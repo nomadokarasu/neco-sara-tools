@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Code Combiner",
+    "slug": "code-combiner",
+    "description": "選択したフォルダ内のコードを、ひとつのテキストファイルにまとめるWebツールです。",
+    "version": "1.0.0",
+    "category": "Web制作",
+    "status": "公開中",
+    "publishedAt": "2026-08-07",
+    "updatedAt": "2026-08-07",
+    "icon": "",
+    "url": "./tools/code-combiner/",
+    "appUrl": "./tools/code-combiner/app/",
+    "privacy": "選択したファイルはブラウザ内で処理され、サーバーには送信されません。"
+  }
+]

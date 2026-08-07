@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>TOOLS | AIと協働して作ったWebツール</title>
+
+  <meta
+    name="description"
+    content="AIとの協働で制作した、創作やWeb制作に役立つ小さなWebツールを公開しています。"
+  >
+
+  <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="./" class="site-logo">TOOLS</a>
+
+      <nav class="site-nav" aria-label="メインメニュー">
+        <a href="#tools">ツール一覧</a>
+        <a href="#about">このサイトについて</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <p class="hero__label">TOOLS BY JUNOTA</p>
+
+        <h1 class="hero__title">
+          AIとの協働で作った、<br>
+          制作のための小さなWebツール。
+        </h1>
+
+        <p class="hero__description">
+          創作やWeb制作のなかで必要になった機能を、
+          AIと一緒に設計・開発し、無料で公開しています。
+        </p>
+      </div>
+    </section>
+
+    <section id="tools" class="tools-section">
+      <div class="container">
+        <div class="section-heading">
+          <p class="section-heading__label">WEB TOOLS</p>
+          <h2 class="section-heading__title">公開中のツール</h2>
+        </div>
+
+        <div id="tools-list" class="tools-grid">
+          <p class="loading-message">ツールを読み込んでいます。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="about-section">
+      <div class="container container--narrow">
+        <div class="section-heading">
+          <p class="section-heading__label">ABOUT</p>
+          <h2 class="section-heading__title">このサイトについて</h2>
+        </div>
+
+        <div class="about-section__content">
+          <p>
+            このサイトでは、AIとの協働によって制作したWebツールを公開しています。
+          </p>
+
+          <p>
+            自分の制作活動やWebサイト運営のなかで必要になったものを中心に、
+            同じような目的を持つ人にも使ってもらえる形に整えて公開していきます。
+          </p>
+
+          <p>
+            特別な記載がない限り、ファイルの処理は利用者のブラウザ内で行い、
+            選択したデータをサーバーへ送信しない設計を基本とします。
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <p>&copy; <span id="current-year"></span> JUNOTA</p>
+
+      <a href="https://neco-sara.com/">neco-sara.com</a>
+    </div>
+  </footer>
+
+  <script src="./assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Code Combiner</title>
+
+  <meta
+    name="description"
+    content="フォルダ内のコードをひとつのテキストファイルにまとめるWebツールです。"
+  >
+
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+
+  <header class="app-header">
+    <div class="app-header__inner">
+
+      <div>
+        <a href="../" class="back-link">← ツール詳細</a>
+        <h1>Code Combiner</h1>
+      </div>
+
+      <span class="version">v1.0.0</span>
+
+    </div>
+  </header>
+
+
+  <main class="app-main">
+
+    <section class="intro">
+      <p>
+        プロジェクトフォルダを選択すると、
+        フォルダ内のコードをひとつのテキストにまとめます。
+      </p>
+
+      <p class="privacy-note">
+        ファイルはブラウザ内で処理され、サーバーには送信されません。
+      </p>
+    </section>
+
+
+    <section class="controls">
+
+      <label class="select-button">
+        フォルダを選択
+
+        <input
+          id="folder-input"
+          type="file"
+          webkitdirectory
+          multiple
+        >
+      </label>
+
+      <button
+        id="download-button"
+        class="download-button"
+        type="button"
+        disabled
+      >
+        テキストを保存
+      </button>
+
+    </section>
+
+
+    <section
+      id="summary"
+      class="summary"
+      hidden
+    >
+      <div>
+        <span class="summary__label">FILES</span>
+        <strong id="file-count">0</strong>
+      </div>
+
+      <div>
+        <span class="summary__label">SIZE</span>
+        <strong id="total-size">0 KB</strong>
+      </div>
+    </section>
+
+
+    <section
+      id="file-section"
+      class="file-section"
+      hidden
+    >
+
+      <div class="section-heading">
+        <h2>対象ファイル</h2>
+        <button
+          id="clear-button"
+          class="text-button"
+          type="button"
+        >
+          クリア
+        </button>
+      </div>
+
+      <div
+        id="file-list"
+        class="file-list"
+      ></div>
+
+    </section>
+
+
+    <section
+      id="preview-section"
+      class="preview-section"
+      hidden
+    >
+
+      <div class="section-heading">
+        <h2>出力プレビュー</h2>
+
+        <button
+          id="copy-button"
+          class="text-button"
+          type="button"
+        >
+          コピー
+        </button>
+      </div>
+
+      <textarea
+        id="output"
+        readonly
+        spellcheck="false"
+      ></textarea>
+
+    </section>
+
+  </main>
+
+
+  <script src="./app.js"></script>
+
+</body>
+</html>
