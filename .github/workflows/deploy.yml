@@ -14,14 +14,22 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy website
+    name: Build and deploy website
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Upload files by FTPS
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build website
+        run: npm run build
+
+      - name: Upload dist by FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.LOLIPOP_FTP_SERVER }}
@@ -29,9 +37,5 @@ jobs:
           password: ${{ secrets.LOLIPOP_FTP_PASSWORD }}
           protocol: ftps
           port: 21
-          local-dir: ./
+          local-dir: ./dist/
           server-dir: /tools/
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/.github/**

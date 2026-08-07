@@ -1,8 +1,8 @@
 [
   {
-    "name": "Code Combiner",
+    "name": "コード統合ツール",
     "slug": "code-combiner",
-    "description": "選択したフォルダ内のコードを、ひとつのテキストファイルにまとめるWebツールです。",
+    "description": "選択したフォルダ内のコードを、ひとつのテキストファイルにまとめるWebツールです。AIとのコード共有にお使いください。",
     "version": "1.0.0",
     "category": "Web制作",
     "status": "公開中",
