@@ -26,5 +26,20 @@
     "useUrl": "",
     "detailUrl": "",
     "privacy": ""
-  }
+  },
+
+  {
+  "name": "手が描けーる",
+  "slug": "tegakakeru",
+  "description": "手が描けるようになるための練習アプリです。",
+  "version": "1.0.0",
+  "category": "描画練習",
+  "status": "公開中",
+  "publishedAt": "2026-07-24",
+  "updatedAt": "2026-07-24",
+  "icon": "",
+  "useUrl": "https://hand.neco-sara.com/",
+  "detailUrl": "",
+  "privacy": ""
+}
 ]

@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "preview": "serve dist"
+  },
+  "devDependencies": {
+    "serve": "^14.2.6"
   }
 }
