@@ -41,5 +41,20 @@
   "useUrl": "https://hand.neco-sara.com/",
   "detailUrl": "",
   "privacy": ""
+},
+
+{
+  "name": "JUNOTA作品倉庫",
+  "slug": "junota-viewer",
+  "description": "JUNOTAの漫画・絵・アニメーションなどの作品をオンラインで閲覧できるWebサイトです。",
+  "version": "1.0.0",
+  "category": "作品",
+  "status": "公開中",
+  "publishedAt": "2026-07-07",
+  "updatedAt": "2026-08-01",
+  "icon": "",
+  "useUrl": "https://viewer.neco-sara.com/",
+  "detailUrl": "",
+  "privacy": ""
 }
 ]
