@@ -10,7 +10,7 @@
     "updatedAt": "2026-08-07",
     "icon": "",
     "useUrl": "./tools/code-combiner/app/",
-"detailUrl": "",
+"detailUrl": "https://neco-sara.com/code-combiner/",
     "privacy": "選択したファイルはブラウザ内で処理され、サーバーには送信されません。"
   },
   {
@@ -24,7 +24,7 @@
     "updatedAt": "2026-08-07",
     "icon": "",
     "useUrl": "",
-"detailUrl": "",
+    "detailUrl": "",
     "privacy": ""
   }
 ]
