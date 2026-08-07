@@ -9,8 +9,8 @@
     "publishedAt": "2026-08-07",
     "updatedAt": "2026-08-07",
     "icon": "",
-    "url": "./tools/code-combiner/",
-    "appUrl": "./tools/code-combiner/app/",
+    "useUrl": "./tools/code-combiner/app/",
+"detailUrl": "",
     "privacy": "選択したファイルはブラウザ内で処理され、サーバーには送信されません。"
   },
   {
@@ -23,8 +23,8 @@
     "publishedAt": "2026-08-07",
     "updatedAt": "2026-08-07",
     "icon": "",
-    "url": "./tools/tool-publishing-system/",
-    "appUrl": "",
+    "useUrl": "",
+"detailUrl": "",
     "privacy": ""
   }
 ]
