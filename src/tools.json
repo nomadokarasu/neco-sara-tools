@@ -12,5 +12,19 @@
     "url": "./tools/code-combiner/",
     "appUrl": "./tools/code-combiner/app/",
     "privacy": "選択したファイルはブラウザ内で処理され、サーバーには送信されません。"
+  },
+  {
+    "name": "Webツール公開システム",
+    "slug": "tool-publishing-system",
+    "description": "AIと協働して作ったWebツールを、マスターデータからビルドし、GitHub経由で自動公開・更新するための仕組みです。",
+    "version": "1.0.0",
+    "category": "Web制作",
+    "status": "公開中",
+    "publishedAt": "2026-08-07",
+    "updatedAt": "2026-08-07",
+    "icon": "",
+    "url": "./tools/tool-publishing-system/",
+    "appUrl": "",
+    "privacy": ""
   }
 ]

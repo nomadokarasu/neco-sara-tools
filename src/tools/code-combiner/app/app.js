@@ -5,10 +5,14 @@ const copyButton = document.getElementById("copy-button");
 
 const summary = document.getElementById("summary");
 const fileCount = document.getElementById("file-count");
+const excludedCount = document.getElementById("excluded-count");
 const totalSize = document.getElementById("total-size");
 
 const fileSection = document.getElementById("file-section");
 const fileList = document.getElementById("file-list");
+
+const excludedSection = document.getElementById("excluded-section");
+const excludedList = document.getElementById("excluded-list");
 
 const previewSection = document.getElementById("preview-section");
 const output = document.getElementById("output");
@@ -99,14 +103,11 @@ const allowedExtensions = new Set([
   "graphql",
   "gql",
 
-  "env.example",
-  "gitignore",
-  "gitattributes",
-  "editorconfig",
-  "dockerfile"
+
 ]);
 
 let selectedFiles = [];
+let excludedFiles = [];
 let combinedText = "";
 let rootFolderName = "project";
 
@@ -128,14 +129,28 @@ async function handleFolderSelection(event) {
   try {
     rootFolderName = getRootFolderName(allFiles);
 
-    const filteredFiles = allFiles
-      .filter(isTargetFile)
-      .sort((a, b) => {
-        const pathA = getRelativePath(a);
-        const pathB = getRelativePath(b);
+    const classifiedFiles = allFiles.map((file) => {
+  return classifyFile(file);
+});
 
-        return pathA.localeCompare(pathB, "ja");
-      });
+const filteredFiles = classifiedFiles
+  .filter((result) => result.included)
+  .map((result) => result.file)
+  .sort((a, b) => {
+    const pathA = getRelativePath(a);
+    const pathB = getRelativePath(b);
+
+    return pathA.localeCompare(pathB, "ja");
+  });
+
+excludedFiles = classifiedFiles
+  .filter((result) => !result.included)
+  .sort((a, b) => {
+    const pathA = getRelativePath(a.file);
+    const pathB = getRelativePath(b.file);
+
+    return pathA.localeCompare(pathB, "ja");
+  });
 
     if (filteredFiles.length === 0) {
       clearSelection();
@@ -180,46 +195,73 @@ async function handleFolderSelection(event) {
   }
 }
 
-function isTargetFile(file) {
+function classifyFile(file) {
   const relativePath = getRelativePath(file);
   const pathParts = relativePath.split("/");
-
   const directoryParts = pathParts.slice(0, -1);
 
-  if (
-    directoryParts.some((directoryName) =>
-      ignoredDirectoryNames.has(directoryName)
-    )
-  ) {
-    return false;
+  const ignoredDirectory = directoryParts.find((directoryName) =>
+    ignoredDirectoryNames.has(directoryName)
+  );
+
+  if (ignoredDirectory) {
+    return {
+      file,
+      included: false,
+      reason: `除外フォルダ：${ignoredDirectory}`
+    };
   }
 
   if (ignoredFileNames.has(file.name)) {
-    return false;
+    return {
+      file,
+      included: false,
+      reason: "除外対象のファイル名"
+    };
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    return false;
+    return {
+      file,
+      included: false,
+      reason: "1ファイルの容量上限を超過"
+    };
   }
 
-  return hasAllowedExtension(file.name);
+  if (!hasAllowedExtension(file.name)) {
+    return {
+      file,
+      included: false,
+      reason: "対象外のファイル形式"
+    };
+  }
+
+  return {
+    file,
+    included: true,
+    reason: ""
+  };
 }
 
 function hasAllowedExtension(fileName) {
   const lowerName = fileName.toLowerCase();
 
   const specialFileNames = [
-    "dockerfile",
-    "makefile",
-    "procfile",
-    ".gitignore",
-    ".gitattributes",
-    ".editorconfig",
-    ".npmrc",
-    ".nvmrc",
-    ".prettierrc",
-    ".eslintrc"
-  ];
+  "dockerfile",
+  "makefile",
+  "procfile",
+  ".gitignore",
+  ".gitattributes",
+  ".editorconfig",
+  ".npmrc",
+  ".nvmrc",
+  ".prettierrc",
+  ".eslintrc",
+  ".env.example",
+  ".env.local.example",
+  ".env.development.example",
+  ".env.production.example"
+];
 
   if (specialFileNames.includes(lowerName)) {
     return true;
@@ -304,6 +346,7 @@ function renderResult() {
   );
 
   fileCount.textContent = String(selectedFiles.length);
+  excludedCount.textContent = String(excludedFiles.length);
   totalSize.textContent = formatBytes(totalBytes);
 
   fileList.innerHTML = "";
@@ -326,10 +369,31 @@ function renderResult() {
     fileList.appendChild(item);
   });
 
+  excludedList.innerHTML = "";
+
+  excludedFiles.forEach((result) => {
+    const item = document.createElement("div");
+    item.className = "excluded-item";
+
+    const path = document.createElement("span");
+    path.className = "excluded-item__path";
+    path.textContent = removeRootFolder(
+      getRelativePath(result.file)
+    );
+
+    const reason = document.createElement("span");
+    reason.className = "excluded-item__reason";
+    reason.textContent = result.reason;
+
+    item.append(path, reason);
+    excludedList.appendChild(item);
+  });
+
   output.value = combinedText;
 
   summary.hidden = false;
   fileSection.hidden = false;
+  excludedSection.hidden = excludedFiles.length === 0;
   previewSection.hidden = false;
   downloadButton.disabled = false;
 }
@@ -390,17 +454,19 @@ async function copyCombinedText() {
 
 function clearSelection() {
   selectedFiles = [];
-  combinedText = "";
+excludedFiles = [];
+combinedText = "";
   rootFolderName = "project";
 
   folderInput.value = "";
   output.value = "";
   fileList.innerHTML = "";
+  excludedList.innerHTML = "";
 
   summary.hidden = true;
-  fileSection.hidden = true;
-  previewSection.hidden = true;
-
+fileSection.hidden = true;
+excludedSection.hidden = true;
+previewSection.hidden = true;
   downloadButton.disabled = true;
 }
 

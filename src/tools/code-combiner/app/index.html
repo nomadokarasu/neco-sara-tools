@@ -8,7 +8,7 @@
 
   <meta
     name="description"
-    content="フォルダ内のコードをひとつのテキストファイルにまとめるWebツールです。"
+    content="フォルダ内のコードをひとつのテキストファイルにまとめるWebツールです。AIとのコード共有にお使いください。"
   >
 
   <link rel="stylesheet" href="./style.css">
@@ -71,20 +71,25 @@
 
 
     <section
-      id="summary"
-      class="summary"
-      hidden
-    >
-      <div>
-        <span class="summary__label">FILES</span>
-        <strong id="file-count">0</strong>
-      </div>
+  id="summary"
+  class="summary"
+  hidden
+>
+  <div>
+    <span class="summary__label">FILES</span>
+    <strong id="file-count">0</strong>
+  </div>
 
-      <div>
-        <span class="summary__label">SIZE</span>
-        <strong id="total-size">0 KB</strong>
-      </div>
-    </section>
+  <div>
+    <span class="summary__label">EXCLUDED</span>
+    <strong id="excluded-count">0</strong>
+  </div>
+
+  <div>
+    <span class="summary__label">SIZE</span>
+    <strong id="total-size">0 KB</strong>
+  </div>
+</section>
 
 
     <section
@@ -111,6 +116,21 @@
 
     </section>
 
+
+    <section
+  id="excluded-section"
+  class="excluded-section"
+  hidden
+>
+  <div class="section-heading">
+    <h2>除外されたファイル</h2>
+  </div>
+
+  <div
+    id="excluded-list"
+    class="excluded-list"
+  ></div>
+</section>
 
     <section
       id="preview-section"

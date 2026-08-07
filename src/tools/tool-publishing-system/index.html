@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Webツール公開システム | TOOLS</title>
+
+  <meta
+    name="description"
+    content="AIと協働して作ったWebツールを、マスターデータからビルドし、GitHub経由で自動公開・更新するための仕組みです。"
+  >
+
+  <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+
+<body>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+
+      <a href="../../" class="site-logo">TOOLS</a>
+
+      <nav class="site-nav" aria-label="メインメニュー">
+        <a href="../../#tools">ツール一覧</a>
+        <a href="../../#about">このサイトについて</a>
+      </nav>
+
+    </div>
+  </header>
+
+
+  <main>
+
+    <section class="tool-detail-hero">
+      <div class="container container--narrow">
+
+        <p class="hero__label">WEB DEVELOPMENT</p>
+
+        <h1 class="tool-detail-hero__title">
+          Webツール公開システム
+        </h1>
+
+        <p class="tool-detail-hero__lead">
+          AIと協働して作ったWebツールを、
+          マスターデータからビルドし、
+          GitHub経由で自動公開・更新するための仕組みです。
+        </p>
+
+      </div>
+    </section>
+
+
+    <section class="tool-detail-section">
+      <div class="container container--narrow">
+
+        <h2>この仕組みについて</h2>
+
+        <p>
+          AIとの協働でWebツールを継続的に制作・公開していくために作った、
+          自分用の公開システムです。
+        </p>
+
+        <p>
+          ツールのマスターデータと実際に公開するデータを分離し、
+          GitHubへ更新を送ることで、
+          公開サイトまで自動的に反映される構成にしています。
+        </p>
+
+      </div>
+    </section>
+
+
+    <section class="tool-detail-section">
+      <div class="container container--narrow">
+
+        <h2>仕組み</h2>
+
+        <ol class="tool-detail-list">
+          <li>
+            <strong>src</strong> にあるマスターデータを編集します。
+          </li>
+
+          <li>
+            ビルド処理によって <strong>dist</strong> に公開用データを生成します。
+          </li>
+
+          <li>
+            Gitで変更履歴を記録し、GitHubへpushします。
+          </li>
+
+          <li>
+            GitHub Actionsが自動的に公開用データを生成します。
+          </li>
+
+          <li>
+            生成されたデータをFTPSでWebサーバーへアップロードします。
+          </li>
+        </ol>
+
+      </div>
+    </section>
+
+
+    <section class="tool-detail-section">
+      <div class="container container--narrow">
+
+        <h2>更新の流れ</h2>
+
+        <p>
+          普段の更新では、サーバー上のファイルを直接編集しません。
+          マスターデータを変更し、その変更から公開用データを作ります。
+        </p>
+
+        <ol class="tool-detail-list">
+          <li>src内のファイルを編集</li>
+          <li>ローカルでビルド</li>
+          <li>distの内容を確認</li>
+          <li>Gitへコミット</li>
+          <li>GitHubへpush</li>
+          <li>GitHub Actionsが自動ビルド</li>
+          <li>Webサーバーへ自動反映</li>
+        </ol>
+
+      </div>
+    </section>
+
+
+    <section class="tool-detail-section">
+      <div class="container container--narrow">
+
+        <h2>構成</h2>
+
+        <p>
+          この公開システムでは、主に次の構成でデータを管理しています。
+        </p>
+
+        <pre><code>neco-sara-tools/
+├─ src/          マスターデータ
+├─ dist/         公開用データ
+├─ scripts/      ビルド処理
+├─ .github/
+│  └─ workflows/ 自動公開設定
+└─ package.json</code></pre>
+
+      </div>
+    </section>
+
+
+    <section class="tool-detail-section">
+      <div class="container container--narrow">
+
+        <h2>使用している仕組み</h2>
+
+        <ul class="tool-detail-list">
+          <li>HTML / CSS / JavaScript</li>
+          <li>Node.js</li>
+          <li>Git</li>
+          <li>GitHub</li>
+          <li>GitHub Actions</li>
+          <li>FTPS</li>
+          <li>ロリポップ！レンタルサーバー</li>
+        </ul>
+
+      </div>
+    </section>
+
+
+    <section class="tool-detail-section">
+      <div class="container container--narrow">
+
+        <h2>バージョン</h2>
+
+        <dl class="tool-info">
+
+          <div>
+            <dt>Version</dt>
+            <dd>1.0.0</dd>
+          </div>
+
+          <div>
+            <dt>公開日</dt>
+            <dd>2026.08.07</dd>
+          </div>
+
+          <div>
+            <dt>最終更新</dt>
+            <dd>2026.08.07</dd>
+          </div>
+
+        </dl>
+
+      </div>
+    </section>
+
+
+    <section class="tool-detail-section">
+      <div class="container container--narrow">
+
+        <h2>制作について</h2>
+
+        <p>
+          この仕組み自体もAIとの協働によって設計・制作しています。
+        </p>
+
+        <p>
+          今後制作するWebツールも、この仕組みを使って追加・更新していく予定です。
+        </p>
+
+      </div>
+    </section>
+
+  </main>
+
+
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+
+      <p>&copy; 2026 JUNOTA</p>
+
+      <a href="../../">TOOLSへ戻る</a>
+
+    </div>
+  </footer>
+
+</body>
+</html>

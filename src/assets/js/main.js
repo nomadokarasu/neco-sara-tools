@@ -29,6 +29,17 @@ async function loadTools() {
       const article = document.createElement("article");
       article.className = "tool-card";
 
+const appButton = tool.appUrl
+  ? `
+      <a
+        href="${escapeAttribute(tool.appUrl)}"
+        class="button button--primary"
+      >
+        使ってみる
+      </a>
+    `
+  : "";
+
       article.innerHTML = `
         <div class="tool-card__meta">
           <span class="tool-card__category">${escapeHtml(tool.category)}</span>
@@ -49,20 +60,15 @@ async function loadTools() {
           </span>
 
           <div class="tool-card__actions">
-            <a
-              href="${escapeAttribute(tool.appUrl)}"
-              class="button button--primary"
-            >
-              使ってみる
-            </a>
+  ${appButton}
 
-            <a
-              href="${escapeAttribute(tool.url)}"
-              class="button button--secondary"
-            >
-              詳細を見る
-            </a>
-          </div>
+  <a
+    href="${escapeAttribute(tool.url)}"
+    class="button ${tool.appUrl ? "button--secondary" : "button--primary"}"
+  >
+    詳細を見る
+  </a>
+</div>
         </div>
       `;
 

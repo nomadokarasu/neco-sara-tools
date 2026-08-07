@@ -166,6 +166,7 @@ textarea {
 /* Sections */
 
 .file-section,
+.excluded-section,
 .preview-section {
   margin-top: 55px;
 }
@@ -234,6 +235,42 @@ textarea {
 }
 
 
+/* Excluded files */
+
+.excluded-list {
+  overflow: hidden;
+
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.excluded-item {
+  padding: 12px 16px;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+
+  border-bottom: 1px solid #eee;
+
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.excluded-item:last-child {
+  border-bottom: 0;
+}
+
+.excluded-item__path {
+  overflow-wrap: anywhere;
+}
+
+.excluded-item__reason {
+  color: #999;
+  white-space: nowrap;
+}
+
 /* Preview */
 
 #output {
@@ -272,4 +309,9 @@ textarea {
     flex-direction: column;
     gap: 3px;
   }
+
+  .excluded-item {
+  grid-template-columns: 1fr;
+  gap: 3px;
+}
 }

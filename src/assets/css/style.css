@@ -473,3 +473,21 @@ a {
     gap: 6px;
   }
 }
+
+.tool-detail-section pre {
+  margin: 28px 0 0;
+  padding: 24px;
+  overflow-x: auto;
+
+  background: #222;
+  color: #eee;
+  border-radius: 8px;
+
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.tool-detail-section code {
+  font-family: inherit;
+}
