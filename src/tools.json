@@ -101,6 +101,21 @@
   "useUrl": "./tools/smartphone-preview/",
   "detailUrl": "",
   "privacy": ""
+},
+
+{
+  "name": "画像一括WebP変換ツール",
+  "slug": "webp-converter",
+  "description": "JPG・PNG・GIF画像をまとめてWebP形式へ変換するWebツールです。",
+  "version": "1.0.0",
+  "category": "画像",
+  "status": "公開中",
+  "publishedAt": "2026-06-27",
+  "updatedAt": "2026-06-27",
+  "icon": "",
+  "useUrl": "./tools/webp-converter/",
+  "detailUrl": "",
+  "privacy": ""
 }
 
 ]

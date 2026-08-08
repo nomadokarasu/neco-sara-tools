@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+  <title>画像一括WebP変換ツール</title>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+
+    .item {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .fail {
+      color: red;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+    }
+
+    #list {
+      margin-top: 20px;
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+
+<body>
+
+  <h1>画像一括WebP変換ツール</h1>
+
+  <p>JPG / PNG / GIF をまとめてWebPへ変換します。</p>
+
+  <input
+    type="file"
+    id="files"
+    multiple
+    accept=".jpg,.jpeg,.png,.gif,image/jpeg,image/png,image/gif"
+  >
+
+  <p>
+    品質
+    <input
+      type="range"
+      id="quality"
+      min="0.1"
+      max="1"
+      step="0.05"
+      value="0.85"
+    >
+    <span id="qualityValue">0.85</span>
+  </p>
+
+  <button id="convertBtn">変換開始</button>
+  <button id="downloadZip" disabled>ZIP一括ダウンロード</button>
+
+  <div id="list"></div>
+
+  <script>
+    const filesInput = document.getElementById("files");
+    const list = document.getElementById("list");
+
+    const quality = document.getElementById("quality");
+    const qualityValue = document.getElementById("qualityValue");
+
+    const zipButton = document.getElementById("downloadZip");
+
+    quality.oninput = () => {
+      qualityValue.textContent = quality.value;
+    };
+
+    let zipBlob = null;
+
+    const MAX_SIZE = 400 * 1024;
+    const MAX_WIDTH = 1400;
+
+    function naturalSort(a, b) {
+      return a.name.localeCompare(
+        b.name,
+        undefined,
+        {
+          numeric: true,
+          sensitivity: "base"
+        }
+      );
+    }
+
+    document.getElementById("convertBtn").onclick = async () => {
+      let files = [...filesInput.files];
+
+      if (!files.length) {
+        alert("画像を選択してください");
+        return;
+      }
+
+      files.sort(naturalSort);
+
+      list.innerHTML = "";
+      zipButton.disabled = true;
+      zipBlob = null;
+
+      const zip = new JSZip();
+
+      const digits = Math.max(
+        2,
+        String(files.length).length
+      );
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        try {
+          const img = new Image();
+          const src = URL.createObjectURL(file);
+
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = src;
+          });
+
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            const scale = MAX_WIDTH / width;
+
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+          }
+
+          const canvas = document.createElement("canvas");
+
+          canvas.width = width;
+          canvas.height = height;
+
+          canvas
+            .getContext("2d")
+            .drawImage(
+              img,
+              0,
+              0,
+              width,
+              height
+            );
+
+          async function encode(q) {
+            return await new Promise((resolve) => {
+              canvas.toBlob(
+                resolve,
+                "image/webp",
+                q
+              );
+            });
+          }
+
+          const initialQuality = Number(quality.value);
+
+          let blob = await encode(initialQuality);
+          let finalQuality = initialQuality;
+
+          if (blob.size > MAX_SIZE) {
+            let low = 0.1;
+            let high = initialQuality;
+
+            while (high - low > 0.01) {
+              const mid = (low + high) / 2;
+
+              const test = await encode(mid);
+
+              if (test.size <= MAX_SIZE) {
+                blob = test;
+                finalQuality = mid;
+                low = mid;
+              } else {
+                high = mid;
+              }
+            }
+          }
+
+          const num = String(i + 1).padStart(
+            digits,
+            "0"
+          );
+
+          const newName = `page${num}.webp`;
+
+          zip.file(newName, blob);
+
+          const url = URL.createObjectURL(blob);
+
+          const sizeKB = (
+            blob.size / 1024
+          ).toFixed(1);
+
+          const div = document.createElement("div");
+
+          div.className = "item success";
+
+          div.innerHTML = `
+            ${file.name}
+            →
+            <strong>${newName}</strong>
+            （${sizeKB} KB・品質 ${finalQuality.toFixed(2)}・${width}×${height}px）
+            <a href="${url}" download="${newName}">
+              ダウンロード
+            </a>
+          `;
+
+          list.appendChild(div);
+
+          URL.revokeObjectURL(src);
+
+        } catch (error) {
+          console.error(error);
+
+          const div = document.createElement("div");
+
+          div.className = "item fail";
+
+          div.textContent =
+            file.name + " の変換に失敗しました";
+
+          list.appendChild(div);
+        }
+      }
+
+      zipBlob = await zip.generateAsync({
+        type: "blob"
+      });
+
+      zipButton.disabled = false;
+
+      alert("変換完了しました");
+    };
+
+    zipButton.onclick = () => {
+      if (!zipBlob) {
+        return;
+      }
+
+      const url = URL.createObjectURL(zipBlob);
+
+      const anchor = document.createElement("a");
+
+      anchor.href = url;
+      anchor.download = "webp_images.zip";
+
+      document.body.appendChild(anchor);
+
+      anchor.click();
+      anchor.remove();
+
+      URL.revokeObjectURL(url);
+    };
+  </script>
+
+</body>
+</html>
