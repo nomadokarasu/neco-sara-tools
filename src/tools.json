@@ -86,6 +86,21 @@
   "useUrl": "./tools/silkscreen-color-reducer/app/",
   "detailUrl": "",
   "privacy": ""
+},
+
+{
+  "name": "スマホ表示確認ツール",
+  "slug": "smartphone-preview",
+  "description": "Webページのレイアウトをスマートフォンやタブレットの画面サイズで確認するためのツールです。",
+  "version": "1.0.0",
+  "category": "Web制作",
+  "status": "公開中",
+  "publishedAt": "2026-01-26",
+  "updatedAt": "2026-01-26",
+  "icon": "",
+  "useUrl": "./tools/smartphone-preview/",
+  "detailUrl": "",
+  "privacy": ""
 }
 
 ]

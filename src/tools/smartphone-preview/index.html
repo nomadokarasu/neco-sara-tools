@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>スマホ表示確認ツール</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #e5e5e5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      padding: 12px;
+      background: #222;
+      color: white;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    input {
+      padding: 6px;
+      font-size: 14px;
+      width: 260px;
+    }
+
+    button {
+      padding: 6px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      background: #444;
+      color: white;
+    }
+
+    .device {
+      margin: 30px 0;
+      width: 390px; /* iPhone幅 */
+      height: 780px;
+      background: black;
+      border-radius: 40px;
+      padding: 18px 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+      position: relative;
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      background: white;
+      border-radius: 28px;
+      overflow: hidden;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .sizes {
+      display: flex;
+      gap: 8px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <input type="text" id="urlInput" placeholder="確認したいURL または ファイル名">
+  <button onclick="loadSite()">表示</button>
+
+  <div class="sizes">
+    <button onclick="setSize(390,780)">iPhone</button>
+    <button onclick="setSize(360,740)">Android</button>
+    <button onclick="setSize(768,1024)">Tablet</button>
+  </div>
+</header>
+
+<div class="device" id="deviceFrame">
+  <div class="screen">
+    <iframe id="previewFrame" src=""></iframe>
+  </div>
+</div>
+
+<script>
+  function loadSite() {
+    const url = document.getElementById("urlInput").value;
+    document.getElementById("previewFrame").src = url;
+  }
+
+  function setSize(width, height) {
+    const device = document.getElementById("deviceFrame");
+    device.style.width = width + "px";
+    device.style.height = height + "px";
+  }
+</script>
+
+</body>
+</html>
