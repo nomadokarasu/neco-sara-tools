@@ -34,6 +34,8 @@ const useButton = tool.useUrl
       <a
         href="${escapeAttribute(tool.useUrl)}"
         class="button button--primary"
+        target="_blank"
+        rel="noopener noreferrer"
       >
         使ってみる
       </a>
@@ -45,6 +47,8 @@ const detailButton = tool.detailUrl
       <a
         href="${escapeAttribute(tool.detailUrl)}"
         class="button button--secondary"
+        target="_blank"
+        rel="noopener noreferrer"
       >
         詳細を見る
       </a>

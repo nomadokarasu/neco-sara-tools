@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ストップウォッチ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        #laps {
+            margin-top: 20px;
+        }
+        #laps div {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>アニメーション用ストップウォッチ</h1>
+ <h3>スペースキーでラップ計測できます</h3>
+
+
+    <div>
+        <label for="fpsInput">フレームレート (FPS): </label>
+        <input type="number" id="fpsInput" value="24" min="1" max="60">
+    </div>
+    <div>
+        <span id="timeDisplay">0秒 0フレーム（総コマ数 0）</span>
+    </div>
+    <button class="button" id="startStopButton">スタート</button>
+    <button class="button" id="lapButton">ラップを記録</button>
+    <button class="button" id="resetButton">リセット</button>
+    <div id="laps"></div>
+
+    <script>
+        let startTime = 0;
+        let elapsedFrames = 0;
+        let previousLapFrames = 0;
+        let isRunning = false;
+        let lapCount = 1;
+        let timerInterval;
+
+        function updateDisplay() {
+            const fps = parseInt(document.getElementById('fpsInput').value);
+            const totalFrames = elapsedFrames;
+            const seconds = Math.floor(totalFrames / fps);
+            const frames = totalFrames % fps;
+            document.getElementById('timeDisplay').textContent = `${seconds}秒 ${frames}フレーム（総コマ数 ${totalFrames}）`;
+        }
+
+        function startTimer() {
+            startTime = performance.now() - (elapsedFrames * 1000 / parseInt(document.getElementById('fpsInput').value));
+            timerInterval = setInterval(() => {
+                const fps = parseInt(document.getElementById('fpsInput').value);
+                const now = performance.now();
+                elapsedFrames = Math.floor((now - startTime) / 1000 * fps);
+                updateDisplay();
+            }, 1000 / 60);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        document.getElementById('startStopButton').addEventListener('click', () => {
+            if (isRunning) {
+                stopTimer();
+                document.getElementById('startStopButton').textContent = 'スタート';
+            } else {
+                startTimer();
+                document.getElementById('startStopButton').textContent = 'ストップ';
+            }
+            isRunning = !isRunning;
+        });
+
+        document.getElementById('lapButton').addEventListener('click', recordLap);
+        document.getElementById('resetButton').addEventListener('click', resetTimer);
+
+        function recordLap() {
+            const fps = parseInt(document.getElementById('fpsInput').value);
+            const lapFrames = elapsedFrames - previousLapFrames;
+            const lapSeconds = Math.floor(lapFrames / fps);
+            const lapOnlyFrames = lapFrames % fps;
+            const totalSeconds = Math.floor(elapsedFrames / fps);
+            const totalFrames = elapsedFrames % fps;
+            const lapDiv = document.createElement('div');
+            lapDiv.textContent = `ラップ ${lapCount} : ${totalSeconds}秒 ${totalFrames}フレーム（総コマ数 ${elapsedFrames}）【＋${lapSeconds}秒${lapOnlyFrames}フレーム（＝${lapFrames}コマ）】`;
+            document.getElementById('laps').appendChild(lapDiv);
+            previousLapFrames = elapsedFrames;
+            lapCount++;
+        }
+
+        function resetTimer() {
+            stopTimer();
+            elapsedFrames = 0;
+            previousLapFrames = 0;
+            lapCount = 1;
+            isRunning = false;
+            document.getElementById('timeDisplay').textContent = '0秒 0フレーム（総コマ数 0）';
+            document.getElementById('laps').innerHTML = '';
+            document.getElementById('startStopButton').textContent = 'スタート';
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && isRunning) {
+                e.preventDefault();
+                recordLap();
+            }
+        });
+    </script>
+</body>
+</html>

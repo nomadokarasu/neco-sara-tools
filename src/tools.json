@@ -56,5 +56,36 @@
   "useUrl": "https://viewer.neco-sara.com/",
   "detailUrl": "",
   "privacy": ""
+},
+
+{
+  "name": "アニメーション用ストップウォッチ",
+  "slug": "animation-stopwatch",
+  "description": "アニメーション制作向けに、秒数・フレーム数・総コマ数を計測できるストップウォッチです。スペースキーでラップを記録できます。",
+  "version": "1.0.0",
+  "category": "アニメ制作",
+  "status": "公開中",
+  "publishedAt": "2025-03-08",
+  "updatedAt": "2025-03-08",
+  "icon": "",
+  "useUrl": "./tools/animation-stopwatch/app/",
+  "detailUrl": "",
+  "privacy": ""
+},
+
+{
+  "name": "シルクスクリーン用減色ツール",
+  "slug": "silkscreen-color-reducer",
+  "description": "画像を指定した色数に減色し、色の変更や色ごとのPNG書き出しができる、シルクスクリーン制作向けのツールです。",
+  "version": "1.0.0",
+  "category": "制作補助",
+  "status": "公開中",
+  "publishedAt": "2025-03-12",
+  "updatedAt": "2026-08-08",
+  "icon": "",
+  "useUrl": "./tools/silkscreen-color-reducer/app/",
+  "detailUrl": "",
+  "privacy": ""
 }
+
 ]

@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像減色アプリ</title>
+    <style>
+       * {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f5f5f3;
+    color: #222;
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+
+/* ========================
+   全体
+======================== */
+
+.app {
+    min-height: 100vh;
+}
+
+.app-header {
+    padding: 20px 30px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+}
+
+.app-header h1 {
+    margin: 0 0 5px;
+    font-size: 22px;
+}
+
+.app-header p {
+    margin: 0;
+    color: #777;
+    font-size: 14px;
+}
+
+
+/* ========================
+   作業エリア
+======================== */
+
+.workspace {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        360px;
+
+    height: calc(100vh - 85px);
+}
+
+
+/* ========================
+   プレビュー
+======================== */
+
+.preview-panel {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    padding: 14px 20px;
+    background: #fafafa;
+    border-bottom: 1px solid #ddd;
+}
+
+.panel-header h2 {
+    margin: 0;
+    font-size: 15px;
+}
+
+.canvas-area {
+    position: relative;
+
+    flex: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+
+    overflow: auto;
+
+    background:
+        linear-gradient(
+            45deg,
+            #ececec 25%,
+            transparent 25%
+        ),
+        linear-gradient(
+            -45deg,
+            #ececec 25%,
+            transparent 25%
+        ),
+        linear-gradient(
+            45deg,
+            transparent 75%,
+            #ececec 75%
+        ),
+        linear-gradient(
+            -45deg,
+            transparent 75%,
+            #ececec 75%
+        );
+
+    background-size: 20px 20px;
+
+    background-position:
+        0 0,
+        0 10px,
+        10px -10px,
+        -10px 0;
+}
+
+canvas {
+    display: block;
+
+    max-width: 100%;
+    max-height: 100%;
+
+    width: auto;
+    height: auto;
+
+    background: white;
+
+    box-shadow:
+        0 2px 12px
+        rgba(0, 0, 0, 0.12);
+}
+
+.empty-message {
+    position: absolute;
+
+    color: #999;
+}
+
+
+/* ========================
+   右側操作パネル
+======================== */
+
+.control-panel {
+    overflow-y: auto;
+
+    padding: 20px;
+
+    background: white;
+
+    border-left: 1px solid #ddd;
+}
+
+.control-section {
+    padding: 0 0 22px;
+    margin-bottom: 22px;
+
+    border-bottom: 1px solid #eee;
+}
+
+.control-section h2 {
+    margin: 0 0 14px;
+
+    font-size: 15px;
+}
+
+.control-section label {
+    display: block;
+
+    margin-bottom: 6px;
+
+    font-size: 13px;
+    color: #555;
+}
+
+
+/* ========================
+   入力
+======================== */
+
+input[type="number"] {
+    width: 100%;
+
+    padding: 9px 10px;
+
+    margin-bottom: 10px;
+
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+
+/* ========================
+   ボタン
+======================== */
+
+button {
+    padding: 9px 13px;
+
+    border: 1px solid #ccc;
+    border-radius: 6px;
+
+    background: white;
+
+    cursor: pointer;
+}
+
+button:hover {
+    background: #f2f2f2;
+}
+
+.primary-button {
+    width: 100%;
+
+    background: #222;
+    color: white;
+
+    border-color: #222;
+}
+
+.primary-button:hover {
+    background: #444;
+}
+
+
+/* ========================
+   ファイル選択
+======================== */
+
+.file-button {
+    display: block;
+
+    padding: 10px 14px;
+
+    text-align: center;
+
+    background: #f5f5f5;
+
+    border: 1px dashed #aaa;
+    border-radius: 6px;
+
+    cursor: pointer;
+}
+
+.file-button:hover {
+    background: #eee;
+}
+
+.file-button input {
+    display: none;
+}
+
+
+/* ========================
+   使用色
+======================== */
+
+.section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 12px;
+}
+
+.section-title-row h2 {
+    margin: 0;
+}
+
+#colorCountDisplay {
+    font-size: 12px;
+    color: #777;
+}
+
+.color-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.color-item {
+    display: grid;
+
+    grid-template-columns:
+        38px
+        42px
+        1fr
+        auto;
+
+    gap: 8px;
+
+    align-items: center;
+
+    padding: 8px;
+
+    background: #f7f7f7;
+
+    border-radius: 6px;
+}
+
+.color-box {
+    position: relative;
+
+    width: 38px;
+    height: 38px;
+
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.remove-btn {
+    position: absolute;
+
+    top: -7px;
+    right: -7px;
+
+    width: 20px;
+    height: 20px;
+
+    padding: 0;
+
+    border-radius: 50%;
+
+    background: white;
+
+    line-height: 16px;
+}
+
+.color-item input[type="color"] {
+    width: 38px;
+    height: 38px;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    cursor: pointer;
+}
+
+.color-item span {
+    font-family: monospace;
+    font-size: 12px;
+}
+
+
+/* ========================
+   プログレス
+======================== */
+
+.progress-container {
+    display: none;
+
+    width: 100%;
+    height: 20px;
+
+    margin-top: 12px;
+
+    overflow: hidden;
+
+    background: #eee;
+
+    border-radius: 10px;
+}
+
+.progress-bar {
+    width: 0%;
+    height: 100%;
+
+    text-align: center;
+
+    font-size: 11px;
+    line-height: 20px;
+
+    background: #333;
+    color: white;
+}
+
+
+/* ========================
+   ショートカット
+======================== */
+
+.shortcut-info {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+
+    font-size: 12px;
+    color: #888;
+}
+
+
+/* ========================
+   スマホ
+======================== */
+
+@media (max-width: 800px) {
+
+    .workspace {
+        display: flex;
+        flex-direction: column;
+
+        height: auto;
+    }
+
+    .preview-panel {
+        min-height: 60vh;
+    }
+
+    .control-panel {
+        border-left: none;
+        border-top: 1px solid #ddd;
+    }
+
+    .canvas-area {
+        min-height: 400px;
+    }
+}
+    </style>
+</head>
+<div class="app">
+
+    <header class="app-header">
+        <h1>シルクスクリーン減色ツール</h1>
+        <p>画像を指定した色数に減色し、色ごとに分版できます。</p>
+    </header>
+
+
+    <div class="workspace">
+
+        <!-- 左側：画像プレビュー -->
+        <main class="preview-panel">
+
+            <div class="panel-header">
+                <h2>プレビュー</h2>
+            </div>
+
+            <div class="canvas-area">
+
+                <canvas id="canvas"></canvas>
+
+                <p class="empty-message" id="emptyMessage">
+                    画像を選択してください
+                </p>
+
+            </div>
+
+        </main>
+
+
+        <!-- 右側：操作パネル -->
+        <aside class="control-panel">
+
+            <!-- 画像選択 -->
+            <section class="control-section">
+
+                <h2>画像</h2>
+
+                <label class="file-button">
+                    画像を選択
+
+                    <input
+                        type="file"
+                        id="imageInput"
+                        accept="image/*"
+                    >
+                </label>
+
+            </section>
+
+
+            <!-- 減色設定 -->
+            <section class="control-section">
+
+                <h2>減色</h2>
+
+                <label for="colorCount">
+                    色数
+                </label>
+
+                <input
+                    type="number"
+                    id="colorCount"
+                    value="4"
+                    min="2"
+                    max="20"
+                >
+
+                <button
+                    class="primary-button"
+                    onclick="processImage()"
+                >
+                    減色する
+                </button>
+
+
+                <div
+                    class="progress-container"
+                    id="progressContainer"
+                >
+                    <div
+                        class="progress-bar"
+                        id="progressBar"
+                    >
+                        0%
+                    </div>
+                </div>
+
+            </section>
+
+
+            <!-- 使用色 -->
+            <section class="control-section">
+
+                <div class="section-title-row">
+
+                    <h2>使用色</h2>
+
+                    <span id="colorCountDisplay"></span>
+
+                </div>
+
+                <div
+                    id="colorList"
+                    class="color-list"
+                ></div>
+
+            </section>
+
+
+            <!-- 書き出し -->
+            <section class="control-section">
+
+                <h2>書き出し</h2>
+
+                <button onclick="downloadImage()">
+                    減色画像を保存
+                </button>
+
+            </section>
+
+
+            <!-- ショートカット -->
+            <section class="shortcut-info">
+
+                <span>Ctrl + Z：戻す</span>
+                <span>Ctrl + Y：やり直す</span>
+
+            </section>
+
+        </aside>
+
+    </div>
+
+</div>
+    <script>
+    let currentPalette = [];
+    let imgData;
+    let canvas, ctx;
+
+    // =========================
+    // Undo / Redo
+    // =========================
+
+    const undoStack = [];
+    const redoStack = [];
+    const MAX_HISTORY = 30;
+
+    function cloneImageData(imageData) {
+        return new ImageData(
+            new Uint8ClampedArray(imageData.data),
+            imageData.width,
+            imageData.height
+        );
+    }
+
+    function clonePalette(palette) {
+        return palette.map(color => [...color]);
+    }
+
+    function createState() {
+        return {
+            palette: clonePalette(currentPalette),
+            imageData: cloneImageData(imgData)
+        };
+    }
+
+    function restoreState(state) {
+        currentPalette = clonePalette(state.palette);
+        imgData = cloneImageData(state.imageData);
+
+        ctx.putImageData(imgData, 0, 0);
+        updateColorList();
+    }
+
+    function saveHistory() {
+        if (!imgData) return;
+
+        undoStack.push(createState());
+
+        if (undoStack.length > MAX_HISTORY) {
+            undoStack.shift();
+        }
+
+        // 新しい操作をしたらRedo履歴を削除
+        redoStack.length = 0;
+    }
+
+    function undo() {
+        if (undoStack.length === 0 || !imgData) return;
+
+        redoStack.push(createState());
+
+        const previousState = undoStack.pop();
+        restoreState(previousState);
+    }
+
+    function redo() {
+        if (redoStack.length === 0 || !imgData) return;
+
+        undoStack.push(createState());
+
+        const nextState = redoStack.pop();
+        restoreState(nextState);
+    }
+
+
+    // =========================
+    // 画像処理
+    // =========================
+
+    function processImage() {
+        const input = document.getElementById('imageInput');
+        const colorCount = parseInt(
+            document.getElementById('colorCount').value,
+            10
+        );
+
+        if (!input.files.length) {
+            alert('画像を選択してください');
+            return;
+        }
+
+        document.getElementById('progressContainer').style.display = "block";
+        updateProgress(0);
+
+        const file = input.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+            const img = new Image();
+
+            img.onload = async function() {
+                canvas = document.getElementById('canvas');
+                ctx = canvas.getContext('2d');
+
+                canvas.width = img.width;
+                canvas.height = img.height;
+
+                ctx.drawImage(img, 0, 0);
+
+                imgData = ctx.getImageData(
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+
+                const pixels = extractPixels(imgData);
+
+                // K-meansで減色
+                currentPalette = await kMeans(pixels, colorCount);
+
+                applyPalette(imgData, currentPalette);
+
+                ctx.putImageData(imgData, 0, 0);
+
+                // 新しい画像を読み込んだら履歴をリセット
+                undoStack.length = 0;
+                redoStack.length = 0;
+
+                updateColorList();
+                updateProgress(100);
+
+                setTimeout(() => {
+                    document.getElementById(
+                        'progressContainer'
+                    ).style.display = "none";
+                }, 500);
+            };
+
+            img.src = event.target.result;
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+
+    function extractPixels(imageData) {
+        const pixels = [];
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            pixels.push([
+                data[i],
+                data[i + 1],
+                data[i + 2]
+            ]);
+        }
+
+        return pixels;
+    }
+
+
+    async function kMeans(data, k) {
+        let centroids = data.slice(0, k);
+        let change = true;
+        let iteration = 0;
+        const maxIterations = 10;
+
+        while (change && iteration < maxIterations) {
+
+            let clusters = Array.from(
+                { length: k },
+                () => []
+            );
+
+            data.forEach(point => {
+                let minDist = Infinity;
+                let clusterIndex = 0;
+
+                centroids.forEach((centroid, index) => {
+                    const dist = colorDistance(
+                        point,
+                        centroid
+                    );
+
+                    if (dist < minDist) {
+                        minDist = dist;
+                        clusterIndex = index;
+                    }
+                });
+
+                clusters[clusterIndex].push(point);
+            });
+
+
+            const newCentroids = clusters.map(cluster => {
+
+                if (cluster.length === 0) {
+                    return centroids[
+                        Math.floor(
+                            Math.random() * centroids.length
+                        )
+                    ];
+                }
+
+                return cluster
+                    .reduce(
+                        (acc, val) =>
+                            acc.map(
+                                (x, i) => x + val[i]
+                            ),
+                        [0, 0, 0]
+                    )
+                    .map(
+                        x => Math.round(
+                            x / cluster.length
+                        )
+                    );
+            });
+
+
+            change =
+                JSON.stringify(newCentroids) !==
+                JSON.stringify(centroids);
+
+            centroids = newCentroids;
+
+            iteration++;
+
+            updateProgress(
+                (iteration / maxIterations) * 100
+            );
+
+            // UI更新用
+            await new Promise(
+                resolve => setTimeout(resolve, 100)
+            );
+        }
+
+        return centroids;
+    }
+
+
+    function applyPalette(imageData, palette) {
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+
+            const closest = findClosestColor(
+                [
+                    data[i],
+                    data[i + 1],
+                    data[i + 2]
+                ],
+                palette
+            );
+
+            data[i] = closest[0];
+            data[i + 1] = closest[1];
+            data[i + 2] = closest[2];
+        }
+    }
+
+
+    function findClosestColor(color, palette) {
+        return palette.reduce(
+            (closest, current) => {
+
+                return colorDistance(
+                    color,
+                    current
+                ) < colorDistance(
+                    color,
+                    closest
+                )
+                    ? current
+                    : closest;
+            }
+        );
+    }
+
+
+    function colorDistance(color1, color2) {
+        return Math.sqrt(
+            (color1[0] - color2[0]) ** 2 +
+            (color1[1] - color2[1]) ** 2 +
+            (color1[2] - color2[2]) ** 2
+        );
+    }
+
+
+    // =========================
+    // 色を削除
+    // =========================
+
+    function removeColor(index) {
+
+        if (currentPalette.length <= 2) {
+            alert("2色以上は必要です！");
+            return;
+        }
+
+        // 操作前を履歴に保存
+        saveHistory();
+
+        const removedColor =
+            currentPalette.splice(index, 1)[0];
+
+        const data = imgData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+
+            const pixelColor = [
+                data[i],
+                data[i + 1],
+                data[i + 2]
+            ];
+
+            if (
+                colorDistance(
+                    pixelColor,
+                    removedColor
+                ) < 10
+            ) {
+
+                const closest = findClosestColor(
+                    pixelColor,
+                    currentPalette
+                );
+
+                data[i] = closest[0];
+                data[i + 1] = closest[1];
+                data[i + 2] = closest[2];
+            }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        updateColorList();
+    }
+
+
+    // =========================
+    // 色を変更
+    // =========================
+
+    function changeColor(index, hexColor) {
+
+        if (!imgData) return;
+
+        const oldColor = [
+            ...currentPalette[index]
+        ];
+
+        const newColor =
+            hexToRgb(hexColor);
+
+        if (!newColor) return;
+
+        if (
+            oldColor[0] === newColor[0] &&
+            oldColor[1] === newColor[1] &&
+            oldColor[2] === newColor[2]
+        ) {
+            return;
+        }
+
+        // 操作前を保存
+        saveHistory();
+
+        const data = imgData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+
+            if (
+                data[i] === oldColor[0] &&
+                data[i + 1] === oldColor[1] &&
+                data[i + 2] === oldColor[2]
+            ) {
+                data[i] = newColor[0];
+                data[i + 1] = newColor[1];
+                data[i + 2] = newColor[2];
+            }
+        }
+
+        currentPalette[index] = newColor;
+
+        ctx.putImageData(imgData, 0, 0);
+        updateColorList();
+    }
+
+
+    function hexToRgb(hex) {
+        const value = hex.replace('#', '');
+
+        if (value.length !== 6) {
+            return null;
+        }
+
+        return [
+            parseInt(value.substring(0, 2), 16),
+            parseInt(value.substring(2, 4), 16),
+            parseInt(value.substring(4, 6), 16)
+        ];
+    }
+
+
+    function rgbToHex(color) {
+
+        return '#' + color
+            .map(value =>
+                value
+                    .toString(16)
+                    .padStart(2, '0')
+            )
+            .join('');
+    }
+
+
+    // =========================
+    // 色一覧
+    // =========================
+
+    function updateColorList() {
+
+        const colorList =
+            document.getElementById('colorList');
+
+        colorList.innerHTML = '';
+
+        document.getElementById(
+            'colorCountDisplay'
+        ).innerText =
+            `使用されている色の数: ${currentPalette.length}`;
+
+
+        currentPalette.forEach(
+            (color, index) => {
+
+                const item =
+                    document.createElement('div');
+
+                item.className = 'color-item';
+
+
+                // 色ボックス
+                const colorBox =
+                    document.createElement('div');
+
+                colorBox.className = 'color-box';
+
+                colorBox.style.backgroundColor =
+                    `rgb(${color[0]},${color[1]},${color[2]})`;
+
+
+                // 削除ボタン
+                const removeButton =
+                    document.createElement('button');
+
+                removeButton.className =
+                    'remove-btn';
+
+                removeButton.textContent = '×';
+
+                removeButton.addEventListener(
+                    'click',
+                    () => removeColor(index)
+                );
+
+                colorBox.appendChild(
+                    removeButton
+                );
+
+
+                // カラーピッカー
+                const colorPicker =
+                    document.createElement('input');
+
+                colorPicker.type = 'color';
+
+                colorPicker.value =
+                    rgbToHex(color);
+
+                colorPicker.title =
+                    '色を変更';
+
+                colorPicker.addEventListener(
+                    'change',
+                    event => {
+                        changeColor(
+                            index,
+                            event.target.value
+                        );
+                    }
+                );
+
+
+                // HEX表示
+                const colorCode =
+                    document.createElement('span');
+
+                colorCode.textContent =
+                    rgbToHex(color);
+
+
+                // 色ごとの保存ボタン
+                const downloadButton =
+                    document.createElement('button');
+
+                downloadButton.textContent =
+                    'この色を保存';
+
+                downloadButton.addEventListener(
+                    'click',
+                    () => downloadColorLayer(index)
+                );
+
+
+                item.appendChild(colorBox);
+                item.appendChild(colorPicker);
+                item.appendChild(colorCode);
+                item.appendChild(downloadButton);
+
+                colorList.appendChild(item);
+            }
+        );
+    }
+
+
+    // =========================
+    // 色ごとのPNG保存
+    // =========================
+
+    function downloadColorLayer(index) {
+
+        if (!imgData) return;
+
+        const targetColor =
+            currentPalette[index];
+
+        const exportCanvas =
+            document.createElement('canvas');
+
+        exportCanvas.width =
+            canvas.width;
+
+        exportCanvas.height =
+            canvas.height;
+
+        const exportCtx =
+            exportCanvas.getContext('2d');
+
+        const exportImageData =
+            exportCtx.createImageData(
+                canvas.width,
+                canvas.height
+            );
+
+        const source =
+            imgData.data;
+
+        const output =
+            exportImageData.data;
+
+
+        for (
+            let i = 0;
+            i < source.length;
+            i += 4
+        ) {
+
+            const isTargetColor =
+                source[i] === targetColor[0] &&
+                source[i + 1] === targetColor[1] &&
+                source[i + 2] === targetColor[2];
+
+
+            if (isTargetColor) {
+
+                // 対象色はそのまま残す
+                output[i] =
+                    targetColor[0];
+
+                output[i + 1] =
+                    targetColor[1];
+
+                output[i + 2] =
+                    targetColor[2];
+
+                output[i + 3] = 255;
+
+            } else {
+
+                // その他の色は透明
+                output[i] = 0;
+                output[i + 1] = 0;
+                output[i + 2] = 0;
+                output[i + 3] = 0;
+            }
+        }
+
+
+        exportCtx.putImageData(
+            exportImageData,
+            0,
+            0
+        );
+
+
+        const link =
+            document.createElement('a');
+
+        const hex =
+            rgbToHex(targetColor)
+                .replace('#', '');
+
+        link.download =
+            `color-${index + 1}-${hex}.png`;
+
+        link.href =
+            exportCanvas.toDataURL('image/png');
+
+        link.click();
+    }
+
+
+    // =========================
+    // プログレスバー
+    // =========================
+
+    function updateProgress(value) {
+
+        const progressBar =
+            document.getElementById(
+                'progressBar'
+            );
+
+        progressBar.style.width =
+            `${value}%`;
+
+        progressBar.innerText =
+            `${Math.round(value)}%`;
+    }
+
+
+    // =========================
+    // 全体画像保存
+    // =========================
+
+    function downloadImage() {
+
+        if (!canvas) return;
+
+        const link =
+            document.createElement('a');
+
+        link.download =
+            'reduced-image.png';
+
+        link.href =
+            canvas.toDataURL('image/png');
+
+        link.click();
+    }
+
+
+
+document.getElementById('imageInput').addEventListener('change', previewImage);
+
+function previewImage() {
+    const input = document.getElementById('imageInput');
+
+    if (!input.files.length) return;
+
+    const file = input.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+        const img = new Image();
+
+        img.onload = function() {
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+
+            // 減色前なので色一覧は空にする
+            currentPalette = [];
+            imgData = null;
+
+            const colorList = document.getElementById('colorList');
+            colorList.innerHTML = '';
+
+            const colorCountDisplay =
+                document.getElementById('colorCountDisplay');
+
+            if (colorCountDisplay) {
+                colorCountDisplay.innerText = '';
+            }
+
+            undoStack.length = 0;
+            redoStack.length = 0;
+        };
+
+        img.src = event.target.result;
+    };
+
+    reader.readAsDataURL(file);
+}
+
+
+    // =========================
+    // キーボードショートカット
+    // =========================
+
+    window.addEventListener(
+        'keydown',
+        event => {
+
+            // Ctrl + Z
+            if (
+                event.ctrlKey &&
+                !event.shiftKey &&
+                event.key.toLowerCase() === 'z'
+            ) {
+                event.preventDefault();
+                undo();
+                return;
+            }
+
+            // Ctrl + Y
+            if (
+                event.ctrlKey &&
+                event.key.toLowerCase() === 'y'
+            ) {
+                event.preventDefault();
+                redo();
+                return;
+            }
+
+            // Ctrl + Shift + Z もRedoとして使用可能
+            if (
+                event.ctrlKey &&
+                event.shiftKey &&
+                event.key.toLowerCase() === 'z'
+            ) {
+                event.preventDefault();
+                redo();
+            }
+        }
+    );
+
+</script>
+</body>
+</html>
