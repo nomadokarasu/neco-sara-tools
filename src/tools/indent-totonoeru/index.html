@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>インデント整えーる</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>インデント整えーる</h1>
+        <p>コードを貼り付けると、インデントを整えます。</p>
+    </header>
+
+    <main>
+
+        <div class="toolbar">
+            <button id="formatButton">インデントを整える</button>
+            <button id="copyButton">全文をコピー</button>
+        </div>
+
+        <div class="editor-container">
+
+            <div class="editor">
+                <h2>入力</h2>
+
+                <textarea
+                    id="inputCode"
+                    placeholder="ここにコードを貼り付けてください"
+                ></textarea>
+            </div>
+
+            <div class="editor">
+                <h2>整形後</h2>
+
+                <textarea
+                    id="outputCode"
+                    readonly
+                    placeholder="整えたコードがここに表示されます"
+                ></textarea>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script src="script.js"></script>
+
+</body>
+</html>

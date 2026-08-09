@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>手製本用 面付ツール</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+    <!-- PDF.js -->
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+    ></script>
+
+    <script
+    src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"
+></script>
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+></script>
+
+</head>
+
+<body>
+
+    <main>
+
+        <h1>手製本用 面付ツール</h1>
+
+        <p>
+            見開きPDFから、中綴じ製本用の印刷データを作成します。
+        </p>
+
+
+        <!-- ==============================
+             1. PDFアップロード
+        =============================== -->
+
+        <section class="upload-area">
+
+            <h2>1. PDFをアップロード</h2>
+
+            <p>
+                奇数ページの見開きPDFを選択してください。
+            </p>
+
+            <input
+                type="file"
+                id="pdfInput"
+                accept="application/pdf"
+            >
+
+            <div id="status"></div>
+
+        </section>
+
+
+        <!-- ==============================
+             2. プレビュー
+        =============================== -->
+
+        <section
+            id="previewSection"
+            class="hidden"
+        >
+
+            <h2>2. プレビュー</h2>
+
+            <p id="pdfInfo"></p>
+
+
+            <div
+                id="instruction"
+                class="instruction"
+            >
+                最初のページを選択してください。
+            </div>
+
+
+            <div id="spreads"></div>
+
+        </section>
+
+                <!-- ==============================
+             3. 製本方法
+        =============================== -->
+
+        <section
+            id="bindingSection"
+            class="hidden"
+        >
+
+            <h2>3. 製本方法</h2>
+
+            <div class="binding-method-box">
+
+                <p class="binding-method-label">
+                    製本方法
+                </p>
+
+                <label>
+                    <input
+                        type="radio"
+                        name="bindingMethod"
+                        value="saddle-stitch"
+                        checked
+                    >
+                    中綴じ
+                </label>
+
+            </div>
+
+            <button
+                type="button"
+                id="imposeButton"
+            >
+                面付する
+            </button>
+
+        </section>
+
+
+        <!-- ==============================
+             4. 製本後プレビュー
+        =============================== -->
+
+        <section
+            id="bookViewerSection"
+            class="hidden"
+        >
+
+            <h2>4. 製本後プレビュー</h2>
+
+            <p id="viewerInfo"></p>
+
+            <div class="book-viewer">
+
+                <div
+                    id="viewerPageCounter"
+                    class="viewer-page-counter"
+                ></div>
+
+                <div
+                    id="viewerPage"
+                    class="viewer-page"
+                ></div>
+
+                <div
+                    id="viewerControls"
+                    class="viewer-controls"
+                >
+
+                    <button
+                        type="button"
+                        id="viewerLeftButton"
+                    ></button>
+
+                    <button
+                        type="button"
+                        id="viewerRightButton"
+                    ></button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+                <!-- ==============================
+     5. ダウンロード
+=============================== -->
+
+<section
+    id="printSection"
+    class="hidden"
+>
+
+    <h2>5. ダウンロード</h2>
+
+
+    <!-- ==============================
+         印刷用PDF
+    =============================== -->
+
+    <div class="download-block">
+
+        <h3>印刷用PDF</h3>
+
+        <p>
+            印刷方法を選択してください。
+        </p>
+
+
+        <div class="print-options">
+
+            <div class="print-option-group">
+
+                <h4>自動両面印刷用</h4>
+
+                <label class="print-option">
+
+                    <input
+                        type="radio"
+                        name="printRange"
+                        value="all"
+                        checked
+                    >
+
+                    <span>
+                        <strong>全部</strong>
+                        <small>
+                            自動両面印刷におすすめ
+                        </small>
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <div class="print-option-group">
+
+                <h4>片面ずつ印刷用</h4>
+
+                <label class="print-option">
+
+                    <input
+                        type="radio"
+                        name="printRange"
+                        value="even"
+                    >
+
+                    <span>
+                        <strong>
+                            先印刷（偶数面のみ）
+                        </strong>
+                    </span>
+
+                </label>
+
+
+                <label class="print-option">
+
+                    <input
+                        type="radio"
+                        name="printRange"
+                        value="odd"
+                    >
+
+                    <span>
+                        <strong>
+                            後印刷（奇数面のみ）
+                        </strong>
+                    </span>
+
+                </label>
+
+            </div>
+
+        </div>
+
+
+        <div class="file-name-setting">
+
+            <label
+                for="printFileName"
+                class="file-name-label"
+            >
+                ファイル名
+            </label>
+
+            <div class="file-name-input-row">
+
+                <input
+    type="text"
+    id="printFileName"
+    value="全部"
+    autocomplete="off"
+>
+
+                <span>.pdf</span>
+
+            </div>
+
+        </div>
+
+
+        <button
+            type="button"
+            id="downloadPrintPdfButton"
+        >
+            印刷用PDFをダウンロード
+        </button>
+
+        <div
+            id="printStatus"
+            class="print-status"
+        ></div>
+
+    </div>
+
+
+    <!-- ==============================
+         ページごとのデータ
+    =============================== -->
+
+    <div class="download-block">
+
+        <h3>ページごとのデータ</h3>
+
+        <p>
+            各ページを個別のファイルにして、
+            ZIPでまとめてダウンロードします。
+        </p>
+
+
+        <div class="page-format-options">
+
+            <p class="page-format-label">
+                ファイル形式
+            </p>
+
+            <label>
+                <input
+                    type="radio"
+                    name="pageFormat"
+                    value="pdf"
+                    checked
+                >
+                PDF
+            </label>
+
+            <label>
+                <input
+                    type="radio"
+                    name="pageFormat"
+                    value="png"
+                >
+                PNG
+            </label>
+
+        </div>
+
+        <div class="file-name-setting">
+
+    <label
+        for="pageZipFileName"
+        class="file-name-label"
+    >
+        ファイル名
+    </label>
+
+    <div class="file-name-input-row">
+
+        <input
+            type="text"
+            id="pageZipFileName"
+            value="pages"
+            autocomplete="off"
+        >
+
+        <span>.zip</span>
+
+    </div>
+
+</div>
+
+
+        <button
+            type="button"
+            id="downloadPagesZipButton"
+        >
+            ページごとのデータをZIPでダウンロード
+        </button>
+
+        <div
+            id="pageZipStatus"
+            class="print-status"
+        ></div>
+
+    </div>
+
+</section>
+
+    </main>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
