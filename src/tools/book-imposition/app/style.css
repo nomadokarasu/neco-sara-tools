@@ -664,6 +664,8 @@ section {
 
     justify-content: center;
     align-items: center;
+
+    border: 1px solid #aaa;
 }
 
 
@@ -683,23 +685,21 @@ section {
     height: auto;
 }
 
-
-
-
-
 /* --------------------------
-   表紙・裏表紙
+表紙・裏表紙
 -------------------------- */
 
 .viewer-spread.single-page {
-    display: flex;
+    width: 100%;
+
+    border: none;
 
     justify-content: center;
-    align-items: center;
 }
-
 
 .viewer-spread.single-page
 .viewer-book-page {
     width: 50%;
+
+    border: 1px solid #aaa;
 }

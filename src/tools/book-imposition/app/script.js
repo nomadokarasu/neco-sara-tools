@@ -236,11 +236,26 @@ async function handlePDF(event) {
 
 
         const pdf =
-            await pdfjsLib
-                .getDocument({
-                    data: arrayBuffer
-                })
-                .promise;
+    await pdfjsLib
+        .getDocument({
+            data: arrayBuffer,
+
+            cMapUrl:
+    new URL(
+        "./cmaps/",
+        window.location.href
+    ).href,
+
+            cMapPacked:
+                true,
+
+            standardFontDataUrl:
+    new URL(
+        "./standard_fonts/",
+        window.location.href
+    ).href
+        })
+        .promise;
 
 
         const originalPageCount =

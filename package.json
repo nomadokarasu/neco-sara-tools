@@ -2,13 +2,15 @@
   "name": "neco-sara-tools",
   "version": "1.0.0",
   "private": true,
- "scripts": {
-  "build": "node scripts/build.js",
-  "preview": "serve dist",
-  "deploy": "node scripts/deploy.js"
-},
-
+  "scripts": {
+    "build": "node scripts/build.js",
+    "preview": "serve dist",
+    "deploy": "node scripts/deploy.js"
+  },
   "devDependencies": {
     "serve": "^14.2.6"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^3.11.174"
   }
 }
