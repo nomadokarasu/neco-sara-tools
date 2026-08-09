@@ -259,31 +259,6 @@ section {
     outline: none;
 }
 
-/* --------------------------
-   個別PDFダウンロード
--------------------------- */
-
-.page-download-button {
-    position: absolute;
-
-    right: 8px;
-    bottom: 8px;
-
-    padding: 6px 10px;
-
-    border: 1px solid #555;
-    border-radius: 4px;
-
-    background: white;
-    color: #222;
-
-    font-size: 12px;
-    font-weight: bold;
-
-    cursor: pointer;
-
-    z-index: 10;
-}
 
 
 .page-download-button:hover {
@@ -367,9 +342,6 @@ section {
 
     overflow: hidden;
 
-    background: #eee;
-
-    border: 1px solid #aaa;
 
     touch-action: pan-y;
 }
@@ -679,4 +651,55 @@ section {
     margin-right: 25px;
 
     cursor: pointer;
+}
+
+/* --------------------------
+   製本後・見開きプレビュー
+-------------------------- */
+
+.viewer-spread {
+    display: flex;
+
+    width: 100%;
+
+    justify-content: center;
+    align-items: center;
+}
+
+
+.viewer-book-page {
+    width: 50%;
+
+    box-sizing: border-box;
+
+    background: white;
+}
+
+
+.viewer-book-page canvas {
+    display: block;
+
+    width: 100%;
+    height: auto;
+}
+
+
+
+
+
+/* --------------------------
+   表紙・裏表紙
+-------------------------- */
+
+.viewer-spread.single-page {
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+}
+
+
+.viewer-spread.single-page
+.viewer-book-page {
+    width: 50%;
 }

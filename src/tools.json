@@ -118,7 +118,7 @@
 "privacy": ""
 },
 {
-"name": "手製本用 面付ツール",
+"name": "めんづけーる｜手製本用 面付ツール",
 "slug": "book-imposition",
 "description": "PDFを読み込み、中綴じ製本用の面付データを作成できるWebツールです。印刷用PDFやページごとのPDF・PNGを書き出せます。",
 "version": "1.0.0",

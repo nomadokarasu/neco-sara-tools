@@ -165,7 +165,9 @@ let currentBindingMethod =
 // 製本後プレビュー
 let viewerPages = [];
 
-let currentViewerPageIndex = 0;
+let viewerSpreads = [];
+
+let currentViewerSpreadIndex = 0;
 
 // 中綴じ面付結果
 let currentImposition = [];
@@ -479,6 +481,14 @@ async function createSpreadPreview(
 
     spreadItem.className =
         "spread-item";
+
+        // PDF 2ページ目以降は
+// 内部では作成するが画面には表示しない
+if (originalPageNumber !== 1) {
+
+    spreadItem.style.display =
+        "none";
+}
 
 
     // ------------------------------------
@@ -913,6 +923,11 @@ function selectFirstPage(
         bindingSection.classList.remove(
     "hidden"
 );
+
+bindingSection.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+});
 }
 
 
@@ -957,51 +972,7 @@ function setBookPage(
     );
 
 
-    // ========================================
-    // 個別PDFダウンロードボタン
-    // ========================================
-
-    const downloadButton =
-        document.createElement(
-            "button"
-        );
-
-
-    downloadButton.type =
-        "button";
-
-
-    downloadButton.className =
-        "page-download-button";
-
-
-    downloadButton.textContent =
-        "PDF";
-
-
-    downloadButton.title =
-        `ページ${pageNumber}をPDFで保存`;
-
-
-    downloadButton.addEventListener(
-        "click",
-        function (event) {
-
-            event.stopPropagation();
-
-
-            downloadSinglePage(
-                half,
-                pageNumber
-            );
-
-        }
-    );
-
-
-    half.appendChild(
-        downloadButton
-    );
+    
 }
 
 
@@ -1277,6 +1248,65 @@ function createImposition() {
 
 
     createBookViewer();
+
+}
+
+
+// ========================================
+// 製本後の見開きを作成
+// ========================================
+
+function createViewerSpreads() {
+
+    const spreads = [];
+
+    const totalPages =
+        viewerPages.length;
+
+
+    // ========================================
+    // 表紙
+    // ========================================
+
+    spreads.push({
+        pages: [1]
+    });
+
+
+    // ========================================
+    // 本文
+    //
+    // 2-3
+    // 4-5
+    // 6-7
+    // ...
+    // ========================================
+
+    for (
+        let pageNumber = 2;
+        pageNumber < totalPages;
+        pageNumber += 2
+    ) {
+
+        spreads.push({
+            pages: [
+                pageNumber,
+                pageNumber + 1
+            ]
+        });
+    }
+
+
+    // ========================================
+    // 裏表紙
+    // ========================================
+
+    spreads.push({
+        pages: [totalPages]
+    });
+
+
+    return spreads;
 }
 
 
@@ -1438,7 +1468,15 @@ function createBookViewer() {
     }
 
 
-    currentViewerPageIndex =
+    // ========================================
+    // 製本後の見開きを作成
+    // ========================================
+
+    viewerSpreads =
+        createViewerSpreads();
+
+
+    currentViewerSpreadIndex =
         0;
 
 
@@ -1451,9 +1489,11 @@ function createBookViewer() {
         "hidden"
     );
 
+
     printSection.classList.remove(
-    "hidden"
-);
+        "hidden"
+    );
+
 
     renderViewerPage();
 
@@ -1488,7 +1528,7 @@ function getBindingMethodName() {
 
 function renderViewerPage() {
 
-    if (viewerPages.length === 0) {
+    if (viewerSpreads.length === 0) {
         return;
     }
 
@@ -1497,65 +1537,169 @@ function renderViewerPage() {
         "";
 
 
-    const sourceHalf =
-        viewerPages[
-            currentViewerPageIndex
+    const spread =
+        viewerSpreads[
+            currentViewerSpreadIndex
         ];
 
 
-    const sourceCanvas =
-        sourceHalf.querySelector(
-            "canvas"
-        );
-
-
-    const canvas =
+    const spreadContainer =
         document.createElement(
-            "canvas"
+            "div"
         );
 
 
-    canvas.width =
-        sourceCanvas.width;
+    spreadContainer.className =
+        "viewer-spread";
 
 
-    canvas.height =
-        sourceCanvas.height;
+    // ========================================
+    // 表紙・裏表紙
+    // ========================================
+
+    if (spread.pages.length === 1) {
+
+        const pageNumber =
+            spread.pages[0];
 
 
-    const context =
-        canvas.getContext(
-            "2d"
+        const pageElement =
+            createViewerPageCanvas(
+                pageNumber
+            );
+
+
+        spreadContainer.classList.add(
+            "single-page"
         );
 
 
-    context.drawImage(
-        sourceCanvas,
-        0,
-        0
-    );
+        // 右綴じ
+        if (
+            currentBindingDirection ===
+            "右綴じ"
+        ) {
+
+            if (pageNumber === 1) {
+
+                spreadContainer.classList.add(
+                    "single-right"
+                );
+
+            } else {
+
+                spreadContainer.classList.add(
+                    "single-left"
+                );
+            }
+
+        }
+
+        // 左綴じ
+        else {
+
+            if (pageNumber === 1) {
+
+                spreadContainer.classList.add(
+                    "single-left"
+                );
+
+            } else {
+
+                spreadContainer.classList.add(
+                    "single-right"
+                );
+            }
+        }
+
+
+        spreadContainer.appendChild(
+            pageElement
+        );
+
+
+        viewerPageCounter.textContent =
+            `${pageNumber} / ${viewerPages.length}`;
+    }
+
+
+    // ========================================
+    // 見開き
+    // ========================================
+
+    else {
+
+        const firstPageNumber =
+            spread.pages[0];
+
+
+        const secondPageNumber =
+            spread.pages[1];
+
+
+        let leftPageNumber;
+        let rightPageNumber;
+
+
+        // 右綴じ
+        //
+        // 3 | 2
+        // 5 | 4
+        // ========================================
+
+        if (
+            currentBindingDirection ===
+            "右綴じ"
+        ) {
+
+            leftPageNumber =
+                secondPageNumber;
+
+            rightPageNumber =
+                firstPageNumber;
+
+        }
+
+
+        // 左綴じ
+        //
+        // 2 | 3
+        // 4 | 5
+        // ========================================
+
+        else {
+
+            leftPageNumber =
+                firstPageNumber;
+
+            rightPageNumber =
+                secondPageNumber;
+        }
+
+
+        spreadContainer.appendChild(
+            createViewerPageCanvas(
+                leftPageNumber
+            )
+        );
+
+
+        spreadContainer.appendChild(
+            createViewerPageCanvas(
+                rightPageNumber
+            )
+        );
+
+
+        viewerPageCounter.textContent =
+            `${firstPageNumber}–${secondPageNumber} / ${viewerPages.length}`;
+    }
 
 
     viewerPage.appendChild(
-        canvas
+        spreadContainer
     );
 
-
-    // ========================================
-    // ページ番号
-    // ========================================
-
-    const pageNumber =
-        currentViewerPageIndex + 1;
-
-
-    viewerPageCounter.textContent =
-        `${pageNumber} / ${viewerPages.length}`;
-
-
-    // ========================================
-    // ボタン配置
-    // ========================================
 
     updateViewerButtons();
 }
@@ -1568,12 +1712,12 @@ function renderViewerPage() {
 function updateViewerButtons() {
 
     const isFirst =
-        currentViewerPageIndex === 0;
+    currentViewerSpreadIndex === 0;
 
 
-    const isLast =
-        currentViewerPageIndex ===
-        viewerPages.length - 1;
+const isLast =
+    currentViewerSpreadIndex ===
+    viewerSpreads.length - 1;
 
 
     // ========================================
@@ -1686,18 +1830,79 @@ viewerRightButton.addEventListener(
 function goToNextViewerPage() {
 
     if (
-        currentViewerPageIndex >=
-        viewerPages.length - 1
+        currentViewerSpreadIndex >=
+        viewerSpreads.length - 1
     ) {
 
         return;
     }
 
 
-    currentViewerPageIndex++;
+    currentViewerSpreadIndex++;
 
 
     renderViewerPage();
+}
+
+function createViewerPageCanvas(
+    pageNumber
+) {
+
+    const sourceHalf =
+        viewerPages[
+            pageNumber - 1
+        ];
+
+
+    const sourceCanvas =
+        sourceHalf.querySelector(
+            "canvas"
+        );
+
+
+    const wrapper =
+        document.createElement(
+            "div"
+        );
+
+
+    wrapper.className =
+        "viewer-book-page";
+
+
+    const canvas =
+        document.createElement(
+            "canvas"
+        );
+
+
+    canvas.width =
+        sourceCanvas.width;
+
+
+    canvas.height =
+        sourceCanvas.height;
+
+
+    const context =
+        canvas.getContext(
+            "2d"
+        );
+
+
+    context.drawImage(
+        sourceCanvas,
+        0,
+        0
+    );
+
+
+    wrapper.appendChild(
+        canvas
+    );
+
+
+    return wrapper;
 }
 
 
@@ -1708,14 +1913,14 @@ function goToNextViewerPage() {
 function goToPreviousViewerPage() {
 
     if (
-        currentViewerPageIndex <= 0
+        currentViewerSpreadIndex <= 0
     ) {
 
         return;
     }
 
 
-    currentViewerPageIndex--;
+    currentViewerSpreadIndex--;
 
 
     renderViewerPage();
@@ -3096,8 +3301,12 @@ function resetTool() {
         [];
 
 
-    currentViewerPageIndex =
-        0;
+    viewerSpreads =
+    [];
+
+
+currentViewerSpreadIndex =
+    0;
 
 
     currentImposition =
