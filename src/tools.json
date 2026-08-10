@@ -8,7 +8,7 @@
     "status": "公開中",
     "publishedAt": "2026-08-07",
     "updatedAt": "2026-08-07",
-    "icon": "",
+    "image": "",
     "useUrl": "./tools/code-combiner/app/",
 "detailUrl": "https://neco-sara.com/code-combiner/",
     "privacy": "選択したファイルはブラウザ内で処理され、サーバーには送信されません。"
@@ -22,7 +22,7 @@
     "status": "公開中",
     "publishedAt": "2026-08-07",
     "updatedAt": "2026-08-07",
-    "icon": "",
+    "image": "",
     "useUrl": "https://tools.neco-sara.com/",
     "detailUrl": "",
     "privacy": ""
@@ -37,7 +37,7 @@
   "status": "公開中",
   "publishedAt": "2026-07-24",
   "updatedAt": "2026-07-24",
-  "icon": "",
+  "image": "",
   "useUrl": "https://hand.neco-sara.com/",
   "detailUrl": "",
   "privacy": ""
@@ -52,7 +52,7 @@
   "status": "公開中",
   "publishedAt": "2026-07-07",
   "updatedAt": "2026-08-01",
-  "icon": "",
+  "image": "",
   "useUrl": "https://viewer.neco-sara.com/",
   "detailUrl": "",
   "privacy": ""
@@ -67,7 +67,7 @@
   "status": "公開中",
   "publishedAt": "2025-03-08",
   "updatedAt": "2025-03-08",
-  "icon": "",
+  "image": "",
   "useUrl": "./tools/animation-stopwatch/app/",
   "detailUrl": "",
   "privacy": ""
@@ -82,7 +82,7 @@
   "status": "公開中",
   "publishedAt": "2025-03-12",
   "updatedAt": "2026-08-08",
-  "icon": "",
+  "image": "",
   "useUrl": "./tools/silkscreen-color-reducer/app/",
   "detailUrl": "",
   "privacy": ""
@@ -97,7 +97,7 @@
   "status": "公開中",
   "publishedAt": "2026-01-26",
   "updatedAt": "2026-01-26",
-  "icon": "",
+  "image": "",
   "useUrl": "./tools/smartphone-preview/",
   "detailUrl": "",
   "privacy": ""
@@ -112,7 +112,7 @@
 "status": "公開中",
 "publishedAt": "2026-06-27",
 "updatedAt": "2026-06-27",
-"icon": "",
+"image": "",
 "useUrl": "./tools/webp-converter/",
 "detailUrl": "",
 "privacy": ""
@@ -126,7 +126,7 @@
 "status": "公開中",
 "publishedAt": "2026-08-09",
 "updatedAt": "2026-08-09",
-"icon": "",
+"image": "./assets/images/book-imposition.webp",
 "useUrl": "./tools/book-imposition/app/",
 "detailUrl": "",
 "privacy": "PDFはブラウザ内で処理され、サーバーには送信されません。"

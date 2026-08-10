@@ -56,7 +56,18 @@ const detailButton = tool.detailUrl
   : "";
 
       article.innerHTML = `
-        <div class="tool-card__meta">
+
+    ${tool.image ? `
+      <div class="tool-card__image">
+        <img
+          src="${escapeAttribute(tool.image)}"
+          alt="${escapeAttribute(tool.name)}"
+          loading="lazy"
+        >
+      </div>
+    ` : ""}
+
+    <div class="tool-card__meta">
           <span class="tool-card__category">${escapeHtml(tool.category)}</span>
           <span class="tool-card__version">v${escapeHtml(tool.version)}</span>
         </div>
