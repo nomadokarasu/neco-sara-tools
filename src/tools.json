@@ -8,7 +8,7 @@
     "status": "公開中",
     "publishedAt": "2026-08-07",
     "updatedAt": "2026-08-07",
-    "image": "",
+    "image": "./assets/images/code-combiner.webp",
     "useUrl": "./tools/code-combiner/app/",
 "detailUrl": "https://neco-sara.com/code-combiner/",
     "privacy": "選択したファイルはブラウザ内で処理され、サーバーには送信されません。"
@@ -37,14 +37,14 @@
   "status": "公開中",
   "publishedAt": "2026-07-24",
   "updatedAt": "2026-07-24",
-  "image": "",
+  "image": "./assets/images/tegakakeru.webp",
   "useUrl": "https://hand.neco-sara.com/",
   "detailUrl": "",
   "privacy": ""
 },
 
 {
-  "name": "JUNOTA作品倉庫",
+  "name": "JUNOTA漫画棚",
   "slug": "junota-viewer",
   "description": "JUNOTAの漫画・絵・アニメーションなどの作品をオンラインで閲覧できるWebサイトです。",
   "version": "1.0.0",
@@ -52,7 +52,7 @@
   "status": "公開中",
   "publishedAt": "2026-07-07",
   "updatedAt": "2026-08-01",
-  "image": "",
+  "image": "./assets/images/junota-viewer.webp",
   "useUrl": "https://viewer.neco-sara.com/",
   "detailUrl": "",
   "privacy": ""
