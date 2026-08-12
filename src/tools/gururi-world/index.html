@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>360° Viewer</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main id="game">
+
+ <section id="start-screen">
+
+  <img
+    id="start-background"
+    src="./assets/ui/top.png"
+    alt=""
+  >
+
+  <div class="start-content">
+
+    <header class="start-header">
+
+      <h1 class="site-logo">
+        ぐるりの世界
+      </h1>
+
+      <a
+        href="./about.html"
+        class="about-link"
+      >
+        このサイトについて
+      </a>
+
+    </header>
+
+
+    <div class="world-list">
+
+      <button
+        class="world-card"
+        type="button"
+        data-world="world01"
+        aria-label="世界1を開く"
+      >
+        <img
+          src="./assets/worlds/world01/thumbnail.png"
+          alt=""
+        >
+      </button>
+
+
+      <button
+        class="world-card"
+        type="button"
+        data-world="world02"
+        aria-label="世界2を開く"
+      >
+        <img
+          src="./assets/worlds/world02/thumbnail.png"
+          alt=""
+        >
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
+
+    <div id="panorama-container"></div>
+
+    <button
+  id="top-back-button"
+  type="button"
+>
+  <span aria-hidden="true">◀</span>
+  <span>トップに戻る</span>
+</button>
+
+
+    <div id="camera-ui">
+      <div id="zoom-control">
+        <span class="zoom-label">−</span>
+        <input id="zoom-slider" type="range" min="0" max="100" value="50" aria-label="ズーム">
+        <span class="zoom-label">＋</span>
+      </div>
+
+      <div id="photo-count">0 / 24</div>
+
+      <button id="shutter-button" type="button" aria-label="撮影">
+        <span></span>
+      </button>
+    </div>
+
+    <button id="album-button" type="button">アルバム</button>
+
+    <div id="shutter-effect"></div>
+
+    <div id="photo-limit-dialog" class="hidden">
+      <div class="limit-dialog-box">
+        <p class="limit-dialog-message">これ以上、写真がとれないや・・・</p>
+
+        <div class="limit-dialog-actions">
+          <button id="limit-album-button" type="button">アルバムを開く</button>
+          <button id="finish-button" type="button">撮影を終了する</button>
+        </div>
+
+        <p class="limit-dialog-note">※写真を削除すれば、撮影を続けられます</p>
+      </div>
+    </div>
+
+    <section id="album-panel" class="hidden" aria-label="アルバム">
+      <div class="album-container">
+        <div class="album-header">
+          <button id="album-back-button" type="button">
+            <span aria-hidden="true">◀</span>
+            <span>撮影に戻る</span>
+          </button>
+
+          <span id="album-count">0 / 24</span>
+        </div>
+
+        <div id="album-grid"></div>
+      </div>
+    </section>
+
+    <div id="photo-popup" class="hidden">
+      <button id="popup-back-button" type="button">
+        <span aria-hidden="true">◀</span>
+        <span>アルバムに戻る</span>
+      </button>
+
+      <img id="popup-image" src="" alt="拡大した写真">
+
+      <button id="popup-delete-button" type="button">
+        この写真を削除
+      </button>
+    </div>
+
+    <section id="end-screen" class="hidden">
+      <img id="end-background" src="./assets/ui/end.png" alt="">
+
+      <div id="slideshow-panel" class="hidden">
+        <div id="slideshow-count">1 / 24</div>
+
+        <img id="slideshow-image" src="" alt="スライドショー">
+
+        <button id="slideshow-skip-button" type="button">
+          スキップ
+        </button>
+      </div>
+
+      <div id="end-dialogue-box">
+        <p id="end-dialogue-text"></p>
+
+        <div id="end-choice-buttons" class="hidden">
+          <button id="end-yes-button" type="button">はい</button>
+          <button id="end-no-button" type="button">いいえ</button>
+        </div>
+
+        <div id="tap-to-continue">▼</div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script type="module" src="./game.js"></script>
+</body>
+</html>

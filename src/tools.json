@@ -130,5 +130,19 @@
 "useUrl": "./tools/book-imposition/app/",
 "detailUrl": "",
 "privacy": "PDFはブラウザ内で処理され、サーバーには送信されません。"
+},
+{
+  "name": "ぐるりの世界｜360°風景撮影ゲーム",
+  "slug": "gururi-world",
+  "description": "360°の風景を見回しながら、気になった景色を写真に撮って楽しむWebゲームです。撮影した写真はアルバムで見返したり、まとめてダウンロードしたりできます。",
+  "version": "1.0.0",
+  "category": "ゲーム",
+  "status": "公開中",
+  "publishedAt": "2026-08-12",
+  "updatedAt": "2026-08-12",
+  "image": "./assets/images/gururi-world.webp",
+  "useUrl": "./tools/gururi-world/",
+  "detailUrl": "",
+  "privacy": "撮影した写真はブラウザ内で処理され、サーバーには送信されません。"
 }
 ]
