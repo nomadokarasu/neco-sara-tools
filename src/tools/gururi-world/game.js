@@ -186,6 +186,9 @@ let currentMode = "camera";
 
 let longitude = 0;
 let latitude = 0;
+let targetLongitude = 0;
+let targetLatitude = 0;
+
 
 let cameraFov = 85;
 
@@ -215,6 +218,8 @@ const dragSensitivity =
 
 renderer.domElement.addEventListener(
   "pointerdown",
+
+
   (event) => {
     if (
       !isGameStarted ||
@@ -229,8 +234,11 @@ renderer.domElement.addEventListener(
     startX = event.clientX;
     startY = event.clientY;
 
-    startLongitude = longitude;
-    startLatitude = latitude;
+    startLongitude =
+  targetLongitude;
+
+startLatitude =
+  targetLatitude;
 
     renderer.domElement.setPointerCapture(
       event.pointerId
@@ -241,7 +249,9 @@ renderer.domElement.addEventListener(
 renderer.domElement.addEventListener(
   "pointermove",
   (event) => {
+
     if (!isDragging) return;
+
 
     const deltaX =
       event.clientX - startX;
@@ -249,13 +259,25 @@ renderer.domElement.addEventListener(
     const deltaY =
       event.clientY - startY;
 
-    longitude =
-  startLongitude -
-  deltaX * dragSensitivity;
 
-latitude =
-  startLatitude +
-  deltaY * dragSensitivity;
+    targetLongitude =
+      startLongitude -
+      deltaX * dragSensitivity;
+
+    targetLatitude =
+      startLatitude +
+      deltaY * dragSensitivity;
+
+
+    // 上下を向きすぎないように制限
+    targetLatitude =
+      Math.max(
+        -85,
+        Math.min(
+          85,
+          targetLatitude
+        )
+      );
   }
 );
 
@@ -314,6 +336,12 @@ topBackButton.addEventListener(
     updatePhotoCount();
 
     renderAlbum();
+    
+    longitude = 0;
+latitude = 0;
+
+targetLongitude = 0;
+targetLatitude = 0;
 
 
     // 撮影画面を終了
@@ -1229,7 +1257,10 @@ function returnToStartScreen() {
   selectedPhotoIndex = 0;
 
   longitude = 0;
-  latitude = 0;
+latitude = 0;
+
+targetLongitude = 0;
+targetLatitude = 0;
 
   zoomSlider.value = 50;
 
@@ -1351,6 +1382,20 @@ function animate() {
     animate
   );
 
+// スワイプで指定された位置へ
+// 滑らかにカメラを近づける
+longitude +=
+  (
+    targetLongitude -
+    longitude
+  ) * 0.18;
+
+latitude +=
+  (
+    targetLatitude -
+    latitude
+  ) * 0.18;
+
   const lookSpeed =
     1.2;
 
@@ -1359,29 +1404,42 @@ function animate() {
     !isEndScreenOpen &&
     currentMode === "camera"
   ) {
-    if (
-      keys["ArrowLeft"]
-    ) {
-      longitude -= lookSpeed;
-    }
+   if (
+  keys["ArrowLeft"]
+) {
+  targetLongitude -=
+    lookSpeed;
+}
 
-    if (
-      keys["ArrowRight"]
-    ) {
-      longitude += lookSpeed;
-    }
+if (
+  keys["ArrowRight"]
+) {
+  targetLongitude +=
+    lookSpeed;
+}
 
-    if (
-      keys["ArrowUp"]
-    ) {
-      latitude += lookSpeed;
-    }
+if (
+  keys["ArrowUp"]
+) {
+  targetLatitude +=
+    lookSpeed;
+}
 
-    if (
-      keys["ArrowDown"]
-    ) {
-      latitude -= lookSpeed;
-    }
+if (
+  keys["ArrowDown"]
+) {
+  targetLatitude -=
+    lookSpeed;
+}
+
+targetLatitude =
+  Math.max(
+    -85,
+    Math.min(
+      85,
+      targetLatitude
+    )
+  );
   }
 
   latitude =

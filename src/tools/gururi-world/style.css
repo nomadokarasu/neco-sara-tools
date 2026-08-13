@@ -141,8 +141,14 @@ button {
 
 #panorama-container canvas {
   display: block;
+
   width: 100% !important;
   height: 100% !important;
+
+  touch-action: none;
+
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* 撮影UI */
