@@ -206,6 +206,19 @@ let isDragging = false;
 let startX = 0;
 let startY = 0;
 
+// ----------------------------------------
+// ピンチズーム用
+// ----------------------------------------
+
+const activePointers =
+  new Map();
+
+let pinchStartDistance =
+  null;
+
+let pinchStartZoom =
+  null;
+
 let startLongitude = 0;
 let startLatitude = 0;
 
@@ -217,32 +230,111 @@ const dragSensitivity =
     : 0.1;
 
 renderer.domElement.addEventListener(
-  "pointerdown",
-
-
+  "pointermove",
   (event) => {
+
     if (
-      !isGameStarted ||
-      isEndScreenOpen ||
-      currentMode === "album"
+      !activePointers.has(
+        event.pointerId
+      )
     ) {
       return;
     }
 
-    isDragging = true;
 
-    startX = event.clientX;
-    startY = event.clientY;
-
-    startLongitude =
-  targetLongitude;
-
-startLatitude =
-  targetLatitude;
-
-    renderer.domElement.setPointerCapture(
-      event.pointerId
+    activePointers.set(
+      event.pointerId,
+      {
+        x: event.clientX,
+        y: event.clientY
+      }
     );
+
+
+    // ------------------------------------
+    // 2本指：ピンチズーム
+    // ------------------------------------
+
+    if (
+      activePointers.size === 2
+    ) {
+
+      const points =
+        Array.from(
+          activePointers.values()
+        );
+
+      const currentDistance =
+        getPointerDistance(
+          points[0],
+          points[1]
+        );
+
+
+      if (
+        pinchStartDistance === null ||
+        pinchStartZoom === null
+      ) {
+        return;
+      }
+
+
+      const distanceChange =
+        currentDistance -
+        pinchStartDistance;
+
+
+      const nextZoom =
+        THREE.MathUtils.clamp(
+          pinchStartZoom +
+          distanceChange * 0.25,
+          0,
+          100
+        );
+
+
+      zoomSlider.value =
+        nextZoom;
+
+      applyZoomFromSlider();
+
+      return;
+    }
+
+
+    // ------------------------------------
+    // 1本指：視点移動
+    // ------------------------------------
+
+    if (!isDragging) {
+      return;
+    }
+
+
+    const deltaX =
+      event.clientX - startX;
+
+    const deltaY =
+      event.clientY - startY;
+
+
+    targetLongitude =
+      startLongitude -
+      deltaX * dragSensitivity;
+
+    targetLatitude =
+      startLatitude +
+      deltaY * dragSensitivity;
+
+
+    targetLatitude =
+      Math.max(
+        -85,
+        Math.min(
+          85,
+          targetLatitude
+        )
+      );
   }
 );
 
@@ -283,8 +375,79 @@ renderer.domElement.addEventListener(
 
 renderer.domElement.addEventListener(
   "pointerup",
-  () => {
-    isDragging = false;
+  (event) => {
+
+    activePointers.delete(
+      event.pointerId
+    );
+
+
+    if (
+      activePointers.size === 0
+    ) {
+
+      isDragging = false;
+
+      pinchStartDistance =
+        null;
+
+      pinchStartZoom =
+        null;
+    }
+
+
+    // ピンチ終了後に指が1本残った場合
+    if (
+      activePointers.size === 1
+    ) {
+
+      const remainingPoint =
+        Array.from(
+          activePointers.values()
+        )[0];
+
+      isDragging = true;
+
+      startX =
+        remainingPoint.x;
+
+      startY =
+        remainingPoint.y;
+
+      startLongitude =
+        targetLongitude;
+
+      startLatitude =
+        targetLatitude;
+
+      pinchStartDistance =
+        null;
+
+      pinchStartZoom =
+        null;
+    }
+  }
+);
+
+renderer.domElement.addEventListener(
+  "pointercancel",
+  (event) => {
+
+    activePointers.delete(
+      event.pointerId
+    );
+
+    if (
+      activePointers.size === 0
+    ) {
+      isDragging = false;
+
+      pinchStartDistance =
+        null;
+
+      pinchStartZoom =
+        null;
+    }
   }
 );
 
@@ -649,6 +812,24 @@ popupDeleteButton.addEventListener(
 let popupSwipeStartX = 0;
 let popupSwipeStartY = 0;
 
+
+function getPointerDistance(
+  pointA,
+  pointB
+) {
+
+  const dx =
+    pointA.x - pointB.x;
+
+  const dy =
+    pointA.y - pointB.y;
+
+  return Math.hypot(
+    dx,
+    dy
+  );
+}
+
 photoPopup.addEventListener(
   "pointerdown",
   (event) => {
@@ -684,7 +865,7 @@ photoPopup.addEventListener(
 
     if (
       Math.abs(deltaX) <
-      50
+      30
     ) {
       return;
     }

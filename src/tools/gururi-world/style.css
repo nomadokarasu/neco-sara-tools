@@ -376,19 +376,33 @@ button {
 #photo-popup {
   position: absolute;
   inset: 0;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   padding: 30px 30px 110px;
+
   background: rgba(0,0,0,0.95);
+
   z-index: 50;
+
+  touch-action: none;
 }
 
 #popup-image {
   display: block;
+
   max-width: 94%;
   max-height: 76%;
+
   object-fit: contain;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+
+  touch-action: none;
 }
 
 #popup-back-button {
