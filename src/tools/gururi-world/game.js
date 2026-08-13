@@ -213,7 +213,7 @@ const dragSensitivity =
   window.matchMedia(
     "(max-width: 600px)"
   ).matches
-    ? 0.5
+    ? 1.0
     : 0.1;
 
 renderer.domElement.addEventListener(
@@ -336,7 +336,7 @@ topBackButton.addEventListener(
     updatePhotoCount();
 
     renderAlbum();
-    
+
     longitude = 0;
 latitude = 0;
 
