@@ -206,6 +206,13 @@ let startY = 0;
 let startLongitude = 0;
 let startLatitude = 0;
 
+const dragSensitivity =
+  window.matchMedia(
+    "(max-width: 600px)"
+  ).matches
+    ? 0.3
+    : 0.1;
+
 renderer.domElement.addEventListener(
   "pointerdown",
   (event) => {
@@ -243,12 +250,12 @@ renderer.domElement.addEventListener(
       event.clientY - startY;
 
     longitude =
-      startLongitude -
-      deltaX * 0.1;
+  startLongitude -
+  deltaX * dragSensitivity;
 
-    latitude =
-      startLatitude +
-      deltaY * 0.1;
+latitude =
+  startLatitude +
+  deltaY * dragSensitivity;
   }
 );
 
