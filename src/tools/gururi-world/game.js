@@ -356,7 +356,7 @@ const dragSensitivity =
   window.matchMedia(
     "(max-width: 600px)"
   ).matches
-    ? 0.4
+    ? 0.3
     : 0.1;
 
 
@@ -1809,6 +1809,16 @@ let typeTimer =
   null;
 
 
+// ZIP事前生成用
+let preparedDownloadUrl =
+  null;
+
+let preparedDownloadName =
+  null;
+
+let preparingDownloadPromise =
+  null;
+
 // ========================================
 // セリフを1文字ずつ表示
 // ========================================
@@ -1839,20 +1849,9 @@ function typeEndDialogue(
     "";
 
 
-  if (
-    hideArrow
-  ) {
-
-    tapToContinue.classList.add(
-      "hidden"
-    );
-
-  } else {
-
-    tapToContinue.classList.add(
-      "hidden"
-    );
-  }
+  tapToContinue.classList.add(
+    "hidden"
+  );
 
 
   let index =
@@ -1879,6 +1878,7 @@ function typeEndDialogue(
           clearInterval(
             typeTimer
           );
+
 
           typeTimer =
             null;
@@ -1941,30 +1941,40 @@ function hideEndChoices() {
 
 
 // ========================================
-// 少し待って選択肢を表示
+// セリフ終了後、少し待って選択肢を表示
 // ========================================
 
-function showChoicesAfterDelay(
-  delay = 650
-) {
+function waitForDialogueThenShowChoices() {
 
-  tapToContinue.classList.add(
-    "hidden"
-  );
+  const checkTimer =
+    window.setInterval(
+      () => {
+
+        if (
+          !endDialogueState.isTyping
+        ) {
+
+          clearInterval(
+            checkTimer
+          );
 
 
-  window.setTimeout(
-    () => {
+          window.setTimeout(
+            () => {
 
-      if (
-        isEndScreenOpen
-      ) {
+              if (
+                isEndScreenOpen
+              ) {
 
-        showEndChoices();
-      }
-    },
-    delay
-  );
+                showEndChoices();
+              }
+            },
+            650
+          );
+        }
+      },
+      50
+    );
 }
 
 
@@ -1989,10 +1999,13 @@ function startEndSequence() {
   isDragging =
     false;
 
+
   activePointers.clear();
+
 
   pinchStartDistance =
     null;
+
 
   pinchStartZoom =
     null;
@@ -2002,13 +2015,16 @@ function startEndSequence() {
     "hidden"
   );
 
+
   albumButton.classList.add(
     "hidden"
   );
 
+
   albumPanel.classList.add(
     "hidden"
   );
+
 
   topBackButton.classList.add(
     "hidden"
@@ -2016,6 +2032,7 @@ function startEndSequence() {
 
 
   closePopup();
+
 
   closePhotoLimitDialog();
 
@@ -2093,19 +2110,63 @@ function advanceEndDialogue() {
 
     waitForDialogueThenShowChoices();
 
+
+    return;
+  }
+
+// --------------------------------------
+// ZIPの準備が後から完了した場合
+// --------------------------------------
+
+if (
+  endDialogueState.phase ===
+  "download-ready"
+) {
+
+  const downloadStarted =
+    startPreparedDownload();
+
+
+  if (
+    !downloadStarted
+  ) {
+
+    endDialogueState.phase =
+      "download-error";
+
+
+    typeEndDialogue(
+      "ダウンロードできませんでした"
+    );
+
+
     return;
   }
 
 
+  endDialogueState.phase =
+    "download-complete";
+
+
+  typeEndDialogue(
+    "ダウンロードを開始しました"
+  );
+
+
+  return;
+}
+
   // --------------------------------------
-  // ダウンロード完了
+  // ダウンロード後
   // ↓
   // それでは、また
   // --------------------------------------
 
   if (
     endDialogueState.phase ===
-    "download-complete"
+      "download-complete" ||
+    endDialogueState.phase ===
+      "download-error"
   ) {
 
     endDialogueState.phase =
@@ -2115,6 +2176,7 @@ function advanceEndDialogue() {
     typeEndDialogue(
       "それでは、また"
     );
+
 
     return;
   }
@@ -2138,46 +2200,9 @@ function advanceEndDialogue() {
 
     finishGame();
 
+
     return;
   }
-}
-
-
-// ========================================
-// セリフ終了を待って選択肢を表示
-// ========================================
-
-function waitForDialogueThenShowChoices() {
-
-  const checkTimer =
-    window.setInterval(
-      () => {
-
-        if (
-          !endDialogueState.isTyping
-        ) {
-
-          clearInterval(
-            checkTimer
-          );
-
-
-          window.setTimeout(
-            () => {
-
-              if (
-                isEndScreenOpen
-              ) {
-
-                showEndChoices();
-              }
-            },
-            650
-          );
-        }
-      },
-      50
-    );
 }
 
 
@@ -2238,16 +2263,23 @@ endYesButton.addEventListener(
 
 
       endDialogueState.phase =
-        "download-question";
+  "download-question";
 
 
-      typeEndDialogue(
-        "写真をダウンロードしますか？",
-        true
-      );
+typeEndDialogue(
+  "写真をダウンロードしますか？",
+  true
+);
 
 
-      waitForDialogueThenShowChoices();
+// 質問を表示している間に
+// ZIPを事前生成する
+preparingDownloadPromise =
+  preparePhotoDownload();
+
+
+waitForDialogueThenShowChoices();
+
 
       return;
     }
@@ -2258,70 +2290,112 @@ endYesButton.addEventListener(
     // ------------------------------------
 
     if (
-      endDialogueState.phase ===
-      "download-question"
+  endDialogueState.phase ===
+  "download-question"
+) {
+
+  hideEndChoices();
+
+
+  tapToContinue.classList.add(
+    "hidden"
+  );
+
+
+  /*
+    通常は選択肢が表示されるまでに
+    ZIP生成が完了している。
+  */
+
+  if (
+    preparedDownloadUrl
+  ) {
+
+    const downloadStarted =
+      startPreparedDownload();
+
+
+    if (
+      !downloadStarted
     ) {
 
-      hideEndChoices();
-
-
-      tapToContinue.classList.add(
-        "hidden"
-      );
-
-
-      // 押した瞬間に表示
-      endDialogueText.textContent =
-        "ダウンロード中...";
-
-
-      endDialogueState.isTyping =
-        false;
-
-
-      // ブラウザに一度描画させる
-      await new Promise(
-        (resolve) => {
-
-          requestAnimationFrame(
-            () => {
-
-              requestAnimationFrame(
-                resolve
-              );
-            }
-          );
-        }
-      );
-
-
-      // ZIP生成
-      await downloadAllPhotos();
-
-
-      // 「完了」が早すぎないように待つ
-      await new Promise(
-        (resolve) => {
-
-          setTimeout(
-            resolve,
-            1500
-          );
-        }
-      );
-
-
       endDialogueState.phase =
-        "download-complete";
+        "download-error";
 
 
       typeEndDialogue(
-        "ダウンロードできました"
+        "ダウンロードできませんでした"
       );
 
 
       return;
     }
+
+
+    endDialogueState.phase =
+      "download-complete";
+
+
+    typeEndDialogue(
+      "ダウンロードを開始しました"
+    );
+
+
+    return;
+  }
+
+
+  /*
+    まだZIP生成中だった場合
+  */
+
+  endDialogueText.textContent =
+    "ダウンロードの準備中...";
+
+
+  if (
+    preparingDownloadPromise
+  ) {
+
+    await preparingDownloadPromise;
+  }
+
+
+  /*
+    ZIPの準備が完了した場合でも、
+    この時点ではユーザー操作から
+    時間が空いているため、
+    自動ダウンロードは行わない。
+  */
+
+  if (
+    preparedDownloadUrl
+  ) {
+
+    endDialogueState.phase =
+      "download-ready";
+
+
+    typeEndDialogue(
+      "準備ができました。もう一度タップしてください"
+    );
+
+
+    return;
+  }
+
+
+  endDialogueState.phase =
+    "download-error";
+
+
+  typeEndDialogue(
+    "ダウンロードできませんでした"
+  );
+
+
+  return;
+}
   }
 );
 
@@ -2347,16 +2421,23 @@ endNoButton.addEventListener(
     ) {
 
       endDialogueState.phase =
-        "download-question";
+  "download-question";
 
 
-      typeEndDialogue(
-        "写真をダウンロードしますか？",
-        true
-      );
+typeEndDialogue(
+  "写真をダウンロードしますか？",
+  true
+);
 
 
-      waitForDialogueThenShowChoices();
+// 質問を表示している間に
+// ZIPを事前生成する
+preparingDownloadPromise =
+  preparePhotoDownload();
+
+
+waitForDialogueThenShowChoices();
+
 
       return;
     }
@@ -2385,6 +2466,7 @@ endNoButton.addEventListener(
   }
 );
 
+
 // ========================================
 // スライドショー
 // ========================================
@@ -2392,8 +2474,10 @@ endNoButton.addEventListener(
 let slideshowResolve =
   null;
 
+
 let slideshowTimer =
   null;
+
 
 let slideshowIndex =
   0;
@@ -2408,13 +2492,13 @@ function startSlideshow() {
   return new Promise(
     (resolve) => {
 
-      // 写真がない場合
       if (
         photos.length ===
         0
       ) {
 
         resolve();
+
 
         return;
       }
@@ -2449,13 +2533,13 @@ function startSlideshow() {
               1;
 
 
-            // 最後まで見終わった
             if (
               slideshowIndex >=
               photos.length
             ) {
 
               finishSlideshow();
+
 
               return;
             }
@@ -2513,6 +2597,7 @@ function finishSlideshow() {
       slideshowTimer
     );
 
+
     slideshowTimer =
       null;
   }
@@ -2560,42 +2645,49 @@ slideshowSkipButton.addEventListener(
   }
 );
 
-
-// ========================================
-// Data URL → Blob
-// ========================================
-
-async function dataUrlToBlob(
-  dataUrl
-) {
-
-  const response =
-    await fetch(
-      dataUrl
-    );
-
-
-  return await response.blob();
-}
-
-
 // ========================================
 // 写真をZIPでダウンロード
 // ========================================
 
-async function downloadAllPhotos() {
+// ========================================
+// ZIPを事前生成
+// ========================================
+
+async function preparePhotoDownload() {
+
+  // 前回のURLが残っていたら破棄
+  if (
+    preparedDownloadUrl
+  ) {
+
+    URL.revokeObjectURL(
+      preparedDownloadUrl
+    );
+
+    preparedDownloadUrl =
+      null;
+  }
+
+
+  preparedDownloadName =
+    null;
+
 
   if (
     photos.length ===
     0
   ) {
-    return;
+
+    console.error(
+      "ダウンロードする写真がありません。"
+    );
+
+    return false;
   }
 
 
-  // JSZipが読み込まれているか確認
   if (
-    typeof JSZip ===
+    typeof window.JSZip ===
     "undefined"
   ) {
 
@@ -2603,56 +2695,155 @@ async function downloadAllPhotos() {
       "JSZipが読み込まれていません。"
     );
 
-    return;
+    return false;
   }
 
 
-  const zip =
-    new JSZip();
+  try {
+
+    const zip =
+      new window.JSZip();
 
 
-  for (
-    let index = 0;
-    index < photos.length;
-    index += 1
-  ) {
+    photos.forEach(
+      (
+        photo,
+        index
+      ) => {
 
-    const photo =
-      photos[index];
+        const base64 =
+          photo.dataUrl.split(
+            ","
+          )[1];
 
 
-    const blob =
-      await dataUrlToBlob(
-        photo.dataUrl
+        const number =
+          String(
+            index + 1
+          ).padStart(
+            2,
+            "0"
+          );
+
+
+        zip.file(
+          `photo-${number}.png`,
+          base64,
+          {
+            base64: true
+          }
+        );
+      }
+    );
+
+
+    // ZIPをここで先に生成
+    const zipBlob =
+      await zip.generateAsync({
+        type: "blob"
+      });
+
+
+    preparedDownloadUrl =
+      URL.createObjectURL(
+        zipBlob
       );
 
 
-    const number =
+    const now =
+      new Date();
+
+
+    const year =
+      now.getFullYear();
+
+
+    const month =
       String(
-        index + 1
+        now.getMonth() + 1
       ).padStart(
         2,
         "0"
       );
 
 
-    zip.file(
-      `photo-${number}.png`,
-      blob
+    const day =
+      String(
+        now.getDate()
+      ).padStart(
+        2,
+        "0"
+      );
+
+
+    const hours =
+      String(
+        now.getHours()
+      ).padStart(
+        2,
+        "0"
+      );
+
+
+    const minutes =
+      String(
+        now.getMinutes()
+      ).padStart(
+        2,
+        "0"
+      );
+
+
+    const seconds =
+      String(
+        now.getSeconds()
+      ).padStart(
+        2,
+        "0"
+      );
+
+
+    preparedDownloadName =
+      `gururi-${year}${month}${day}-${hours}${minutes}${seconds}.zip`;
+
+
+    return true;
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      "ZIPの作成に失敗しました。",
+      error
     );
+
+
+    preparedDownloadUrl =
+      null;
+
+    preparedDownloadName =
+      null;
+
+
+    return false;
   }
+}
 
 
-  const zipBlob =
-    await zip.generateAsync({
-      type: "blob"
-    });
+// ========================================
+// 生成済みZIPをダウンロード
+// ========================================
 
+function startPreparedDownload() {
 
-  const url =
-    URL.createObjectURL(
-      zipBlob
-    );
+  if (
+    !preparedDownloadUrl ||
+    !preparedDownloadName
+  ) {
+
+    return false;
+  }
 
 
   const link =
@@ -2661,66 +2852,16 @@ async function downloadAllPhotos() {
     );
 
 
-  // 日時をファイル名へ入れる
-  const now =
-    new Date();
-
-
-  const year =
-    now.getFullYear();
-
-
-  const month =
-    String(
-      now.getMonth() + 1
-    ).padStart(
-      2,
-      "0"
-    );
-
-
-  const day =
-    String(
-      now.getDate()
-    ).padStart(
-      2,
-      "0"
-    );
-
-
-  const hours =
-    String(
-      now.getHours()
-    ).padStart(
-      2,
-      "0"
-    );
-
-
-  const minutes =
-    String(
-      now.getMinutes()
-    ).padStart(
-      2,
-      "0"
-    );
-
-
-  const seconds =
-    String(
-      now.getSeconds()
-    ).padStart(
-      2,
-      "0"
-    );
-
-
   link.href =
-    url;
+    preparedDownloadUrl;
 
 
   link.download =
-    `gururi-${year}${month}${day}-${hours}${minutes}${seconds}.zip`;
+    preparedDownloadName;
+
+
+  link.style.display =
+    "none";
 
 
   document.body.appendChild(
@@ -2728,21 +2869,15 @@ async function downloadAllPhotos() {
   );
 
 
+  // 「はい」を押したイベント内で
+  // すぐにダウンロードを開始する
   link.click();
 
 
   link.remove();
 
 
-  window.setTimeout(
-    () => {
-
-      URL.revokeObjectURL(
-        url
-      );
-    },
-    1000
-  );
+  return true;
 }
 
 
@@ -2760,6 +2895,7 @@ function finishGame() {
       typeTimer
     );
 
+
     typeTimer =
       null;
   }
@@ -2772,6 +2908,7 @@ function finishGame() {
     clearInterval(
       slideshowTimer
     );
+
 
     slideshowTimer =
       null;
@@ -2834,6 +2971,7 @@ function returnToStartScreen() {
 
   updatePhotoCount();
 
+
   renderAlbum();
 
 
@@ -2841,11 +2979,14 @@ function returnToStartScreen() {
   longitude =
     0;
 
+
   latitude =
     0;
 
+
   targetLongitude =
     0;
+
 
   targetLatitude =
     0;
@@ -2855,6 +2996,7 @@ function returnToStartScreen() {
   zoomSlider.value =
     50;
 
+
   applyZoomFromSlider();
 
 
@@ -2862,10 +3004,13 @@ function returnToStartScreen() {
   isDragging =
     false;
 
+
   activePointers.clear();
+
 
   pinchStartDistance =
     null;
+
 
   pinchStartZoom =
     null;
@@ -2876,13 +3021,16 @@ function returnToStartScreen() {
     "hidden"
   );
 
+
   albumButton.classList.add(
     "hidden"
   );
 
+
   albumPanel.classList.add(
     "hidden"
   );
+
 
   topBackButton.classList.add(
     "hidden"
@@ -2890,6 +3038,7 @@ function returnToStartScreen() {
 
 
   closePopup();
+
 
   closePhotoLimitDialog();
 
@@ -2910,8 +3059,10 @@ function returnToStartScreen() {
   endDialogueState.phase =
     "intro";
 
+
   endDialogueState.isTyping =
     false;
+
 
   endDialogueState.waitingForChoice =
     false;
@@ -2919,6 +3070,26 @@ function returnToStartScreen() {
 
   endDialogueText.textContent =
     "";
+
+    
+if (
+  preparedDownloadUrl
+) {
+
+  URL.revokeObjectURL(
+    preparedDownloadUrl
+  );
+}
+
+
+preparedDownloadUrl =
+  null;
+
+preparedDownloadName =
+  null;
+
+preparingDownloadPromise =
+  null;
 }
 
 // ========================================
@@ -2927,7 +3098,6 @@ function returnToStartScreen() {
 
 function updateCameraLook() {
 
-  // 緯度を制限
   latitude =
     Math.max(
       -85,
@@ -3029,7 +3199,8 @@ function animate() {
   if (
     isGameStarted &&
     !isEndScreenOpen &&
-    currentMode === "camera"
+    currentMode ===
+      "camera"
   ) {
 
     if (
@@ -3079,11 +3250,9 @@ function animate() {
   }
 
 
-  // カメラ方向更新
   updateCameraLook();
 
 
-  // 描画
   renderer.render(
     scene,
     camera
@@ -3131,6 +3300,7 @@ resizeObserver.observe(
 
 updatePhotoCount();
 
+
 renderAlbum();
 
 
@@ -3138,45 +3308,53 @@ cameraUI.classList.add(
   "hidden"
 );
 
+
 albumButton.classList.add(
   "hidden"
 );
+
 
 albumPanel.classList.add(
   "hidden"
 );
 
+
 topBackButton.classList.add(
   "hidden"
 );
+
 
 photoLimitDialog.classList.add(
   "hidden"
 );
 
+
 photoPopup.classList.add(
   "hidden"
 );
+
 
 endScreen.classList.add(
   "hidden"
 );
 
+
 slideshowPanel.classList.add(
   "hidden"
 );
 
+
 endChoiceButtons.classList.add(
   "hidden"
 );
+
 
 tapToContinue.classList.add(
   "hidden"
 );
 
 
-// 開始時は白背景から
-// トップ画面を表示
+// 開始時はトップ画面を表示
 startScreen.classList.remove(
   "hidden"
 );
