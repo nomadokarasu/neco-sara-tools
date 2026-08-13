@@ -213,7 +213,7 @@ const dragSensitivity =
   window.matchMedia(
     "(max-width: 600px)"
   ).matches
-    ? 1.0
+    ? 0.4
     : 0.1;
 
 renderer.domElement.addEventListener(
