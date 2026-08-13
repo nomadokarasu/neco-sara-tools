@@ -2174,7 +2174,7 @@ if (
 
 
     typeEndDialogue(
-      "それでは、また"
+      "ありがとうございました"
     );
 
 
@@ -2457,7 +2457,7 @@ waitForDialogueThenShowChoices();
 
 
       typeEndDialogue(
-        "それでは、また"
+        "ありがとうございました"
       );
 
 
