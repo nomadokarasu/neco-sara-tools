@@ -330,6 +330,28 @@ let isGameStarted =
 let isEndScreenOpen =
   false;
 
+  // ========================================
+// GA4イベント送信
+// ========================================
+
+function trackGururiEvent(
+  eventName,
+  parameters = {}
+) {
+
+  if (
+    typeof window.gtag !==
+    "function"
+  ) {
+    return;
+  }
+
+  window.gtag(
+    "event",
+    eventName,
+    parameters
+  );
+}
 
 // ========================================
 // 視点操作
@@ -414,6 +436,13 @@ worldCards.forEach(
 
         const worldId =
           card.dataset.world;
+
+          trackGururiEvent(
+  "gururi_world_select",
+  {
+    world_id: worldId
+  }
+);
 
         loadWorld(
           worldId
@@ -1192,6 +1221,16 @@ function takePhoto() {
     dataUrl
   });
 
+// 最初の1枚
+if (
+  photos.length ===
+  1
+) {
+
+  trackGururiEvent(
+    "gururi_photo_first"
+  );
+}
 
   updatePhotoCount();
 
@@ -1199,12 +1238,17 @@ function takePhoto() {
 
 
   // 24枚目を撮影した場合
-  if (
-    photos.length >=
-    maxPhotos
-  ) {
+if (
+  photos.length >=
+  maxPhotos
+) {
 
-    window.setTimeout(
+  trackGururiEvent(
+    "gururi_photo_complete"
+  );
+
+
+  window.setTimeout(
       () => {
 
         openPhotoLimitDialog();
@@ -2503,6 +2547,14 @@ function startSlideshow() {
         return;
       }
 
+      trackGururiEvent(
+  "gururi_slideshow",
+  {
+    photo_count:
+      photos.length
+  }
+);
+
 
       slideshowResolve =
         resolve;
@@ -2872,6 +2924,14 @@ function startPreparedDownload() {
   // 「はい」を押したイベント内で
   // すぐにダウンロードを開始する
   link.click();
+
+  trackGururiEvent(
+  "gururi_download",
+  {
+    photo_count:
+      photos.length
+  }
+);
 
 
   link.remove();
