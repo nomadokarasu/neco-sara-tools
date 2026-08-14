@@ -33,6 +33,9 @@ const outputDirectory =
 const GA_MEASUREMENT_ID =
   "G-E5CTR47H44";
 
+const GA_ALL_MEASUREMENT_ID =
+  "G-60W5Q19X8K";
+
 
 const GA_TAG = `
   <!-- Google tag (gtag.js) -->
@@ -43,9 +46,9 @@ const GA_TAG = `
     gtag('js', new Date());
 
     gtag('config', '${GA_MEASUREMENT_ID}');
+    gtag('config', '${GA_ALL_MEASUREMENT_ID}');
   </script>
 `;
-
 
 // ========================================
 // srcフォルダ確認
@@ -174,23 +177,21 @@ function addGoogleAnalytics(
     );
 
 
-  // すでに同じGA4タグがある場合は追加しない
-  if (
-    html.includes(
-      GA_MEASUREMENT_ID
-    )
-  ) {
+ // 両方のGA4測定IDがすでにある場合は追加しない
+if (
+  html.includes(GA_MEASUREMENT_ID) &&
+  html.includes(GA_ALL_MEASUREMENT_ID)
+) {
 
-    console.log(
-      `GA4設定済み：${path.relative(
-        outputDirectory,
-        filePath
-      )}`
-    );
+  console.log(
+    `GA4設定済み：${path.relative(
+      outputDirectory,
+      filePath
+    )}`
+  );
 
-    return;
-  }
-
+  return;
+}
 
   // <head>がない場合
   if (
