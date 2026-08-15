@@ -61,12 +61,20 @@
       </button>
 
       <button
-        class="screen-tab"
-        type="button"
-        data-screen="settings"
-      >
-        設定
-      </button>
+  class="screen-tab"
+  type="button"
+  data-screen="settings"
+>
+  設定
+</button>
+
+<button
+  class="screen-tab"
+  type="button"
+  data-screen="records"
+>
+  記録編集
+</button>
     </nav>
 
 
@@ -431,6 +439,38 @@
         <!-- JavaScriptで進捗を表示します -->
       </div>
         </section>
+     </div>
+
+    <div
+      id="records-panel"
+      class="tab-panel"
+      hidden
+    >
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="section-number">
+              6
+            </p>
+
+            <div>
+              <h2>
+                記録編集
+              </h2>
+
+              <p class="section-description">
+                過去の作業記録を追加・編集・削除します。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="record-editor">
+          <p class="empty-message">
+            記録一覧を準備しています。
+          </p>
+        </div>
+      </section>
     </div>
   </main>
  

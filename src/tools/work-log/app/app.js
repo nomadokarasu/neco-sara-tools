@@ -129,6 +129,12 @@ const settingsPanel =
     "settings-panel"
   );
 
+
+const recordsPanel =
+  document.getElementById(
+    "records-panel"
+  );
+
   
 
 const timerCategoryName =
@@ -3257,7 +3263,7 @@ function createProgressStatus(
 
 
 // ========================================
-// 作業・設定タブ
+// 作業・設定・記録編集タブ
 // ========================================
 
 screenTabButtons.forEach(
@@ -3269,22 +3275,26 @@ screenTabButtons.forEach(
         const selectedScreen =
           screenTabButton.dataset.screen;
 
+        const allowedScreens = [
+          "work",
+          "settings",
+          "records"
+        ];
 
         if (
-          selectedScreen !== "work" &&
-          selectedScreen !== "settings"
+          !allowedScreens.includes(
+            selectedScreen
+          )
         ) {
           return;
         }
 
-
         appData.settings.selectedScreen =
-  selectedScreen;
+          selectedScreen;
 
+        saveDisplaySettingsLocally();
 
-saveDisplaySettingsLocally();
-
-updateScreenTabs();
+        updateScreenTabs();
       }
     );
   }
@@ -3296,10 +3306,20 @@ updateScreenTabs();
 // ========================================
 
 function updateScreenTabs() {
+  const allowedScreens = [
+    "work",
+    "settings",
+    "records"
+  ];
+
+  const requestedScreen =
+    appData.settings.selectedScreen;
+
   const selectedScreen =
-    appData.settings.selectedScreen ===
-      "settings"
-      ? "settings"
+    allowedScreens.includes(
+      requestedScreen
+    )
+      ? requestedScreen
       : "work";
 
 
@@ -3309,12 +3329,10 @@ function updateScreenTabs() {
         screenTabButton.dataset.screen ===
         selectedScreen;
 
-
       screenTabButton.classList.toggle(
         "is-active",
         isSelected
       );
-
 
       screenTabButton.setAttribute(
         "aria-selected",
@@ -3330,10 +3348,13 @@ function updateScreenTabs() {
     selectedScreen !==
     "work";
 
-
   settingsPanel.hidden =
     selectedScreen !==
     "settings";
+
+  recordsPanel.hidden =
+    selectedScreen !==
+    "records";
 }
 
 
