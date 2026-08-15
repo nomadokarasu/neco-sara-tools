@@ -372,6 +372,13 @@ function hasWorkLogContent(data) {
 // データの保存
 // ========================================
 
+let adminPassword = "";
+
+let pendingServerData = null;
+
+let serverSavePromise = null;
+
+
 function saveAppData() {
   localStorage.setItem(
     STORAGE_KEY,
@@ -380,6 +387,113 @@ function saveAppData() {
       appData
     )
   );
+
+  pendingServerData =
+    structuredClone(
+      appData
+    );
+
+  if (!serverSavePromise) {
+    serverSavePromise =
+      saveQueuedDataToServer()
+        .finally(
+          function() {
+            serverSavePromise =
+              null;
+
+            if (pendingServerData) {
+              saveAppData();
+            }
+          }
+        );
+  }
+}
+
+
+async function saveQueuedDataToServer() {
+  while (pendingServerData) {
+    const dataToSave =
+      pendingServerData;
+
+    pendingServerData =
+      null;
+
+    if (!adminPassword) {
+      const enteredPassword =
+        window.prompt(
+          "管理用パスワードを入力してください。"
+        );
+
+      if (!enteredPassword) {
+        showStatusMessage(
+          "サーバーへの保存を中止しました。ブラウザ内には保存されています。"
+        );
+
+        return;
+      }
+
+      adminPassword =
+        enteredPassword;
+    }
+
+    try {
+      const response =
+        await fetch(
+          "../api/save.php",
+
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            cache: "no-store",
+
+            body: JSON.stringify(
+              {
+                password:
+                  adminPassword,
+
+                data:
+                  dataToSave
+              }
+            )
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          adminPassword = "";
+        }
+
+        throw new Error(
+          result.error ||
+          "サーバーへの保存に失敗しました。"
+        );
+      }
+
+      showStatusMessage(
+        "ブラウザとサーバーに保存しました。"
+      );
+    } catch (error) {
+      console.error(
+        "サーバーへの保存に失敗しました。",
+        error
+      );
+
+      showStatusMessage(
+        error.message ||
+        "サーバーへの保存に失敗しました。"
+      );
+
+      return;
+    }
+  }
 }
 
 
