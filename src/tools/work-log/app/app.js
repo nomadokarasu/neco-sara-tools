@@ -183,6 +183,120 @@ const recordWeekRangeText =
     "record-week-range-text"
   );
 
+
+const recordPeriodTitle =
+  document.getElementById(
+    "record-period-title"
+  );
+
+
+const recordDateRange =
+  document.getElementById(
+    "record-date-range"
+  );
+
+
+const recordTotalTime =
+  document.getElementById(
+    "record-total-time"
+  );
+
+
+const recordCategorySummaryList =
+  document.getElementById(
+    "record-category-summary-list"
+  );
+
+
+const recordProjectList =
+  document.getElementById(
+    "record-project-list"
+  );
+
+
+const addRecordButton =
+  document.getElementById(
+    "add-record-button"
+  );
+
+
+const recordDialog =
+  document.getElementById(
+    "record-dialog"
+  );
+
+
+const recordForm =
+  document.getElementById(
+    "record-form"
+  );
+
+
+const recordDialogTitle =
+  document.getElementById(
+    "record-dialog-title"
+  );
+
+
+const recordDialogCloseButton =
+  document.getElementById(
+    "record-dialog-close-button"
+  );
+
+
+const recordCancelButton =
+  document.getElementById(
+    "record-cancel-button"
+  );
+
+
+const recordSessionIdInput =
+  document.getElementById(
+    "record-session-id"
+  );
+
+
+const recordNoteIndexInput =
+  document.getElementById(
+    "record-note-index"
+  );
+
+
+const recordEditDateInput =
+  document.getElementById(
+    "record-edit-date"
+  );
+
+
+const recordEditProjectSelect =
+  document.getElementById(
+    "record-edit-project"
+  );
+
+
+const recordEditStartTimeInput =
+  document.getElementById(
+    "record-edit-start-time"
+  );
+
+
+const recordEditEndTimeInput =
+  document.getElementById(
+    "record-edit-end-time"
+  );
+
+
+const recordEditContentInput =
+  document.getElementById(
+    "record-edit-content"
+  );
+
+
+const recordFormError =
+  document.getElementById(
+    "record-form-error"
+  );
+
   
 
 const timerCategoryName =
@@ -281,6 +395,8 @@ async function initializeApp() {
   updateWorkTimeDisplay();
 
 initializeRecordNavigation();
+
+initializeRecordForm();
 
 initializeTimer();
 }
@@ -602,6 +718,8 @@ updatePeriodButtons();
 updateWorkTimeDisplay();
 
 updateRecordDateInputDisplay();
+
+renderRecordSummary();
       }
     );
   }
@@ -3541,8 +3659,722 @@ function setRecordDateInputValues() {
     );
 
   updateRecordWeekRange();
+
+  renderRecordSummary();
 }
 
+// ========================================
+// 記録編集の集計
+// ========================================
+
+function renderRecordSummary() {
+  const periodRange =
+    getRecordPeriodRange();
+
+  const sessions =
+    appData.sessions.filter(
+      function(session) {
+        const startedAt =
+          Number(
+            session.startedAt
+          );
+
+        return (
+          startedAt >=
+            periodRange.start.getTime() &&
+          startedAt <
+            periodRange.end.getTime()
+        );
+      }
+    );
+
+  const totalSeconds =
+    sessions.reduce(
+      function(
+        total,
+        session
+      ) {
+        return (
+          total +
+          Number(
+            session.elapsedSeconds || 0
+          )
+        );
+      },
+
+      0
+    );
+
+  recordPeriodTitle.textContent =
+    createRecordPeriodTitle(
+      periodRange
+    );
+
+  recordDateRange.textContent =
+    createRecordDateRangeText(
+      periodRange
+    );
+
+recordTotalTime.textContent =
+  formatSecondsAsText(
+    totalSeconds
+  );
+
+  renderRecordCategorySummary(
+  sessions
+);
+
+renderRecordProjectReports(
+  sessions
+);
+}
+
+function renderRecordCategorySummary(
+  sessions
+) {
+  if (
+    appData.categories.length === 0
+  ) {
+    recordCategorySummaryList.innerHTML = `
+      <p class="empty-message">
+        大分類が設定されていません。
+      </p>
+    `;
+
+    return;
+  }
+
+  const selectedPeriodHours =
+    getSelectedPeriodHours();
+
+  recordCategorySummaryList.innerHTML =
+    appData.categories
+      .map(
+        function(category) {
+          const plannedSeconds =
+            Math.round(
+              selectedPeriodHours *
+              Number(
+                category.allocationPercent || 0
+              ) /
+              100 *
+              3600
+            );
+
+          const actualSeconds =
+            sessions
+              .filter(
+                function(session) {
+                  return (
+                    session.categoryId ===
+                    category.id
+                  );
+                }
+              )
+              .reduce(
+                function(
+                  total,
+                  session
+                ) {
+                  return (
+                    total +
+                    Number(
+                      session.elapsedSeconds || 0
+                    )
+                  );
+                },
+
+                0
+              );
+
+          const progressPercent =
+            calculateProgressPercent(
+              actualSeconds,
+              plannedSeconds
+            );
+
+          const progressRate =
+            calculateProgressRate(
+              actualSeconds,
+              plannedSeconds
+            );
+
+          const progressStatus =
+            createProgressStatus(
+              actualSeconds,
+              plannedSeconds
+            );
+
+          return `
+            <article class="progress-item">
+              <div class="progress-heading">
+                <span class="progress-name">
+                  ${escapeHtml(category.name)}
+
+                  <strong class="progress-percentage">
+                    ${progressRate}
+                  </strong>
+                </span>
+
+                <span class="progress-time">
+                  実績
+                  ${formatSecondsAsText(actualSeconds)}
+                  ／
+                  予定
+                  ${formatSecondsAsText(plannedSeconds)}
+                </span>
+              </div>
+
+              <div class="progress-bar">
+                <span
+                  class="progress-bar__value"
+                  style="width: ${progressPercent}%"
+                ></span>
+              </div>
+
+              <p
+                class="progress-remaining${progressStatus.isOver ? " is-over" : ""}"
+              >
+                ${progressStatus.message}
+              </p>
+            </article>
+          `;
+        }
+      )
+      .join("");
+}
+
+// ========================================
+// 記録編集のプロジェクト別記録
+// ========================================
+
+function renderRecordProjectReports(
+  sessions
+) {
+  const selectedPeriodHours =
+    getSelectedPeriodHours();
+
+  const reportItems = [];
+
+  appData.categories.forEach(
+    function(category) {
+      const projects =
+        Array.isArray(
+          category.projects
+        )
+          ? category.projects
+          : [];
+
+      projects.forEach(
+        function(project) {
+          const projectSessions =
+            sessions.filter(
+              function(session) {
+                return (
+                  session.projectId ===
+                  project.id
+                );
+              }
+            );
+
+          const totalSeconds =
+            projectSessions.reduce(
+              function(
+                total,
+                session
+              ) {
+                return (
+                  total +
+                  Number(
+                    session.elapsedSeconds || 0
+                  )
+                );
+              },
+
+              0
+            );
+
+          const plannedSeconds =
+            Math.round(
+              selectedPeriodHours *
+              Number(
+                category.allocationPercent || 0
+              ) /
+              100 *
+              Number(
+                project.allocationPercent || 0
+              ) /
+              100 *
+              3600
+            );
+
+          const progressRate =
+            calculateProgressRate(
+              totalSeconds,
+              plannedSeconds
+            );
+
+          const workDays =
+            groupRecordSessionsByDay(
+              projectSessions
+            );
+
+          reportItems.push(`
+            <details class="project-report-item">
+              <summary>
+                <span class="project-summary-main">
+                  <span class="project-category-name">
+                    ${escapeHtml(category.name)}
+                  </span>
+
+                  <span class="project-name">
+                    ${escapeHtml(project.name)}
+
+                    <strong class="progress-percentage">
+                      ${progressRate}
+                    </strong>
+                  </span>
+                </span>
+
+                <span class="project-total-information">
+                  <span class="project-total-time">
+                    ${formatSecondsAsText(totalSeconds)}
+                  </span>
+
+                  <span class="project-work-days">
+                    作業日数：
+                    ${workDays.length}日
+                  </span>
+                </span>
+              </summary>
+
+              <div class="project-detail">
+                ${createRecordWorkDayHtml(workDays)}
+              </div>
+            </details>
+          `);
+        }
+      );
+    }
+  );
+
+  if (reportItems.length === 0) {
+    recordProjectList.innerHTML = `
+      <p class="empty-message">
+        プロジェクトが設定されていません。
+      </p>
+    `;
+
+    return;
+  }
+
+  recordProjectList.innerHTML =
+    reportItems.join("");
+}
+
+
+function groupRecordSessionsByDay(
+  sessions
+) {
+  const workDayMap =
+    new Map();
+
+  sessions.forEach(
+    function(session) {
+      const sessionDate =
+        new Date(
+          Number(
+            session.startedAt
+          )
+        );
+
+      const dateKey =
+        formatRecordDateForInput(
+          sessionDate
+        );
+
+      if (!workDayMap.has(dateKey)) {
+        const date =
+          new Date(
+            sessionDate
+          );
+
+        date.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+
+        workDayMap.set(
+          dateKey,
+
+          {
+            date:
+              date,
+
+            totalSeconds:
+              0,
+
+            records:
+              []
+          }
+        );
+      }
+
+      const workDay =
+        workDayMap.get(
+          dateKey
+        );
+
+      workDay.totalSeconds +=
+        Number(
+          session.elapsedSeconds || 0
+        );
+
+      const notes =
+        Array.isArray(
+          session.notes
+        )
+          ? session.notes
+          : [];
+
+      if (notes.length === 0) {
+        workDay.records.push(
+          {
+            sessionId:
+              session.id,
+
+            noteIndex:
+              null,
+
+            text:
+              "作業内容の記録なし",
+
+            startedAt:
+              Number(
+                session.startedAt
+              ),
+
+            endedAt:
+              Number(
+                session.endedAt
+              ) ||
+              Number(
+                session.startedAt
+              )
+          }
+        );
+      } else {
+        notes.forEach(
+          function(
+            note,
+            noteIndex
+          ) {
+            workDay.records.push(
+              {
+                sessionId:
+                  session.id,
+
+                noteIndex:
+                  noteIndex,
+
+                text:
+                  note.text ||
+                  "作業内容の記録なし",
+
+                startedAt:
+                  Number(
+                    note.startedAt
+                  ) ||
+                  Number(
+                    session.startedAt
+                  ),
+
+                endedAt:
+                  Number(
+                    note.endedAt
+                  ) ||
+                  Number(
+                    note.createdAt
+                  ) ||
+                  Number(
+                    session.endedAt
+                  ) ||
+                  Number(
+                    session.startedAt
+                  )
+              }
+            );
+          }
+        );
+      }
+    }
+  );
+
+  return Array.from(
+    workDayMap.values()
+  ).sort(
+    function(a, b) {
+      return (
+        b.date -
+        a.date
+      );
+    }
+  );
+}
+
+
+function createRecordWorkDayHtml(
+  workDays
+) {
+  if (workDays.length === 0) {
+    return `
+      <p class="empty-message">
+        この期間の作業記録はありません。
+      </p>
+    `;
+  }
+
+  return workDays
+    .map(
+      function(workDay) {
+        const recordHtml =
+          workDay.records
+            .sort(
+              function(a, b) {
+                return (
+                  a.startedAt -
+                  b.startedAt
+                );
+              }
+            )
+            .map(
+              function(record) {
+                return `
+                  <li>
+                    <time
+                      class="work-time-range"
+                      datetime="${new Date(
+                        record.startedAt
+                      ).toISOString()}"
+                    >
+                      ${formatWorkTimeRange(record)}
+                    </time>
+
+                    <span class="work-content-text">
+  ${escapeHtml(record.text)}
+</span>
+
+<span class="record-item-actions">
+  <button
+    class="record-edit-button secondary-button"
+    type="button"
+    data-session-id="${escapeHtml(
+      String(
+        record.sessionId
+      )
+    )}"
+    data-note-index="${
+      record.noteIndex === null
+        ? ""
+        : record.noteIndex
+    }"
+  >
+    編集
+  </button>
+
+  <button
+    class="record-delete-button danger-button"
+    type="button"
+    data-session-id="${escapeHtml(
+      String(
+        record.sessionId
+      )
+    )}"
+    data-note-index="${
+      record.noteIndex === null
+        ? ""
+        : record.noteIndex
+    }"
+  >
+    削除
+  </button>
+</span>
+                  </li>
+                `;
+              }
+            )
+            .join("");
+
+        return `
+          <article class="work-day-item">
+            <time
+              class="work-day-date"
+              datetime="${formatRecordDateForInput(
+                workDay.date
+              )}"
+            >
+              ${formatRecordDisplayDate(
+                workDay.date
+              )}
+            </time>
+
+            <ul class="work-content-list">
+              ${recordHtml}
+            </ul>
+
+            <span class="work-day-total">
+              合計
+              ${formatSecondsAsText(
+                workDay.totalSeconds
+              )}
+            </span>
+          </article>
+        `;
+      }
+    )
+    .join("");
+}
+
+function getRecordPeriodRange() {
+  const selectedPeriod =
+    appData.settings.selectedPeriod;
+
+  let start;
+  let end;
+
+  if (selectedPeriod === "month") {
+    start =
+      new Date(
+        selectedRecordDate.getFullYear(),
+        selectedRecordDate.getMonth(),
+        1
+      );
+
+    end =
+      new Date(
+        selectedRecordDate.getFullYear(),
+        selectedRecordDate.getMonth() + 1,
+        1
+      );
+  } else if (selectedPeriod === "week") {
+    start =
+      getRecordWeekStart(
+        selectedRecordDate
+      );
+
+    end =
+      new Date(
+        start
+      );
+
+    end.setDate(
+      end.getDate() + 7
+    );
+  } else {
+    start =
+      new Date(
+        selectedRecordDate
+      );
+
+    start.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+    end =
+      new Date(
+        start
+      );
+
+    end.setDate(
+      end.getDate() + 1
+    );
+  }
+
+  return {
+    start:
+      start,
+
+    end:
+      end
+  };
+}
+
+
+function createRecordPeriodTitle(
+  periodRange
+) {
+  const selectedPeriod =
+    appData.settings.selectedPeriod;
+
+  if (selectedPeriod === "month") {
+    return (
+      selectedRecordDate.getFullYear() +
+      "年" +
+      (
+        selectedRecordDate.getMonth() + 1
+      ) +
+      "月の集計"
+    );
+  }
+
+  if (selectedPeriod === "week") {
+    const weekEnd =
+      new Date(
+        periodRange.end
+      );
+
+    weekEnd.setDate(
+      weekEnd.getDate() - 1
+    );
+
+    return (
+      formatRecordDisplayDate(
+        periodRange.start
+      ) +
+      "〜" +
+      formatRecordDisplayDate(
+        weekEnd
+      ) +
+      "の集計"
+    );
+  }
+
+  return (
+    formatRecordDisplayDate(
+      periodRange.start
+    ) +
+    "の集計"
+  );
+}
+
+
+function createRecordDateRangeText(
+  periodRange
+) {
+  const rangeEnd =
+    new Date(
+      periodRange.end
+    );
+
+  rangeEnd.setMilliseconds(
+    rangeEnd.getMilliseconds() - 1
+  );
+
+  return (
+    formatRecordDisplayDate(
+      periodRange.start
+    ) +
+    "〜" +
+    formatRecordDisplayDate(
+      rangeEnd
+    )
+  );
+}
 
 function formatRecordDateForInput(
   date
@@ -3572,6 +4404,802 @@ function formatRecordDateForInput(
     month +
     "-" +
     day
+  );
+}
+
+// ========================================
+// 作業記録の追加・編集フォーム
+// ========================================
+
+function initializeRecordForm() {
+  renderRecordProjectOptions();
+
+
+  addRecordButton.addEventListener(
+    "click",
+
+    function() {
+      openAddRecordDialog();
+    }
+  );
+
+
+  recordProjectList.addEventListener(
+  "click",
+
+  function(event) {
+    const editButton =
+      event.target.closest(
+        ".record-edit-button"
+      );
+
+    if (editButton) {
+      openEditRecordDialog(
+        editButton.dataset.sessionId,
+        editButton.dataset.noteIndex
+      );
+
+      return;
+    }
+
+    const deleteButton =
+      event.target.closest(
+        ".record-delete-button"
+      );
+
+    if (deleteButton) {
+      deleteRecord(
+        deleteButton.dataset.sessionId,
+        deleteButton.dataset.noteIndex
+      );
+    }
+  }
+);
+
+
+  recordDialogCloseButton.addEventListener(
+    "click",
+
+    closeRecordDialog
+  );
+
+
+  recordCancelButton.addEventListener(
+    "click",
+
+    closeRecordDialog
+  );
+
+
+  recordForm.addEventListener(
+  "submit",
+
+  function(event) {
+    event.preventDefault();
+
+    saveRecordForm();
+  }
+);
+}
+
+
+function renderRecordProjectOptions() {
+  const optionHtml = [];
+
+  appData.categories.forEach(
+    function(category) {
+      const projects =
+        Array.isArray(
+          category.projects
+        )
+          ? category.projects
+          : [];
+
+      projects.forEach(
+        function(project) {
+          optionHtml.push(`
+            <option value="${escapeHtml(project.id)}">
+              ${escapeHtml(category.name)}
+              ＞
+              ${escapeHtml(project.name)}
+            </option>
+          `);
+        }
+      );
+    }
+  );
+
+  recordEditProjectSelect.innerHTML = `
+    <option value="">
+      プロジェクトを選択
+    </option>
+
+    ${optionHtml.join("")}
+  `;
+}
+
+
+function openAddRecordDialog() {
+  recordForm.reset();
+
+  recordSessionIdInput.value =
+    "";
+
+  recordNoteIndexInput.value =
+    "";
+
+  recordDialogTitle.textContent =
+    "作業を追加";
+
+  recordFormError.textContent =
+    "";
+
+  recordEditDateInput.value =
+    formatRecordDateForInput(
+      selectedRecordDate
+    );
+
+  const startDate =
+    new Date();
+
+  startDate.setSeconds(
+    0,
+    0
+  );
+
+  const endDate =
+    new Date(
+      startDate
+    );
+
+  endDate.setMinutes(
+    endDate.getMinutes() + 30
+  );
+
+  recordEditStartTimeInput.value =
+    formatRecordTimeForInput(
+      startDate
+    );
+
+  recordEditEndTimeInput.value =
+    formatRecordTimeForInput(
+      endDate
+    );
+
+  renderRecordProjectOptions();
+
+  recordDialog.showModal();
+}
+
+
+function openEditRecordDialog(
+  sessionId,
+  noteIndexText
+) {
+  const session =
+    appData.sessions.find(
+      function(item) {
+        return (
+          String(item.id) ===
+          String(sessionId)
+        );
+      }
+    );
+
+  if (!session) {
+    showStatusMessage(
+      "編集する作業記録が見つかりません。"
+    );
+
+    return;
+  }
+
+  const hasNoteIndex =
+    noteIndexText !== "";
+
+  const noteIndex =
+    hasNoteIndex
+      ? Number(noteIndexText)
+      : null;
+
+  const note =
+    noteIndex !== null &&
+    Array.isArray(session.notes)
+      ? session.notes[noteIndex]
+      : null;
+
+  const startedAt =
+    Number(
+      note?.startedAt
+    ) ||
+    Number(
+      session.startedAt
+    );
+
+  const endedAt =
+    Number(
+      note?.endedAt
+    ) ||
+    Number(
+      note?.createdAt
+    ) ||
+    Number(
+      session.endedAt
+    ) ||
+    startedAt;
+
+  recordForm.reset();
+
+  recordSessionIdInput.value =
+    String(
+      session.id
+    );
+
+  recordNoteIndexInput.value =
+    noteIndex === null
+      ? ""
+      : String(
+          noteIndex
+        );
+
+  recordDialogTitle.textContent =
+    "作業を編集";
+
+  recordFormError.textContent =
+    "";
+
+  recordEditDateInput.value =
+    formatRecordDateForInput(
+      new Date(
+        startedAt
+      )
+    );
+
+  renderRecordProjectOptions();
+
+  recordEditProjectSelect.value =
+    session.projectId;
+
+  recordEditStartTimeInput.value =
+    formatRecordTimeForInput(
+      new Date(
+        startedAt
+      )
+    );
+
+  recordEditEndTimeInput.value =
+    formatRecordTimeForInput(
+      new Date(
+        endedAt
+      )
+    );
+
+  recordEditContentInput.value =
+    note?.text || "";
+
+  recordDialog.showModal();
+}
+
+function deleteRecord(
+  sessionId,
+  noteIndexText
+) {
+  const sessionIndex =
+    appData.sessions.findIndex(
+      function(session) {
+        return (
+          String(session.id) ===
+          String(sessionId)
+        );
+      }
+    );
+
+  if (sessionIndex < 0) {
+    showStatusMessage(
+      "削除する作業記録が見つかりません。"
+    );
+
+    return;
+  }
+
+  const session =
+    appData.sessions[
+      sessionIndex
+    ];
+
+  const notes =
+    Array.isArray(
+      session.notes
+    )
+      ? session.notes
+      : [];
+
+  const hasNoteIndex =
+    noteIndexText !== "";
+
+  const noteIndex =
+    hasNoteIndex
+      ? Number(noteIndexText)
+      : null;
+
+  let workContent =
+    "作業内容の記録なし";
+
+  if (
+    noteIndex !== null &&
+    notes[noteIndex]
+  ) {
+    workContent =
+      notes[noteIndex].text ||
+      workContent;
+  } else if (
+    notes.length === 1
+  ) {
+    workContent =
+      notes[0].text ||
+      workContent;
+  }
+
+  const confirmed =
+    window.confirm(
+      "次の作業記録を削除します。\n\n" +
+      workContent +
+      "\n\nこの操作を続けますか？"
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  if (
+    noteIndex !== null &&
+    notes.length > 1 &&
+    notes[noteIndex]
+  ) {
+    notes.splice(
+      noteIndex,
+      1
+    );
+
+    session.notes =
+      notes;
+
+    recalculateSessionFromNotes(
+      session
+    );
+  } else {
+    appData.sessions.splice(
+      sessionIndex,
+      1
+    );
+  }
+
+  saveAppData();
+
+  renderRecordSummary();
+
+  renderProgressList();
+
+  showStatusMessage(
+    "作業記録を削除しました。"
+  );
+}
+
+function saveRecordForm() {
+  const projectId =
+    recordEditProjectSelect.value;
+
+  const projectInformation =
+    findProjectInformation(
+      projectId
+    );
+
+  const workDate =
+    recordEditDateInput.value;
+
+  const startTime =
+    recordEditStartTimeInput.value;
+
+  const endTime =
+    recordEditEndTimeInput.value;
+
+  const workContent =
+    recordEditContentInput.value.trim();
+
+  if (!projectInformation) {
+    recordFormError.textContent =
+      "プロジェクトを選択してください。";
+
+    return;
+  }
+
+  if (
+    !workDate ||
+    !startTime ||
+    !endTime
+  ) {
+    recordFormError.textContent =
+      "作業日と時刻を入力してください。";
+
+    return;
+  }
+
+  if (!workContent) {
+    recordFormError.textContent =
+      "作業内容を入力してください。";
+
+    return;
+  }
+
+  const startedAt =
+    new Date(
+      workDate +
+      "T" +
+      startTime +
+      ":00"
+    ).getTime();
+
+  const endedAt =
+    new Date(
+      workDate +
+      "T" +
+      endTime +
+      ":00"
+    ).getTime();
+
+  if (
+    !Number.isFinite(startedAt) ||
+    !Number.isFinite(endedAt)
+  ) {
+    recordFormError.textContent =
+      "日付または時刻が正しくありません。";
+
+    return;
+  }
+
+  if (endedAt <= startedAt) {
+    recordFormError.textContent =
+      "終了時刻は開始時刻より後にしてください。";
+
+    return;
+  }
+
+  const recordData = {
+    categoryId:
+      projectInformation.category.id,
+
+    projectId:
+      projectInformation.project.id,
+
+    startedAt:
+      startedAt,
+
+    endedAt:
+      endedAt,
+
+    elapsedSeconds:
+      Math.max(
+        1,
+
+        Math.floor(
+          (
+            endedAt -
+            startedAt
+          ) /
+          1000
+        )
+      ),
+
+    text:
+      workContent
+  };
+
+  const sessionId =
+    recordSessionIdInput.value;
+
+  const noteIndexText =
+    recordNoteIndexInput.value;
+
+  if (sessionId) {
+    updateExistingRecord(
+      sessionId,
+      noteIndexText,
+      recordData
+    );
+  } else {
+    appData.sessions.push(
+      createRecordSession(
+        recordData
+      )
+    );
+  }
+
+  selectedRecordDate =
+    new Date(
+      startedAt
+    );
+
+  saveAppData();
+
+  setRecordDateInputValues();
+
+  renderProgressList();
+
+  closeRecordDialog();
+
+  showStatusMessage(
+    sessionId
+      ? "作業記録を更新しました。"
+      : "作業記録を追加しました。"
+  );
+}
+
+
+function updateExistingRecord(
+  sessionId,
+  noteIndexText,
+  recordData
+) {
+  const sessionIndex =
+    appData.sessions.findIndex(
+      function(session) {
+        return (
+          String(session.id) ===
+          String(sessionId)
+        );
+      }
+    );
+
+  if (sessionIndex < 0) {
+    recordFormError.textContent =
+      "編集する作業記録が見つかりません。";
+
+    return;
+  }
+
+  const session =
+    appData.sessions[
+      sessionIndex
+    ];
+
+  const notes =
+    Array.isArray(
+      session.notes
+    )
+      ? session.notes
+      : [];
+
+  const hasNoteIndex =
+    noteIndexText !== "";
+
+  const noteIndex =
+    hasNoteIndex
+      ? Number(noteIndexText)
+      : null;
+
+  if (
+    noteIndex !== null &&
+    notes.length > 1 &&
+    notes[noteIndex]
+  ) {
+    notes.splice(
+      noteIndex,
+      1
+    );
+
+    session.notes =
+      notes;
+
+    recalculateSessionFromNotes(
+      session
+    );
+
+    appData.sessions.push(
+      createRecordSession(
+        recordData
+      )
+    );
+
+    return;
+  }
+
+  session.categoryId =
+    recordData.categoryId;
+
+  session.projectId =
+    recordData.projectId;
+
+  session.startedAt =
+    recordData.startedAt;
+
+  session.endedAt =
+    recordData.endedAt;
+
+  session.elapsedSeconds =
+    recordData.elapsedSeconds;
+
+  session.notes = [
+    {
+      text:
+        recordData.text,
+
+      startedAt:
+        recordData.startedAt,
+
+      endedAt:
+        recordData.endedAt,
+
+      createdAt:
+        recordData.endedAt
+    }
+  ];
+}
+
+
+function createRecordSession(
+  recordData
+) {
+  return {
+    id:
+      createId(
+        "session"
+      ),
+
+    categoryId:
+      recordData.categoryId,
+
+    projectId:
+      recordData.projectId,
+
+    startedAt:
+      recordData.startedAt,
+
+    endedAt:
+      recordData.endedAt,
+
+    elapsedSeconds:
+      recordData.elapsedSeconds,
+
+    notes: [
+      {
+        text:
+          recordData.text,
+
+        startedAt:
+          recordData.startedAt,
+
+        endedAt:
+          recordData.endedAt,
+
+        createdAt:
+          recordData.endedAt
+      }
+    ]
+  };
+}
+
+
+function recalculateSessionFromNotes(
+  session
+) {
+  const notes =
+    Array.isArray(
+      session.notes
+    )
+      ? session.notes
+      : [];
+
+  if (notes.length === 0) {
+    return;
+  }
+
+  const startedTimes =
+    notes.map(
+      function(note) {
+        return Number(
+          note.startedAt
+        );
+      }
+    );
+
+  const endedTimes =
+    notes.map(
+      function(note) {
+        return (
+          Number(
+            note.endedAt
+          ) ||
+          Number(
+            note.createdAt
+          ) ||
+          Number(
+            note.startedAt
+          )
+        );
+      }
+    );
+
+  session.startedAt =
+    Math.min(
+      ...startedTimes
+    );
+
+  session.endedAt =
+    Math.max(
+      ...endedTimes
+    );
+
+  session.elapsedSeconds =
+    notes.reduce(
+      function(
+        total,
+        note
+      ) {
+        const noteStartedAt =
+          Number(
+            note.startedAt
+          );
+
+        const noteEndedAt =
+          Number(
+            note.endedAt
+          ) ||
+          Number(
+            note.createdAt
+          ) ||
+          noteStartedAt;
+
+        return (
+          total +
+          Math.max(
+            1,
+
+            Math.floor(
+              (
+                noteEndedAt -
+                noteStartedAt
+              ) /
+              1000
+            )
+          )
+        );
+      },
+
+      0
+    );
+}
+
+function closeRecordDialog() {
+  recordDialog.close();
+
+  recordFormError.textContent =
+    "";
+}
+
+
+function formatRecordTimeForInput(
+  date
+) {
+  const hours =
+    String(
+      date.getHours()
+    ).padStart(
+      2,
+      "0"
+    );
+
+  const minutes =
+    String(
+      date.getMinutes()
+    ).padStart(
+      2,
+      "0"
+    );
+
+  return (
+    hours +
+    ":" +
+    minutes
   );
 }
 

@@ -1569,3 +1569,317 @@ a:focus-visible {
 
   font-size: 0.9rem;
 }
+
+/* ========================================
+   記録編集：プロジェクト別記録
+======================================== */
+
+.project-report-list {
+  display: grid;
+  gap: 12px;
+}
+
+
+.project-report-item {
+  overflow: hidden;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background: #ffffff;
+}
+
+
+.project-report-item summary {
+  display: grid;
+
+  grid-template-columns:
+    minmax(150px, 1fr) auto;
+
+  align-items: center;
+  gap: 16px;
+
+  padding: 14px 16px;
+
+  cursor: pointer;
+}
+
+
+.project-report-item summary:hover {
+  background: #f3f3f3;
+}
+
+
+.project-category-name {
+  display: block;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.75rem;
+}
+
+
+.project-name {
+  display: block;
+
+  margin-top: 2px;
+
+  font-weight: 700;
+}
+
+
+.project-total-information {
+  display: grid;
+  gap: 1px;
+
+  text-align: right;
+}
+
+
+.project-total-time {
+  font-weight: 700;
+}
+
+
+.project-work-days {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.75rem;
+}
+
+
+.project-detail {
+  display: grid;
+  gap: 12px;
+
+  border-top:
+    1px solid var(--border-color);
+
+  padding: 14px 16px 16px;
+}
+
+
+.work-day-item {
+  display: grid;
+
+  grid-template-columns:
+    150px minmax(0, 1fr) auto;
+
+  align-items: start;
+  gap: 18px;
+
+  border-bottom:
+    1px solid var(--border-color);
+
+  padding: 10px 0;
+}
+
+
+.work-day-item:last-child {
+  border-bottom: 0;
+}
+
+
+.work-day-date,
+.work-time-range {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+}
+
+
+.work-content-list {
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+
+.work-content-list li {
+  display: grid;
+
+  grid-template-columns:
+    120px minmax(0, 1fr) auto;
+
+  align-items: start;
+  gap: 10px;
+
+  margin-bottom: 8px;
+}
+
+
+.work-time-range,
+.work-day-total {
+  white-space: nowrap;
+}
+
+
+.work-day-total {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+
+@media (max-width: 700px) {
+  .project-report-item summary {
+    grid-template-columns: 1fr;
+  }
+
+
+  .project-total-information {
+    text-align: left;
+  }
+
+
+  .work-day-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+
+  .work-content-list li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+
+/* ========================================
+   記録の追加・編集フォーム
+======================================== */
+
+.record-item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+
+.record-item-actions button {
+  padding: 6px 10px;
+
+  font-size: 0.75rem;
+}
+
+
+.record-dialog {
+  width: min(560px, calc(100% - 32px));
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 0;
+
+  background: #ffffff;
+}
+
+
+.record-dialog::backdrop {
+  background:
+    rgba(0, 0, 0, 0.35);
+}
+
+
+.record-form {
+  display: grid;
+  gap: 16px;
+
+  padding: 22px;
+}
+
+
+.record-dialog-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+
+.record-dialog-heading h2 {
+  margin: 4px 0 0;
+}
+
+
+.record-form > label,
+.record-time-inputs label {
+  display: grid;
+  gap: 6px;
+}
+
+
+.record-form input,
+.record-form select,
+.record-form textarea {
+  width: 100%;
+}
+
+
+.record-time-inputs {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+
+.record-form textarea {
+  resize: vertical;
+}
+
+
+.record-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+
+.form-error {
+  min-height: 1.4em;
+
+  margin: 0;
+
+  color:
+    var(--danger-color);
+
+  font-size: 0.85rem;
+}
+
+
+@media (max-width: 700px) {
+  .work-content-list li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+
+  .record-item-actions {
+    margin-top: 4px;
+  }
+
+
+  .record-time-inputs {
+    grid-template-columns: 1fr;
+  }
+
+
+  .record-form-actions {
+    flex-direction: column-reverse;
+  }
+
+
+  .record-form-actions button {
+    width: 100%;
+  }
+}

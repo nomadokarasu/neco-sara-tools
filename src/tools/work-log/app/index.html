@@ -609,6 +609,138 @@
     </div>
   </section>
 </div>
+
+<dialog
+  id="record-dialog"
+  class="record-dialog"
+>
+  <form
+    id="record-form"
+    class="record-form"
+    method="dialog"
+  >
+    <div class="record-dialog-heading">
+      <div>
+        <p class="section-label">
+          WORK RECORD
+        </p>
+
+        <h2 id="record-dialog-title">
+          作業を追加
+        </h2>
+      </div>
+
+      <button
+        id="record-dialog-close-button"
+        class="secondary-button"
+        type="button"
+        aria-label="閉じる"
+      >
+        ×
+      </button>
+    </div>
+
+    <input
+      id="record-session-id"
+      type="hidden"
+    >
+
+    <input
+      id="record-note-index"
+      type="hidden"
+    >
+
+    <label for="record-edit-date">
+      <span>
+        作業日
+      </span>
+
+      <input
+        id="record-edit-date"
+        type="date"
+        required
+      >
+    </label>
+
+    <label for="record-edit-project">
+      <span>
+        プロジェクト
+      </span>
+
+      <select
+        id="record-edit-project"
+        required
+      >
+        <option value="">
+          プロジェクトを選択
+        </option>
+      </select>
+    </label>
+
+    <div class="record-time-inputs">
+      <label for="record-edit-start-time">
+        <span>
+          開始時刻
+        </span>
+
+        <input
+          id="record-edit-start-time"
+          type="time"
+          required
+        >
+      </label>
+
+      <label for="record-edit-end-time">
+        <span>
+          終了時刻
+        </span>
+
+        <input
+          id="record-edit-end-time"
+          type="time"
+          required
+        >
+      </label>
+    </div>
+
+    <label for="record-edit-content">
+      <span>
+        作業内容
+      </span>
+
+      <textarea
+        id="record-edit-content"
+        rows="4"
+        required
+      ></textarea>
+    </label>
+
+    <p
+      id="record-form-error"
+      class="form-error"
+      aria-live="polite"
+    >
+    </p>
+
+    <div class="record-form-actions">
+      <button
+        id="record-cancel-button"
+        class="secondary-button"
+        type="button"
+      >
+        キャンセル
+      </button>
+
+      <button
+        class="primary-button"
+        type="submit"
+      >
+        保存
+      </button>
+    </div>
+  </form>
+</dialog>
+
   </main>
  
 
