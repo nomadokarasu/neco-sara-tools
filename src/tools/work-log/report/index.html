@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>JUNOTA 作業日報</title>
+
+  <link
+    rel="stylesheet"
+    href="./style.css"
+  >
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <p class="site-label">
+        JUNOTA WORK REPORT
+      </p>
+
+      <h1>
+        JUNOTA 作業日報
+      </h1>
+
+      <p class="site-description">
+        作品やウェブツールをつくる日々の作業記録です。
+      </p>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <!-- ========================================
+         表示期間
+    ========================================= -->
+    <div class="sticky-controls">
+      <section class="period-panel">
+        <div
+          class="period-tabs"
+          role="group"
+          aria-label="表示期間"
+        >
+          <button
+            class="period-button"
+            type="button"
+            data-period="day"
+          >
+            日
+          </button>
+
+          <button
+            class="period-button is-active"
+            type="button"
+            data-period="week"
+          >
+            週
+          </button>
+
+          <button
+            class="period-button"
+            type="button"
+            data-period="month"
+          >
+            月
+          </button>
+        </div>
+
+        <div class="date-selection">
+          <button
+            id="previous-period-button"
+            class="date-move-button"
+            type="button"
+            aria-label="前の期間"
+          >
+            ←
+          </button>
+
+          <label
+            id="date-input-label"
+            for="report-date"
+          >
+            基準日
+
+            <input
+              id="report-date"
+              type="date"
+            >
+          </label>
+
+          <label
+            id="month-input-label"
+            for="report-month"
+            hidden
+          >
+            表示する月
+
+            <input
+              id="report-month"
+              type="month"
+            >
+          </label>
+
+          <button
+            id="next-period-button"
+            class="date-move-button"
+            type="button"
+            aria-label="次の期間"
+          >
+            →
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ========================================
+         現在作業中の内容
+    ========================================= -->
+    <section
+      id="active-work-panel"
+      class="panel active-work-panel"
+      hidden
+    >
+      <div>
+        <p class="section-label">
+          現在作業中
+        </p>
+
+        <p
+          id="active-category-name"
+          class="active-category-name"
+        >
+        </p>
+
+        <h2 id="active-project-name">
+        </h2>
+      </div>
+
+      <p
+        id="active-timer"
+        class="active-timer"
+      >
+        00:00:00
+      </p>
+    </section>
+
+    <!-- ========================================
+         期間全体の集計
+    ========================================= -->
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">
+            SUMMARY
+          </p>
+
+          <h2 id="report-period-title">
+            今週の集計
+          </h2>
+        </div>
+
+        <div class="total-time">
+          <span>
+            総作業時間
+          </span>
+
+          <strong id="report-total-time">
+            0分
+          </strong>
+        </div>
+      </div>
+
+      <p
+        id="report-date-range"
+        class="report-date-range"
+      >
+      </p>
+
+      <div
+        id="category-summary-list"
+        class="category-summary-list"
+      >
+        <p class="empty-message">
+          作業記録はまだありません。
+        </p>
+      </div>
+    </section>
+
+    <!-- ========================================
+         プロジェクトごとの集計
+    ========================================= -->
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">
+            PROJECT REPORT
+          </p>
+
+          <h2>
+            プロジェクト別の記録
+          </h2>
+
+          <p class="section-description">
+            プロジェクト名を押すと、作業日と内容を確認できます。
+          </p>
+        </div>
+      </div>
+
+      <div
+        id="project-report-list"
+        class="project-report-list"
+      >
+        <p class="empty-message">
+          作業記録はまだありません。
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      © JUNOTA
+    </p>
+  </footer>
+
+  <script src="./report.js"></script>
+</body>
+</html>

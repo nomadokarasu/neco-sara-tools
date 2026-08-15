@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>JUNOTA 作業時間管理</title>
+
+  <link
+    rel="stylesheet"
+    href="./style.css"
+  >
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div>
+        <p class="site-label">
+          JUNOTA WORK LOG
+        </p>
+
+        <h1>
+          作業時間管理
+        </h1>
+      </div>
+
+      <a
+        class="report-link"
+        href="../report/"
+        target="_blank"
+        rel="noopener"
+      >
+        公開日報を見る
+      </a>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+        <div class="sticky-controls">
+
+
+    <!-- ========================================
+         画面切り替え
+    ========================================= -->
+    <nav
+      class="screen-tabs"
+      aria-label="管理画面の切り替え"
+    >
+      <button
+        class="screen-tab is-active"
+        type="button"
+        data-screen="work"
+      >
+        作業
+      </button>
+
+      <button
+        class="screen-tab"
+        type="button"
+        data-screen="settings"
+      >
+        設定
+      </button>
+    </nav>
+
+
+    <!-- ========================================
+         1. 表示期間
+    ========================================= -->
+    <section class="panel period-panel">
+      <div class="section-heading">
+        <div>
+          <p class="section-number">
+            1
+          </p>
+
+          <div>
+            <h2>
+              表示期間
+            </h2>
+
+            <p class="section-description">
+              日・週・月の表示を切り替えます。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="period-tabs"
+        role="group"
+        aria-label="表示期間"
+      >
+        <button
+          class="period-button"
+          type="button"
+          data-period="day"
+        >
+          日
+        </button>
+
+        <button
+          class="period-button is-active"
+          type="button"
+          data-period="week"
+        >
+          週
+        </button>
+
+        <button
+          class="period-button"
+          type="button"
+          data-period="month"
+        >
+          月
+        </button>
+      </div>
+        </section>
+
+    </div>
+
+    <div
+      id="settings-panel"
+      class="tab-panel"
+      hidden
+    >
+
+
+    <!-- ========================================
+         2. 作業時間の設定
+    ========================================= -->
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <p class="section-number">
+            2
+          </p>
+
+          <div>
+            <h2>
+              作業時間の設定
+            </h2>
+
+            <p class="section-description">
+              週の作業時間を基準に、日と月へ換算します。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <form
+        id="work-time-form"
+        class="work-time-form"
+      >
+        <label for="total-work-hours">
+          <span id="work-time-label">
+            1週間の作業時間
+          </span>
+
+          <span class="input-with-unit">
+            <input
+              id="total-work-hours"
+              type="number"
+              min="0.5"
+              step="0.5"
+              value="30"
+              required
+            >
+
+            <span>
+              時間
+            </span>
+          </span>
+        </label>
+
+        <button
+          class="primary-button"
+          type="submit"
+        >
+          保存
+        </button>
+      </form>
+
+      <dl class="converted-time-list">
+        <div>
+          <dt>
+            1日
+          </dt>
+
+          <dd id="converted-day">
+            6時間
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            1週間
+          </dt>
+
+          <dd id="converted-week">
+            30時間
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            1か月
+          </dt>
+
+          <dd id="converted-month">
+            130時間
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- ========================================
+         3. 作業時間の割り振り
+    ========================================= -->
+    <section class="panel">
+      <div class="section-heading section-heading--between">
+        <div>
+          <p class="section-number">
+            3
+          </p>
+
+          <div>
+            <h2>
+              作業時間の割り振り
+            </h2>
+
+            <p class="section-description">
+              大分類の中にプロジェクトを設定します。
+            </p>
+          </div>
+        </div>
+
+        <p
+          id="allocation-total"
+          class="allocation-total"
+        >
+          合計 100%
+        </p>
+      </div>
+
+      <div
+        id="category-list"
+        class="category-list"
+      >
+        <!-- JavaScriptで大分類とプロジェクトを表示します -->
+      </div>
+
+      <button
+        id="add-category-button"
+        class="secondary-button"
+        type="button"
+      >
+        大分類を追加
+      </button>
+    </section>
+
+        </div>
+
+    <div
+      id="work-panel"
+      class="tab-panel"
+    >
+
+    <!-- ========================================
+         4. タイマー
+    ========================================= -->
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <p class="section-number">
+            4
+          </p>
+
+          <div>
+            <h2>
+              タイマー
+            </h2>
+
+            <p class="section-description">
+              作業するプロジェクトを選択してください。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="timer-area">
+        <label for="timer-project">
+          作業するプロジェクト
+        </label>
+
+        <select id="timer-project">
+          <option value="">
+            プロジェクトを選択
+          </option>
+        </select>
+
+        <p
+          id="timer-category-name"
+          class="timer-category-name"
+        >
+        </p>
+
+        <p
+          id="timer-project-name"
+          class="timer-project-name"
+        >
+          プロジェクトが選択されていません
+        </p>
+
+        <p
+          id="timer-display"
+          class="timer-display"
+          aria-live="polite"
+        >
+          00:00:00
+        </p>
+
+        <p
+          id="remaining-time"
+          class="remaining-time"
+        >
+          残り時間：—
+        </p>
+
+        <div class="timer-buttons">
+          <button
+            id="start-button"
+            class="primary-button"
+            type="button"
+          >
+            開始
+          </button>
+
+          <button
+            id="stop-button"
+            class="danger-button"
+            type="button"
+            disabled
+          >
+            終了
+          </button>
+        </div>
+      </div>
+        <div class="timer-note-area">
+          <div class="timer-note-heading">
+            <h3>
+              具体的にやったこと
+            </h3>
+
+            <p>
+              ひとつの作業が終わるたびに追加します。
+            </p>
+          </div>
+
+          <form
+            id="work-note-form"
+            class="work-note-form"
+          >
+            <label for="work-note">
+  終了した作業
+</label>
+
+            <div class="work-note-input">
+              <input
+                id="work-note"
+                type="text"
+                placeholder="例：タイマー画面のHTMLを作成"
+                disabled
+              >
+
+              <button
+                id="add-note-button"
+                class="secondary-button"
+                type="submit"
+                disabled
+              >
+                追加
+              </button>
+            </div>
+          </form>
+
+          <ul
+            id="current-note-list"
+            class="note-list"
+          >
+            <li class="empty-message">
+              まだ作業内容は記録されていません。
+            </li>
+          </ul>
+        </div>
+
+    </section>
+
+    <!-- ========================================
+         5. 現在の進捗
+    ========================================= -->
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <p class="section-number">
+            
+          </p>
+
+          <div>
+            <h2>
+              現在の進捗
+            </h2>
+
+            <p class="section-description">
+              選択した期間の予定時間と実績を表示します。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="progress-list"
+        class="progress-list"
+      >
+        <!-- JavaScriptで進捗を表示します -->
+      </div>
+        </section>
+    </div>
+  </main>
+ 
+
+  <p
+    id="status-message"
+    class="status-message"
+    aria-live="polite"
+  >
+  </p>
+
+  <script src="./app.js"></script>
+</body>
+</html>

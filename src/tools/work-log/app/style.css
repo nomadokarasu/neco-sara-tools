@@ -1,0 +1,1313 @@
+/* ========================================
+   基本設定
+======================================== */
+
+:root {
+  --background-color: #f5f5f5;
+  --panel-color: #ffffff;
+  --text-color: #222222;
+  --sub-text-color: #666666;
+  --border-color: #d8d8d8;
+
+  --primary-color: #333333;
+  --primary-text-color: #ffffff;
+
+  --danger-color: #a64040;
+  --danger-text-color: #ffffff;
+
+  --warning-background: #fff2d8;
+  --warning-text: #7a4c00;
+
+  --success-background: #e8f3e8;
+  --success-text: #356535;
+
+  --border-radius: 6px;
+  --content-width: 1000px;
+}
+
+
+/* ========================================
+   全要素共通
+======================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+
+html {
+  font-size: 16px;
+}
+
+
+body {
+  margin: 0;
+
+  background:
+    var(--background-color);
+
+  color:
+    var(--text-color);
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Yu Gothic",
+    "YuGothic",
+    sans-serif;
+
+  line-height: 1.7;
+}
+
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+
+button {
+  cursor: pointer;
+}
+
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+
+input,
+select,
+textarea {
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background:
+    #ffffff;
+
+  color:
+    var(--text-color);
+}
+
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible,
+a:focus-visible {
+  outline:
+    2px solid #777777;
+
+  outline-offset:
+    2px;
+}
+
+
+/* ========================================
+   ヘッダー
+======================================== */
+
+.site-header {
+  border-bottom:
+    1px solid var(--border-color);
+
+  background:
+    var(--panel-color);
+}
+
+
+.site-header__inner {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  width: 90%;
+  max-width: var(--content-width);
+
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+
+.site-label {
+  margin: 0 0 4px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  letter-spacing: 0.1em;
+}
+
+
+.site-header h1 {
+  margin: 0;
+
+  font-size: 1.75rem;
+  line-height: 1.3;
+}
+
+
+.report-link {
+  display: inline-block;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 8px 14px;
+
+  background:
+    #ffffff;
+
+  color:
+    var(--text-color);
+
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+
+.report-link:hover {
+  background:
+    #eeeeee;
+}
+
+
+/* ========================================
+   メイン部分
+======================================== */
+
+.main-content {
+  display: grid;
+  gap: 20px;
+
+  width: 90%;
+  max-width: var(--content-width);
+
+  margin: 0 auto;
+  padding: 24px 0 80px;
+}
+
+
+/* ========================================
+   共通パネル
+======================================== */
+
+.panel {
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 22px;
+
+  background:
+    var(--panel-color);
+}
+
+
+.section-heading {
+  margin-bottom: 18px;
+}
+
+
+.section-heading > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+
+.section-heading--between {
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+
+.section-number {
+  display: grid;
+  flex-shrink: 0;
+
+  place-items: center;
+
+  width: 28px;
+  height: 28px;
+
+  margin: 1px 0 0;
+
+  border-radius:
+    50%;
+
+  background:
+    var(--primary-color);
+
+  color:
+    var(--primary-text-color);
+
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+
+.section-heading h2 {
+  margin: 0;
+
+  font-size: 1.2rem;
+}
+
+
+.section-description {
+  margin: 3px 0 0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.85rem;
+}
+
+
+/* ========================================
+   日・週・月の切り替え
+======================================== */
+
+
+.sticky-controls {
+  position: sticky;
+  top: 0;
+
+  z-index: 10;
+
+  display: grid;
+  gap: 10px;
+
+  margin:
+    -8px 0 0;
+
+  padding:
+    8px 0 10px;
+
+  background:
+    var(--background-color);
+}
+
+.period-panel {
+  position: static;
+}
+
+
+.period-tabs {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 6px;
+
+  max-width: 360px;
+}
+
+
+.period-button {
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 8px 16px;
+
+  background:
+    #ffffff;
+
+  color:
+    var(--text-color);
+}
+
+
+.period-button:hover {
+  background:
+    #eeeeee;
+}
+
+
+.period-button.is-active {
+  border-color:
+    var(--primary-color);
+
+  background:
+    var(--primary-color);
+
+  color:
+    var(--primary-text-color);
+}
+
+/* ========================================
+   作業・設定タブ
+======================================== */
+
+.screen-tabs {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 6px;
+}
+
+
+.screen-tab {
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 10px 16px;
+
+  background:
+    #ffffff;
+
+  color:
+    var(--text-color);
+
+  font-weight: 600;
+}
+
+
+.screen-tab:hover {
+  background:
+    #eeeeee;
+}
+
+
+.screen-tab.is-active {
+  border-color:
+    var(--primary-color);
+
+  background:
+    var(--primary-color);
+
+  color:
+    var(--primary-text-color);
+}
+
+
+.tab-panel {
+  display: grid;
+  gap: 20px;
+}
+
+
+.tab-panel[hidden] {
+  display: none;
+}
+
+/* ========================================
+   作業時間の設定
+======================================== */
+
+.work-time-form {
+  display: flex;
+
+  align-items: flex-end;
+  gap: 12px;
+}
+
+
+.work-time-form label {
+  display: grid;
+  gap: 6px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.875rem;
+}
+
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color:
+    var(--text-color);
+}
+
+
+.input-with-unit input {
+  width: 120px;
+
+  padding: 9px;
+
+  text-align: right;
+}
+
+
+.converted-time-list {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 10px;
+
+  margin: 20px 0 0;
+}
+
+
+.converted-time-list > div {
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 12px;
+
+  background:
+    #fafafa;
+}
+
+
+.converted-time-list dt {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+}
+
+
+.converted-time-list dd {
+  margin: 2px 0 0;
+
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+
+/* ========================================
+   ボタン
+======================================== */
+
+.primary-button,
+.secondary-button,
+.danger-button {
+  border-radius:
+    var(--border-radius);
+
+  padding: 9px 15px;
+
+  font-weight: 600;
+}
+
+
+.primary-button {
+  border:
+    1px solid var(--primary-color);
+
+  background:
+    var(--primary-color);
+
+  color:
+    var(--primary-text-color);
+}
+
+
+.primary-button:hover {
+  opacity: 0.85;
+}
+
+
+.secondary-button {
+  border:
+    1px solid var(--border-color);
+
+  background:
+    #ffffff;
+
+  color:
+    var(--text-color);
+}
+
+
+.secondary-button:hover {
+  background:
+    #eeeeee;
+}
+
+
+.danger-button {
+  border:
+    1px solid var(--danger-color);
+
+  background:
+    var(--danger-color);
+
+  color:
+    var(--danger-text-color);
+}
+
+
+.danger-button:hover {
+  opacity: 0.85;
+}
+
+
+/* ========================================
+   大分類とプロジェクト
+======================================== */
+
+.allocation-total {
+  flex-shrink: 0;
+
+  margin: 0;
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 5px 9px;
+
+  background:
+    var(--success-background);
+
+  color:
+    var(--success-text);
+
+  font-size: 0.8rem;
+}
+
+
+.allocation-total.has-error {
+  background:
+    var(--warning-background);
+
+  color:
+    var(--warning-text);
+}
+
+
+.category-list {
+  display: grid;
+  gap: 14px;
+
+  margin-bottom: 16px;
+}
+
+
+.category-item {
+  overflow: hidden;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+}
+
+
+.category-header {
+  display: grid;
+
+  grid-template-columns:
+    minmax(160px, 1fr)
+    100px
+    100px
+    auto;
+
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px;
+
+  background:
+    #f1f1f1;
+}
+
+
+.category-name-input,
+.project-name-input {
+  width: 100%;
+
+  padding: 7px 9px;
+}
+
+
+.percentage-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+
+.percentage-input input {
+  width: 70px;
+
+  padding: 7px;
+
+  text-align: right;
+}
+
+
+.category-hours,
+.project-hours {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+
+.small-button {
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    4px;
+
+  padding: 6px 9px;
+
+  background:
+    #ffffff;
+
+  color:
+    var(--text-color);
+
+  font-size: 0.75rem;
+}
+
+
+.small-button:hover {
+  background:
+    #e8e8e8;
+}
+
+
+.delete-button {
+  border-color:
+    #d6a0a0;
+
+  color:
+    #8a2d2d;
+}
+
+
+.project-list {
+  display: grid;
+  gap: 6px;
+
+  padding: 10px 12px 12px;
+}
+
+
+
+.project-allocation-status {
+  margin:
+    0 0 4px 30px;
+
+  color:
+    var(--success-text);
+
+  font-size:
+    0.75rem;
+}
+
+
+.project-allocation-status.has-error {
+  border-radius:
+    var(--border-radius);
+
+  padding:
+    5px 8px;
+
+  background:
+    var(--warning-background);
+
+  color:
+    var(--warning-text);
+}
+
+.project-item {
+  display: grid;
+
+  grid-template-columns:
+    20px
+    minmax(150px, 1fr)
+    100px
+    100px
+    auto;
+
+  align-items: center;
+  gap: 10px;
+}
+
+
+.project-branch {
+  color:
+    #999999;
+}
+
+
+.add-project-form {
+  display: flex;
+  gap: 8px;
+
+  margin: 8px 0 2px 30px;
+}
+
+
+.add-project-form input {
+  flex: 1;
+
+  min-width: 0;
+
+  padding: 7px 9px;
+}
+
+
+/* ========================================
+   タイマー
+======================================== */
+
+.timer-area {
+  max-width: 560px;
+}
+
+
+.timer-area > label {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.875rem;
+}
+
+
+.timer-area select {
+  width: 100%;
+
+  padding: 10px;
+}
+
+
+.timer-category-name {
+  min-height: 1.7em;
+
+  margin: 22px 0 0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.85rem;
+}
+
+
+.timer-project-name {
+  min-height: 1.7em;
+
+  margin: 2px 0 0;
+
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+
+.timer-display {
+  margin: 28px 0 10px;
+
+  font-family:
+    Consolas,
+    "Courier New",
+    monospace;
+
+  font-size: clamp(
+    2.4rem,
+    8vw,
+    4rem
+  );
+
+  font-variant-numeric:
+    tabular-nums;
+
+  line-height: 1;
+  text-align: center;
+}
+
+
+.remaining-time {
+  margin: 0 0 24px;
+
+  color:
+    var(--sub-text-color);
+
+  text-align: center;
+}
+
+
+.remaining-time.is-over {
+  color:
+    var(--danger-color);
+
+  font-weight: 700;
+}
+
+
+.timer-buttons {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 10px;
+}
+
+
+/* ========================================
+   作業内容の記録
+======================================== */
+
+
+.timer-note-area {
+  margin-top:
+    24px;
+
+  border-top:
+    1px solid var(--border-color);
+
+  padding-top:
+    20px;
+}
+
+
+.timer-note-heading {
+  margin-bottom:
+    16px;
+}
+
+
+.timer-note-heading h3 {
+  margin:
+    0;
+
+  font-size:
+    1rem;
+}
+
+
+.timer-note-heading p {
+  margin:
+    3px 0 0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size:
+    0.8rem;
+}
+
+.work-note-form label {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.875rem;
+}
+
+
+.work-note-input {
+  display: flex;
+  gap: 8px;
+}
+
+
+.work-note-input input {
+  flex: 1;
+
+  min-width: 0;
+
+  padding: 10px;
+}
+
+
+.note-list {
+  display: grid;
+  gap: 8px;
+
+  margin: 18px 0 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+
+.note-item {
+  display: grid;
+
+    grid-template-columns:
+    120px 1fr;
+
+  gap: 10px;
+
+  border-bottom:
+    1px solid var(--border-color);
+
+  padding: 8px 0;
+}
+
+
+.note-time {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+}
+
+
+.note-text {
+  overflow-wrap:
+    anywhere;
+}
+
+
+.empty-message {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.875rem;
+}
+
+
+/* ========================================
+   進捗
+======================================== */
+
+.progress-list {
+  display: grid;
+  gap: 14px;
+}
+
+
+.progress-item {
+  display: grid;
+  gap: 7px;
+}
+
+
+.progress-heading {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+}
+
+
+.progress-name {
+  font-weight: 700;
+}
+
+
+
+.progress-percentage {
+  display: inline-block;
+
+  margin-left: 8px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+
+.progress-time {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+}
+
+
+.progress-bar {
+  overflow: hidden;
+
+  height: 8px;
+
+  border-radius:
+    4px;
+
+  background:
+    #e6e6e6;
+}
+
+
+.progress-bar__value {
+  display: block;
+
+  width: 0;
+  height: 100%;
+
+  background:
+    var(--primary-color);
+}
+
+
+.progress-remaining {
+  margin: 0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+
+.progress-remaining.is-over {
+  color:
+    var(--danger-color);
+}
+
+
+
+.project-progress-list {
+  display: grid;
+  gap: 14px;
+
+  margin-top: 14px;
+  padding: 14px 0 0 24px;
+
+  border-top:
+    1px solid var(--border-color);
+}
+
+
+.project-progress-item {
+  display: grid;
+  gap: 6px;
+}
+
+
+.project-progress-name {
+  font-size: 0.9rem;
+}
+
+
+.project-progress-item .progress-bar {
+  height: 5px;
+}
+
+
+.project-progress-item .progress-bar__value {
+  background:
+    #777777;
+}
+
+
+
+
+
+/* ========================================
+   保存状態のメッセージ
+======================================== */
+
+.status-message {
+  position: fixed;
+
+  right: 20px;
+  bottom: 20px;
+
+  z-index: 20;
+
+  max-width:
+    calc(100% - 40px);
+
+  margin: 0;
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 10px 14px;
+
+  background:
+    var(--primary-color);
+
+  color:
+    var(--primary-text-color);
+
+  font-size: 0.85rem;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s;
+}
+
+
+.status-message.is-visible {
+  opacity: 1;
+}
+
+
+/* ========================================
+   スマートフォン表示
+======================================== */
+
+@media (max-width: 700px) {
+  .site-header__inner {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 14px;
+  }
+
+
+  .site-header h1 {
+    font-size: 1.45rem;
+  }
+
+
+  .report-link {
+    width: 100%;
+
+    text-align: center;
+  }
+
+
+  .panel {
+    padding: 16px;
+  }
+
+
+  .work-time-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+  .work-time-form .primary-button {
+    width: 100%;
+  }
+
+
+  .converted-time-list {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .section-heading--between {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+  .allocation-total {
+    align-self: flex-start;
+  }
+
+
+  .category-header {
+    grid-template-columns:
+      minmax(100px, 1fr)
+      90px;
+  }
+
+
+  .category-hours {
+    text-align: left;
+  }
+
+
+  .category-header .small-button {
+    justify-self: end;
+  }
+
+
+  .project-item {
+    grid-template-columns:
+      16px
+      minmax(90px, 1fr)
+      90px;
+  }
+
+
+  .project-hours {
+    display: none;
+  }
+
+
+  .project-item .small-button {
+    grid-column:
+      2 / -1;
+
+    justify-self: end;
+  }
+
+
+  .add-project-form {
+    margin-left: 24px;
+  }
+
+
+  .timer-buttons {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .work-note-input {
+    flex-direction: column;
+  }
+
+
+  .work-note-input .secondary-button {
+    width: 100%;
+  }
+
+
+  .progress-heading {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 2px;
+  }
+
+
+  .note-item {
+    grid-template-columns:
+      1fr;
+
+    gap:
+      2px;
+  }
+
+}

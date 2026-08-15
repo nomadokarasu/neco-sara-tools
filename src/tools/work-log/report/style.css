@@ -1,0 +1,891 @@
+/* ========================================
+   基本設定
+======================================== */
+
+:root {
+  --background-color: #f5f5f5;
+  --panel-color: #ffffff;
+  --text-color: #222222;
+  --sub-text-color: #666666;
+  --border-color: #d8d8d8;
+
+  --primary-color: #333333;
+  --primary-text-color: #ffffff;
+
+  --danger-color: #a64040;
+
+  --border-radius: 6px;
+  --content-width: 1000px;
+}
+
+
+/* ========================================
+   全要素共通
+======================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+
+html {
+  font-size: 16px;
+}
+
+
+body {
+  margin: 0;
+
+  background:
+    var(--background-color);
+
+  color:
+    var(--text-color);
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Yu Gothic",
+    "YuGothic",
+    sans-serif;
+
+  line-height: 1.7;
+}
+
+
+button,
+input {
+  font: inherit;
+}
+
+
+button {
+  cursor: pointer;
+}
+
+
+button:focus-visible,
+input:focus,
+summary:focus-visible {
+  outline:
+    2px solid #777777;
+
+  outline-offset:
+    2px;
+}
+
+
+/* ========================================
+   ヘッダー
+======================================== */
+
+.site-header {
+  border-bottom:
+    1px solid var(--border-color);
+
+  background:
+    var(--panel-color);
+}
+
+
+.site-header__inner {
+  width: 90%;
+  max-width:
+    var(--content-width);
+
+  margin: 0 auto;
+  padding: 28px 0;
+}
+
+
+.site-label,
+.section-label {
+  margin: 0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  letter-spacing: 0.1em;
+}
+
+
+.site-header h1 {
+  margin: 4px 0;
+
+  font-size: 1.8rem;
+  line-height: 1.3;
+}
+
+
+.site-description {
+  margin: 6px 0 0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.9rem;
+}
+
+
+/* ========================================
+   メイン部分
+======================================== */
+
+.main-content {
+  display: grid;
+  gap: 20px;
+
+  width: 90%;
+  max-width:
+    var(--content-width);
+
+  margin: 0 auto;
+  padding: 24px 0 80px;
+}
+
+
+/* ========================================
+   共通パネル
+======================================== */
+
+.panel {
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 22px;
+
+  background:
+    var(--panel-color);
+}
+
+
+.section-heading {
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 24px;
+
+  margin-bottom: 18px;
+}
+
+
+.section-heading h2 {
+  margin: 3px 0 0;
+
+  font-size: 1.25rem;
+}
+
+
+.section-description {
+  margin: 4px 0 0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.85rem;
+}
+
+
+.empty-message {
+  margin: 0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.875rem;
+}
+
+
+/* ========================================
+   固定する期間選択
+======================================== */
+
+.sticky-controls {
+  position: sticky;
+  top: 0;
+
+  z-index: 10;
+
+  margin:
+    -8px 0 0;
+
+  padding:
+    8px 0 10px;
+
+  background:
+    var(--background-color);
+}
+
+
+.period-panel {
+  display: grid;
+  gap: 12px;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 14px;
+
+  background:
+    var(--panel-color);
+}
+
+
+.period-tabs {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 6px;
+}
+
+
+.period-button,
+.date-move-button {
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background:
+    #ffffff;
+
+  color:
+    var(--text-color);
+}
+
+
+.period-button {
+  padding: 8px 16px;
+
+  font-weight: 600;
+}
+
+
+.period-button:hover,
+.date-move-button:hover {
+  background:
+    #eeeeee;
+}
+
+
+.period-button.is-active {
+  border-color:
+    var(--primary-color);
+
+  background:
+    var(--primary-color);
+
+  color:
+    var(--primary-text-color);
+}
+
+
+/* ========================================
+   日付選択
+======================================== */
+
+.date-selection {
+  display: grid;
+
+  grid-template-columns:
+    44px
+    minmax(180px, 1fr)
+    44px;
+
+  align-items: end;
+  gap: 8px;
+}
+
+
+.date-selection label {
+  display: grid;
+  gap: 4px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+
+
+
+.date-selection label[hidden] {
+  display: none;
+}
+
+.date-selection input {
+  width: 100%;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 7px 9px;
+
+  background:
+    #ffffff;
+
+  color:
+    var(--text-color);
+
+  text-align: center;
+}
+
+
+.date-move-button {
+  height: 39px;
+
+  padding: 6px;
+}
+
+
+/* ========================================
+   作業中
+======================================== */
+
+.active-work-panel {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  border-color:
+    #d2a9a9;
+}
+
+
+.active-work-panel[hidden] {
+  display: none;
+}
+
+
+.active-category-name {
+  margin: 14px 0 0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.85rem;
+}
+
+
+.active-work-panel h2 {
+  margin: 2px 0 0;
+
+  font-size: 1.25rem;
+}
+
+
+.active-timer {
+  flex-shrink: 0;
+
+  margin: 0;
+
+  font-family:
+    Consolas,
+    "Courier New",
+    monospace;
+
+  font-size: 2rem;
+
+  font-variant-numeric:
+    tabular-nums;
+}
+
+
+/* ========================================
+   総時間
+======================================== */
+
+.total-time {
+  flex-shrink: 0;
+
+  text-align: right;
+}
+
+
+.total-time span {
+  display: block;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.75rem;
+}
+
+
+.total-time strong {
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 1.4rem;
+}
+
+
+.report-date-range {
+  margin: -8px 0 18px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+}
+
+
+/* ========================================
+   大分類別の集計
+======================================== */
+
+.category-summary-list {
+  display: grid;
+  gap: 14px;
+}
+
+
+.category-summary-item {
+  display: grid;
+  gap: 7px;
+}
+
+
+.category-summary-heading {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
+}
+
+
+.category-summary-name {
+  font-weight: 700;
+}
+
+
+.category-summary-times {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+
+.progress-percentage {
+  display: inline-block;
+
+  margin-left: 8px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+}
+
+
+.progress-bar {
+  overflow: hidden;
+
+  height: 8px;
+
+  border-radius:
+    4px;
+
+  background:
+    #e6e6e6;
+}
+
+
+.progress-bar__value {
+  display: block;
+
+  width: 0;
+  height: 100%;
+
+  background:
+    var(--primary-color);
+}
+
+
+.category-summary-status {
+  margin: 0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+
+.category-summary-status.is-over {
+  color:
+    var(--danger-color);
+}
+
+
+/* ========================================
+   プロジェクト別の記録
+======================================== */
+
+.project-report-list {
+  display: grid;
+  gap: 12px;
+}
+
+
+.project-report-item {
+  overflow: hidden;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background:
+    #ffffff;
+}
+
+
+.project-report-item summary {
+  display: grid;
+
+  grid-template-columns:
+    minmax(150px, 1fr)
+    auto;
+
+  align-items: center;
+  gap: 16px;
+
+  padding: 14px 16px;
+
+  cursor: pointer;
+
+  list-style-position:
+    inside;
+}
+
+
+.project-report-item summary:hover {
+  background:
+    #f3f3f3;
+}
+
+
+.project-summary-main {
+  min-width: 0;
+}
+
+
+.project-category-name {
+  display: block;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.75rem;
+}
+
+
+.project-name {
+  display: block;
+
+  margin-top: 2px;
+
+  font-weight: 700;
+
+  overflow-wrap:
+    anywhere;
+}
+
+
+.project-total-information {
+  display: grid;
+  gap: 1px;
+
+  text-align: right;
+}
+
+
+.project-total-time {
+  font-weight: 700;
+}
+
+
+.project-work-days {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.75rem;
+}
+
+
+.project-detail {
+  display: grid;
+  gap: 12px;
+
+  border-top:
+    1px solid var(--border-color);
+
+  padding: 14px 16px 16px;
+}
+
+
+/* ========================================
+   作業日ごとの記録
+======================================== */
+
+.work-day-item {
+  display: grid;
+
+  grid-template-columns:
+    130px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: start;
+  gap: 18px;
+
+  border-bottom:
+    1px solid var(--border-color);
+
+  padding: 10px 0;
+}
+
+
+.work-day-item:last-child {
+  border-bottom: 0;
+}
+
+
+.work-day-date {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+}
+
+
+.work-content-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+
+.work-content-list li {
+  display: grid;
+
+  grid-template-columns:
+    120px minmax(0, 1fr);
+
+  gap: 10px;
+
+  margin-bottom: 5px;
+
+  overflow-wrap:
+    anywhere;
+}
+
+
+
+.work-time-range {
+  color:
+    var(--sub-text-color);
+
+  font-size:
+    0.8rem;
+
+  white-space:
+    nowrap;
+}
+
+
+.work-content-text {
+  min-width: 0;
+}
+
+
+.work-content-list li:last-child {
+  margin-bottom: 0;
+}
+
+
+.work-day-total {
+  white-space: nowrap;
+
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+
+/* ========================================
+   フッター
+======================================== */
+
+.site-footer {
+  border-top:
+    1px solid var(--border-color);
+
+  background:
+    var(--panel-color);
+}
+
+
+.site-footer p {
+  width: 90%;
+  max-width:
+    var(--content-width);
+
+  margin: 0 auto;
+  padding: 20px 0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+
+/* ========================================
+   スマートフォン表示
+======================================== */
+
+@media (max-width: 700px) {
+  .site-header__inner {
+    padding:
+      22px 0;
+  }
+
+
+  .site-header h1 {
+    font-size:
+      1.5rem;
+  }
+
+
+  .panel {
+    padding:
+      16px;
+  }
+
+
+  .section-heading {
+    align-items:
+      stretch;
+
+    flex-direction:
+      column;
+
+    gap:
+      10px;
+  }
+
+
+  .total-time {
+    text-align:
+      left;
+  }
+
+
+  .date-selection {
+    grid-template-columns:
+      40px
+      minmax(120px, 1fr)
+      40px;
+  }
+
+
+  .active-work-panel {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+  }
+
+
+  .active-timer {
+    align-self:
+      flex-end;
+
+    font-size:
+      1.7rem;
+  }
+
+
+  .category-summary-heading {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+
+    gap:
+      3px;
+  }
+
+
+  .category-summary-times {
+    text-align:
+      left;
+  }
+
+
+  .project-report-item summary {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .project-total-information {
+    text-align:
+      left;
+  }
+
+
+  .work-day-item {
+    grid-template-columns:
+      1fr;
+    gap:
+      5px;
+  }
+
+
+  .work-day-total {
+    text-align:
+      right;
+  }
+
+    .work-content-list li {
+    grid-template-columns:
+      1fr;
+
+    gap:
+      1px;
+  }
+}
