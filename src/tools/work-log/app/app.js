@@ -198,7 +198,9 @@ const currentNoteList =
 // ========================================
 
 let appData =
-  loadAppData();
+  structuredClone(
+    defaultData
+  );
 
 
 // ========================================
@@ -208,7 +210,10 @@ let appData =
 initializeApp();
 
 
-function initializeApp() {
+async function initializeApp() {
+  appData =
+    await loadAppData();
+
   ensureInitialCategories();
 
   updatePeriodButtons();
@@ -225,12 +230,73 @@ function initializeApp() {
 // データの読み込み
 // ========================================
 
-function loadAppData() {
+async function loadAppData() {
+  const localData =
+    loadLocalAppData();
+
+  try {
+    const response =
+      await fetch(
+        "../api/load.php?time=" +
+        Date.now(),
+
+        {
+          method: "GET",
+          cache: "no-store"
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(
+        "HTTP " +
+        response.status
+      );
+    }
+
+    const serverData =
+      await response.json();
+
+    const normalizedServerData =
+      normalizeAppData(
+        serverData
+      );
+
+    if (
+      !hasWorkLogContent(
+        normalizedServerData
+      ) &&
+      hasWorkLogContent(
+        localData
+      )
+    ) {
+      return localData;
+    }
+
+    localStorage.setItem(
+      STORAGE_KEY,
+
+      JSON.stringify(
+        normalizedServerData
+      )
+    );
+
+    return normalizedServerData;
+  } catch (error) {
+    console.error(
+      "サーバーからの読み込みに失敗しました。",
+      error
+    );
+
+    return localData;
+  }
+}
+
+
+function loadLocalAppData() {
   const savedData =
     localStorage.getItem(
       STORAGE_KEY
     );
-
 
   if (!savedData) {
     return structuredClone(
@@ -238,38 +304,67 @@ function loadAppData() {
     );
   }
 
-
   try {
-    const parsedData =
+    return normalizeAppData(
       JSON.parse(
         savedData
-      );
-
-
-    return {
-      ...structuredClone(
-        defaultData
-      ),
-
-      ...parsedData,
-
-      settings: {
-        ...defaultData.settings,
-
-        ...parsedData.settings
-      }
-    };
+      )
+    );
   } catch (error) {
     console.error(
-      "保存データの読み込みに失敗しました。",
+      "ブラウザ内データの読み込みに失敗しました。",
       error
     );
-
 
     return structuredClone(
       defaultData
     );
   }
+}
+
+
+function normalizeAppData(data) {
+  return {
+    ...structuredClone(
+      defaultData
+    ),
+
+    ...data,
+
+    settings: {
+      ...defaultData.settings,
+
+      ...(data.settings || {})
+    },
+
+    categories:
+      Array.isArray(
+        data.categories
+      )
+        ? data.categories
+        : [],
+
+    sessions:
+      Array.isArray(
+        data.sessions
+      )
+        ? data.sessions
+        : [],
+
+    activeSession:
+      data.activeSession || null
+  };
+}
+
+
+function hasWorkLogContent(data) {
+  return (
+    data.categories.length > 0 ||
+    data.sessions.length > 0 ||
+    Boolean(
+      data.activeSession
+    )
+  );
 }
 
 
