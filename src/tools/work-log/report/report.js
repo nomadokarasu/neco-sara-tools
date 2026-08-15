@@ -135,7 +135,9 @@ let selectedDate =
 
 
 let appData =
-  loadAppData();
+  structuredClone(
+    defaultData
+  );
 
 
 // ========================================
@@ -145,7 +147,10 @@ let appData =
 initializeReport();
 
 
-function initializeReport() {
+async function initializeReport() {
+  appData =
+    await loadAppData();
+
   setDateInputValues();
 
   updatePeriodButtons();
@@ -157,14 +162,22 @@ function initializeReport() {
 
   window.setInterval(
     function() {
-      appData =
-        loadAppData();
-
-
       renderActiveWork();
     },
 
     1000
+  );
+
+
+  window.setInterval(
+    async function() {
+      appData =
+        await loadAppData();
+
+      renderReport();
+    },
+
+    15000
   );
 }
 
@@ -173,12 +186,48 @@ function initializeReport() {
 // 保存データの読み込み
 // ========================================
 
-function loadAppData() {
+async function loadAppData() {
+  try {
+    const response =
+      await fetch(
+        "../api/load.php?time=" +
+        Date.now(),
+
+        {
+          method: "GET",
+          cache: "no-store"
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(
+        "HTTP " +
+        response.status
+      );
+    }
+
+    const serverData =
+      await response.json();
+
+    return normalizeReportData(
+      serverData
+    );
+  } catch (error) {
+    console.error(
+      "サーバーから作業記録を読み込めませんでした。",
+      error
+    );
+
+    return loadLocalReportData();
+  }
+}
+
+
+function loadLocalReportData() {
   const savedData =
     localStorage.getItem(
       STORAGE_KEY
     );
-
 
   if (!savedData) {
     return structuredClone(
@@ -186,38 +235,56 @@ function loadAppData() {
     );
   }
 
-
   try {
-    const parsedData =
+    return normalizeReportData(
       JSON.parse(
         savedData
-      );
-
-
-    return {
-      ...structuredClone(
-        defaultData
-      ),
-
-      ...parsedData,
-
-      settings: {
-        ...defaultData.settings,
-
-        ...parsedData.settings
-      }
-    };
+      )
+    );
   } catch (error) {
     console.error(
-      "作業記録の読み込みに失敗しました。",
+      "ブラウザ内の作業記録を読み込めませんでした。",
       error
     );
-
 
     return structuredClone(
       defaultData
     );
   }
+}
+
+
+function normalizeReportData(data) {
+  return {
+    ...structuredClone(
+      defaultData
+    ),
+
+    ...data,
+
+    settings: {
+      ...defaultData.settings,
+
+      ...(data.settings || {})
+    },
+
+    categories:
+      Array.isArray(
+        data.categories
+      )
+        ? data.categories
+        : [],
+
+    sessions:
+      Array.isArray(
+        data.sessions
+      )
+        ? data.sessions
+        : [],
+
+    activeSession:
+      data.activeSession || null
+  };
 }
 
 
