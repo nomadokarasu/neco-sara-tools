@@ -474,54 +474,69 @@
       </button>
     </div>
 
-    <div class="record-period-navigation">
-      <button
-        id="record-previous-period-button"
-        class="secondary-button"
-        type="button"
-        aria-label="前の期間"
-      >
-        ←
-      </button>
+   <div class="record-period-navigation">
+  <button
+    id="record-previous-period-button"
+    class="secondary-button"
+    type="button"
+    aria-label="前の期間"
+  >
+    ←
+  </button>
 
-      <label
-        id="record-date-label"
-        for="record-date"
-      >
-        <span>
-          表示する日
-        </span>
+  <label
+    id="record-date-label"
+    for="record-date"
+  >
+    <span>
+      表示する日
+    </span>
 
-        <input
-          id="record-date"
-          type="date"
-        >
-      </label>
+    <input
+      id="record-date"
+      type="date"
+    >
+  </label>
 
-      <label
-        id="record-month-label"
-        for="record-month"
-        hidden
-      >
-        <span>
-          表示する月
-        </span>
+  <div
+    id="record-week-range"
+    class="record-week-range"
+    hidden
+  >
+    <span>
+      表示する週
+    </span>
 
-        <input
-          id="record-month"
-          type="month"
-        >
-      </label>
+    <strong id="record-week-range-text">
+      2026年8月10日（月）〜2026年8月16日（日）
+    </strong>
+  </div>
 
-      <button
-        id="record-next-period-button"
-        class="secondary-button"
-        type="button"
-        aria-label="次の期間"
-      >
-        →
-      </button>
-    </div>
+  <label
+    id="record-month-label"
+    for="record-month"
+    hidden
+  >
+    <span>
+      表示する月
+    </span>
+
+    <input
+      id="record-month"
+      type="month"
+    >
+  </label>
+
+  <button
+    id="record-next-period-button"
+    class="secondary-button"
+    type="button"
+    aria-label="次の期間"
+  >
+    →
+  </button>
+</div>
+
   </section>
 
   <!-- 選択期間の集計 -->

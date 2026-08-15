@@ -1529,3 +1529,43 @@ a:focus-visible {
     justify-items: start;
   }
 }
+
+.record-week-range {
+  display: grid;
+  gap: 6px;
+
+  min-width: 0;
+}
+
+
+.record-week-range[hidden] {
+  display: none;
+}
+
+
+.record-week-range span {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+}
+
+
+.record-week-range strong {
+  display: flex;
+  align-items: center;
+
+  min-height: 42px;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 8px 12px;
+
+  background: #ffffff;
+
+  font-size: 0.9rem;
+}

@@ -135,6 +135,54 @@ const recordsPanel =
     "records-panel"
   );
 
+
+const recordPreviousPeriodButton =
+  document.getElementById(
+    "record-previous-period-button"
+  );
+
+
+const recordNextPeriodButton =
+  document.getElementById(
+    "record-next-period-button"
+  );
+
+
+const recordDateInput =
+  document.getElementById(
+    "record-date"
+  );
+
+
+const recordMonthInput =
+  document.getElementById(
+    "record-month"
+  );
+
+
+const recordDateLabel =
+  document.getElementById(
+    "record-date-label"
+  );
+
+
+const recordMonthLabel =
+  document.getElementById(
+    "record-month-label"
+  );
+
+
+const recordWeekRange =
+  document.getElementById(
+    "record-week-range"
+  );
+
+
+const recordWeekRangeText =
+  document.getElementById(
+    "record-week-range-text"
+  );
+
   
 
 const timerCategoryName =
@@ -203,6 +251,10 @@ const currentNoteList =
 // 保存済みデータを読み込む
 // ========================================
 
+let selectedRecordDate =
+  new Date();
+
+
 let appData =
   structuredClone(
     defaultData
@@ -228,7 +280,9 @@ async function initializeApp() {
 
   updateWorkTimeDisplay();
 
-  initializeTimer();
+initializeRecordNavigation();
+
+initializeTimer();
 }
 
 
@@ -545,7 +599,9 @@ saveDisplaySettingsLocally();
 
 updatePeriodButtons();
 
-        updateWorkTimeDisplay();
+updateWorkTimeDisplay();
+
+updateRecordDateInputDisplay();
       }
     );
   }
@@ -3260,7 +3316,264 @@ function createProgressStatus(
   };
 }
 
+// ========================================
+// 記録編集の期間操作
+// ========================================
 
+function initializeRecordNavigation() {
+  setRecordDateInputValues();
+
+  updateRecordDateInputDisplay();
+
+
+  recordPreviousPeriodButton.addEventListener(
+    "click",
+
+    function() {
+      moveRecordPeriod(
+        -1
+      );
+    }
+  );
+
+
+  recordNextPeriodButton.addEventListener(
+    "click",
+
+    function() {
+      moveRecordPeriod(
+        1
+      );
+    }
+  );
+
+
+  recordDateInput.addEventListener(
+    "change",
+
+    function() {
+      if (!recordDateInput.value) {
+        return;
+      }
+
+      selectedRecordDate =
+        new Date(
+          recordDateInput.value +
+          "T00:00:00"
+        );
+
+      setRecordDateInputValues();
+    }
+  );
+
+
+  recordMonthInput.addEventListener(
+    "change",
+
+    function() {
+      if (!recordMonthInput.value) {
+        return;
+      }
+
+      selectedRecordDate =
+        new Date(
+          recordMonthInput.value +
+          "-01T00:00:00"
+        );
+
+      setRecordDateInputValues();
+    }
+  );
+}
+
+
+function updateRecordDateInputDisplay() {
+  const selectedPeriod =
+    appData.settings.selectedPeriod;
+
+  const isDay =
+    selectedPeriod ===
+    "day";
+
+  const isWeek =
+    selectedPeriod ===
+    "week";
+
+  const isMonth =
+    selectedPeriod ===
+    "month";
+
+  recordDateLabel.hidden =
+    !isDay;
+
+  recordWeekRange.hidden =
+    !isWeek;
+
+  recordMonthLabel.hidden =
+    !isMonth;
+
+  updateRecordWeekRange();
+}
+
+
+function moveRecordPeriod(
+  direction
+) {
+  const movedDate =
+    new Date(
+      selectedRecordDate
+    );
+
+  const selectedPeriod =
+    appData.settings.selectedPeriod;
+
+  if (selectedPeriod === "month") {
+    movedDate.setMonth(
+      movedDate.getMonth() +
+      direction
+    );
+  } else if (selectedPeriod === "week") {
+    movedDate.setDate(
+      movedDate.getDate() +
+      direction * 7
+    );
+  } else {
+    movedDate.setDate(
+      movedDate.getDate() +
+      direction
+    );
+  }
+
+  selectedRecordDate =
+    movedDate;
+
+  setRecordDateInputValues();
+}
+
+
+function updateRecordWeekRange() {
+  const weekStart =
+    getRecordWeekStart(
+      selectedRecordDate
+    );
+
+  const weekEnd =
+    new Date(
+      weekStart
+    );
+
+  weekEnd.setDate(
+    weekEnd.getDate() + 6
+  );
+
+  recordWeekRangeText.textContent =
+    formatRecordDisplayDate(
+      weekStart
+    ) +
+    "〜" +
+    formatRecordDisplayDate(
+      weekEnd
+    );
+}
+
+
+function getRecordWeekStart(
+  date
+) {
+  const weekStart =
+    new Date(
+      date
+    );
+
+  weekStart.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+  const dayNumber =
+    weekStart.getDay();
+
+  const distanceFromMonday =
+    dayNumber === 0
+      ? 6
+      : dayNumber - 1;
+
+  weekStart.setDate(
+    weekStart.getDate() -
+    distanceFromMonday
+  );
+
+  return weekStart;
+}
+
+
+function formatRecordDisplayDate(
+  date
+) {
+  return new Intl.DateTimeFormat(
+    "ja-JP",
+
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "short"
+    }
+  ).format(
+    date
+  );
+}
+
+function setRecordDateInputValues() {
+  recordDateInput.value =
+    formatRecordDateForInput(
+      selectedRecordDate
+    );
+
+  recordMonthInput.value =
+    formatRecordDateForInput(
+      selectedRecordDate
+    ).slice(
+      0,
+      7
+    );
+
+  updateRecordWeekRange();
+}
+
+
+function formatRecordDateForInput(
+  date
+) {
+  const year =
+    date.getFullYear();
+
+  const month =
+    String(
+      date.getMonth() + 1
+    ).padStart(
+      2,
+      "0"
+    );
+
+  const day =
+    String(
+      date.getDate()
+    ).padStart(
+      2,
+      "0"
+    );
+
+  return (
+    year +
+    "-" +
+    month +
+    "-" +
+    day
+  );
+}
 
 // ========================================
 // 作業・設定・記録編集タブ
