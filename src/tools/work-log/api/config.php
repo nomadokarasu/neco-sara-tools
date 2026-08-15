@@ -11,6 +11,10 @@ const DB_NAME = 'LAA0915260-nippou';
 const DB_USER = 'LAA0915260';
 const DB_PASSWORD = '800tuguharu';
 
+// 作業日報の管理・保存に使用するパスワード
+const ADMIN_PASSWORD = '800tuguharu';
+
+
 // ========================================
 // データベースに接続する関数
 // ========================================
