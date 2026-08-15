@@ -442,36 +442,158 @@
      </div>
 
     <div
-      id="records-panel"
-      class="tab-panel"
-      hidden
-    >
-      <section class="panel">
-        <div class="section-heading">
-          <div>
-            <p class="section-number">
-              6
-            </p>
+  id="records-panel"
+  class="tab-panel"
+  hidden
+>
+  <!-- 記録編集の表示期間 -->
+  <section class="panel">
+    <div class="record-edit-heading">
+      <div>
+        <p class="section-number">
+          6
+        </p>
 
-            <div>
-              <h2>
-                記録編集
-              </h2>
+        <div>
+          <h2>
+            記録編集
+          </h2>
 
-              <p class="section-description">
-                過去の作業記録を追加・編集・削除します。
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div id="record-editor">
-          <p class="empty-message">
-            記録一覧を準備しています。
+          <p class="section-description">
+            公開日報と同じ形式で、作業記録を確認・編集します。
           </p>
         </div>
-      </section>
+      </div>
+
+      <button
+        id="add-record-button"
+        class="primary-button"
+        type="button"
+      >
+        作業を追加
+      </button>
     </div>
+
+    <div class="record-period-navigation">
+      <button
+        id="record-previous-period-button"
+        class="secondary-button"
+        type="button"
+        aria-label="前の期間"
+      >
+        ←
+      </button>
+
+      <label
+        id="record-date-label"
+        for="record-date"
+      >
+        <span>
+          表示する日
+        </span>
+
+        <input
+          id="record-date"
+          type="date"
+        >
+      </label>
+
+      <label
+        id="record-month-label"
+        for="record-month"
+        hidden
+      >
+        <span>
+          表示する月
+        </span>
+
+        <input
+          id="record-month"
+          type="month"
+        >
+      </label>
+
+      <button
+        id="record-next-period-button"
+        class="secondary-button"
+        type="button"
+        aria-label="次の期間"
+      >
+        →
+      </button>
+    </div>
+  </section>
+
+  <!-- 選択期間の集計 -->
+  <section class="panel">
+    <div class="record-summary-heading">
+      <div>
+        <p class="section-label">
+          SUMMARY
+        </p>
+
+        <h2 id="record-period-title">
+          選択期間の集計
+        </h2>
+
+        <p
+          id="record-date-range"
+          class="section-description"
+        >
+        </p>
+      </div>
+
+      <div class="record-total-time">
+        <span>
+          総作業時間
+        </span>
+
+        <strong id="record-total-time">
+          0秒
+        </strong>
+      </div>
+    </div>
+
+    <div
+      id="record-category-summary-list"
+      class="category-summary-list"
+    >
+      <p class="empty-message">
+        大分類が設定されていません。
+      </p>
+    </div>
+  </section>
+
+  <!-- プロジェクト別の記録 -->
+  <section class="panel">
+    <div class="section-heading">
+      <div>
+        <p class="section-label">
+          PROJECT REPORT
+        </p>
+
+        <div>
+          <h2>
+            プロジェクト別の記録
+          </h2>
+
+          <p class="section-description">
+            プロジェクト名を押すと、作業日と内容を確認できます。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="record-project-list"
+      class="project-report-list"
+    >
+      <p class="empty-message">
+        作業記録はまだありません。
+      </p>
+    </div>
+  </section>
+</div>
   </main>
  
 

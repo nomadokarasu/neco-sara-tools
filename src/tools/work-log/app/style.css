@@ -1311,3 +1311,221 @@ a:focus-visible {
   }
 
 }
+
+/* ========================================
+   記録編集
+======================================== */
+
+.record-editor {
+  display: grid;
+  gap: 20px;
+}
+
+
+.record-editor-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+
+.record-editor-toolbar label {
+  display: grid;
+  gap: 6px;
+}
+
+
+.record-editor-toolbar input {
+  min-width: 180px;
+}
+
+
+.record-list {
+  display: grid;
+  gap: 16px;
+}
+
+
+.record-day {
+  display: grid;
+  gap: 10px;
+
+  border-top:
+    1px solid var(--border-color);
+
+  padding-top: 16px;
+}
+
+
+.record-day:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+
+.record-day h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+
+.record-item {
+  display: grid;
+  gap: 8px;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 14px;
+
+  background: #ffffff;
+}
+
+
+.record-item-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+
+.record-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+
+@media (max-width: 640px) {
+  .record-editor-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+  .record-editor-toolbar input {
+    width: 100%;
+    min-width: 0;
+  }
+
+
+  .record-item-heading {
+    flex-direction: column;
+  }
+}
+
+/* ========================================
+   レポート形式の記録編集画面
+======================================== */
+
+.record-edit-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+
+.record-edit-heading > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+
+.record-edit-heading h2 {
+  margin: 0;
+}
+
+
+.record-period-navigation {
+  display: grid;
+
+  grid-template-columns:
+    48px minmax(0, 1fr) 48px;
+
+  align-items: end;
+  gap: 8px;
+
+  margin-top: 20px;
+}
+
+
+.record-period-navigation label {
+  display: grid;
+  gap: 6px;
+}
+
+
+.record-period-navigation label[hidden] {
+  display: none;
+}
+
+
+.record-period-navigation input {
+  width: 100%;
+}
+
+
+.record-summary-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+
+  margin-bottom: 20px;
+}
+
+
+.record-summary-heading h2 {
+  margin:
+    4px 0 8px;
+}
+
+
+.record-total-time {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+
+  white-space: nowrap;
+}
+
+
+.record-total-time span {
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.8rem;
+}
+
+
+.record-total-time strong {
+  font-size: 1.4rem;
+}
+
+
+@media (max-width: 640px) {
+  .record-edit-heading {
+    flex-direction: column;
+  }
+
+
+  .record-edit-heading .primary-button {
+    width: 100%;
+  }
+
+
+  .record-summary-heading {
+    flex-direction: column;
+  }
+
+
+  .record-total-time {
+    justify-items: start;
+  }
+}
