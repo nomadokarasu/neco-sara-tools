@@ -537,10 +537,6 @@ function moveSelectedPeriod(
 // ========================================
 
 function renderReport() {
-  appData =
-    loadAppData();
-
-
   const periodRange =
     getSelectedPeriodRange();
 
