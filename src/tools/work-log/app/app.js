@@ -498,6 +498,21 @@ async function saveQueuedDataToServer() {
 
 
 // ========================================
+// 表示設定だけをブラウザ内に保存
+// ========================================
+
+function saveDisplaySettingsLocally() {
+  localStorage.setItem(
+    STORAGE_KEY,
+
+    JSON.stringify(
+      appData
+    )
+  );
+}
+
+
+// ========================================
 // 日・週・月ボタン
 // ========================================
 
@@ -517,12 +532,12 @@ periodButtons.forEach(
 
 
         appData.settings.selectedPeriod =
-          selectedPeriod;
+  selectedPeriod;
 
 
-        saveAppData();
+saveDisplaySettingsLocally();
 
-        updatePeriodButtons();
+updatePeriodButtons();
 
         updateWorkTimeDisplay();
       }
@@ -3264,12 +3279,12 @@ screenTabButtons.forEach(
 
 
         appData.settings.selectedScreen =
-          selectedScreen;
+  selectedScreen;
 
 
-        saveAppData();
+saveDisplaySettingsLocally();
 
-        updateScreenTabs();
+updateScreenTabs();
       }
     );
   }
