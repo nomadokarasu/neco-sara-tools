@@ -232,6 +232,18 @@ a:focus-visible {
 }
 
 
+.archive-heading > div {
+  display:
+    block;
+}
+
+
+.archive-heading .section-label {
+  margin-bottom:
+    4px;
+}
+
+
 .section-heading--between {
   display: flex;
 
@@ -2172,12 +2184,18 @@ a:focus-visible {
 
 @media (max-width: 700px) {
   .project-report-item summary {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto;
+
+    gap:
+      10px;
   }
 
 
   .project-total-information {
-    text-align: left;
+    text-align:
+      right;
   }
 
 

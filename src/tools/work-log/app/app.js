@@ -3584,11 +3584,8 @@ function updateNoteInputState() {
 
 function renderCurrentNotes() {
   if (!appData.activeSession) {
-    currentNoteList.innerHTML = `
-      <li class="empty-message">
-        タイマーを開始すると、作業内容を記録できます。
-      </li>
-    `;
+    currentNoteList.innerHTML =
+      "";
 
     return;
   }

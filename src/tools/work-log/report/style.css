@@ -1045,13 +1045,17 @@ summary:focus-visible {
 
   .project-report-item summary {
     grid-template-columns:
-      1fr;
+      minmax(0, 1fr)
+      auto;
+
+    gap:
+      10px;
   }
 
 
   .project-total-information {
     text-align:
-      left;
+      right;
   }
 
 
