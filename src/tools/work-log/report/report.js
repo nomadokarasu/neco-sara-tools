@@ -986,7 +986,7 @@ function getCurrentProjects(
 
 
 // ========================================
-// 現在のプロジェクトのSUMMARY
+// 選択期間に作業したプロジェクトのSUMMARY
 // ========================================
 
 function renderCurrentSummary(
@@ -996,49 +996,40 @@ function renderCurrentSummary(
     getSelectedPeriodHours();
 
 
-  const currentCategories =
-    appData.categories.filter(
-      function(category) {
-        return (
-          getCurrentProjects(
-            category
-          ).length > 0
-        );
-      }
+  const periodProjectIds =
+    new Set(
+      sessions.map(
+        function(session) {
+          return session.projectId;
+        }
+      )
     );
 
 
-  const currentProjectIds =
-    new Set();
+  const periodCategories =
+    appData.categories.filter(
+      function(category) {
+        const projects =
+          Array.isArray(
+            category.projects
+          )
+            ? category.projects
+            : [];
 
 
-  currentCategories.forEach(
-    function(category) {
-      getCurrentProjects(
-        category
-      ).forEach(
-        function(project) {
-          currentProjectIds.add(
-            project.id
-          );
-        }
-      );
-    }
-  );
-
-
-  const currentSessions =
-    sessions.filter(
-      function(session) {
-        return currentProjectIds.has(
-          session.projectId
+        return projects.some(
+          function(project) {
+            return periodProjectIds.has(
+              project.id
+            );
+          }
         );
       }
     );
 
 
   const totalSeconds =
-    currentSessions.reduce(
+    sessions.reduce(
       function(
         total,
         session
@@ -1062,11 +1053,11 @@ function renderCurrentSummary(
 
 
   if (
-    currentCategories.length === 0
+    periodCategories.length === 0
   ) {
     categorySummaryList.innerHTML = `
       <p class="empty-message">
-        現在のプロジェクトが設定されていません。
+        この期間の作業記録はありません。
       </p>
     `;
 
@@ -1075,18 +1066,30 @@ function renderCurrentSummary(
 
 
   categorySummaryList.innerHTML =
-    currentCategories
+    periodCategories
       .map(
         function(category) {
-          const currentProjects =
-            getCurrentProjects(
-              category
+          const allProjects =
+            Array.isArray(
+              category.projects
+            )
+              ? category.projects
+              : [];
+
+
+          const periodProjects =
+            allProjects.filter(
+              function(project) {
+                return periodProjectIds.has(
+                  project.id
+                );
+              }
             );
 
 
           const categoryProjectIds =
             new Set(
-              currentProjects.map(
+              periodProjects.map(
                 function(project) {
                   return project.id;
                 }
@@ -1095,7 +1098,7 @@ function renderCurrentSummary(
 
 
           const categorySessions =
-            currentSessions.filter(
+            sessions.filter(
               function(session) {
                 return categoryProjectIds.has(
                   session.projectId
@@ -1155,7 +1158,7 @@ function renderCurrentSummary(
 
 
           const projectHtml =
-            currentProjects
+            periodProjects
               .map(
                 function(project) {
                   const projectSessions =
@@ -1329,7 +1332,8 @@ function renderCurrentSummary(
 // ========================================
 
 function renderArchiveReports() {
-  const archiveItems = [];
+  const categoryItems =
+    [];
 
 
   appData.categories.forEach(
@@ -1338,124 +1342,141 @@ function renderArchiveReports() {
         Array.isArray(
           category.projects
         )
-          ? category.projects
+          ? category.projects.filter(
+              function(project) {
+                return (
+                  project.isCurrent ===
+                  false
+                );
+              }
+            )
           : [];
 
 
-      projects
-        .filter(
-          function(project) {
-            return (
-              project.isCurrent ===
-              false
-            );
-          }
-        )
-        .forEach(
-          function(project) {
-            const projectSessions =
-              appData.sessions.filter(
-                function(session) {
-                  return (
-                    session.projectId ===
-                    project.id
-                  );
-                }
-              );
+      if (projects.length === 0) {
+        return;
+      }
 
 
-            const totalSeconds =
-              projectSessions.reduce(
-                function(
-                  total,
-                  session
-                ) {
-                  return (
-                    total +
-                    Number(
-                      session.elapsedSeconds || 0
-                    )
-                  );
-                },
-
-                0
-              );
-
-
-            const workDays =
-              groupSessionsByDay(
-                projectSessions
-              );
-
-
-            let workPeriodText =
-              "作業記録なし";
-
-
-            if (workDays.length > 0) {
-              const newestDate =
-                workDays[0].date;
-
-
-              const oldestDate =
-                workDays[
-                  workDays.length - 1
-                ].date;
-
-
-              workPeriodText =
-                formatJapaneseDate(
-                  oldestDate
-                ) +
-                " ～ " +
-                formatJapaneseDate(
-                  newestDate
+      const projectItems =
+        projects
+          .map(
+            function(project) {
+              const projectSessions =
+                appData.sessions.filter(
+                  function(session) {
+                    return (
+                      session.projectId ===
+                      project.id
+                    );
+                  }
                 );
-            }
 
 
-            archiveItems.push(`
-              <details class="project-report-item">
-                <summary>
-                  <span class="project-summary-main">
-                    <span class="project-category-name">
-                      ${escapeHtml(category.name)}
-                    </span>
+              const totalSeconds =
+                projectSessions.reduce(
+                  function(
+                    total,
+                    session
+                  ) {
+                    return (
+                      total +
+                      Number(
+                        session.elapsedSeconds || 0
+                      )
+                    );
+                  },
 
+                  0
+                );
+
+
+              const workDays =
+                groupSessionsByDay(
+                  projectSessions
+                );
+
+
+              let workPeriodText =
+                "作業記録なし";
+
+
+              if (workDays.length > 0) {
+                const newestDate =
+                  workDays[0].date;
+
+
+                const oldestDate =
+                  workDays[
+                    workDays.length - 1
+                  ].date;
+
+
+                workPeriodText =
+                  formatJapaneseDate(
+                    oldestDate
+                  ) +
+                  " ～ " +
+                  formatJapaneseDate(
+                    newestDate
+                  );
+              }
+
+
+              return `
+                <details class="project-report-item">
+                  <summary>
                     <span class="project-name">
                       ${escapeHtml(project.name)}
                     </span>
-                  </span>
 
-                  <span class="project-total-information">
-                    <span class="project-total-time">
-                      ${formatSecondsAsText(totalSeconds)}
+                    <span class="project-total-information">
+                      <span class="project-total-time">
+                        ${formatSecondsAsText(totalSeconds)}
+                      </span>
+
+                      <span class="project-work-days">
+                        作業日数：
+                        ${workDays.length}日
+                      </span>
                     </span>
+                  </summary>
 
-                    <span class="project-work-days">
-                      作業日数：
-                      ${workDays.length}日
-                    </span>
-                  </span>
-                </summary>
+                  <div class="project-detail">
+                    <p class="archive-work-period">
+                      作業期間：
+                      ${workPeriodText}
+                    </p>
 
-                <div class="project-detail">
-                  <p class="archive-work-period">
-                    作業期間：
-                    ${workPeriodText}
-                  </p>
+                    ${createWorkDayHtml(workDays)}
+                  </div>
+                </details>
+              `;
+            }
+          )
+          .join("");
 
-                  ${createWorkDayHtml(workDays)}
-                </div>
-              </details>
-            `);
-          }
-        );
+
+      categoryItems.push(`
+        <details class="archive-category-item">
+          <summary>
+            <strong>
+              ${escapeHtml(category.name)}
+            </strong>
+          </summary>
+
+          <div class="archive-project-list">
+            ${projectItems}
+          </div>
+        </details>
+      `);
     }
   );
 
 
-  if (archiveItems.length === 0) {
+  if (
+    categoryItems.length === 0
+  ) {
     projectReportList.innerHTML = `
       <p class="empty-message">
         アーカイブされたプロジェクトはありません。
@@ -1467,7 +1488,7 @@ function renderArchiveReports() {
 
 
   projectReportList.innerHTML =
-    archiveItems.join("");
+    categoryItems.join("");
 }
 
 

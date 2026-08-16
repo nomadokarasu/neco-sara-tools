@@ -671,7 +671,62 @@ summary:focus-visible {
 
 
 /* ========================================
-   プロジェクト別の記録
+   アーカイブの階層
+======================================== */
+
+.archive-category-item {
+  overflow:
+    hidden;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background:
+    #ffffff;
+}
+
+
+.archive-category-item > summary {
+  padding:
+    14px 16px;
+
+  background:
+    #f1f1f1;
+
+  cursor:
+    pointer;
+}
+
+
+.archive-category-item > summary:hover {
+  background:
+    #e8e8e8;
+}
+
+
+.archive-project-list {
+  display:
+    grid;
+
+  gap:
+    10px;
+
+  margin:
+    0 16px 16px 28px;
+
+  border-left:
+    2px solid var(--border-color);
+
+  padding:
+    12px 0 0 18px;
+}
+
+
+/* ========================================
+   アーカイブ内のプロジェクト
 ======================================== */
 
 .project-report-list {
@@ -979,6 +1034,15 @@ summary:focus-visible {
   }
 
 
+  .archive-project-list {
+    margin:
+      0 10px 12px 14px;
+
+    padding-left:
+      10px;
+  }
+
+
   .project-report-item summary {
     grid-template-columns:
       1fr;
@@ -1004,11 +1068,72 @@ summary:focus-visible {
       right;
   }
 
-    .work-content-list li {
+  .work-content-list li {
     grid-template-columns:
       1fr;
 
     gap:
       1px;
   }
+}
+
+
+/* ========================================
+   折りたたみマーカーの統一
+======================================== */
+
+details > summary {
+  position:
+    relative;
+
+  list-style:
+    none;
+
+  padding-left:
+    40px !important;
+}
+
+
+details > summary::-webkit-details-marker {
+  display:
+    none;
+}
+
+
+details > summary::before {
+  content:
+    "▶";
+
+  position:
+    absolute;
+
+  top:
+    14px;
+
+  left:
+    14px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size:
+    0.75rem;
+
+  line-height:
+    1.7;
+}
+
+
+.project-report-item > summary::before {
+  top:
+    50%;
+
+  transform:
+    translateY(-50%);
+}
+
+
+details[open] > summary::before {
+  content:
+    "▼";
 }

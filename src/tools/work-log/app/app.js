@@ -1233,6 +1233,22 @@ function getSelectedPeriodHours() {
 // ========================================
 
 function renderCategoryList() {
+  const openCategoryIds =
+    new Set(
+      Array.from(
+        categoryList.querySelectorAll(
+          ".category-item[open]"
+        )
+      ).map(
+        function(categoryItem) {
+          return String(
+            categoryItem.dataset.categoryId
+          );
+        }
+      )
+    );
+
+
   const selectedPeriodHours =
     getSelectedPeriodHours();
 
@@ -1386,11 +1402,34 @@ function renderCategoryList() {
               .join("");
 
 
+          const isCategoryOpen =
+            openCategoryIds.has(
+              String(
+                category.id
+              )
+            );
+
+
           return `
-            <article
+            <details
               class="category-item"
               data-category-id="${category.id}"
+              ${isCategoryOpen ? "open" : ""}
             >
+              <summary class="category-toggle">
+                <strong class="category-toggle-name">
+                  ${escapeHtml(category.name)}
+                </strong>
+
+                <span class="category-toggle-percentage">
+                  ${category.allocationPercent}%
+                </span>
+
+                <span class="category-toggle-hours">
+                  ${formatHours(categoryHours)}
+                </span>
+              </summary>
+
               <div class="category-header">
                 <input
                   class="category-name-input"
@@ -1432,7 +1471,7 @@ function renderCategoryList() {
                 </button>
               </div>
 
-                            <div class="project-list">
+              <div class="project-list">
                 <p
                   class="project-allocation-status${projectAllocationClass}"
                 >
@@ -1461,7 +1500,7 @@ function renderCategoryList() {
                   </button>
                 </form>
               </div>
-            </article>
+            </details>
           `;
         }
       )
@@ -1474,7 +1513,24 @@ function renderCategoryList() {
 // ========================================
 
 function renderProjectStatusList() {
-  const items = [];
+  const openCategoryIds =
+    new Set(
+      Array.from(
+        projectStatusList.querySelectorAll(
+          ".project-status-category[open]"
+        )
+      ).map(
+        function(categoryItem) {
+          return String(
+            categoryItem.dataset.categoryId
+          );
+        }
+      )
+    );
+
+
+  const categoryItems =
+    [];
 
 
   appData.categories.forEach(
@@ -1487,44 +1543,75 @@ function renderProjectStatusList() {
           : [];
 
 
-      projects.forEach(
-        function(project) {
-          const isCurrent =
-            project.isCurrent !== false;
+      if (projects.length === 0) {
+        return;
+      }
 
 
-          items.push(`
-            <label class="project-status-item">
-              <span class="project-status-name">
-                <span class="project-status-category">
-                  ${escapeHtml(category.name)}
-                </span>
+      const projectItems =
+        projects
+          .map(
+            function(project) {
+              const isCurrent =
+                project.isCurrent !== false;
 
-                <strong>
-                  ${escapeHtml(project.name)}
-                </strong>
-              </span>
 
-              <span class="project-status-check">
-                <input
-                  type="checkbox"
-                  data-action="project-current"
-                  data-category-id="${category.id}"
-                  data-project-id="${project.id}"
-                  ${isCurrent ? "checked" : ""}
-                >
+              return `
+                <label class="project-status-item">
+                  <strong class="project-status-name">
+                    ${escapeHtml(project.name)}
+                  </strong>
 
-                現在のプロジェクト
-              </span>
-            </label>
-          `);
-        }
-      );
+                  <span class="project-status-check">
+                    <input
+                      type="checkbox"
+                      data-action="project-current"
+                      data-category-id="${category.id}"
+                      data-project-id="${project.id}"
+                      ${isCurrent ? "checked" : ""}
+                    >
+
+                    現在のプロジェクト
+                  </span>
+                </label>
+              `;
+            }
+          )
+          .join("");
+
+
+      const isOpen =
+        openCategoryIds.has(
+          String(
+            category.id
+          )
+        );
+
+
+      categoryItems.push(`
+        <details
+          class="project-status-category"
+          data-category-id="${category.id}"
+          ${isOpen ? "open" : ""}
+        >
+          <summary>
+            <strong>
+              ${escapeHtml(category.name)}
+            </strong>
+          </summary>
+
+          <div class="project-status-category-list">
+            ${projectItems}
+          </div>
+        </details>
+      `);
     }
   );
 
 
-  if (items.length === 0) {
+  if (
+    categoryItems.length === 0
+  ) {
     projectStatusList.innerHTML = `
       <p class="empty-message">
         プロジェクトが設定されていません。
@@ -1536,7 +1623,7 @@ function renderProjectStatusList() {
 
 
   projectStatusList.innerHTML =
-    items.join("");
+    categoryItems.join("");
 }
 
 
@@ -1600,6 +1687,8 @@ projectStatusList.addEventListener(
     saveAppData();
 
     updateWorkTimeDisplay();
+
+    renderRecordSummary();
 
 
     showStatusMessage(
@@ -4046,170 +4135,118 @@ function renderRecordSummary() {
       periodRange
     );
 
-recordTotalTime.textContent =
-  formatSecondsAsText(
-    totalSeconds
+  recordTotalTime.textContent =
+    formatSecondsAsText(
+      totalSeconds
+    );
+
+
+  renderRecordIntegratedSummary(
+    sessions
   );
 
-  renderRecordCategorySummary(
-  sessions
-);
 
-renderRecordProjectReports(
-  sessions
-);
+  renderRecordProjectReports(
+    appData.sessions
+  );
 }
 
-function renderRecordCategorySummary(
+function renderRecordIntegratedSummary(
   sessions
 ) {
+  const periodProjectIds =
+    new Set(
+      sessions.map(
+        function(session) {
+          return session.projectId;
+        }
+      )
+    );
+
+
+  const periodCategories =
+    appData.categories.filter(
+      function(category) {
+        const projects =
+          Array.isArray(
+            category.projects
+          )
+            ? category.projects
+            : [];
+
+
+        return projects.some(
+          function(project) {
+            return periodProjectIds.has(
+              project.id
+            );
+          }
+        );
+      }
+    );
+
+
   if (
-    appData.categories.length === 0
+    periodCategories.length === 0
   ) {
     recordCategorySummaryList.innerHTML = `
       <p class="empty-message">
-        大分類が設定されていません。
+        この期間の作業記録はありません。
       </p>
     `;
 
     return;
   }
 
+
   const selectedPeriodHours =
     getSelectedPeriodHours();
+
 
   recordCategorySummaryList.innerHTML =
-    appData.categories
+    periodCategories
       .map(
         function(category) {
-          const plannedSeconds =
-            Math.round(
-              selectedPeriodHours *
-              Number(
-                category.allocationPercent || 0
-              ) /
-              100 *
-              3600
-            );
+          const allProjects =
+            Array.isArray(
+              category.projects
+            )
+              ? category.projects
+              : [];
 
-          const actualSeconds =
-            sessions
-              .filter(
-                function(session) {
-                  return (
-                    session.categoryId ===
-                    category.id
-                  );
-                }
-              )
-              .reduce(
-                function(
-                  total,
-                  session
-                ) {
-                  return (
-                    total +
-                    Number(
-                      session.elapsedSeconds || 0
-                    )
-                  );
-                },
 
-                0
-              );
-
-          const progressPercent =
-            calculateProgressPercent(
-              actualSeconds,
-              plannedSeconds
-            );
-
-          const progressRate =
-            calculateProgressRate(
-              actualSeconds,
-              plannedSeconds
-            );
-
-          const progressStatus =
-            createProgressStatus(
-              actualSeconds,
-              plannedSeconds
-            );
-
-          return `
-            <article class="progress-item">
-              <div class="progress-heading">
-                <span class="progress-name">
-                  ${escapeHtml(category.name)}
-
-                  <strong class="progress-percentage">
-                    ${progressRate}
-                  </strong>
-                </span>
-
-                <span class="progress-time">
-                  実績
-                  ${formatSecondsAsText(actualSeconds)}
-                  ／
-                  予定
-                  ${formatSecondsAsText(plannedSeconds)}
-                </span>
-              </div>
-
-              <div class="progress-bar">
-                <span
-                  class="progress-bar__value"
-                  style="width: ${progressPercent}%"
-                ></span>
-              </div>
-
-              <p
-                class="progress-remaining${progressStatus.isOver ? " is-over" : ""}"
-              >
-                ${progressStatus.message}
-              </p>
-            </article>
-          `;
-        }
-      )
-      .join("");
-}
-
-// ========================================
-// 記録編集のプロジェクト別記録
-// ========================================
-
-function renderRecordProjectReports(
-  sessions
-) {
-  const selectedPeriodHours =
-    getSelectedPeriodHours();
-
-  const reportItems = [];
-
-  appData.categories.forEach(
-    function(category) {
-      const projects =
-        Array.isArray(
-          category.projects
-        )
-          ? category.projects
-          : [];
-
-      projects.forEach(
-        function(project) {
-          const projectSessions =
-            sessions.filter(
-              function(session) {
-                return (
-                  session.projectId ===
+          const projects =
+            allProjects.filter(
+              function(project) {
+                return periodProjectIds.has(
                   project.id
                 );
               }
             );
 
-          const totalSeconds =
-            projectSessions.reduce(
+
+          const projectIds =
+            new Set(
+              projects.map(
+                function(project) {
+                  return project.id;
+                }
+              )
+            );
+
+
+          const categorySessions =
+            sessions.filter(
+              function(session) {
+                return projectIds.has(
+                  session.projectId
+                );
+              }
+            );
+
+
+          const categoryActualSeconds =
+            categorySessions.reduce(
               function(
                 total,
                 session
@@ -4225,84 +4262,355 @@ function renderRecordProjectReports(
               0
             );
 
-          const plannedSeconds =
+
+          const categoryPlannedSeconds =
             Math.round(
               selectedPeriodHours *
               Number(
                 category.allocationPercent || 0
               ) /
               100 *
-              Number(
-                project.allocationPercent || 0
-              ) /
-              100 *
               3600
             );
 
-          const progressRate =
+
+          const categoryProgressPercent =
+            calculateProgressPercent(
+              categoryActualSeconds,
+              categoryPlannedSeconds
+            );
+
+
+          const categoryProgressRate =
             calculateProgressRate(
-              totalSeconds,
-              plannedSeconds
+              categoryActualSeconds,
+              categoryPlannedSeconds
             );
 
-          const workDays =
-            groupRecordSessionsByDay(
-              projectSessions
+
+          const categoryStatus =
+            createProgressStatus(
+              categoryActualSeconds,
+              categoryPlannedSeconds
             );
 
-          reportItems.push(`
-            <details class="project-report-item">
+
+          const projectHtml =
+            projects
+              .map(
+                function(project) {
+                  const projectSessions =
+                    categorySessions.filter(
+                      function(session) {
+                        return (
+                          session.projectId ===
+                          project.id
+                        );
+                      }
+                    );
+
+
+                  const projectActualSeconds =
+                    projectSessions.reduce(
+                      function(
+                        total,
+                        session
+                      ) {
+                        return (
+                          total +
+                          Number(
+                            session.elapsedSeconds || 0
+                          )
+                        );
+                      },
+
+                      0
+                    );
+
+
+                  const projectPlannedSeconds =
+                    Math.round(
+                      selectedPeriodHours *
+                      Number(
+                        category.allocationPercent || 0
+                      ) /
+                      100 *
+                      Number(
+                        project.allocationPercent || 0
+                      ) /
+                      100 *
+                      3600
+                    );
+
+
+                  const projectProgressPercent =
+                    calculateProgressPercent(
+                      projectActualSeconds,
+                      projectPlannedSeconds
+                    );
+
+
+                  const projectProgressRate =
+                    calculateProgressRate(
+                      projectActualSeconds,
+                      projectPlannedSeconds
+                    );
+
+
+                  const projectStatus =
+                    createProgressStatus(
+                      projectActualSeconds,
+                      projectPlannedSeconds
+                    );
+
+
+                  const workDays =
+                    groupRecordSessionsByDay(
+                      projectSessions
+                    );
+
+
+                  const archiveLabel =
+                    project.isCurrent === false
+                      ? `
+                        <span class="record-archive-label">
+                          アーカイブ
+                        </span>
+                      `
+                      : "";
+
+
+                  return `
+                    <details class="record-summary-project">
+                      <summary>
+                        <div class="record-summary-overview">
+                          <div class="progress-heading">
+                            <span class="progress-name">
+                              ${escapeHtml(project.name)}
+
+                              ${archiveLabel}
+
+                              <strong class="progress-percentage">
+                                ${projectProgressRate}
+                              </strong>
+                            </span>
+
+                            <span class="progress-time">
+                              実績
+                              ${formatSecondsAsText(projectActualSeconds)}
+                              ／
+                              予定
+                              ${formatSecondsAsText(projectPlannedSeconds)}
+                            </span>
+                          </div>
+
+                          <div class="progress-bar">
+                            <span
+                              class="progress-bar__value"
+                              style="width: ${projectProgressPercent}%"
+                            ></span>
+                          </div>
+
+                          <p
+                            class="progress-remaining${projectStatus.isOver ? " is-over" : ""}"
+                          >
+                            ${projectStatus.message}
+                          </p>
+                        </div>
+                      </summary>
+
+                      <div class="record-summary-project-detail">
+                        ${createRecordWorkDayHtml(workDays)}
+                      </div>
+                    </details>
+                  `;
+                }
+              )
+              .join("");
+
+
+          return `
+            <details class="progress-item record-summary-category">
               <summary>
-                <span class="project-summary-main">
-                  <span class="project-category-name">
-                    ${escapeHtml(category.name)}
-                  </span>
+                <div class="record-summary-overview">
+                  <div class="progress-heading">
+                    <span class="progress-name">
+                      ${escapeHtml(category.name)}
 
-                  <span class="project-name">
-                    ${escapeHtml(project.name)}
+                      <strong class="progress-percentage">
+                        ${categoryProgressRate}
+                      </strong>
+                    </span>
 
-                    <strong class="progress-percentage">
-                      ${progressRate}
-                    </strong>
-                  </span>
-                </span>
+                    <span class="progress-time">
+                      実績
+                      ${formatSecondsAsText(categoryActualSeconds)}
+                      ／
+                      予定
+                      ${formatSecondsAsText(categoryPlannedSeconds)}
+                    </span>
+                  </div>
 
-                <span class="project-total-information">
-                  <span class="project-total-time">
-                    ${formatSecondsAsText(totalSeconds)}
-                  </span>
+                  <div class="progress-bar">
+                    <span
+                      class="progress-bar__value"
+                      style="width: ${categoryProgressPercent}%"
+                    ></span>
+                  </div>
 
-                  <span class="project-work-days">
-                    作業日数：
-                    ${workDays.length}日
-                  </span>
-                </span>
+                  <p
+                    class="progress-remaining${categoryStatus.isOver ? " is-over" : ""}"
+                  >
+                    ${categoryStatus.message}
+                  </p>
+                </div>
               </summary>
 
-              <div class="project-detail">
-                ${createRecordWorkDayHtml(workDays)}
+              <div class="record-summary-project-list">
+                ${projectHtml}
               </div>
             </details>
-          `);
+          `;
         }
-      );
+      )
+      .join("");
+}
+
+
+// ========================================
+// 記録編集のアーカイブ
+// ========================================
+
+function renderRecordProjectReports(
+  sessions
+) {
+  const categoryItems =
+    [];
+
+
+  appData.categories.forEach(
+    function(category) {
+      const projects =
+        Array.isArray(
+          category.projects
+        )
+          ? category.projects.filter(
+              function(project) {
+                return (
+                  project.isCurrent ===
+                  false
+                );
+              }
+            )
+          : [];
+
+
+      if (projects.length === 0) {
+        return;
+      }
+
+
+      const projectItems =
+        projects
+          .map(
+            function(project) {
+              const projectSessions =
+                sessions.filter(
+                  function(session) {
+                    return (
+                      session.projectId ===
+                      project.id
+                    );
+                  }
+                );
+
+
+              const totalSeconds =
+                projectSessions.reduce(
+                  function(
+                    total,
+                    session
+                  ) {
+                    return (
+                      total +
+                      Number(
+                        session.elapsedSeconds || 0
+                      )
+                    );
+                  },
+
+                  0
+                );
+
+
+              const workDays =
+                groupRecordSessionsByDay(
+                  projectSessions
+                );
+
+
+              return `
+                <details class="project-report-item">
+                  <summary>
+                    <span class="project-name">
+                      ${escapeHtml(project.name)}
+                    </span>
+
+                    <span class="project-total-information">
+                      <span class="project-total-time">
+                        ${formatSecondsAsText(totalSeconds)}
+                      </span>
+
+                      <span class="project-work-days">
+                        作業日数：
+                        ${workDays.length}日
+                      </span>
+                    </span>
+                  </summary>
+
+                  <div class="project-detail">
+                    ${createRecordWorkDayHtml(workDays)}
+                  </div>
+                </details>
+              `;
+            }
+          )
+          .join("");
+
+
+      categoryItems.push(`
+        <details class="record-archive-category">
+          <summary>
+            <strong>
+              ${escapeHtml(category.name)}
+            </strong>
+          </summary>
+
+          <div class="record-archive-project-list">
+            ${projectItems}
+          </div>
+        </details>
+      `);
     }
   );
 
-  if (reportItems.length === 0) {
+
+  if (
+    categoryItems.length === 0
+  ) {
     recordProjectList.innerHTML = `
       <p class="empty-message">
-        プロジェクトが設定されていません。
+        アーカイブされたプロジェクトはありません。
       </p>
     `;
 
     return;
   }
 
-  recordProjectList.innerHTML =
-    reportItems.join("");
-}
 
+  recordProjectList.innerHTML =
+    categoryItems.join("");
+}
 
 function groupRecordSessionsByDay(
   sessions
@@ -4755,7 +5063,7 @@ function initializeRecordForm() {
   );
 
 
-  recordProjectList.addEventListener(
+   recordsPanel.addEventListener(
   "click",
 
   function(event) {
@@ -5652,6 +5960,14 @@ function updateScreenTabs() {
   recordsPanel.hidden =
     selectedScreen !==
     "records";
+
+
+  if (
+    selectedScreen ===
+    "records"
+  ) {
+    renderRecordSummary();
+  }
 }
 
 

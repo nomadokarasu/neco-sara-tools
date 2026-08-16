@@ -606,6 +606,57 @@ a:focus-visible {
 }
 
 
+.project-status-category {
+  overflow:
+    hidden;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background:
+    #ffffff;
+}
+
+
+.project-status-category > summary {
+  padding:
+    14px 16px;
+
+  background:
+    #f1f1f1;
+
+  cursor:
+    pointer;
+}
+
+
+.project-status-category > summary:hover {
+  background:
+    #e8e8e8;
+}
+
+
+.project-status-category-list {
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  margin-left:
+    28px;
+
+  border-left:
+    2px solid var(--border-color);
+
+  padding:
+    12px 12px 12px 18px;
+}
+
+
 .project-status-item {
   display: flex;
   align-items: center;
@@ -618,7 +669,8 @@ a:focus-visible {
   border-radius:
     var(--border-radius);
 
-  padding: 14px 16px;
+  padding:
+    12px 14px;
 
   background:
     #ffffff;
@@ -626,23 +678,9 @@ a:focus-visible {
 
 
 .project-status-name {
-  min-width: 0;
-}
+  min-width:
+    0;
 
-
-.project-status-category {
-  display: block;
-
-  margin-bottom: 3px;
-
-  color:
-    var(--sub-text-color);
-
-  font-size: 0.75rem;
-}
-
-
-.project-status-name strong {
   overflow-wrap:
     anywhere;
 }
@@ -668,10 +706,24 @@ a:focus-visible {
 
 
 @media (max-width: 640px) {
+  .project-status-category-list {
+    margin-left:
+      14px;
+
+    padding-left:
+      10px;
+  }
+
+
   .project-status-item {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 12px;
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+
+    gap:
+      12px;
   }
 }
 
@@ -701,6 +753,57 @@ a:focus-visible {
 
   border-radius:
     var(--border-radius);
+}
+
+
+.category-toggle {
+  display: grid;
+
+  grid-template-columns:
+    minmax(160px, 1fr)
+    100px
+    100px;
+
+  align-items: center;
+  gap: 10px;
+
+  padding: 14px 16px;
+
+  background:
+    #f1f1f1;
+
+  cursor: pointer;
+}
+
+
+.category-toggle:hover {
+  background:
+    #e8e8e8;
+}
+
+
+.category-toggle-name {
+  overflow-wrap:
+    anywhere;
+}
+
+
+.category-toggle-percentage,
+.category-toggle-hours {
+  color:
+    var(--sub-text-color);
+
+  font-size:
+    0.8rem;
+
+  text-align:
+    right;
+}
+
+
+.category-item[open] > .category-toggle {
+  border-bottom:
+    1px solid var(--border-color);
 }
 
 
@@ -1353,6 +1456,18 @@ a:focus-visible {
   }
 
 
+  .category-toggle {
+    grid-template-columns:
+      minmax(100px, 1fr)
+      auto;
+  }
+
+
+  .category-toggle-hours {
+    display: none;
+  }
+
+
   .category-header {
     grid-template-columns:
       minmax(100px, 1fr)
@@ -1689,8 +1804,218 @@ a:focus-visible {
 }
 
 /* ========================================
-   記録編集：プロジェクト別記録
+   記録編集：SUMMARYの階層
 ======================================== */
+
+.record-summary-category {
+  overflow: hidden;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background:
+    #ffffff;
+}
+
+
+.record-summary-category > summary {
+  padding:
+    14px 16px;
+
+  cursor:
+    pointer;
+}
+
+
+.record-summary-category > summary:hover {
+  background:
+    #f3f3f3;
+}
+
+
+.record-summary-overview {
+  display: grid;
+  gap: 7px;
+}
+
+
+.record-summary-project-list {
+  display: grid;
+  gap: 10px;
+
+  margin:
+    0 16px 16px 28px;
+
+  border-left:
+    2px solid var(--border-color);
+
+  padding:
+    12px 0 0 18px;
+}
+
+
+.record-summary-project {
+  overflow: hidden;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background:
+    #ffffff;
+}
+
+
+.record-summary-project > summary {
+  padding:
+    12px 14px;
+
+  cursor:
+    pointer;
+}
+
+
+.record-summary-project > summary:hover {
+  background:
+    #f3f3f3;
+}
+
+
+.record-summary-project-detail {
+  display: grid;
+  gap: 12px;
+
+  margin-left:
+    18px;
+
+  border-top:
+    1px solid var(--border-color);
+
+  border-left:
+    1px solid var(--border-color);
+
+  padding:
+    14px 14px 14px 18px;
+}
+
+
+.record-archive-label {
+  display: inline-block;
+
+  margin-left:
+    8px;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    999px;
+
+  padding:
+    2px 7px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size:
+    0.7rem;
+
+  font-weight:
+    400;
+}
+
+
+@media (max-width: 640px) {
+  .record-summary-project-list,
+  .record-archive-project-list {
+    margin:
+      0 10px 12px 14px;
+
+    padding-left:
+      10px;
+  }
+
+
+  .record-summary-project-detail {
+    margin-left:
+      8px;
+
+    padding-left:
+      10px;
+  }
+}
+
+
+/* ========================================
+   記録編集：アーカイブ
+======================================== */
+
+.record-archive-category {
+  overflow:
+    hidden;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background:
+    #ffffff;
+}
+
+
+.record-archive-category > summary {
+  padding:
+    14px 16px;
+
+  background:
+    #f1f1f1;
+
+  cursor:
+    pointer;
+}
+
+
+.record-archive-category > summary:hover {
+  background:
+    #e8e8e8;
+}
+
+
+.record-archive-project-list {
+  display:
+    grid;
+
+  gap:
+    10px;
+
+  margin:
+    0 16px 16px 28px;
+
+  border-left:
+    2px solid var(--border-color);
+
+  padding:
+    12px 0 0 18px;
+}
+
+
+@media (max-width: 640px) {
+  .record-archive-project-list {
+    margin:
+      0 10px 12px 14px;
+
+    padding-left:
+      10px;
+  }
+}
+
 
 .project-report-list {
   display: grid;
@@ -2000,4 +2325,65 @@ a:focus-visible {
   .record-form-actions button {
     width: 100%;
   }
+}
+
+
+/* ========================================
+   折りたたみマーカーの統一
+======================================== */
+
+details > summary {
+  position:
+    relative;
+
+  list-style:
+    none;
+
+  padding-left:
+    40px !important;
+}
+
+
+details > summary::-webkit-details-marker {
+  display:
+    none;
+}
+
+
+details > summary::before {
+  content:
+    "▶";
+
+  position:
+    absolute;
+
+  top:
+    14px;
+
+  left:
+    14px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size:
+    0.75rem;
+
+  line-height:
+    1.7;
+}
+
+
+.project-report-item > summary::before {
+  top:
+    50%;
+
+  transform:
+    translateY(-50%);
+}
+
+
+details[open] > summary::before {
+  content:
+    "▼";
 }
