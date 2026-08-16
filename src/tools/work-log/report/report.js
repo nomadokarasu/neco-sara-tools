@@ -68,6 +68,18 @@ const monthInputLabel =
   );
 
 
+const weekRangeDisplay =
+  document.getElementById(
+    "week-range-display"
+  );
+
+
+const weekRangeText =
+  document.getElementById(
+    "week-range-text"
+  );
+
+
 const activeWorkPanel =
   document.getElementById(
     "active-work-panel"
@@ -255,6 +267,36 @@ function loadLocalReportData() {
 
 
 function normalizeReportData(data) {
+  const categories =
+    Array.isArray(
+      data.categories
+    )
+      ? data.categories.map(
+          function(category) {
+            return {
+              ...category,
+
+              projects:
+                Array.isArray(
+                  category.projects
+                )
+                  ? category.projects.map(
+                      function(project) {
+                        return {
+                          ...project,
+
+                          isCurrent:
+                            project.isCurrent !== false
+                        };
+                      }
+                    )
+                  : []
+            };
+          }
+        )
+      : [];
+
+
   return {
     ...structuredClone(
       defaultData
@@ -269,11 +311,7 @@ function normalizeReportData(data) {
     },
 
     categories:
-      Array.isArray(
-        data.categories
-      )
-        ? data.categories
-        : [],
+      categories,
 
     sessions:
       Array.isArray(
@@ -359,6 +397,49 @@ function setDateInputValues() {
     formatMonthForInput(
       selectedDate
     );
+
+
+  updateReportWeekRange();
+}
+
+
+function updateReportWeekRange() {
+  const weekStart =
+    getWeekStart(
+      selectedDate
+    );
+
+  const weekEnd =
+    new Date(
+      weekStart
+    );
+
+  weekEnd.setDate(
+    weekEnd.getDate() + 6
+  );
+
+  weekRangeText.textContent =
+    formatReportMonthDay(
+      weekStart
+    ) +
+    "～" +
+    formatReportMonthDay(
+      weekEnd
+    );
+}
+
+
+function formatReportMonthDay(
+  date
+) {
+  return (
+    (
+      date.getMonth() + 1
+    ) +
+    "月" +
+    date.getDate() +
+    "日"
+  );
 }
 
 
@@ -367,28 +448,32 @@ function setDateInputValues() {
 // ========================================
 
 function updateDateInputDisplay() {
+  const isDay =
+    selectedPeriod ===
+    "day";
+
+  const isWeek =
+    selectedPeriod ===
+    "week";
+
   const isMonth =
     selectedPeriod ===
     "month";
 
 
   dateInputLabel.hidden =
-    isMonth;
+    !isDay;
 
+  weekRangeDisplay.hidden =
+    !isWeek;
 
   monthInputLabel.hidden =
     !isMonth;
 
 
-  if (selectedPeriod === "day") {
+  if (isDay) {
     dateInputLabel.firstChild.textContent =
       "表示する日";
-  }
-
-
-  if (selectedPeriod === "week") {
-    dateInputLabel.firstChild.textContent =
-      "週の基準日";
   }
 
 
@@ -554,14 +639,12 @@ function renderReport() {
 
   renderActiveWork();
 
-  renderCategorySummary(
+  renderCurrentSummary(
     sessions
   );
 
 
-  renderProjectReports(
-    sessions
-  );
+  renderArchiveReports();
 }
 
 
@@ -747,10 +830,26 @@ function renderPeriodInformation(
   }
 
 
-  if (selectedPeriod === "week") {
-    reportPeriodTitle.textContent =
-      "週間集計";
-  }
+if (selectedPeriod === "week") {
+  const weekEnd =
+    new Date(
+      periodRange.end
+    );
+
+  weekEnd.setDate(
+    weekEnd.getDate() - 1
+  );
+
+  reportPeriodTitle.textContent =
+    formatReportMonthDay(
+      periodRange.start
+    ) +
+    "～" +
+    formatReportMonthDay(
+      weekEnd
+    ) +
+    "の集計";
+}
 
 
   if (selectedPeriod === "month") {
@@ -855,6 +954,520 @@ function getActiveElapsedSeconds() {
       1000
     )
   );
+}
+
+
+// ========================================
+// 現在のプロジェクトを取得する
+// ========================================
+
+function getCurrentProjects(
+  category
+) {
+  if (
+    !category ||
+    !Array.isArray(
+      category.projects
+    )
+  ) {
+    return [];
+  }
+
+
+  return category.projects.filter(
+    function(project) {
+      return (
+        project.isCurrent !==
+        false
+      );
+    }
+  );
+}
+
+
+// ========================================
+// 現在のプロジェクトのSUMMARY
+// ========================================
+
+function renderCurrentSummary(
+  sessions
+) {
+  const periodHours =
+    getSelectedPeriodHours();
+
+
+  const currentCategories =
+    appData.categories.filter(
+      function(category) {
+        return (
+          getCurrentProjects(
+            category
+          ).length > 0
+        );
+      }
+    );
+
+
+  const currentProjectIds =
+    new Set();
+
+
+  currentCategories.forEach(
+    function(category) {
+      getCurrentProjects(
+        category
+      ).forEach(
+        function(project) {
+          currentProjectIds.add(
+            project.id
+          );
+        }
+      );
+    }
+  );
+
+
+  const currentSessions =
+    sessions.filter(
+      function(session) {
+        return currentProjectIds.has(
+          session.projectId
+        );
+      }
+    );
+
+
+  const totalSeconds =
+    currentSessions.reduce(
+      function(
+        total,
+        session
+      ) {
+        return (
+          total +
+          Number(
+            session.elapsedSeconds || 0
+          )
+        );
+      },
+
+      0
+    );
+
+
+  reportTotalTime.textContent =
+    formatSecondsAsText(
+      totalSeconds
+    );
+
+
+  if (
+    currentCategories.length === 0
+  ) {
+    categorySummaryList.innerHTML = `
+      <p class="empty-message">
+        現在のプロジェクトが設定されていません。
+      </p>
+    `;
+
+    return;
+  }
+
+
+  categorySummaryList.innerHTML =
+    currentCategories
+      .map(
+        function(category) {
+          const currentProjects =
+            getCurrentProjects(
+              category
+            );
+
+
+          const categoryProjectIds =
+            new Set(
+              currentProjects.map(
+                function(project) {
+                  return project.id;
+                }
+              )
+            );
+
+
+          const categorySessions =
+            currentSessions.filter(
+              function(session) {
+                return categoryProjectIds.has(
+                  session.projectId
+                );
+              }
+            );
+
+
+          const categoryActualSeconds =
+            categorySessions.reduce(
+              function(
+                total,
+                session
+              ) {
+                return (
+                  total +
+                  Number(
+                    session.elapsedSeconds || 0
+                  )
+                );
+              },
+
+              0
+            );
+
+
+          const categoryPlannedSeconds =
+            Math.round(
+              periodHours *
+              Number(
+                category.allocationPercent || 0
+              ) /
+              100 *
+              3600
+            );
+
+
+          const categoryProgressRate =
+            calculateProgressRate(
+              categoryActualSeconds,
+              categoryPlannedSeconds
+            );
+
+
+          const categoryProgressWidth =
+            calculateProgressWidth(
+              categoryActualSeconds,
+              categoryPlannedSeconds
+            );
+
+
+          const categoryStatus =
+            createProgressStatus(
+              categoryActualSeconds,
+              categoryPlannedSeconds
+            );
+
+
+          const projectHtml =
+            currentProjects
+              .map(
+                function(project) {
+                  const projectSessions =
+                    categorySessions.filter(
+                      function(session) {
+                        return (
+                          session.projectId ===
+                          project.id
+                        );
+                      }
+                    );
+
+
+                  const projectActualSeconds =
+                    projectSessions.reduce(
+                      function(
+                        total,
+                        session
+                      ) {
+                        return (
+                          total +
+                          Number(
+                            session.elapsedSeconds || 0
+                          )
+                        );
+                      },
+
+                      0
+                    );
+
+
+                  const projectPlannedSeconds =
+                    Math.round(
+                      periodHours *
+                      Number(
+                        category.allocationPercent || 0
+                      ) /
+                      100 *
+                      Number(
+                        project.allocationPercent || 0
+                      ) /
+                      100 *
+                      3600
+                    );
+
+
+                  const projectProgressRate =
+                    calculateProgressRate(
+                      projectActualSeconds,
+                      projectPlannedSeconds
+                    );
+
+
+                  const projectProgressWidth =
+                    calculateProgressWidth(
+                      projectActualSeconds,
+                      projectPlannedSeconds
+                    );
+
+
+                  const projectStatus =
+                    createProgressStatus(
+                      projectActualSeconds,
+                      projectPlannedSeconds
+                    );
+
+
+                  const workDays =
+                    groupSessionsByDay(
+                      projectSessions
+                    );
+
+
+                  return `
+                    <details class="summary-project-item">
+                      <summary>
+                        <div class="summary-project-overview">
+                          <div class="category-summary-heading">
+                            <span class="category-summary-name">
+                              ${escapeHtml(project.name)}
+
+                              <strong class="progress-percentage">
+                                ${projectProgressRate}
+                              </strong>
+                            </span>
+
+                            <span class="category-summary-times">
+                              実績
+                              ${formatSecondsAsText(projectActualSeconds)}
+                              ／
+                              予定
+                              ${formatSecondsAsText(projectPlannedSeconds)}
+                            </span>
+                          </div>
+
+                          <div class="progress-bar">
+                            <span
+                              class="progress-bar__value"
+                              style="width: ${projectProgressWidth}%"
+                            ></span>
+                          </div>
+
+                          <p
+                            class="category-summary-status${projectStatus.isOver ? " is-over" : ""}"
+                          >
+                            ${projectStatus.message}
+                          </p>
+                        </div>
+                      </summary>
+
+                      <div class="summary-project-detail">
+                        ${createWorkDayHtml(workDays)}
+                      </div>
+                    </details>
+                  `;
+                }
+              )
+              .join("");
+
+
+          return `
+            <details class="category-summary-item">
+              <summary>
+                <div class="category-summary-overview">
+                  <div class="category-summary-heading">
+                    <span class="category-summary-name">
+                      ${escapeHtml(category.name)}
+
+                      <strong class="progress-percentage">
+                        ${categoryProgressRate}
+                      </strong>
+                    </span>
+
+                    <span class="category-summary-times">
+                      実績
+                      ${formatSecondsAsText(categoryActualSeconds)}
+                      ／
+                      予定
+                      ${formatSecondsAsText(categoryPlannedSeconds)}
+                    </span>
+                  </div>
+
+                  <div class="progress-bar">
+                    <span
+                      class="progress-bar__value"
+                      style="width: ${categoryProgressWidth}%"
+                    ></span>
+                  </div>
+
+                  <p
+                    class="category-summary-status${categoryStatus.isOver ? " is-over" : ""}"
+                  >
+                    ${categoryStatus.message}
+                  </p>
+                </div>
+              </summary>
+
+              <div class="summary-project-list">
+                ${projectHtml}
+              </div>
+            </details>
+          `;
+        }
+      )
+      .join("");
+}
+
+
+// ========================================
+// アーカイブされたプロジェクト
+// ========================================
+
+function renderArchiveReports() {
+  const archiveItems = [];
+
+
+  appData.categories.forEach(
+    function(category) {
+      const projects =
+        Array.isArray(
+          category.projects
+        )
+          ? category.projects
+          : [];
+
+
+      projects
+        .filter(
+          function(project) {
+            return (
+              project.isCurrent ===
+              false
+            );
+          }
+        )
+        .forEach(
+          function(project) {
+            const projectSessions =
+              appData.sessions.filter(
+                function(session) {
+                  return (
+                    session.projectId ===
+                    project.id
+                  );
+                }
+              );
+
+
+            const totalSeconds =
+              projectSessions.reduce(
+                function(
+                  total,
+                  session
+                ) {
+                  return (
+                    total +
+                    Number(
+                      session.elapsedSeconds || 0
+                    )
+                  );
+                },
+
+                0
+              );
+
+
+            const workDays =
+              groupSessionsByDay(
+                projectSessions
+              );
+
+
+            let workPeriodText =
+              "作業記録なし";
+
+
+            if (workDays.length > 0) {
+              const newestDate =
+                workDays[0].date;
+
+
+              const oldestDate =
+                workDays[
+                  workDays.length - 1
+                ].date;
+
+
+              workPeriodText =
+                formatJapaneseDate(
+                  oldestDate
+                ) +
+                " ～ " +
+                formatJapaneseDate(
+                  newestDate
+                );
+            }
+
+
+            archiveItems.push(`
+              <details class="project-report-item">
+                <summary>
+                  <span class="project-summary-main">
+                    <span class="project-category-name">
+                      ${escapeHtml(category.name)}
+                    </span>
+
+                    <span class="project-name">
+                      ${escapeHtml(project.name)}
+                    </span>
+                  </span>
+
+                  <span class="project-total-information">
+                    <span class="project-total-time">
+                      ${formatSecondsAsText(totalSeconds)}
+                    </span>
+
+                    <span class="project-work-days">
+                      作業日数：
+                      ${workDays.length}日
+                    </span>
+                  </span>
+                </summary>
+
+                <div class="project-detail">
+                  <p class="archive-work-period">
+                    作業期間：
+                    ${workPeriodText}
+                  </p>
+
+                  ${createWorkDayHtml(workDays)}
+                </div>
+              </details>
+            `);
+          }
+        );
+    }
+  );
+
+
+  if (archiveItems.length === 0) {
+    projectReportList.innerHTML = `
+      <p class="empty-message">
+        アーカイブされたプロジェクトはありません。
+      </p>
+    `;
+
+    return;
+  }
+
+
+  projectReportList.innerHTML =
+    archiveItems.join("");
 }
 
 

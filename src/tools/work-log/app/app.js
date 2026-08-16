@@ -99,6 +99,12 @@ const addCategoryButton =
   );
 
 
+const projectStatusList =
+  document.getElementById(
+    "project-status-list"
+  );
+
+
 const timerProjectSelect =
   document.getElementById(
     "timer-project"
@@ -500,6 +506,36 @@ function loadLocalAppData() {
 
 
 function normalizeAppData(data) {
+  const categories =
+    Array.isArray(
+      data.categories
+    )
+      ? data.categories.map(
+          function(category) {
+            return {
+              ...category,
+
+              projects:
+                Array.isArray(
+                  category.projects
+                )
+                  ? category.projects.map(
+                      function(project) {
+                        return {
+                          ...project,
+
+                          isCurrent:
+                            project.isCurrent !== false
+                        };
+                      }
+                    )
+                  : []
+            };
+          }
+        )
+      : [];
+
+
   return {
     ...structuredClone(
       defaultData
@@ -514,11 +550,7 @@ function normalizeAppData(data) {
     },
 
     categories:
-      Array.isArray(
-        data.categories
-      )
-        ? data.categories
-        : [],
+      categories,
 
     sessions:
       Array.isArray(
@@ -531,7 +563,6 @@ function normalizeAppData(data) {
       data.activeSession || null
   };
 }
-
 
 function hasWorkLogContent(data) {
   return (
@@ -902,7 +933,9 @@ function updateWorkTimeDisplay() {
     );
 
 
-    renderCategoryList();
+  renderCategoryList();
+
+  renderProjectStatusList();
 
   renderTimerProjectOptions();
 
@@ -1238,7 +1271,7 @@ function renderCategoryList() {
     appData.categories
       .map(
         function(category) {
-          const categoryHours =
+                    const categoryHours =
             selectedPeriodHours *
             Number(
               category.allocationPercent
@@ -1246,12 +1279,10 @@ function renderCategoryList() {
             100;
 
 
-                    const projects =
-            Array.isArray(
-              category.projects
-            )
-              ? category.projects
-              : [];
+          const projects =
+            getCurrentProjects(
+              category
+            );
 
 
           const projectTotalPercentage =
@@ -1439,9 +1470,150 @@ function renderCategoryList() {
 
 
 // ========================================
-// HTMLとして解釈される文字を変換する
+// プロジェクト一覧を表示する
 // ========================================
 
+function renderProjectStatusList() {
+  const items = [];
+
+
+  appData.categories.forEach(
+    function(category) {
+      const projects =
+        Array.isArray(
+          category.projects
+        )
+          ? category.projects
+          : [];
+
+
+      projects.forEach(
+        function(project) {
+          const isCurrent =
+            project.isCurrent !== false;
+
+
+          items.push(`
+            <label class="project-status-item">
+              <span class="project-status-name">
+                <span class="project-status-category">
+                  ${escapeHtml(category.name)}
+                </span>
+
+                <strong>
+                  ${escapeHtml(project.name)}
+                </strong>
+              </span>
+
+              <span class="project-status-check">
+                <input
+                  type="checkbox"
+                  data-action="project-current"
+                  data-category-id="${category.id}"
+                  data-project-id="${project.id}"
+                  ${isCurrent ? "checked" : ""}
+                >
+
+                現在のプロジェクト
+              </span>
+            </label>
+          `);
+        }
+      );
+    }
+  );
+
+
+  if (items.length === 0) {
+    projectStatusList.innerHTML = `
+      <p class="empty-message">
+        プロジェクトが設定されていません。
+      </p>
+    `;
+
+    return;
+  }
+
+
+  projectStatusList.innerHTML =
+    items.join("");
+}
+
+
+// ========================================
+// 現在のプロジェクトを切り替える
+// ========================================
+
+projectStatusList.addEventListener(
+  "change",
+
+  function(event) {
+    const checkbox =
+      event.target;
+
+
+    if (
+      !(
+        checkbox instanceof
+        HTMLInputElement
+      ) ||
+      checkbox.dataset.action !==
+        "project-current"
+    ) {
+      return;
+    }
+
+
+    const category =
+      findCategory(
+        checkbox.dataset.categoryId
+      );
+
+
+    if (!category) {
+      return;
+    }
+
+
+    const project =
+      findProject(
+        category,
+        checkbox.dataset.projectId
+      );
+
+
+    if (!project) {
+      return;
+    }
+
+
+    project.isCurrent =
+      checkbox.checked;
+
+
+    if (!checkbox.checked) {
+      project.allocationPercent =
+        0;
+    }
+
+
+    saveAppData();
+
+    updateWorkTimeDisplay();
+
+
+    showStatusMessage(
+      checkbox.checked
+        ? "現在のプロジェクトに戻しました。"
+        : "プロジェクトをアーカイブへ移動しました。"
+    );
+  }
+);
+
+
+// ========================================
+// HTMLとして解釈される文字を変換する
+// ========================================
 function escapeHtml(
   text
 ) {
@@ -1689,11 +1861,14 @@ categoryList.addEventListener(
             "project"
           ),
 
-        name:
+                name:
           projectName,
 
         allocationPercent:
-          0
+          0,
+
+        isCurrent:
+          true
       }
     );
 
@@ -1745,6 +1920,58 @@ categoryList.addEventListener(
       action ===
       "delete-category"
     ) {
+      const category =
+        findCategory(
+          categoryId
+        );
+
+
+      if (!category) {
+        return;
+      }
+
+
+      const projectIds =
+        new Set(
+          category.projects.map(
+            function(project) {
+              return project.id;
+            }
+          )
+        );
+
+
+      const hasSavedRecords =
+        appData.sessions.some(
+          function(session) {
+            return projectIds.has(
+              session.projectId
+            );
+          }
+        );
+
+
+      const hasActiveRecord =
+        Boolean(
+          appData.activeSession &&
+          projectIds.has(
+            appData.activeSession.projectId
+          )
+        );
+
+
+      if (
+        hasSavedRecords ||
+        hasActiveRecord
+      ) {
+        window.alert(
+          "作業記録があるため、この大分類は削除できません。配下のプロジェクトをアーカイブへ移してください。"
+        );
+
+        return;
+      }
+
+
       const shouldDelete =
         window.confirm(
           "この大分類と、その中のプロジェクトを削除しますか？"
@@ -1758,9 +1985,9 @@ categoryList.addEventListener(
 
       appData.categories =
         appData.categories.filter(
-          function(category) {
+          function(item) {
             return (
-              category.id !==
+              item.id !==
               categoryId
             );
           }
@@ -1793,9 +2020,40 @@ categoryList.addEventListener(
       }
 
 
+      const hasSavedRecords =
+        appData.sessions.some(
+          function(session) {
+            return (
+              session.projectId ===
+              projectId
+            );
+          }
+        );
+
+
+      const hasActiveRecord =
+        Boolean(
+          appData.activeSession &&
+          appData.activeSession.projectId ===
+            projectId
+        );
+
+
+      if (
+        hasSavedRecords ||
+        hasActiveRecord
+      ) {
+        window.alert(
+          "作業記録があるため、このプロジェクトは削除できません。「現在のプロジェクト」のチェックを外して、アーカイブへ移してください。"
+        );
+
+        return;
+      }
+
+
       const shouldDelete =
         window.confirm(
-          "このプロジェクトを削除しますか？"
+          "このプロジェクトを削除しますか？作業記録はありません。"
         );
 
 
@@ -1899,6 +2157,34 @@ function normalizePercentage(
 
 
 // ========================================
+// 現在のプロジェクトを取得する
+// ========================================
+
+function getCurrentProjects(
+  category
+) {
+  if (
+    !category ||
+    !Array.isArray(
+      category.projects
+    )
+  ) {
+    return [];
+  }
+
+
+  return category.projects.filter(
+    function(project) {
+      return (
+        project.isCurrent !==
+        false
+      );
+    }
+  );
+}
+
+
+// ========================================
 // タイマーの選択肢を更新する
 // ========================================
 
@@ -1907,12 +2193,14 @@ function renderTimerProjectOptions() {
     timerProjectSelect.value;
 
 
-  const optionHtml =
+   const optionHtml =
     appData.categories
       .map(
         function(category) {
           const projects =
-            category.projects
+            getCurrentProjects(
+              category
+            )
               .map(
                 function(project) {
                   return `
@@ -1978,12 +2266,24 @@ function renderProgressList() {
     getSelectedPeriodHours();
 
 
+  const currentCategories =
+    appData.categories.filter(
+      function(category) {
+        return (
+          getCurrentProjects(
+            category
+          ).length > 0
+        );
+      }
+    );
+
+
   if (
-    appData.categories.length === 0
+    currentCategories.length === 0
   ) {
     progressList.innerHTML = `
-      <p class="empty-message">
-        大分類が設定されていません。
+            <p class="empty-message">
+        現在のプロジェクトが設定されていません。
       </p>
     `;
 
@@ -1991,8 +2291,8 @@ function renderProgressList() {
   }
 
 
-  progressList.innerHTML =
-    appData.categories
+    progressList.innerHTML =
+    currentCategories
       .map(
         function(category) {
           const categoryPlannedSeconds =
@@ -2033,8 +2333,10 @@ function renderProgressList() {
             );
 
 
-          const projectProgressHtml =
-            category.projects
+                    const projectProgressHtml =
+            getCurrentProjects(
+              category
+            )
               .map(
                 function(project) {
                   const projectPlannedSeconds =
@@ -2110,43 +2412,47 @@ function renderProgressList() {
 
 
           return `
-            <article class="progress-item">
-              <div class="progress-heading">
-                                <span class="progress-name">
-                  ${escapeHtml(category.name)}
+  <details class="progress-item">
+    <summary class="progress-category-summary">
+      <div class="progress-category-overview">
+        <div class="progress-heading">
+          <span class="progress-name">
+            ${escapeHtml(category.name)}
 
-                  <strong class="progress-percentage">
-                    ${categoryProgressRate}
-                  </strong>
-                </span>
+            <strong class="progress-percentage">
+              ${categoryProgressRate}
+            </strong>
+          </span>
 
-                <span class="progress-time">
-                  実績
-                  ${formatSecondsAsText(categoryActualSeconds)}
-                  ／
-                  予定
-                  ${formatSecondsAsText(categoryPlannedSeconds)}
-                </span>
-              </div>
+          <span class="progress-time">
+            実績
+            ${formatSecondsAsText(categoryActualSeconds)}
+            ／
+            予定
+            ${formatSecondsAsText(categoryPlannedSeconds)}
+          </span>
+        </div>
 
-              <div class="progress-bar">
-                <span
-                  class="progress-bar__value"
-                  style="width: ${categoryProgressPercent}%"
-                ></span>
-              </div>
+        <div class="progress-bar">
+          <span
+            class="progress-bar__value"
+            style="width: ${categoryProgressPercent}%"
+          ></span>
+        </div>
 
-              <p
-                class="progress-remaining${categoryStatus.isOver ? " is-over" : ""}"
-              >
-                ${categoryStatus.message}
-              </p>
+        <p
+          class="progress-remaining${categoryStatus.isOver ? " is-over" : ""}"
+        >
+          ${categoryStatus.message}
+        </p>
+      </div>
+    </summary>
 
-              <div class="project-progress-list">
-                ${projectProgressHtml}
-              </div>
-            </article>
-          `;
+    <div class="project-progress-list">
+      ${projectProgressHtml}
+    </div>
+  </details>
+`;
         }
       )
       .join("");
@@ -3279,13 +3585,37 @@ function formatNoteTime(
 function getCategoryActualSeconds(
   categoryId
 ) {
+  const category =
+    findCategory(
+      categoryId
+    );
+
+
+  if (!category) {
+    return 0;
+  }
+
+
+  const currentProjectIds =
+    new Set(
+      getCurrentProjects(
+        category
+      ).map(
+        function(project) {
+          return project.id;
+        }
+      )
+    );
+
+
   let totalSeconds =
     appData.sessions
       .filter(
         function(session) {
           return (
-            session.categoryId ===
-              categoryId &&
+            currentProjectIds.has(
+              session.projectId
+            ) &&
             isDateInSelectedPeriod(
               session.startedAt
             )
@@ -3311,8 +3641,9 @@ function getCategoryActualSeconds(
 
   if (
     appData.activeSession &&
-    appData.activeSession.categoryId ===
-      categoryId &&
+    currentProjectIds.has(
+      appData.activeSession.projectId
+    ) &&
     isDateInSelectedPeriod(
       appData.activeSession.startedAt
     )
@@ -4483,8 +4814,11 @@ function initializeRecordForm() {
 }
 
 
-function renderRecordProjectOptions() {
+function renderRecordProjectOptions(
+  includedProjectId = ""
+) {
   const optionHtml = [];
+
 
   appData.categories.forEach(
     function(category) {
@@ -4495,19 +4829,39 @@ function renderRecordProjectOptions() {
           ? category.projects
           : [];
 
-      projects.forEach(
-        function(project) {
-          optionHtml.push(`
-            <option value="${escapeHtml(project.id)}">
-              ${escapeHtml(category.name)}
-              ＞
-              ${escapeHtml(project.name)}
-            </option>
-          `);
-        }
-      );
+
+      projects
+        .filter(
+          function(project) {
+            return (
+              project.isCurrent !==
+                false ||
+              String(project.id) ===
+                String(includedProjectId)
+            );
+          }
+        )
+        .forEach(
+          function(project) {
+            const archiveLabel =
+              project.isCurrent === false
+                ? "（アーカイブ）"
+                : "";
+
+
+            optionHtml.push(`
+              <option value="${escapeHtml(project.id)}">
+                ${escapeHtml(category.name)}
+                ＞
+                ${escapeHtml(project.name)}
+                ${archiveLabel}
+              </option>
+            `);
+          }
+        );
     }
   );
+
 
   recordEditProjectSelect.innerHTML = `
     <option value="">
@@ -4648,14 +5002,16 @@ function openEditRecordDialog(
   recordFormError.textContent =
     "";
 
-  recordEditDateInput.value =
+    recordEditDateInput.value =
     formatRecordDateForInput(
       new Date(
         startedAt
       )
     );
 
-  renderRecordProjectOptions();
+  renderRecordProjectOptions(
+    session.projectId
+  );
 
   recordEditProjectSelect.value =
     session.projectId;

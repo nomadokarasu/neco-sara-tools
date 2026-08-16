@@ -596,6 +596,86 @@ a:focus-visible {
 }
 
 
+/* ========================================
+   プロジェクト一覧
+======================================== */
+
+.project-status-list {
+  display: grid;
+  gap: 10px;
+}
+
+
+.project-status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding: 14px 16px;
+
+  background:
+    #ffffff;
+}
+
+
+.project-status-name {
+  min-width: 0;
+}
+
+
+.project-status-category {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size: 0.75rem;
+}
+
+
+.project-status-name strong {
+  overflow-wrap:
+    anywhere;
+}
+
+
+.project-status-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  flex-shrink: 0;
+
+  cursor: pointer;
+
+  font-size: 0.85rem;
+}
+
+
+.project-status-check input {
+  width: 18px;
+  height: 18px;
+}
+
+
+@media (max-width: 640px) {
+  .project-status-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+
 .allocation-total.has-error {
   background:
     var(--warning-background);
@@ -1018,6 +1098,32 @@ a:focus-visible {
 }
 
 
+.progress-category-summary {
+  cursor: pointer;
+}
+
+
+.progress-category-summary:hover {
+  background:
+    #f5f5f5;
+}
+
+
+.progress-category-overview {
+  display: grid;
+  gap: 7px;
+
+  width: 100%;
+  padding: 6px;
+}
+
+
+.progress-category-summary::marker {
+  color:
+    var(--sub-text-color);
+}
+
+
 .progress-heading {
   display: flex;
 
@@ -1106,6 +1212,18 @@ a:focus-visible {
 
   border-top:
     1px solid var(--border-color);
+}
+
+
+.progress-item:not([open])
+  > .project-progress-list {
+  display: none;
+}
+
+
+.progress-item[open]
+  > .project-progress-list {
+  display: grid;
 }
 
 

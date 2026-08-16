@@ -80,29 +80,43 @@
           </button>
 
           <label
-            id="date-input-label"
-            for="report-date"
-          >
-            基準日
+  id="date-input-label"
+  for="report-date"
+>
+  基準日
 
-            <input
-              id="report-date"
-              type="date"
-            >
-          </label>
+  <input
+    id="report-date"
+    type="date"
+  >
+</label>
 
-          <label
-            id="month-input-label"
-            for="report-month"
-            hidden
-          >
-            表示する月
+<div
+  id="week-range-display"
+  class="week-range-display"
+  hidden
+>
+  <span>
+    表示する週
+  </span>
 
-            <input
-              id="report-month"
-              type="month"
-            >
-          </label>
+  <strong id="week-range-text">
+    8月10日～8月16日
+  </strong>
+</div>
+
+<label
+  id="month-input-label"
+  for="report-month"
+  hidden
+>
+  表示する月
+
+  <input
+    id="report-month"
+    type="month"
+  >
+</label>
 
           <button
             id="next-period-button"
@@ -160,6 +174,11 @@
           <h2 id="report-period-title">
             今週の集計
           </h2>
+
+          <p class="section-description">
+            大分類を押すとプロジェクト一覧を表示します。
+            プロジェクトを押すと作業記録を確認できます。
+          </p>
         </div>
 
         <div class="total-time">
@@ -189,22 +208,23 @@
       </div>
     </section>
 
-    <!-- ========================================
-         プロジェクトごとの集計
+      <!-- ========================================
+         アーカイブ
     ========================================= -->
     <section class="panel">
       <div class="section-heading">
         <div>
           <p class="section-label">
-            PROJECT REPORT
+            ARCHIVE
           </p>
 
           <h2>
-            プロジェクト別の記録
+            完了したプロジェクト
           </h2>
 
           <p class="section-description">
-            プロジェクト名を押すと、作業日と内容を確認できます。
+            「現在のプロジェクト」から外したプロジェクトを表示します。
+            アーカイブは上で選択した表示期間に左右されません。
           </p>
         </div>
       </div>
@@ -214,7 +234,7 @@
         class="project-report-list"
       >
         <p class="empty-message">
-          作業記録はまだありません。
+          アーカイブされたプロジェクトはありません。
         </p>
       </div>
     </section>
