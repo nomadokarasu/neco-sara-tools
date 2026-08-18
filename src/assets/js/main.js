@@ -57,24 +57,47 @@ const detailButton = tool.detailUrl
 
       article.innerHTML = `
 
-    ${tool.image ? `
-      <div class="tool-card__image">
-        <img
-          src="${escapeAttribute(tool.image)}"
-          alt="${escapeAttribute(tool.name)}"
-          loading="lazy"
-        >
-      </div>
-    ` : ""}
+${tool.image ? `
+  ${tool.useUrl ? `
+    <a
+      href="${escapeAttribute(tool.useUrl)}"
+      class="tool-card__image"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <img
+        src="${escapeAttribute(tool.image)}"
+        alt="${escapeAttribute(tool.name)}"
+        loading="lazy"
+      >
+    </a>
+  ` : `
+    <div class="tool-card__image">
+      <img
+        src="${escapeAttribute(tool.image)}"
+        alt="${escapeAttribute(tool.name)}"
+        loading="lazy"
+      >
+    </div>
+  `}
+` : ""}
 
-    <div class="tool-card__meta">
-          <span class="tool-card__category">${escapeHtml(tool.category)}</span>
-          <span class="tool-card__version">v${escapeHtml(tool.version)}</span>
-        </div>
+<div class="tool-card__meta">
+  <span class="tool-card__category">${escapeHtml(tool.category)}</span>
+  <span class="tool-card__version">v${escapeHtml(tool.version)}</span>
+</div>
 
-        <h3 class="tool-card__title">
-          ${escapeHtml(tool.name)}
-        </h3>
+<h3 class="tool-card__title">
+  ${tool.useUrl ? `
+    <a
+      href="${escapeAttribute(tool.useUrl)}"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      ${escapeHtml(tool.name)}
+    </a>
+  ` : escapeHtml(tool.name)}
+</h3>
 
         <p class="tool-card__description">
           ${escapeHtml(tool.description)}
