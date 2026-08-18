@@ -1,0 +1,857 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background: #222;
+  color: #fff;
+}
+
+.toolbar {
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 16px;
+
+  background: #333;
+  border-bottom: 1px solid #555;
+
+    overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/*
+  ツールバー内では
+  テキストを改行しない
+*/
+
+.toolbar,
+.toolbar * {
+  white-space: nowrap;
+}
+
+.toolbar__title {
+  font-weight: 600;
+    flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.toolbar__tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tool-button {
+  padding: 5px 10px;
+
+  border: 1px solid #666;
+  border-radius: 4px;
+
+  background: #444;
+  color: #ddd;
+
+  font: inherit;
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.tool-button:hover {
+  background: #555;
+}
+
+.tool-button.is-active {
+  background: #ddd;
+  color: #222;
+
+  border-color: #ddd;
+}
+
+.pen-size-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-left: 8px;
+
+  font-size: 13px;
+  color: #ddd;
+}
+
+.tool-button,
+.pen-size-control,
+.pen-color-control,
+.recent-colors,
+.history-controls,
+.canvas-size-control,
+.eye-height-control,
+.toolbar__info {
+  flex-shrink: 0;
+}
+
+.pen-size-control input {
+  width: 100px;
+}
+
+#penSizeValue {
+  min-width: 24px;
+  text-align: right;
+}
+
+
+.pen-color-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-left: 8px;
+
+  font-size: 13px;
+  color: #ddd;
+}
+
+
+.pen-color-control input {
+  width: 32px;
+  height: 26px;
+
+  padding: 0;
+
+  border: 1px solid #666;
+  border-radius: 4px;
+
+  background: none;
+
+  cursor: pointer;
+}
+
+
+.recent-colors {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 5px;
+
+  width: 100%;
+}
+
+
+.recent-color-button {
+  width: 100%;
+  height: 24px;
+
+  padding: 0;
+
+  border: 1px solid #777;
+  border-radius: 3px;
+
+  cursor: pointer;
+}
+
+
+.recent-color-button:hover:not(:disabled) {
+  border-color: #fff;
+}
+
+
+.recent-color-button.is-empty {
+  background:
+    linear-gradient(
+      135deg,
+      #3b3b3b 25%,
+      #444 25%,
+      #444 50%,
+      #3b3b3b 50%,
+      #3b3b3b 75%,
+      #444 75%
+    );
+  background-size: 8px 8px;
+
+  opacity: 0.45;
+  cursor: default;
+}
+
+
+.history-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  margin-left: 8px;
+}
+
+
+.history-controls .tool-button {
+  width: 32px;
+  padding-left: 0;
+  padding-right: 0;
+
+  font-size: 18px;
+  line-height: 1;
+}
+
+.canvas-size-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-left: 8px;
+
+  font-size: 13px;
+  color: #ddd;
+}
+
+
+.canvas-size-control select {
+  padding: 4px 6px;
+
+  border: 1px solid #666;
+  border-radius: 4px;
+
+  background: #444;
+  color: #ddd;
+
+  font: inherit;
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.guide-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  flex-shrink: 0;
+
+  font-size: 13px;
+  color: #ddd;
+
+  cursor: pointer;
+}
+
+
+.guide-toggle input {
+  margin: 0;
+
+  cursor: pointer;
+}
+
+.eye-height-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-left: 8px;
+
+  font-size: 13px;
+  color: #ddd;
+}
+
+
+.eye-height-control input[type="range"] {
+  width: 90px;
+}
+
+
+.eye-height-step-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+
+  flex-shrink: 0;
+
+  padding: 0;
+
+  border: 1px solid #666;
+  border-radius: 3px;
+
+  background: #444;
+  color: #eee;
+
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+
+.eye-height-step-button:hover {
+  background: #555;
+}
+
+
+#eyeHeightValue {
+  min-width: 38px;
+  text-align: right;
+}
+
+.toolbar__info {
+  font-size: 13px;
+  color: #ccc;
+}
+
+/* ================================
+   描画ツールパネル
+================================ */
+
+.drawing-tools {
+  position: fixed;
+
+  top: 60px;
+  left: 16px;
+
+  z-index: 100;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  width: 160px;
+
+  padding: 10px;
+
+  background: #333;
+
+  border: 1px solid #555;
+  border-radius: 6px;
+}
+
+
+.drawing-tools .tool-button {
+  width: 100%;
+}
+
+
+.drawing-tools__separator {
+  width: 100%;
+  height: 1px;
+
+  margin: 2px 0;
+
+  background: #555;
+}
+
+
+.drawing-tools .pen-color-control {
+  margin-left: 0;
+}
+
+
+.drawing-tools .recent-colors {
+  margin-left: 0;
+}
+
+
+.drawing-tools .pen-size-control {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  width: 100%;
+}
+
+
+.pen-size-label {
+  font-size: 13px;
+  color: #ddd;
+}
+
+
+.pen-size-slider {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 6px;
+
+  width: 100%;
+}
+
+
+.pen-size-slider input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+
+.size-step-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+
+  padding: 0;
+
+  border: 1px solid #666;
+  border-radius: 3px;
+
+  background: #444;
+  color: #eee;
+
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+
+.size-step-button:hover {
+  background: #555;
+}
+
+
+.drawing-tools .pen-size-control .number-input {
+  display: block;
+
+  width: 52px;
+  height: 26px;
+
+  margin: 0 auto;
+
+  padding: 3px 6px;
+
+  border: 1px solid #666;
+  border-radius: 3px;
+
+  background: #222;
+  color: #eee;
+
+  font: inherit;
+  text-align: center;
+}
+
+
+
+
+.number-input {
+  box-sizing: border-box;
+
+  width: 42px;
+  min-width: 0;
+
+  padding: 3px 4px;
+
+  border: 1px solid #666;
+  border-radius: 3px;
+
+  background: #222;
+  color: #eee;
+
+  font: inherit;
+  text-align: right;
+}
+
+.number-input::-webkit-inner-spin-button,
+.number-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
+.number-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.drawing-tools .pen-color-control {
+  justify-content: space-between;
+}
+
+
+.drawing-tools .history-controls {
+  width: 100%;
+  margin-left: 0;
+}
+
+
+.drawing-tools .history-controls .tool-button {
+  flex: 1;
+}
+
+/* ================================
+   パネル移動
+================================ */
+
+.drawing-tools,
+.layer-panel {
+  cursor: grab;
+}
+
+
+.drawing-tools.is-dragging,
+.layer-panel.is-dragging {
+  cursor: grabbing;
+}
+
+
+/*
+  パネル内の操作部品では
+  通常のカーソルを使用する
+*/
+
+.drawing-tools button,
+.layer-panel button {
+  cursor: pointer;
+}
+
+
+.drawing-tools input,
+.layer-panel input {
+  cursor: auto;
+}
+
+
+/* ================================
+   レイヤーパネル
+================================ */
+
+.layer-panel {
+  position: fixed;
+
+  top: 60px;
+  right: 16px;
+
+  z-index: 100;
+
+  width: 220px;
+
+  padding: 10px;
+
+  background: #333;
+
+  border: 1px solid #555;
+  border-radius: 6px;
+}
+
+
+.layer-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 8px;
+
+  font-size: 13px;
+  color: #eee;
+}
+
+
+.layer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  max-height: 260px;
+
+  overflow-y: auto;
+}
+
+
+.layer-item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 4px;
+
+  padding: 3px;
+
+  border: 1px solid #555;
+  border-radius: 4px;
+
+  background: #2a2a2a;
+}
+
+
+.layer-item.is-active {
+  border-color: #ddd;
+  background: #444;
+}
+
+
+.layer-visibility-button,
+.layer-name-input,
+.layer-action-button {
+  border: 1px solid #666;
+  border-radius: 3px;
+
+  background: #444;
+  color: #eee;
+
+  font: inherit;
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+
+.layer-visibility-button {
+  width: 30px;
+  min-width: 30px;
+
+  padding: 4px 0;
+}
+
+
+.layer-name-input {
+  min-width: 0;
+  width: 100%;
+
+  padding: 4px 6px;
+
+  border: 1px solid transparent;
+
+  outline: none;
+
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.layer-name-input:focus {
+  border-color: #aaa;
+  background: #222;
+}
+
+
+/* ================================
+   レイヤー不透明度
+================================ */
+
+.layer-opacity-control {
+  grid-column: 2 / 3;
+
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  padding: 2px 4px 4px;
+}
+
+
+.layer-opacity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  font-size: 11px;
+  color: #bbb;
+}
+
+
+.layer-opacity-control input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+
+.layer-panel__actions {
+  display: grid;
+  grid-template-columns: 36px 36px minmax(0, 1fr);
+  gap: 5px;
+
+  margin-top: 8px;
+}
+
+
+.layer-action-button {
+  padding: 4px 6px;
+}
+
+
+.layer-action-button:hover:not(:disabled),
+.layer-visibility-button:hover,
+.layer-name-input:hover {
+  background: #555;
+}
+
+
+.layer-action-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+
+/* ================================
+   360°プレビュー
+================================ */
+
+.preview-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px;
+
+  background: rgba(0, 0, 0, 0.85);
+
+  z-index: 1000;
+}
+
+
+.preview-overlay.is-open {
+  display: flex;
+}
+
+
+.preview-panel {
+  width: 100%;
+  max-width: 1200px;
+
+  background: #222;
+
+  border: 1px solid #555;
+  border-radius: 6px;
+
+  overflow: hidden;
+}
+
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 10px 12px;
+
+  color: #ddd;
+
+  font-size: 14px;
+}
+
+
+.preview-canvas-area {
+  width: 100%;
+
+  padding: 12px;
+
+  background: #111;
+
+  overflow: auto;
+}
+
+
+#previewCanvas {
+  display: block;
+
+  width: 100%;
+  height: auto;
+
+  aspect-ratio: 2 / 1;
+
+  image-rendering: pixelated;
+
+  background: #eee;
+}
+
+#viewport {
+  width: 100%;
+  height: calc(100vh - 48px);
+
+  cursor: default;
+}
+
+
+#viewport.is-looking {
+  cursor: grabbing;
+}
+
+#viewport.is-zooming {
+  cursor: ns-resize;
+}
+
+canvas {
+  display: block;
+}
+
+
+/* ================================
+   ヘルプ
+================================ */
+
+.help-panel {
+  position: fixed;
+
+  top: 60px;
+  right: 16px;
+
+  z-index: 200;
+
+  display: none;
+
+  width: 280px;
+
+  padding: 12px;
+
+  background: #333;
+  color: #eee;
+
+  border: 1px solid #555;
+  border-radius: 6px;
+}
+
+
+.help-panel.is-open {
+  display: block;
+}
+
+
+.help-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 12px;
+}
+
+
+.help-panel__header button {
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+  color: #eee;
+
+  font-size: 20px;
+
+  cursor: pointer;
+}
+
+
+.help-panel__content p {
+  margin: 8px 0;
+
+  font-size: 13px;
+}

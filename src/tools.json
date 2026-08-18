@@ -144,5 +144,21 @@
   "useUrl": "./tools/gururi-world/",
   "detailUrl": "",
   "privacy": "撮影した写真はブラウザ内で処理され、サーバーには送信されません。"
+},
+{
+  "name": "ぐるりペイント｜360°風景スケッチツール",
+  "slug": "gururi-paint",
+  "description": "360°空間を見回しながら、球面上に直接絵を描けるブラウザ用スケッチツールです。",
+  "version": "1.0.0",
+  "category": "制作補助",
+  "status": "公開中",
+  "publishedAt": "2026-08-18",
+  "updatedAt": "2026-08-18",
+  "image": "./assets/images/gururi-paint.webp",
+  "useUrl": "./tools/gururi-paint/",
+  "detailUrl": "",
+  "privacy": "描画データや読み込んだ保存データはブラウザ内で処理され、サーバーには送信されません。"
 }
+
 ]
+
