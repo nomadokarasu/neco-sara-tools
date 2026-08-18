@@ -316,7 +316,7 @@ const photos =
   [];
 
 const maxPhotos =
-  24;
+  12;
 
 let selectedPhotoIndex =
   0;
@@ -917,6 +917,49 @@ const keys = {};
 window.addEventListener(
   "keydown",
   (event) => {
+
+    // ========================================
+    // 拡大写真を左右の矢印キーで移動
+    // ========================================
+
+    if (
+      isPopupOpen
+    ) {
+
+      // 左キー
+      // → 前の写真
+      if (
+        event.key ===
+        "ArrowLeft"
+      ) {
+
+        event.preventDefault();
+
+        movePopupPhoto(
+          -1
+        );
+
+        return;
+      }
+
+
+      // 右キー
+      // → 次の写真
+      if (
+        event.key ===
+        "ArrowRight"
+      ) {
+
+        event.preventDefault();
+
+        movePopupPhoto(
+          1
+        );
+
+        return;
+      }
+    }
+
 
     keys[event.key] =
       true;
