@@ -407,17 +407,21 @@ function loadWorld(
   const panoramaPath =
     `./assets/worlds/${worldId}/panorama.png`;
 
-  textureLoader.load(
-    panoramaPath,
-    (texture) => {
+textureLoader.load(
+  panoramaPath,
+  (texture) => {
 
-      panorama.material.map =
-        texture;
+    texture.colorSpace =
+      THREE.SRGBColorSpace;
 
-      panorama.material.needsUpdate =
-        true;
-    }
-  );
+
+    panorama.material.map =
+      texture;
+
+    panorama.material.needsUpdate =
+      true;
+  }
+);
 }
 
 
