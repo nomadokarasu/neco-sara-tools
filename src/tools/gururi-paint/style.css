@@ -120,8 +120,9 @@ body {
 
 .pen-color-control {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
 
   margin-left: 8px;
 
@@ -130,18 +131,27 @@ body {
 }
 
 
+.pen-color-label {
+  font-size: 13px;
+  color: #ddd;
+}
+
+
+#colorPickerWheel {
+  display: flex;
+  justify-content: center;
+
+  width: 100%;
+}
+
+
+#colorPickerWheel > div {
+  margin: 0 auto;
+}
+
+
 .pen-color-control input {
-  width: 32px;
-  height: 26px;
-
-  padding: 0;
-
-  border: 1px solid #666;
-  border-radius: 4px;
-
-  background: none;
-
-  cursor: pointer;
+  display: none;
 }
 
 
@@ -1077,10 +1087,10 @@ canvas {
   }
 
 
-  .drawing-tools
+.drawing-tools
     .pen-color-control {
 
-    grid-column: 1 / 2;
+    grid-column: 1 / -1;
 
     margin-left: 0;
   }

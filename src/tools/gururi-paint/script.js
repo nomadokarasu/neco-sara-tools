@@ -1,6 +1,9 @@
 import * as THREE from
   "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
+import iro from
+  "https://cdn.jsdelivr.net/npm/@jaames/iro@5/dist/iro.es.js";
+
 /* ================================
    基本設定
 ================================ */
@@ -55,8 +58,13 @@ const penSizePlus =
 const penSizeValue =
   document.getElementById("penSizeValue");
 
+const colorPickerWheel =
+  document.getElementById(
+    "colorPickerWheel"
+  );
+
 const penColorInput =
-  document.getElementById("penColor");
+  document.getElementById("penColorInput");
 
 const recentColorsElement =
   document.getElementById("recentColors");
@@ -1308,9 +1316,9 @@ visible:
     )
   ) {
 
-    penColor =
+setPenColor(
       loadedPenColor
-        .toLowerCase();
+    );
   }
 
 
@@ -1343,9 +1351,6 @@ visible:
       savedPenSize
     );
 
-
-  penColorInput.value =
-    penColor;
 
   penSizeInput.value =
     penSize;
@@ -2201,7 +2206,76 @@ let currentStroke = null;
   ペン設定
 */
 
-let penColor = "#222222";
+let penColor = "#000000";
+
+
+function setPenColor(
+  color
+) {
+
+  const normalizedColor =
+    String(color)
+      .toLowerCase();
+
+  penColor =
+    normalizedColor;
+
+  penColorInput.value =
+    normalizedColor;
+
+  if (
+    colorPicker.color.hexString
+      .toLowerCase() !==
+    normalizedColor
+  ) {
+
+    colorPicker.color.hexString =
+      normalizedColor;
+  }
+}
+
+
+const colorPicker =
+  new iro.ColorPicker(
+    colorPickerWheel,
+    {
+      width: 150,
+
+      color: penColor,
+
+      borderWidth: 1,
+      borderColor: "#555",
+
+      layout: [
+        {
+          component:
+            iro.ui.Wheel
+        },
+        {
+          component:
+            iro.ui.Slider,
+          options: {
+            sliderType:
+              "value"
+          }
+        }
+      ]
+    }
+  );
+
+
+colorPicker.on(
+  "color:change",
+  (color) => {
+
+    penColor =
+      color.hexString
+        .toLowerCase();
+
+    penColorInput.value =
+      penColor;
+  }
+);
 
 let penSize = 3;
 let savedPenSize = 3;
@@ -2420,11 +2494,9 @@ function renderRecentColors() {
         "click",
         () => {
 
-          penColor =
-            color;
-
-          penColorInput.value =
-            color;
+setPenColor(
+            color
+          );
 
           rememberColor(
             color
@@ -2473,8 +2545,9 @@ penColorInput.addEventListener(
   "input",
   () => {
 
-    penColor =
-      penColorInput.value;
+    setPenColor(
+      penColorInput.value
+    );
   }
 );
 
@@ -2941,11 +3014,9 @@ function pickColorAt(
     `#${toHex(pixel[0])}${toHex(pixel[1])}${toHex(pixel[2])}`;
 
 
-  penColor =
-    color;
-
-  penColorInput.value =
-    color;
+ setPenColor(
+      pickedColor
+    );
 
 
   rememberColor(

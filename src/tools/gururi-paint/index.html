@@ -262,19 +262,22 @@
   </div>
 
 
-  <div class="pen-color-control">
+<div class="pen-color-control">
 
-    <label for="penColor">
-      色
-    </label>
+  <span class="pen-color-label">
+    色
+  </span>
 
-    <input
-      id="penColor"
-      type="color"
-      value="#222222"
-    >
+  <div id="colorPickerWheel"></div>
 
-  </div>
+  <input
+    id="penColorInput"
+    type="color"
+    value="#000000"
+    hidden
+  >
+
+</div>
 
   <div
     id="recentColors"
