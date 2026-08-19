@@ -63,6 +63,19 @@ const colorPickerWheel =
     "colorPickerWheel"
   );
 
+
+const colorWheelLayer =
+  document.getElementById(
+    "colorWheelLayer"
+  );
+
+
+const colorBoxLayer =
+  document.getElementById(
+    "colorBoxLayer"
+  );
+
+
 const penColorInput =
   document.getElementById("penColorInput");
 
@@ -2624,16 +2637,22 @@ function setPenColor(
     String(color)
       .toLowerCase();
 
+
+  /*
+    実際に使用する色
+  */
+
   penColor =
     normalizedColor;
 
-penColorInput.value =
+
+  penColorInput.value =
     normalizedColor;
 
 
   /*
-    スマートフォン用の
-    現在色表示も更新する
+    スマートフォン用
+    現在色表示
   */
 
   mobileColorButton
@@ -2642,15 +2661,39 @@ penColorInput.value =
       normalizedColor;
 
 
+  /*
+    中央のSVボックスへ
+    実際の色を設定
+  */
+
   if (
-    colorPicker.color.hexString
+    colorBoxPicker.color.hexString
       .toLowerCase() !==
     normalizedColor
   ) {
 
-    colorPicker.color.hexString =
+    colorBoxPicker.color.hexString =
       normalizedColor;
   }
+
+
+  /*
+    外側リングは
+    色相だけを表示する。
+
+    彩度100・明度100に固定することで
+    ハンドルをリング外周に保つ。
+  */
+
+  const hsv =
+    colorBoxPicker.color.hsv;
+
+
+  colorPicker.color.hsv = {
+    h: hsv.h,
+    s: 100,
+    v: 100
+  };
 }
 
 
@@ -2671,35 +2714,40 @@ colorPickerWheel.addEventListener(
 
 const colorPicker =
   new iro.ColorPicker(
-    colorPickerWheel,
+    colorWheelLayer,
     {
       width: 150,
 
       /*
-        カラーホイールの初期状態は
-        明度100%から開始する
+        外側リングは
+        色相選択専用として使う
       */
 
       color: {
         h: 0,
-        s: 0,
+        s: 100,
         v: 100
       },
 
       borderWidth: 1,
       borderColor: "#555",
 
+      /*
+        中央ボックスで
+        明度を下げても
+        リング自体は暗くしない
+      */
+
+      wheelLightness: false,
+
       layout: [
         {
           component:
-            iro.ui.Wheel
-        },
-        {
-          component:
-            iro.ui.Slider,
+            iro.ui.Wheel,
+
           options: {
-            sliderType:
-              "value"
+            wheelLightness:
+              false
           }
         }
       ]
@@ -2707,7 +2755,79 @@ const colorPicker =
   );
 
 
+/*
+  中央の
+  彩度・明度ボックス
+*/
+
+const colorBoxPicker =
+  new iro.ColorPicker(
+    colorBoxLayer,
+    {
+      width: 92,
+
+      color: {
+        h: 0,
+        s: 0,
+        v: 0
+      },
+
+      borderWidth: 1,
+      borderColor: "#777",
+
+      padding: 4,
+
+      layout: [
+        {
+          component:
+            iro.ui.Box,
+
+          options: {
+            boxHeight: 92
+          }
+        }
+      ]
+    }
+  );
+
+
+/*
+  ================================
+  外側リング
+  色相変更
+  ================================
+*/
+
 colorPicker.on(
+  "input:change",
+  (color) => {
+
+    /*
+      現在の彩度・明度は維持し、
+      色相だけ変更する
+    */
+
+    const currentHSV =
+      colorBoxPicker.color.hsv;
+
+
+    colorBoxPicker.color.hsv = {
+      h: color.hue,
+      s: currentHSV.s,
+      v: currentHSV.v
+    };
+  }
+);
+
+
+/*
+  ================================
+  中央ボックス
+  彩度・明度変更
+  ================================
+*/
+
+colorBoxPicker.on(
   "color:change",
   (color) => {
 
@@ -2717,21 +2837,54 @@ colorPicker.on(
 
 
     /*
-      カラーホイール自身からの変更では
-      ホイールへ色を設定し直さず、
-      ペン色と各表示だけ同期する
+      実際のペン色へ反映
     */
 
     penColor =
       normalizedColor;
 
+
     penColorInput.value =
       normalizedColor;
+
 
     mobileColorButton
       .style
       .backgroundColor =
         normalizedColor;
+
+
+    /*
+      外側リングは
+      現在の色相だけ同期する。
+
+      S・Vは100に固定して、
+      ハンドルをリング外周に維持。
+    */
+
+    const hsv =
+      color.hsv;
+
+
+    const wheelHSV =
+      colorPicker.color.hsv;
+
+
+    if (
+      Math.abs(
+        wheelHSV.h -
+        hsv.h
+      ) > 0.01 ||
+      wheelHSV.s !== 100 ||
+      wheelHSV.v !== 100
+    ) {
+
+      colorPicker.color.hsv = {
+        h: hsv.h,
+        s: 100,
+        v: 100
+      };
+    }
   }
 );
 

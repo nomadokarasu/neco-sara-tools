@@ -137,16 +137,100 @@ body {
 }
 
 
-#colorPickerWheel {
-  display: flex;
-  justify-content: center;
+/*
+  外周Wheelと中央Boxを
+  重ねるための領域
+*/
 
-  width: 100%;
+#colorPickerWheel {
+  position: relative;
+
+  width: 150px;
+  height: 150px;
+
+  margin: 0 auto;
 }
 
 
-#colorPickerWheel > div {
-  margin: 0 auto;
+/*
+  外側の色相リング
+*/
+
+#colorWheelLayer {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 1;
+
+  width: 150px;
+  height: 150px;
+}
+
+
+/*
+  中央の
+  彩度・明度ボックス
+*/
+
+#colorBoxLayer {
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  z-index: 2;
+
+  width: 92px;
+  height: 92px;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+}
+
+
+/*
+  iro.js側が作る要素の
+  余白をなくす
+*/
+
+#colorWheelLayer
+  > .IroColorPicker,
+#colorBoxLayer
+  > .IroColorPicker {
+
+  margin: 0 !important;
+}
+
+
+/*
+  中央Boxの色面を
+  ひし形に切り抜く。
+
+  iro.jsの操作座標自体は
+  回転させないので、
+  CSS transformで45度回転するより
+  操作のずれが起きにくい。
+*/
+
+#colorBoxLayer
+  .IroColorPicker
+  > .IroBox
+  > .IroBox {
+
+  border-radius:
+    0 !important;
+
+  clip-path:
+    polygon(
+      50% 0,
+      100% 50%,
+      50% 100%,
+      0 50%
+    );
 }
 
 
@@ -1410,18 +1494,12 @@ canvas {
   }
 
 
-  .drawing-tools
+.drawing-tools
     .pen-color-control
     #colorPickerWheel {
 
-    width: 100%;
-  }
-
-
-  .drawing-tools
-    .pen-color-control
-    #colorPickerWheel
-    > div {
+    width: 150px;
+    height: 150px;
 
     margin:
       0 auto;
