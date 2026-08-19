@@ -3564,8 +3564,9 @@ function hexToRgba(hex) {
 function floodFill(
   x,
   y,
-  color,
-  layerId = activeLayerId
+  fillColor,
+  layerId,
+  historyAction = null
 ) {
 
   const layer =
@@ -3714,7 +3715,7 @@ referenceContext.globalAlpha =
     fillB,
     fillA
   ] =
-    hexToRgba(color);
+    hexToRgba(fillColor);
 
 
   function isTarget(offset) {
@@ -4112,8 +4113,85 @@ referenceContext.globalAlpha =
   }
 
 
-  if (!changed) {
+if (!changed) {
     return false;
+  }
+
+
+  /*
+    差分Undo用。
+
+    flood fillで実際に変更対象となった
+    ピクセル（visited と edgePainted）から
+    変更範囲を求め、
+    putImageDataする前のキャンバス状態を
+    タイル単位で保存する。
+  */
+
+  if (
+    historyAction &&
+    historyAction.tileDiffs instanceof Map
+  ) {
+
+    let minChangedX = width;
+    let minChangedY = height;
+
+    let maxChangedX = -1;
+    let maxChangedY = -1;
+
+
+    for (
+      let i = 0;
+      i < visited.length;
+      i++
+    ) {
+
+      if (
+        !visited[i] &&
+        !edgePainted[i]
+      ) {
+        continue;
+      }
+
+
+      const x =
+        i % width;
+
+      const y =
+        Math.floor(i / width);
+
+
+      if (x < minChangedX) {
+        minChangedX = x;
+      }
+
+      if (y < minChangedY) {
+        minChangedY = y;
+      }
+
+      if (x > maxChangedX) {
+        maxChangedX = x;
+      }
+
+      if (y > maxChangedY) {
+        maxChangedY = y;
+      }
+    }
+
+
+    if (
+      maxChangedX >= 0 &&
+      maxChangedY >= 0
+    ) {
+
+      captureStrokeTiles(
+        historyAction,
+        minChangedX,
+        minChangedY,
+        maxChangedX,
+        maxChangedY
+      );
+    }
   }
 
 
@@ -7078,14 +7156,29 @@ function handleTouchPointerEnd(
       tap.tool === "bucket"
     ) {
 
+      const bucketAction = {
+        tool: "bucket",
+        layerId: tap.layerId,
+        color: tap.color,
+        x: position.x,
+        y: position.y,
+
+        /*
+          差分Undo用
+        */
+        tileDiffs:
+          new Map()
+      };
+
+
       const changed =
         floodFill(
           position.x,
           position.y,
           tap.color,
-          tap.layerId
+          tap.layerId,
+          bucketAction
         );
-
 
       if (!changed) {
         return true;
@@ -7096,23 +7189,9 @@ function handleTouchPointerEnd(
         0;
 
 
-      strokeHistory.push({
-
-        tool:
-          "bucket",
-
-        layerId:
-          tap.layerId,
-
-        color:
-          tap.color,
-
-        x:
-          position.x,
-
-        y:
-          position.y
-      });
+      strokeHistory.push(
+        bucketAction
+      );
 
 
       rememberColor(
@@ -7282,12 +7361,28 @@ if (event.button !== 0) {
 
     if (currentTool === "bucket") {
 
+const bucketAction = {
+        tool: "bucket",
+        layerId: activeLayerId,
+        color: penColor,
+        x: position.x,
+        y: position.y,
+
+        /*
+          差分Undo用
+        */
+        tileDiffs:
+          new Map()
+      };
+
+
       const changed =
         floodFill(
           position.x,
           position.y,
           penColor,
-          activeLayerId
+          activeLayerId,
+          bucketAction
         );
 
 
@@ -7299,13 +7394,9 @@ if (event.button !== 0) {
       redoStrokeHistory.length = 0;
 
 
-      strokeHistory.push({
-        tool: "bucket",
-        layerId: activeLayerId,
-        color: penColor,
-        x: position.x,
-        y: position.y
-      });
+strokeHistory.push(
+        bucketAction
+      );
 
 
       rememberColor(
