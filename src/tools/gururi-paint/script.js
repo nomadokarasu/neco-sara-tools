@@ -2654,6 +2654,21 @@ penColorInput.value =
 }
 
 
+/*
+  カラーホイール操作が
+  描画ツールパネルのドラッグへ
+  伝わらないようにする
+*/
+
+colorPickerWheel.addEventListener(
+  "pointerdown",
+  (event) => {
+
+    event.stopPropagation();
+  }
+);
+
+
 const colorPicker =
   new iro.ColorPicker(
     colorPickerWheel,
@@ -2696,9 +2711,27 @@ colorPicker.on(
   "color:change",
   (color) => {
 
-    setPenColor(
+    const normalizedColor =
       color.hexString
-    );
+        .toLowerCase();
+
+
+    /*
+      カラーホイール自身からの変更では
+      ホイールへ色を設定し直さず、
+      ペン色と各表示だけ同期する
+    */
+
+    penColor =
+      normalizedColor;
+
+    penColorInput.value =
+      normalizedColor;
+
+    mobileColorButton
+      .style
+      .backgroundColor =
+        normalizedColor;
   }
 );
 
@@ -4460,7 +4493,7 @@ panel.addEventListener(
         パネルを移動しない
       */
 
-      if (
+if (
         event.target.closest(
           [
             "button",
@@ -4468,7 +4501,9 @@ panel.addEventListener(
             "select",
             "textarea",
             "label",
-            "a"
+            "a",
+            ".pen-color-control",
+            ".recent-colors"
           ].join(",")
         )
       ) {
