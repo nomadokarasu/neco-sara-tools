@@ -142,10 +142,17 @@ body {
 */
 
 .current-pen-color-swatch {
-  width: 32px;
-  height: 32px;
+  box-sizing: border-box;
+
+  width:
+    calc(
+      100% + 8px
+    );
+
+  height: 28px;
 
   margin-top: 2px;
+  margin-left: -8px;
 
   background: #000;
 
@@ -916,7 +923,29 @@ body {
 }
 
 
-.layer-name-input:focus {
+/*
+  通常時：
+  選択はできるが編集はしない
+*/
+
+.layer-name-input[readonly] {
+  cursor: default;
+
+  -webkit-touch-callout: none;
+}
+
+
+/*
+  編集中だけ
+  入力欄らしい表示にする
+*/
+
+.layer-name-input:not([readonly]) {
+  cursor: text;
+}
+
+
+.layer-name-input:not([readonly]):focus {
   border-color: #aaa;
   background: #222;
 }

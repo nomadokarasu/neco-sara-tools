@@ -5712,28 +5712,79 @@ function renderLayerPanel() {
     );
 
 
-    /*
-      レイヤー名は直接入力できる。
-      日本語入力にも対応する。
+/*
+      レイヤー名。
+
+      PC：
+      ダブルクリックで編集。
+
+      スマートフォン：
+      長押しで編集。
     */
 
     const nameInput =
       document.createElement("input");
 
+
     nameInput.type =
       "text";
+
 
     nameInput.className =
       "layer-name-input";
 
+
     nameInput.value =
       layer.name;
 
-    nameInput.maxLength = 80;
+
+    nameInput.maxLength =
+      80;
+
+
+    /*
+      最初は編集不可。
+
+      1回クリック／タップでは
+      レイヤー選択だけを行う。
+    */
+
+    nameInput.readOnly =
+      true;
+
 
     nameInput.title =
-      "レイヤー名を編集";
+      isMobileDevice
+        ? "長押しでレイヤー名を編集"
+        : "ダブルクリックでレイヤー名を編集";
 
+
+    /*
+      レイヤー名編集を開始する
+    */
+
+    function startLayerNameEditing() {
+
+      nameInput.readOnly =
+        false;
+
+
+      nameInput.focus();
+
+
+      /*
+        編集開始時には
+        名前全体を選択する
+      */
+
+      nameInput.select();
+    }
+
+
+    /*
+      クリック／タップされた
+      レイヤーを選択する
+    */
 
     nameInput.addEventListener(
       "focus",
@@ -5765,11 +5816,220 @@ function renderLayerPanel() {
             "is-active"
           );
 
+
           updateLayerActionButtons();
         }
       }
     );
 
+
+    /*
+      PC：
+      ダブルクリックで編集開始
+    */
+
+    nameInput.addEventListener(
+      "dblclick",
+      (event) => {
+
+        if (isMobileDevice) {
+          return;
+        }
+
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+
+        startLayerNameEditing();
+      }
+    );
+
+
+    /*
+      ================================
+      スマートフォン：
+      長押しで編集開始
+      ================================
+    */
+
+    let layerNameLongPressTimer =
+      null;
+
+
+    let layerNameLongPressReady =
+      false;
+
+
+    let layerNamePressStartX =
+      0;
+
+
+    let layerNamePressStartY =
+      0;
+
+
+    function cancelLayerNameLongPress() {
+
+      if (
+        layerNameLongPressTimer !==
+        null
+      ) {
+
+        clearTimeout(
+          layerNameLongPressTimer
+        );
+
+
+        layerNameLongPressTimer =
+          null;
+      }
+    }
+
+
+    nameInput.addEventListener(
+      "pointerdown",
+      (event) => {
+
+        if (
+          !isMobileDevice ||
+          !nameInput.readOnly
+        ) {
+          return;
+        }
+
+
+        layerNamePressStartX =
+          event.clientX;
+
+
+        layerNamePressStartY =
+          event.clientY;
+
+
+        layerNameLongPressReady =
+          false;
+
+
+        cancelLayerNameLongPress();
+
+
+        /*
+          約0.55秒で
+          長押しと判定する
+        */
+
+        layerNameLongPressTimer =
+          setTimeout(
+            () => {
+
+              layerNameLongPressReady =
+                true;
+
+
+              layerNameLongPressTimer =
+                null;
+            },
+            550
+          );
+      }
+    );
+
+
+    /*
+      指が大きく動いたら
+      スクロール操作とみなし、
+      長押しをキャンセルする
+    */
+
+    nameInput.addEventListener(
+      "pointermove",
+      (event) => {
+
+        if (
+          !isMobileDevice ||
+          layerNameLongPressTimer ===
+            null
+        ) {
+          return;
+        }
+
+
+        const distance =
+          Math.hypot(
+            event.clientX -
+              layerNamePressStartX,
+
+            event.clientY -
+              layerNamePressStartY
+          );
+
+
+        if (distance > 10) {
+
+          cancelLayerNameLongPress();
+
+          layerNameLongPressReady =
+            false;
+        }
+      }
+    );
+
+
+    /*
+      長押し後に指を離したら
+      編集状態へ切り替える
+    */
+
+    nameInput.addEventListener(
+      "pointerup",
+      (event) => {
+
+        if (!isMobileDevice) {
+          return;
+        }
+
+
+        cancelLayerNameLongPress();
+
+
+        if (
+          !layerNameLongPressReady
+        ) {
+          return;
+        }
+
+
+        layerNameLongPressReady =
+          false;
+
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+
+        startLayerNameEditing();
+      }
+    );
+
+
+    nameInput.addEventListener(
+      "pointercancel",
+      () => {
+
+        cancelLayerNameLongPress();
+
+        layerNameLongPressReady =
+          false;
+      }
+    );
+
+
+    /*
+      名前を確定
+    */
 
     nameInput.addEventListener(
       "change",
@@ -5778,10 +6038,12 @@ function renderLayerPanel() {
         const newName =
           nameInput.value.trim();
 
+
         if (newName) {
 
           layer.name =
             newName;
+
 
           nameInput.value =
             layer.name;
@@ -5795,6 +6057,10 @@ function renderLayerPanel() {
     );
 
 
+    /*
+      Enterで確定
+    */
+
     nameInput.addEventListener(
       "keydown",
       (event) => {
@@ -5806,6 +6072,37 @@ function renderLayerPanel() {
 
           nameInput.blur();
         }
+
+
+        /*
+          Escなら変更前へ戻す
+        */
+
+        if (
+          event.key === "Escape"
+        ) {
+
+          nameInput.value =
+            layer.name;
+
+
+          nameInput.blur();
+        }
+      }
+    );
+
+
+    /*
+      編集終了後は
+      再び読み取り専用へ戻す
+    */
+
+    nameInput.addEventListener(
+      "blur",
+      () => {
+
+        nameInput.readOnly =
+          true;
       }
     );
 
