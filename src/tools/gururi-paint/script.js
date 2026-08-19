@@ -185,8 +185,15 @@ const previewCanvas =
     "previewCanvas"
   );
 
+
 const previewContext =
   previewCanvas.getContext("2d");
+
+
+const previewSeamHandle =
+  document.getElementById(
+    "previewSeamHandle"
+  );
 
 /*
   カメラ
@@ -560,6 +567,35 @@ for (const layer of layers) {
    長方形プレビュー
 ================================ */
 
+
+/*
+  左右反転済みの画像を
+  一時保存するCanvas
+*/
+
+const previewSourceCanvas =
+  document.createElement(
+    "canvas"
+  );
+
+
+const previewSourceContext =
+  previewSourceCanvas.getContext(
+    "2d"
+  );
+
+
+/*
+  360°画像の左端位置。
+
+  0 = 元の左端
+  0.5 = 画像中央
+  1 = 一周して元の左端
+*/
+
+let previewSeamRatio = 0;
+
+
 function updatePreview() {
 
   /*
@@ -574,49 +610,150 @@ function updatePreview() {
     paintCanvas.height;
 
 
-  /*
-    補間を無効化
-  */
+  previewSourceCanvas.width =
+    paintCanvas.width;
+
+  previewSourceCanvas.height =
+    paintCanvas.height;
+
 
   previewContext.imageSmoothingEnabled =
     false;
 
 
+  previewSourceContext
+    .imageSmoothingEnabled =
+      false;
+
+
   /*
-    現在の360°画像をコピー
+    まず左右反転した
+    通常のプレビュー画像を作る
   */
 
-  previewContext.clearRect(
+  previewSourceContext.clearRect(
     0,
     0,
-    previewCanvas.width,
-    previewCanvas.height
+    previewSourceCanvas.width,
+    previewSourceCanvas.height
   );
 
-  /*
-    球体の内側から見た向きに合わせて
-    左右反転して表示する
-  */
 
-  previewContext.save();
+  previewSourceContext.save();
 
-  previewContext.translate(
-    previewCanvas.width,
+
+  previewSourceContext.translate(
+    previewSourceCanvas.width,
     0
   );
 
-  previewContext.scale(
+
+  previewSourceContext.scale(
     -1,
     1
   );
 
-  previewContext.drawImage(
+
+  previewSourceContext.drawImage(
     paintCanvas,
     0,
     0
   );
 
-  previewContext.restore();
+
+  previewSourceContext.restore();
+
+
+  /*
+    左端位置をCanvas上の
+    X座標へ変換する
+  */
+
+  const width =
+    previewCanvas.width;
+
+
+  const height =
+    previewCanvas.height;
+
+
+  const normalizedRatio =
+    (
+      (
+        previewSeamRatio %
+        1
+      ) +
+      1
+    ) % 1;
+
+
+  const seamX =
+    Math.round(
+      normalizedRatio *
+      width
+    ) % width;
+
+
+  previewContext.clearRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+
+  /*
+    seamX以降を
+    左側へ描画
+  */
+
+  const rightWidth =
+    width -
+    seamX;
+
+
+  if (rightWidth > 0) {
+
+    previewContext.drawImage(
+      previewSourceCanvas,
+
+      seamX,
+      0,
+      rightWidth,
+      height,
+
+      0,
+      0,
+      rightWidth,
+      height
+    );
+  }
+
+
+  /*
+    元画像の左側部分を
+    右端へつなげる。
+
+    360°なので継ぎ目なく
+    循環させることができる。
+  */
+
+  if (seamX > 0) {
+
+    previewContext.drawImage(
+      previewSourceCanvas,
+
+      0,
+      0,
+      seamX,
+      height,
+
+      rightWidth,
+      0,
+      seamX,
+      height
+    );
+  }
 }
 
 /* ================================
@@ -634,7 +771,7 @@ function downloadPNG() {
 
 
   /*
-    書き出し専用Canvasを作成
+    書き出し専用Canvas
   */
 
   const exportCanvas =
@@ -646,111 +783,203 @@ function downloadPNG() {
   exportCanvas.height =
     outputHeight;
 
-
   const exportContext =
     exportCanvas.getContext("2d");
-
-
-  /*
-    拡大時の補間を無効化
-  */
 
   exportContext.imageSmoothingEnabled =
     false;
 
 
   /*
-    プレビューと同じ向きになるよう
-    左右反転する
+    まず、プレビューと同じ並び順の
+    元画像を作るための一時Canvasを用意する
   */
 
-  exportContext.save();
+  const previewLikeSourceCanvas =
+    document.createElement("canvas");
 
-  exportContext.translate(
-    exportCanvas.width,
+  previewLikeSourceCanvas.width =
+    paintCanvas.width;
+
+  previewLikeSourceCanvas.height =
+    paintCanvas.height;
+
+  const previewLikeSourceContext =
+    previewLikeSourceCanvas.getContext("2d");
+
+  previewLikeSourceContext.imageSmoothingEnabled =
+    false;
+
+
+  /*
+    左右反転した通常の
+    360°長方形画像を作る
+  */
+
+  previewLikeSourceContext.clearRect(
+    0,
+    0,
+    previewLikeSourceCanvas.width,
+    previewLikeSourceCanvas.height
+  );
+
+  previewLikeSourceContext.save();
+
+  previewLikeSourceContext.translate(
+    previewLikeSourceCanvas.width,
     0
   );
 
-  exportContext.scale(
+  previewLikeSourceContext.scale(
     -1,
     1
   );
 
+  previewLikeSourceContext.drawImage(
+    paintCanvas,
+    0,
+    0
+  );
+
+  previewLikeSourceContext.restore();
+
 
   /*
-    編集用画像を
-    選択した出力サイズへ拡大
+    次に、プレビューと同じく
+    左端位置を previewSeamRatio に合わせて
+    循環移動した画像を作る
   */
+
+  const previewLikeCanvas =
+    document.createElement("canvas");
+
+  previewLikeCanvas.width =
+    paintCanvas.width;
+
+  previewLikeCanvas.height =
+    paintCanvas.height;
+
+  const previewLikeContext =
+    previewLikeCanvas.getContext("2d");
+
+  previewLikeContext.imageSmoothingEnabled =
+    false;
+
+
+  const sourceWidth =
+    previewLikeCanvas.width;
+
+  const sourceHeight =
+    previewLikeCanvas.height;
+
+  const normalizedRatio =
+    (
+      (
+        previewSeamRatio %
+        1
+      ) +
+      1
+    ) % 1;
+
+  const seamX =
+    Math.round(
+      normalizedRatio *
+      sourceWidth
+    ) % sourceWidth;
+
+
+  previewLikeContext.clearRect(
+    0,
+    0,
+    sourceWidth,
+    sourceHeight
+  );
+
+
+  /*
+    seamX 以降を左側へ描画
+  */
+
+  const rightWidth =
+    sourceWidth - seamX;
+
+  if (rightWidth > 0) {
+
+    previewLikeContext.drawImage(
+      previewLikeSourceCanvas,
+      seamX,
+      0,
+      rightWidth,
+      sourceHeight,
+      0,
+      0,
+      rightWidth,
+      sourceHeight
+    );
+  }
+
+
+  /*
+    元画像左側を右端へつなげる
+  */
+
+  if (seamX > 0) {
+
+    previewLikeContext.drawImage(
+      previewLikeSourceCanvas,
+      0,
+      0,
+      seamX,
+      sourceHeight,
+      rightWidth,
+      0,
+      seamX,
+      sourceHeight
+    );
+  }
+
+
+  /*
+    プレビューと同じ並び順の画像を
+    出力サイズへ拡大して書き出す
+  */
+
+  exportContext.clearRect(
+    0,
+    0,
+    outputWidth,
+    outputHeight
+  );
 
   exportContext.drawImage(
-    paintCanvas,
-
+    previewLikeCanvas,
     0,
     0,
-    paintCanvas.width,
-    paintCanvas.height,
-
+    sourceWidth,
+    sourceHeight,
     0,
     0,
-    exportCanvas.width,
-    exportCanvas.height
+    outputWidth,
+    outputHeight
   );
-
-
-  exportContext.restore();
 
 
   /*
-    PNGへ変換してダウンロード
+    PNGダウンロード
   */
 
-  exportCanvas.toBlob(
-    (blob) => {
+  const link =
+    document.createElement("a");
 
-      if (!blob) {
-        return;
-      }
+  link.href =
+    exportCanvas.toDataURL(
+      "image/png"
+    );
 
+  link.download =
+    "gururi-world.png";
 
-      const url =
-        URL.createObjectURL(blob);
-
-      const link =
-        document.createElement("a");
-
-      link.href =
-        url;
-
-      link.download =
-        "gururi-world.png";
-
-
-      document.body.appendChild(
-        link
-      );
-
-      link.click();
-
-      link.remove();
-
-
-      /*
-        一時URLを解放
-      */
-
-      setTimeout(
-        () => {
-
-          URL.revokeObjectURL(
-            url
-          );
-
-        },
-        1000
-      );
-    },
-    "image/png"
-  );
+  link.click();
 }
 
 
@@ -5641,10 +5870,277 @@ function updateLayerActionButtons() {
 }
 
 
+/* ================================
+   レイヤー
+   ドラッグ並び替え
+================================ */
+
+let layerDragState = null;
+
+
+/*
+  ドロップ位置の表示を消す
+*/
+
+function clearLayerDropMarkers() {
+
+  for (
+    const item of
+      layerList.querySelectorAll(
+        ".layer-item"
+      )
+  ) {
+
+    item.classList.remove(
+      "is-drop-before",
+      "is-drop-after"
+    );
+  }
+}
+
+
+/*
+  ドラッグ中の
+  ドロップ位置を調べる
+*/
+
+function updateLayerDragTarget(
+  event
+) {
+
+  if (!layerDragState) {
+    return;
+  }
+
+
+  /*
+    スマートフォンで
+    リスト端までドラッグした場合は
+    少しずつスクロールする
+  */
+
+  const listRect =
+    layerList.getBoundingClientRect();
+
+
+  if (
+    event.clientY <
+    listRect.top + 28
+  ) {
+
+    layerList.scrollTop -= 12;
+
+  } else if (
+    event.clientY >
+    listRect.bottom - 28
+  ) {
+
+    layerList.scrollTop += 12;
+  }
+
+
+  const element =
+    document.elementFromPoint(
+      event.clientX,
+      event.clientY
+    );
+
+
+  const targetItem =
+    element
+      ?.closest(
+        ".layer-item"
+      );
+
+
+  clearLayerDropMarkers();
+
+
+  layerDragState.targetLayerId =
+    null;
+
+
+  if (
+    !targetItem ||
+    targetItem ===
+      layerDragState.sourceItem
+  ) {
+    return;
+  }
+
+
+  const targetLayerId =
+    Number(
+      targetItem.dataset.layerId
+    );
+
+
+  if (
+    !Number.isFinite(
+      targetLayerId
+    )
+  ) {
+    return;
+  }
+
+
+  const rect =
+    targetItem
+      .getBoundingClientRect();
+
+
+  /*
+    対象レイヤーの上半分なら
+    その上へ。
+
+    下半分なら
+    その下へ配置する。
+  */
+
+  const placeAfter =
+    event.clientY >=
+    rect.top +
+      rect.height / 2;
+
+
+  targetItem.classList.add(
+    placeAfter
+      ? "is-drop-after"
+      : "is-drop-before"
+  );
+
+
+  layerDragState.targetLayerId =
+    targetLayerId;
+
+
+  layerDragState.placeAfter =
+    placeAfter;
+}
+
+
+/*
+  ドラッグ終了
+*/
+
+function finishLayerDrag(
+  commit = true
+) {
+
+  if (!layerDragState) {
+    return;
+  }
+
+
+  const {
+    layerId,
+    targetLayerId,
+    placeAfter,
+    sourceItem
+  } =
+    layerDragState;
+
+
+  sourceItem.classList.remove(
+    "is-layer-dragging"
+  );
+
+
+  clearLayerDropMarkers();
+
+
+  layerDragState = null;
+
+
+  if (
+    !commit ||
+    targetLayerId === null ||
+    targetLayerId === layerId
+  ) {
+    return;
+  }
+
+
+  /*
+    UIと同じ
+    上→下の配列を一時的に作る
+  */
+
+  const visualLayers =
+    [...layers].reverse();
+
+
+  const draggedIndex =
+    visualLayers.findIndex(
+      (layer) =>
+        layer.id === layerId
+    );
+
+
+  if (draggedIndex < 0) {
+    return;
+  }
+
+
+  const [
+    draggedLayer
+  ] =
+    visualLayers.splice(
+      draggedIndex,
+      1
+    );
+
+
+  const targetIndex =
+    visualLayers.findIndex(
+      (layer) =>
+        layer.id ===
+          targetLayerId
+    );
+
+
+  if (targetIndex < 0) {
+    return;
+  }
+
+
+  const insertIndex =
+    targetIndex +
+    (
+      placeAfter
+        ? 1
+        : 0
+    );
+
+
+  visualLayers.splice(
+    insertIndex,
+    0,
+    draggedLayer
+  );
+
+
+  /*
+    実際のlayers配列は
+    下→上なので再び反転して戻す
+  */
+
+  layers.splice(
+    0,
+    layers.length,
+    ...visualLayers.reverse()
+  );
+
+
+  requestPaintUpdate();
+
+  renderLayerPanel();
+}
+
+
 function renderLayerPanel() {
 
   layerList.innerHTML = "";
-
 
   /*
     配列は下→上の順なので、
@@ -5665,6 +6161,18 @@ function renderLayerPanel() {
 
     item.className =
       "layer-item";
+
+
+    /*
+      ドラッグ並び替えで
+      対象レイヤーを判別する
+    */
+
+    item.dataset.layerId =
+      String(
+        layer.id
+      );
+
 
     if (
       layer.id === activeLayerId
@@ -5708,6 +6216,170 @@ function renderLayerPanel() {
         requestPaintUpdate();
 
         renderLayerPanel();
+      }
+    );
+
+
+    /*
+      レイヤー並び替え用
+      ドラッグハンドル
+    */
+
+    const dragHandle =
+      document.createElement(
+        "button"
+      );
+
+
+    dragHandle.type =
+      "button";
+
+
+    dragHandle.className =
+      "layer-drag-handle";
+
+
+    dragHandle.textContent =
+      "≡";
+
+
+    dragHandle.title =
+      "ドラッグして並び替え";
+
+
+    dragHandle.setAttribute(
+      "aria-label",
+      "レイヤーをドラッグして並び替え"
+    );
+
+
+    dragHandle.addEventListener(
+      "pointerdown",
+      (event) => {
+
+        /*
+          PCでは左クリックだけ
+        */
+
+        if (
+          event.pointerType ===
+            "mouse" &&
+          event.button !== 0
+        ) {
+          return;
+        }
+
+
+        layerDragState = {
+          layerId:
+            layer.id,
+
+          sourceItem:
+            item,
+
+          targetLayerId:
+            null,
+
+          placeAfter:
+            false
+        };
+
+
+        item.classList.add(
+          "is-layer-dragging"
+        );
+
+
+        dragHandle
+          .setPointerCapture(
+            event.pointerId
+          );
+
+
+        event.preventDefault();
+
+        event.stopPropagation();
+      }
+    );
+
+
+    dragHandle.addEventListener(
+      "pointermove",
+      (event) => {
+
+        if (!layerDragState) {
+          return;
+        }
+
+
+        updateLayerDragTarget(
+          event
+        );
+
+
+        event.preventDefault();
+
+        event.stopPropagation();
+      }
+    );
+
+
+    dragHandle.addEventListener(
+      "pointerup",
+      (event) => {
+
+        if (!layerDragState) {
+          return;
+        }
+
+
+        if (
+          dragHandle
+            .hasPointerCapture(
+              event.pointerId
+            )
+        ) {
+
+          dragHandle
+            .releasePointerCapture(
+              event.pointerId
+            );
+        }
+
+
+        finishLayerDrag(
+          true
+        );
+
+
+        event.preventDefault();
+
+        event.stopPropagation();
+      }
+    );
+
+
+    dragHandle.addEventListener(
+      "pointercancel",
+      (event) => {
+
+        if (
+          dragHandle
+            .hasPointerCapture(
+              event.pointerId
+            )
+        ) {
+
+          dragHandle
+            .releasePointerCapture(
+              event.pointerId
+            );
+        }
+
+
+        finishLayerDrag(
+          false
+        );
       }
     );
 
@@ -6227,9 +6899,16 @@ function renderLayerPanel() {
       visibilityButton
     );
 
+
     item.appendChild(
       nameInput
     );
+
+
+    item.appendChild(
+      dragHandle
+    );
+
 
     item.appendChild(
       opacityControl
@@ -7291,6 +7970,261 @@ const action =
 
   rebuildDrawing();
 }
+
+
+/* ================================
+   プレビュー左端ハンドル
+================================ */
+
+let isPreviewSeamDragging =
+  false;
+
+
+/*
+  今回のドラッグで
+  選択している位置
+*/
+
+let previewDragRatio = 0;
+
+
+/*
+  ポインター位置に
+  ▼を移動する
+*/
+
+function updatePreviewSeamHandle(
+  event
+) {
+
+  const rect =
+    previewCanvas
+      .getBoundingClientRect();
+
+
+  if (
+    rect.width <= 0
+  ) {
+    return;
+  }
+
+
+  /*
+    Canvas左端を0として
+    ポインター位置を取得
+  */
+
+  let x =
+    event.clientX -
+    rect.left;
+
+
+  /*
+    画像の範囲内に制限
+  */
+
+  x =
+    Math.max(
+      0,
+      Math.min(
+        rect.width,
+        x
+      )
+    );
+
+
+  previewDragRatio =
+    x /
+    rect.width;
+
+
+  previewSeamHandle
+    .style
+    .left =
+      `${x}px`;
+}
+
+
+/*
+  ▼をつかむ
+*/
+
+previewSeamHandle.addEventListener(
+  "pointerdown",
+  (event) => {
+
+    if (
+      event.pointerType ===
+        "mouse" &&
+      event.button !== 0
+    ) {
+      return;
+    }
+
+
+    isPreviewSeamDragging =
+      true;
+
+
+    previewDragRatio = 0;
+
+
+    previewSeamHandle
+      .setPointerCapture(
+        event.pointerId
+      );
+
+
+    updatePreviewSeamHandle(
+      event
+    );
+
+
+    event.preventDefault();
+
+    event.stopPropagation();
+  }
+);
+
+
+/*
+  ▼を横方向へ移動
+*/
+
+previewSeamHandle.addEventListener(
+  "pointermove",
+  (event) => {
+
+    if (
+      !isPreviewSeamDragging
+    ) {
+      return;
+    }
+
+
+    updatePreviewSeamHandle(
+      event
+    );
+
+
+    event.preventDefault();
+
+    event.stopPropagation();
+  }
+);
+
+
+/*
+  ▼を離した位置を
+  新しい画像左端にする
+*/
+
+function finishPreviewSeamDrag(
+  event
+) {
+
+  if (
+    !isPreviewSeamDragging
+  ) {
+    return;
+  }
+
+
+  isPreviewSeamDragging =
+    false;
+
+
+  if (
+    previewSeamHandle
+      .hasPointerCapture(
+        event.pointerId
+      )
+  ) {
+
+    previewSeamHandle
+      .releasePointerCapture(
+        event.pointerId
+      );
+  }
+
+
+  /*
+    現在の左端位置へ
+    今回選択した位置を加える
+  */
+
+  previewSeamRatio =
+    (
+      previewSeamRatio +
+      previewDragRatio
+    ) % 1;
+
+
+  /*
+    新しい左端で
+    プレビューを書き直す
+  */
+
+  updatePreview();
+
+
+  /*
+    ▼自身は再び
+    新しい画像の左端へ戻す
+  */
+
+  previewDragRatio = 0;
+
+
+  previewSeamHandle
+    .style
+    .left =
+      "0px";
+
+
+  event.preventDefault();
+
+  event.stopPropagation();
+}
+
+
+previewSeamHandle.addEventListener(
+  "pointerup",
+  finishPreviewSeamDrag
+);
+
+
+previewSeamHandle.addEventListener(
+  "pointercancel",
+  (event) => {
+
+    isPreviewSeamDragging =
+      false;
+
+
+    previewDragRatio = 0;
+
+
+    previewSeamHandle
+      .style
+      .left =
+        "0px";
+
+
+    if (
+      previewSeamHandle
+        .hasPointerCapture(
+          event.pointerId
+        )
+    ) {
+
+      previewSeamHandle
+        .releasePointerCapture(
+          event.pointerId
+        );
+    }
+  }
+);
 
 
 /* ================================

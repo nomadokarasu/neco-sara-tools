@@ -575,11 +575,31 @@
 
       </div>
 
-      <div class="preview-canvas-area">
+<div class="preview-canvas-area">
 
-        <canvas
-          id="previewCanvas"
-        ></canvas>
+        <div class="preview-canvas-wrap">
+
+          <!--
+            360°画像の
+            左端位置を決めるハンドル
+          -->
+
+          <button
+            id="previewSeamHandle"
+            class="preview-seam-handle"
+            type="button"
+            title="ドラッグして画像の左端を変更"
+            aria-label="ドラッグして画像の左端を変更"
+          >
+            ▼
+          </button>
+
+
+          <canvas
+            id="previewCanvas"
+          ></canvas>
+
+        </div>
 
       </div>
 
