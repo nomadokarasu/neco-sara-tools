@@ -1184,9 +1184,9 @@ canvas {
   }
 
 
-  /*
-    ＋ / −ボタンも
-    スマホでは不要
+/*
+    スマホでは
+    ＋ / −ボタンを表示する
   */
 
   .drawing-tools
@@ -1194,18 +1194,69 @@ canvas {
   .drawing-tools
     #penSizePlus {
 
-    display: none;
+    display: flex;
+
+    width: 32px;
+    height: 32px;
+
+    flex-shrink: 0;
+
+    align-items: center;
+    justify-content: center;
+
+    margin: 0;
+
+    font-size: 18px;
   }
 
 
   /*
-    数値入力も非表示
+    ＋をバーの上、
+    −をバーの下へ配置する
+  */
+
+  .drawing-tools
+    #penSizePlus {
+
+    order: 1;
+  }
+
+
+  .drawing-tools
+    .pen-size-slider
+    input[type="range"] {
+
+    order: 2;
+  }
+
+
+  .drawing-tools
+    #penSizeMinus {
+
+    order: 3;
+  }
+
+
+/*
+    数値入力は
+    太さUIの最上部へ表示する
   */
 
   .drawing-tools
     #penSizeValue {
 
-    display: none;
+    display: block;
+
+    order: 1;
+
+    width: 42px;
+    height: 30px;
+
+    margin: 0;
+
+    padding: 3px 4px;
+
+    text-align: center;
   }
 
 
@@ -1214,16 +1265,22 @@ canvas {
     グリッドを解除
   */
 
-  .drawing-tools
+.drawing-tools
     .pen-size-slider {
 
     display: flex;
 
+    flex-direction: column;
+
     align-items: center;
     justify-content: center;
 
+    gap: 6px;
+
+    order: 2;
+
     width: 32px;
-    height: 150px;
+    height: auto;
   }
 
 
@@ -1255,8 +1312,10 @@ canvas {
     ========================
   */
 
-  .mobile-color-swatch {
+.mobile-color-swatch {
     display: block;
+
+    order: 3;
 
     width: 36px;
     height: 36px;

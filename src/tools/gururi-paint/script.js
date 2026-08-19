@@ -2252,6 +2252,363 @@ const redoStrokeHistory = [];
 let currentStroke = null;
 
 
+/* ================================
+   高速Undo / Redo
+================================ */
+
+/*
+  Canvasを小さなタイルに分け、
+  ストロークが触ったタイルだけ
+  描画前の状態を保存する。
+
+  128 × 128pxにすることで、
+  短い線でも保存メモリが
+  大きくなりすぎないようにする。
+*/
+
+const HISTORY_TILE_SIZE = 128;
+
+
+/*
+  X座標を360°Canvas内へ戻す
+*/
+
+function wrapHistoryX(
+  x,
+  width
+) {
+
+  return (
+    (x % width) +
+    width
+  ) % width;
+}
+
+
+/*
+  指定された範囲に含まれる
+  タイルを描画前に保存する
+*/
+
+function captureStrokeTiles(
+  stroke,
+  minX,
+  minY,
+  maxX,
+  maxY
+) {
+
+  if (
+    !stroke ||
+    !(stroke.tileDiffs instanceof Map)
+  ) {
+    return;
+  }
+
+
+  const layer =
+    getLayerById(
+      stroke.layerId
+    );
+
+
+  if (!layer) {
+    return;
+  }
+
+
+  const canvas =
+    layer.canvas;
+
+  const context =
+    layer.context;
+
+
+  const yStart =
+    Math.max(
+      0,
+      Math.floor(minY)
+    );
+
+  const yEnd =
+    Math.min(
+      canvas.height - 1,
+      Math.ceil(maxY)
+    );
+
+
+  if (yEnd < yStart) {
+    return;
+  }
+
+
+  /*
+    横方向の一部分を
+    タイル単位で保存する
+  */
+
+  function captureXRange(
+    rangeStart,
+    rangeEnd
+  ) {
+
+    const xStart =
+      Math.max(
+        0,
+        Math.floor(rangeStart)
+      );
+
+    const xEnd =
+      Math.min(
+        canvas.width - 1,
+        Math.ceil(rangeEnd)
+      );
+
+
+    if (xEnd < xStart) {
+      return;
+    }
+
+
+    const firstTileX =
+      Math.floor(
+        xStart /
+        HISTORY_TILE_SIZE
+      );
+
+    const lastTileX =
+      Math.floor(
+        xEnd /
+        HISTORY_TILE_SIZE
+      );
+
+    const firstTileY =
+      Math.floor(
+        yStart /
+        HISTORY_TILE_SIZE
+      );
+
+    const lastTileY =
+      Math.floor(
+        yEnd /
+        HISTORY_TILE_SIZE
+      );
+
+
+    for (
+      let tileY = firstTileY;
+      tileY <= lastTileY;
+      tileY++
+    ) {
+
+      for (
+        let tileX = firstTileX;
+        tileX <= lastTileX;
+        tileX++
+      ) {
+
+        const key =
+          `${tileX}:${tileY}`;
+
+
+        /*
+          同じストローク内で
+          同じタイルは一度だけ保存
+        */
+
+        if (
+          stroke.tileDiffs.has(
+            key
+          )
+        ) {
+          continue;
+        }
+
+
+        const x =
+          tileX *
+          HISTORY_TILE_SIZE;
+
+        const y =
+          tileY *
+          HISTORY_TILE_SIZE;
+
+
+        const width =
+          Math.min(
+            HISTORY_TILE_SIZE,
+            canvas.width - x
+          );
+
+        const height =
+          Math.min(
+            HISTORY_TILE_SIZE,
+            canvas.height - y
+          );
+
+
+        stroke.tileDiffs.set(
+          key,
+          {
+            x,
+            y,
+            width,
+            height,
+
+            imageData:
+              context.getImageData(
+                x,
+                y,
+                width,
+                height
+              )
+          }
+        );
+      }
+    }
+  }
+
+
+  const spanX =
+    Math.max(
+      0,
+      maxX - minX
+    );
+
+
+  /*
+    Canvas一周以上なら
+    横方向すべてを保存
+  */
+
+  if (
+    spanX >= canvas.width
+  ) {
+
+    captureXRange(
+      0,
+      canvas.width - 1
+    );
+
+    return;
+  }
+
+
+  /*
+    左右端をまたぐ場合にも
+    正しくタイルを保存する
+  */
+
+  const wrappedStart =
+    wrapHistoryX(
+      minX,
+      canvas.width
+    );
+
+  const wrappedEnd =
+    wrappedStart +
+    spanX;
+
+
+  if (
+    wrappedEnd <
+    canvas.width
+  ) {
+
+    captureXRange(
+      wrappedStart,
+      wrappedEnd
+    );
+
+  } else {
+
+    captureXRange(
+      wrappedStart,
+      canvas.width - 1
+    );
+
+    captureXRange(
+      0,
+      wrappedEnd -
+        canvas.width
+    );
+  }
+}
+
+
+/*
+  Undo / Redo時には、
+  保存してあるタイルと
+  現在のタイルを交換する。
+
+  同じ処理をもう一度行えば
+  Redoになる。
+*/
+
+function swapStrokeTiles(
+  stroke
+) {
+
+  if (
+    !stroke ||
+    !(stroke.tileDiffs instanceof Map) ||
+    stroke.tileDiffs.size === 0
+  ) {
+    return false;
+  }
+
+
+  const layer =
+    getLayerById(
+      stroke.layerId
+    );
+
+
+  if (!layer) {
+    return false;
+  }
+
+
+  const context =
+    layer.context;
+
+
+  for (
+    const tile of
+      stroke.tileDiffs.values()
+  ) {
+
+    const currentImage =
+      context.getImageData(
+        tile.x,
+        tile.y,
+        tile.width,
+        tile.height
+      );
+
+
+    context.putImageData(
+      tile.imageData,
+      tile.x,
+      tile.y
+    );
+
+
+    /*
+      保存内容を現在状態へ交換する。
+      これにより同じ関数で
+      UndoとRedoの両方に対応できる。
+    */
+
+    tile.imageData =
+      currentImage;
+  }
+
+
+  return true;
+}
+
+
 /*
   ペン設定
 */
@@ -5499,9 +5856,31 @@ function undo() {
     strokeHistory.pop();
 
 
-  redoStrokeHistory.push(
+redoStrokeHistory.push(
     action
   );
+
+
+  /*
+    新方式で記録された
+    ペン／消しゴムの場合は、
+    全履歴を再描画せず
+    変更タイルだけを戻す
+  */
+
+  if (
+    action.tileDiffs instanceof Map &&
+    action.tileDiffs.size > 0
+  ) {
+
+    swapStrokeTiles(
+      action
+    );
+
+    requestPaintUpdate();
+
+    return;
+  }
 
 
   /*
@@ -5627,8 +6006,35 @@ function redo() {
   }
 
 
-  const action =
+const action =
     redoStrokeHistory.pop();
+
+
+  /*
+    新方式のペン／消しゴムは
+    タイルをもう一度交換するだけで
+    Redoできる
+  */
+
+  if (
+    action.tileDiffs instanceof Map &&
+    action.tileDiffs.size > 0
+  ) {
+
+    swapStrokeTiles(
+      action
+    );
+
+
+    strokeHistory.push(
+      action
+    );
+
+
+    requestPaintUpdate();
+
+    return;
+  }
 
 
   /*
@@ -6138,6 +6544,20 @@ function cancelCurrentTouchStroke() {
   }
 
 
+  /*
+    描きかけのストロークが
+    変更したタイルだけを
+    描画前状態へ戻す
+  */
+
+  if (currentStroke) {
+
+    swapStrokeTiles(
+      currentStroke
+    );
+  }
+
+
   isDrawing = false;
 
   currentStroke = null;
@@ -6148,15 +6568,6 @@ function cancelCurrentTouchStroke() {
   previousMidX = null;
   previousMidY = null;
 
-
-  /*
-    現在のストロークはまだ
-    strokeHistoryへ入っていないため、
-    履歴から描き直すことで
-    誤描画だけを消せる
-  */
-
-  rebuildDrawing();
 
   requestPaintUpdate();
 }
@@ -6925,11 +7336,20 @@ if (event.button !== 0) {
       新しいストロークを開始
     */
 
-    currentStroke = {
+currentStroke = {
       tool: currentTool,
       layerId: activeLayerId,
       color: penColor,
       size: penSize,
+
+      /*
+        高速Undo用。
+        このストロークが変更する
+        タイルの描画前状態を保存する。
+      */
+
+      tileDiffs:
+        new Map(),
 
       points: [
         {
@@ -6967,9 +7387,33 @@ if (event.button !== 0) {
       position.y;
 
 
-    /*
+/*
       クリックした最初の一点を描く
     */
+
+    const initialHistoryPadding =
+      (
+        penSize *
+        drawScale
+      ) / 2 + 2;
+
+
+    captureStrokeTiles(
+      currentStroke,
+
+      position.x -
+        initialHistoryPadding,
+
+      position.y -
+        initialHistoryPadding,
+
+      position.x +
+        initialHistoryPadding,
+
+      position.y +
+        initialHistoryPadding
+    );
+
 
     if (currentTool === "eraser") {
 
@@ -7258,14 +7702,64 @@ renderer.domElement.addEventListener(
           adjustedX
         ) / 2;
 
-      const midY =
+const midY =
         (
           previousPaintY +
           position.y
         ) / 2;
 
 
-            /*
+      /*
+        この曲線が触れる範囲を
+        描画前に保存する。
+
+        quadraticCurveは
+        始点・制御点・終点の
+        範囲内に収まるため、
+        この3点から範囲を求める。
+      */
+
+      const historyPadding =
+        (
+          penSize *
+          drawScale
+        ) / 2 + 2;
+
+
+      captureStrokeTiles(
+        currentStroke,
+
+        Math.min(
+          previousMidX,
+          previousPaintX,
+          midX
+        ) -
+          historyPadding,
+
+        Math.min(
+          previousMidY,
+          previousPaintY,
+          midY
+        ) -
+          historyPadding,
+
+        Math.max(
+          previousMidX,
+          previousPaintX,
+          midX
+        ) +
+          historyPadding,
+
+        Math.max(
+          previousMidY,
+          previousPaintY,
+          midY
+        ) +
+          historyPadding
+      );
+
+
+      /*
         通常位置に描画
       */
 
