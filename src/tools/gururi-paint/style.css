@@ -184,11 +184,20 @@ body {
   width: 92px;
   height: 92px;
 
+  /*
+    中央の彩度・明度Boxを
+    時計回りに45°回転する
+  */
+
   transform:
     translate(
       -50%,
       -50%
-    );
+    )
+    rotate(45deg);
+
+  transform-origin:
+    center center;
 }
 
 
@@ -216,22 +225,7 @@ body {
   操作のずれが起きにくい。
 */
 
-#colorBoxLayer
-  .IroColorPicker
-  > .IroBox
-  > .IroBox {
 
-  border-radius:
-    0 !important;
-
-  clip-path:
-    polygon(
-      50% 0,
-      100% 50%,
-      50% 100%,
-      0 50%
-    );
-}
 
 
 .pen-color-control input {
