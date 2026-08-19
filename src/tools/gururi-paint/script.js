@@ -69,6 +69,25 @@ const penColorInput =
 const recentColorsElement =
   document.getElementById("recentColors");
 
+
+const penColorControl =
+  document.querySelector(
+    ".pen-color-control"
+  );
+
+
+const mobileColorButton =
+  document.getElementById(
+    "mobileColorButton"
+  );
+
+
+const mobileColorBackdrop =
+  document.getElementById(
+    "mobileColorBackdrop"
+  );
+
+
 const undoButton =
   document.getElementById("undoButton");
 
@@ -2251,8 +2270,20 @@ function setPenColor(
   penColor =
     normalizedColor;
 
-  penColorInput.value =
+penColorInput.value =
     normalizedColor;
+
+
+  /*
+    スマートフォン用の
+    現在色表示も更新する
+  */
+
+  mobileColorButton
+    .style
+    .backgroundColor =
+      normalizedColor;
+
 
   if (
     colorPicker.color.hexString
@@ -2308,14 +2339,94 @@ colorPicker.on(
   "color:change",
   (color) => {
 
-    penColor =
+    setPenColor(
       color.hexString
-        .toLowerCase();
-
-    penColorInput.value =
-      penColor;
+    );
   }
 );
+
+
+/* ================================
+   スマートフォン用
+   カラーホイール
+================================ */
+
+function openMobileColorPicker() {
+
+  if (!isMobileDevice) {
+    return;
+  }
+
+
+  penColorControl.classList.add(
+    "is-mobile-color-open"
+  );
+
+
+  mobileColorBackdrop.classList.add(
+    "is-open"
+  );
+
+
+  mobileColorButton.setAttribute(
+    "aria-expanded",
+    "true"
+  );
+}
+
+
+function closeMobileColorPicker() {
+
+  penColorControl.classList.remove(
+    "is-mobile-color-open"
+  );
+
+
+  mobileColorBackdrop.classList.remove(
+    "is-open"
+  );
+
+
+  mobileColorButton.setAttribute(
+    "aria-expanded",
+    "false"
+  );
+}
+
+
+mobileColorButton.addEventListener(
+  "click",
+  () => {
+
+    if (!isMobileDevice) {
+      return;
+    }
+
+
+    if (
+      penColorControl.classList.contains(
+        "is-mobile-color-open"
+      )
+    ) {
+
+      closeMobileColorPicker();
+
+    } else {
+
+      openMobileColorPicker();
+    }
+  }
+);
+
+
+mobileColorBackdrop.addEventListener(
+  "click",
+  () => {
+
+    closeMobileColorPicker();
+  }
+);
+
 
 let penSize = 3;
 let savedPenSize = 3;
@@ -2487,6 +2598,16 @@ let recentColors = [];
 function renderRecentColors() {
 
   recentColorsElement.innerHTML = "";
+
+
+  /*
+    スマートフォンでは
+    最近使用した色を表示しない
+  */
+
+  if (isMobileDevice) {
+    return;
+  }
 
 
   /*
@@ -4212,6 +4333,17 @@ function updateMobileViewportSize() {
 function setMobilePanel(
   panelName
 ) {
+
+  /*
+    描画タブから離れる場合は
+    カラーホイールを閉じる
+  */
+
+  if (panelName !== "draw") {
+
+    closeMobileColorPicker();
+  }
+
 
   drawingToolsPanel
     ?.classList

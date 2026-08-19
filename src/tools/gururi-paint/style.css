@@ -887,6 +887,17 @@ canvas {
 }
 
 
+/*
+  スマートフォン専用UIは
+  PCでは表示しない
+*/
+
+.mobile-color-swatch,
+.mobile-color-backdrop {
+  display: none;
+}
+
+
 @media (max-width: 700px) {
 
   /*
@@ -1048,11 +1059,9 @@ canvas {
   .drawing-tools {
     display: none !important;
 
-    max-height: 240px;
+    padding: 8px 10px;
 
-    padding: 10px;
-
-    overflow-y: auto;
+    overflow: visible;
 
     background: #333;
 
@@ -1060,6 +1069,11 @@ canvas {
       1px solid #555;
   }
 
+
+  /*
+    下部には
+    4つの描画ツールだけを並べる
+  */
 
   .drawing-tools.is-mobile-open {
     display: grid !important;
@@ -1076,62 +1090,316 @@ canvas {
 
   .drawing-tools > .tool-button {
     width: 100%;
-    min-height: 38px;
+
+    min-height: 40px;
+
+    padding:
+      5px 4px;
+
+    font-size: 12px;
   }
 
+
+  /*
+    スマホでは区切り線不要
+  */
 
   .drawing-tools__separator {
-    grid-column: 1 / -1;
-
-    margin: 0;
+    display: none;
   }
 
 
-  .drawing-tools
-    .pen-size-control {
-
-    grid-column: 1 / -1;
-
-    width: 100%;
-
-    margin-left: 0;
-  }
-
-
-.drawing-tools
-    .pen-color-control {
-
-    grid-column: 1 / -1;
-
-    margin-left: 0;
-  }
-
+  /*
+    最近使った色は
+    スマホでは使用しない
+  */
 
   .drawing-tools
     .recent-colors {
 
-    grid-column: 2 / -1;
+    display: none !important;
+  }
 
-    width: 100%;
-    margin-left: 0;
+
+  /*
+    ========================
+    太さ
+    ========================
+
+    描画エリアの右側へ
+    固定表示する
+  */
+
+  .drawing-tools
+    .pen-size-control {
+
+    position: fixed !important;
+
+    top: 50% !important;
+    right: 10px !important;
+    bottom: auto !important;
+    left: auto !important;
+
+    z-index: 20;
+
+    display: flex;
+
+    flex-direction: column;
+    align-items: center;
+
+    gap: 8px;
+
+    width: 46px !important;
+
+    margin: 0 !important;
+    padding: 8px 5px;
+
+    transform:
+      translateY(-50%);
+
+    background:
+      rgba(
+        42,
+        42,
+        42,
+        0.82
+      );
+
+    border:
+      1px solid #555;
+
+    border-radius: 8px;
+  }
+
+
+  /*
+    「太さ」の文字は
+    スマホでは非表示
+  */
+
+  .drawing-tools
+    .pen-size-label {
+
+    display: none;
+  }
+
+
+  /*
+    ＋ / −ボタンも
+    スマホでは不要
+  */
+
+  .drawing-tools
+    #penSizeMinus,
+  .drawing-tools
+    #penSizePlus {
+
+    display: none;
+  }
+
+
+  /*
+    数値入力も非表示
+  */
+
+  .drawing-tools
+    #penSizeValue {
+
+    display: none;
+  }
+
+
+  /*
+    横向きスライダー用の
+    グリッドを解除
+  */
+
+  .drawing-tools
+    .pen-size-slider {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 150px;
+  }
+
+
+  /*
+    スライダーを縦向きにする
+  */
+
+  .drawing-tools
+    .pen-size-slider
+    input[type="range"] {
+
+    width: 32px;
+    height: 150px;
+
+    min-width: 0;
+
+    margin: 0;
+
+    writing-mode:
+      vertical-lr;
+
+    direction: rtl;
+  }
+
+
+  /*
+    ========================
+    現在色
+    ========================
+  */
+
+  .mobile-color-swatch {
+    display: block;
+
+    width: 36px;
+    height: 36px;
+
+    flex-shrink: 0;
+
+    padding: 0;
+
+    background: #000;
+
+    border:
+      2px solid #ddd;
+
+    border-radius: 4px;
+
+    cursor: pointer;
+  }
+
+
+  /*
+    ========================
+    カラーホイール
+    ========================
+
+    通常時は隠しておく
+  */
+
+  .drawing-tools
+    .pen-color-control {
+
+    display: none !important;
+
+    position: fixed !important;
+
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+
+    z-index: 30;
+
+    width: 190px !important;
+
+    margin: 0 !important;
+    padding: 16px;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      );
+
+    background: #333;
+
+    border:
+      1px solid #666;
+
+    border-radius: 10px;
+
+    box-shadow:
+      0 6px 24px
+      rgba(
+        0,
+        0,
+        0,
+        0.4
+      );
+  }
+
+
+  /*
+    色ボタンを押したときだけ
+    表示する
+  */
+
+  .drawing-tools
+    .pen-color-control
+    .pen-color-label {
+
+    text-align: center;
   }
 
 
   .drawing-tools
-    .history-controls {
-
-    grid-column: 1 / -1;
+    .pen-color-control
+    #colorPickerWheel {
 
     width: 100%;
-    margin-left: 0;
   }
 
 
   .drawing-tools
-    .history-controls
-    .tool-button {
+    .pen-color-control
+    #colorPickerWheel
+    > div {
 
-    min-height: 36px;
+    margin:
+      0 auto;
+  }
+
+
+  .drawing-tools
+    .pen-color-control
+    input {
+
+    display: none;
+  }
+
+  .drawing-tools
+    .pen-color-control.is-mobile-color-open {
+
+    display: flex !important;
+
+    flex-direction: column;
+  }
+
+
+  /*
+    カラーホイールを開いたときの
+    背景
+  */
+
+  .mobile-color-backdrop {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 10;
+
+    background:
+      rgba(
+        0,
+        0,
+        0,
+        0.3
+      );
+  }
+
+
+  .mobile-color-backdrop.is-open {
+    display: block;
   }
 
 

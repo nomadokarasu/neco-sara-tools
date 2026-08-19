@@ -274,7 +274,7 @@
 
     </div>
 
-    <input
+<input
       id="penSizeValue"
       class="number-input"
       type="number"
@@ -284,6 +284,20 @@
       value="3"
       aria-label="ペンの太さを数値入力"
     >
+
+
+    <!--
+      スマートフォン用
+      現在色ボタン
+    -->
+
+    <button
+      id="mobileColorButton"
+      class="mobile-color-swatch"
+      type="button"
+      aria-label="色を選択"
+      aria-expanded="false"
+    ></button>
 
   </div>
 
@@ -305,10 +319,22 @@
 
 </div>
 
-  <div
+<div
     id="recentColors"
     class="recent-colors"
     aria-label="最近使用した色"
+  ></div>
+
+
+  <!--
+    スマートフォン用
+    カラーホイール背景
+  -->
+
+  <div
+    id="mobileColorBackdrop"
+    class="mobile-color-backdrop"
+    aria-hidden="true"
   ></div>
 
 
