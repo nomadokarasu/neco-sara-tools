@@ -79,6 +79,13 @@ const colorBoxLayer =
 const penColorInput =
   document.getElementById("penColorInput");
 
+
+const currentPenColorSwatch =
+  document.getElementById(
+    "currentPenColorSwatch"
+  );
+
+
 const recentColorsElement =
   document.getElementById("recentColors");
 
@@ -2638,10 +2645,6 @@ function setPenColor(
       .toLowerCase();
 
 
-  /*
-    実際に使用する色
-  */
-
   penColor =
     normalizedColor;
 
@@ -2662,8 +2665,19 @@ function setPenColor(
 
 
   /*
-    中央のSVボックスへ
-    実際の色を設定
+    PC用の
+    現在色表示も更新する
+  */
+
+  currentPenColorSwatch
+    .style
+    .backgroundColor =
+      normalizedColor;
+
+
+  /*
+    中央の彩度・明度Boxへ
+    色を同期する
   */
 
   if (
@@ -2678,83 +2692,38 @@ function setPenColor(
 
 
   /*
-    外側リングは
-    色相だけを表示する。
-
-    彩度100・明度100に固定することで
-    ハンドルをリング外周に保つ。
+    色相環のハンドルも
+    現在色へ同期する
   */
 
   const hsv =
     colorBoxPicker.color.hsv;
 
 
-  colorPicker.color.hsv = {
-    h: hsv.h,
-    s: 100,
-    v: 100
-  };
+  currentHue =
+    hsv.h;
+
+
+  updateHueRingHandle(
+    currentHue
+  );
 }
 
-
 /*
-  カラーホイール操作が
-  描画ツールパネルのドラッグへ
-  伝わらないようにする
+  外側の色相環は
+  iro.jsではなくCSSで表示する。
+
+  JavaScriptでは
+  選択ハンドルだけを管理する。
 */
 
-colorPickerWheel.addEventListener(
-  "pointerdown",
-  (event) => {
-
-    event.stopPropagation();
-  }
-);
-
-
-const colorPicker =
-  new iro.ColorPicker(
-    colorWheelLayer,
-    {
-      width: 150,
-
-      /*
-        外側リングは
-        色相選択専用として使う
-      */
-
-      color: {
-        h: 0,
-        s: 100,
-        v: 100
-      },
-
-      borderWidth: 1,
-      borderColor: "#555",
-
-      /*
-        中央ボックスで
-        明度を下げても
-        リング自体は暗くしない
-      */
-
-      wheelLightness: false,
-
-      layout: [
-        {
-          component:
-            iro.ui.Wheel,
-
-          options: {
-            wheelLightness:
-              false
-          }
-        }
-      ]
-    }
+const colorHueHandle =
+  document.getElementById(
+    "colorHueHandle"
   );
 
 
+let currentHue = 0;
 /*
   中央の
   彩度・明度ボックス
@@ -2764,7 +2733,7 @@ const colorBoxPicker =
   new iro.ColorPicker(
     colorBoxLayer,
     {
-      width: 92,
+      width: 64,
 
       color: {
         h: 0,
@@ -2775,7 +2744,7 @@ const colorBoxPicker =
       borderWidth: 1,
       borderColor: "#777",
 
-      padding: 4,
+      padding: 0,
 
       layout: [
         {
@@ -2783,12 +2752,303 @@ const colorBoxPicker =
             iro.ui.Box,
 
           options: {
-            boxHeight: 92
+            boxHeight: 64
           }
         }
       ]
     }
   );
+
+  /* ================================
+   色相環
+================================ */
+
+
+/*
+  色相から
+  ハンドル位置を更新する
+*/
+
+function updateHueRingHandle(
+  hue
+) {
+
+  const size =
+    colorWheelLayer
+      .clientWidth;
+
+
+  if (size <= 0) {
+    return;
+  }
+
+
+  const center =
+    size / 2;
+
+
+  /*
+    リング幅24pxなので
+    その中央をハンドルが通る
+  */
+
+  const radius =
+    center - 12;
+
+
+  /*
+    0°を円の上側にする
+  */
+
+  const angle =
+    (
+      hue - 90
+    ) *
+    Math.PI /
+    180;
+
+
+  const x =
+    center +
+    Math.cos(angle) *
+    radius;
+
+
+  const y =
+    center +
+    Math.sin(angle) *
+    radius;
+
+
+  colorHueHandle.style.left =
+    `${x}px`;
+
+  colorHueHandle.style.top =
+    `${y}px`;
+}
+
+
+/*
+  ポインター位置から
+  色相を求める
+*/
+
+function updateHueFromPointer(
+  event,
+  checkRingArea = false
+) {
+
+  const rect =
+    colorWheelLayer
+      .getBoundingClientRect();
+
+
+  const centerX =
+    rect.left +
+    rect.width / 2;
+
+  const centerY =
+    rect.top +
+    rect.height / 2;
+
+
+  const dx =
+    event.clientX -
+    centerX;
+
+  const dy =
+    event.clientY -
+    centerY;
+
+
+  const distance =
+    Math.hypot(
+      dx,
+      dy
+    );
+
+
+  const outerRadius =
+    rect.width / 2;
+
+
+  const innerRadius =
+    outerRadius - 24;
+
+
+  /*
+    最初に押した位置が
+    リング上でなければ
+    色相操作を開始しない
+  */
+
+  if (
+    checkRingArea &&
+    (
+      distance <
+        innerRadius ||
+      distance >
+        outerRadius
+    )
+  ) {
+
+    return false;
+  }
+
+
+  /*
+    上 = 0°
+    右 = 90°
+    下 = 180°
+    左 = 270°
+  */
+
+  let hue =
+    (
+      Math.atan2(
+        dy,
+        dx
+      ) *
+      180 /
+      Math.PI +
+      90
+    );
+
+
+  hue =
+    (
+      hue +
+      360
+    ) % 360;
+
+
+  currentHue =
+    hue;
+
+
+  const hsv =
+    colorBoxPicker
+      .color
+      .hsv;
+
+
+  /*
+    彩度・明度はそのまま、
+    色相だけ変更する
+  */
+
+  colorBoxPicker.color.hsv = {
+    h: hue,
+    s: hsv.s,
+    v: hsv.v
+  };
+
+
+  updateHueRingHandle(
+    hue
+  );
+
+
+  return true;
+}
+
+
+let isHueDragging = false;
+
+
+colorWheelLayer.addEventListener(
+  "pointerdown",
+  (event) => {
+
+    const started =
+      updateHueFromPointer(
+        event,
+        true
+      );
+
+
+    if (!started) {
+      return;
+    }
+
+
+    isHueDragging =
+      true;
+
+
+    colorWheelLayer
+      .setPointerCapture(
+        event.pointerId
+      );
+
+
+    event.preventDefault();
+    event.stopPropagation();
+  }
+);
+
+
+colorWheelLayer.addEventListener(
+  "pointermove",
+  (event) => {
+
+    if (!isHueDragging) {
+      return;
+    }
+
+
+    updateHueFromPointer(
+      event
+    );
+
+
+    event.preventDefault();
+    event.stopPropagation();
+  }
+);
+
+
+function finishHuePointer(
+  event
+) {
+
+  if (!isHueDragging) {
+    return;
+  }
+
+
+  isHueDragging =
+    false;
+
+
+  if (
+    colorWheelLayer
+      .hasPointerCapture(
+        event.pointerId
+      )
+  ) {
+
+    colorWheelLayer
+      .releasePointerCapture(
+        event.pointerId
+      );
+  }
+
+
+  event.stopPropagation();
+}
+
+
+colorWheelLayer.addEventListener(
+  "pointerup",
+  finishHuePointer
+);
+
+
+colorWheelLayer.addEventListener(
+  "pointercancel",
+  finishHuePointer
+);
 
 
 /*
@@ -2798,26 +3058,7 @@ const colorBoxPicker =
   ================================
 */
 
-colorPicker.on(
-  "input:change",
-  (color) => {
 
-    /*
-      現在の彩度・明度は維持し、
-      色相だけ変更する
-    */
-
-    const currentHSV =
-      colorBoxPicker.color.hsv;
-
-
-    colorBoxPicker.color.hsv = {
-      h: color.hue,
-      s: currentHSV.s,
-      v: currentHSV.v
-    };
-  }
-);
 
 
 /*
@@ -2837,16 +3078,26 @@ colorBoxPicker.on(
 
 
     /*
-      実際のペン色へ反映
+      選択した色を
+      実際のペン色へ反映する
     */
 
     penColor =
       normalizedColor;
 
 
+    /*
+      hiddenのカラー入力も同期
+    */
+
     penColorInput.value =
       normalizedColor;
 
+
+    /*
+      スマートフォンの
+      現在色表示も同期
+    */
 
     mobileColorButton
       .style
@@ -2855,37 +3106,267 @@ colorBoxPicker.on(
 
 
     /*
-      外側リングは
-      現在の色相だけ同期する。
+      PC用の
+      現在色表示も同期する
+    */
 
-      S・Vは100に固定して、
-      ハンドルをリング外周に維持。
+    currentPenColorSwatch
+      .style
+      .backgroundColor =
+        normalizedColor;
+
+
+    /*
+      色相環のハンドルを
+      現在の色相へ同期する
     */
 
     const hsv =
       color.hsv;
 
 
-    const wheelHSV =
-      colorPicker.color.hsv;
+    currentHue =
+      hsv.h;
 
 
-    if (
-      Math.abs(
-        wheelHSV.h -
-        hsv.h
-      ) > 0.01 ||
-      wheelHSV.s !== 100 ||
-      wheelHSV.v !== 100
-    ) {
-
-      colorPicker.color.hsv = {
-        h: hsv.h,
-        s: 100,
-        v: 100
-      };
-    }
+    updateHueRingHandle(
+      currentHue
+    );
   }
+);
+
+/* ================================
+   45°回転したSVひし形の操作
+================================ */
+
+let isColorBoxDragging = false;
+
+
+/*
+  画面上のポインター座標を
+  45°回転前のBox座標へ戻して、
+  彩度・明度へ変換する
+*/
+
+function updateColorBoxFromPointer(
+  event
+) {
+
+  const rect =
+    colorBoxLayer
+      .getBoundingClientRect();
+
+
+  /*
+    回転後の要素の中心
+  */
+
+  const centerX =
+    rect.left +
+    rect.width / 2;
+
+  const centerY =
+    rect.top +
+    rect.height / 2;
+
+
+  /*
+    中心から見た
+    マウス／指の位置
+  */
+
+  const dx =
+    event.clientX -
+    centerX;
+
+  const dy =
+    event.clientY -
+    centerY;
+
+
+  /*
+    CSSで時計回り45°回しているので、
+    座標を反時計回り45°戻す
+  */
+
+  const angle =
+    Math.PI / 4;
+
+  const cos =
+    Math.cos(angle);
+
+  const sin =
+    Math.sin(angle);
+
+
+  const boxSize =
+    colorBoxLayer.offsetWidth;
+
+
+  const localX =
+    dx * cos +
+    dy * sin +
+    boxSize / 2;
+
+  const localY =
+    -dx * sin +
+    dy * cos +
+    boxSize / 2;
+
+
+  /*
+    Boxの範囲内へ収める
+  */
+
+  const x =
+    Math.max(
+      0,
+      Math.min(
+        boxSize,
+        localX
+      )
+    );
+
+  const y =
+    Math.max(
+      0,
+      Math.min(
+        boxSize,
+        localY
+      )
+    );
+
+
+  /*
+    横軸：彩度
+    縦軸：明度
+  */
+
+  const saturation =
+    (
+      x /
+      boxSize
+    ) * 100;
+
+  const value =
+    100 -
+    (
+      y /
+      boxSize
+    ) * 100;
+
+
+  const currentHSV =
+    colorBoxPicker
+      .color
+      .hsv;
+
+
+  colorBoxPicker.color.hsv = {
+    h: currentHSV.h,
+    s: saturation,
+    v: value
+  };
+}
+
+
+/*
+  ひし形を押した
+*/
+
+colorBoxLayer.addEventListener(
+  "pointerdown",
+  (event) => {
+
+    isColorBoxDragging =
+      true;
+
+
+    colorBoxLayer
+      .setPointerCapture(
+        event.pointerId
+      );
+
+
+    updateColorBoxFromPointer(
+      event
+    );
+
+
+    event.preventDefault();
+    event.stopPropagation();
+  }
+);
+
+
+/*
+  ひし形上をドラッグ
+*/
+
+colorBoxLayer.addEventListener(
+  "pointermove",
+  (event) => {
+
+    if (!isColorBoxDragging) {
+      return;
+    }
+
+
+    updateColorBoxFromPointer(
+      event
+    );
+
+
+    event.preventDefault();
+    event.stopPropagation();
+  }
+);
+
+
+/*
+  操作終了
+*/
+
+function finishColorBoxPointer(
+  event
+) {
+
+  if (!isColorBoxDragging) {
+    return;
+  }
+
+
+  isColorBoxDragging =
+    false;
+
+
+  if (
+    colorBoxLayer
+      .hasPointerCapture(
+        event.pointerId
+      )
+  ) {
+
+    colorBoxLayer
+      .releasePointerCapture(
+        event.pointerId
+      );
+  }
+
+
+  event.stopPropagation();
+}
+
+
+colorBoxLayer.addEventListener(
+  "pointerup",
+  finishColorBoxPointer
+);
+
+
+colorBoxLayer.addEventListener(
+  "pointercancel",
+  finishColorBoxPointer
 );
 
 
