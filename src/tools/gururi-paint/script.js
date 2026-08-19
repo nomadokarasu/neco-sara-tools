@@ -3014,8 +3014,8 @@ function pickColorAt(
     `#${toHex(pixel[0])}${toHex(pixel[1])}${toHex(pixel[2])}`;
 
 
- setPenColor(
-      pickedColor
+setPenColor(
+      color
     );
 
 
@@ -4092,6 +4092,83 @@ const settingsPanel =
   );
 
 
+function updateMobileViewportSize() {
+
+  /*
+    PCでは通常サイズへ戻す
+  */
+
+  if (
+    !window.matchMedia(
+      "(max-width: 700px)"
+    ).matches
+  ) {
+
+    viewport.style.height = "";
+
+  } else {
+
+    /*
+      現在開いている
+      下部パネルを取得
+    */
+
+    const openPanel =
+      document.querySelector(
+        ".drawing-tools.is-mobile-open, " +
+        ".layer-panel.is-mobile-open, " +
+        ".toolbar__tools.is-mobile-open"
+      );
+
+
+    const panelHeight =
+      openPanel
+        ? openPanel
+            .getBoundingClientRect()
+            .height
+        : 0;
+
+
+    /*
+      44px = 上部ヘッダー
+      52px = 下部タブ
+
+      下部パネルも差し引いて、
+      実際に見える部分だけを
+      描画エリアにする
+    */
+
+    viewport.style.height =
+      `calc(
+        100dvh -
+        44px -
+        52px -
+        ${panelHeight}px -
+        env(safe-area-inset-bottom)
+      )`;
+  }
+
+
+  /*
+    Three.js側も
+    新しい描画領域サイズへ合わせる
+  */
+
+  camera.aspect =
+    viewport.clientWidth /
+    viewport.clientHeight;
+
+
+  camera.updateProjectionMatrix();
+
+
+  renderer.setSize(
+    viewport.clientWidth,
+    viewport.clientHeight
+  );
+}
+
+
 function setMobilePanel(
   panelName
 ) {
@@ -4120,7 +4197,7 @@ function setMobilePanel(
     );
 
 
-  mobileBottomTabButtons.forEach(
+mobileBottomTabButtons.forEach(
     (button) => {
 
       button.classList.toggle(
@@ -4128,6 +4205,19 @@ function setMobilePanel(
         button.dataset.mobilePanel ===
           panelName
       );
+    }
+  );
+
+
+  /*
+    displayが切り替わったあとに
+    パネルの実際の高さを測る
+  */
+
+  requestAnimationFrame(
+    () => {
+
+      updateMobileViewportSize();
     }
   );
 }
@@ -7286,16 +7376,7 @@ window.addEventListener(
   "resize",
   () => {
 
-    camera.aspect =
-      viewport.clientWidth /
-      viewport.clientHeight;
-
-    camera.updateProjectionMatrix();
-
-    renderer.setSize(
-      viewport.clientWidth,
-      viewport.clientHeight
-    );
+    updateMobileViewportSize();
   }
 );
 

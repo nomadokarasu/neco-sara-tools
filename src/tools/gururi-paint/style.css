@@ -917,10 +917,21 @@ canvas {
     360°表示領域
   */
 
-  #viewport {
-    height: calc(
-      100dvh - 44px
-    );
+#viewport {
+    /*
+      実際の高さはJavaScriptで
+      下部パネルの高さを測って設定する
+    */
+
+    height:
+      calc(
+        100dvh -
+        44px -
+        52px -
+        env(
+          safe-area-inset-bottom
+        )
+      );
   }
 
 
