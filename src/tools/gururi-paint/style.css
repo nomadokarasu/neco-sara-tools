@@ -783,6 +783,17 @@ body {
 }
 
 
+/*
+  360°描画領域では
+  スマートフォン標準の
+  スクロールやピンチ操作を無効化する
+*/
+
+#viewport canvas {
+  touch-action: none;
+}
+
+
 #viewport.is-looking {
   cursor: grabbing;
 }

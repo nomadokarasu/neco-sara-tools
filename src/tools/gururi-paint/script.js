@@ -5585,6 +5585,735 @@ window.addEventListener(
   }
 );
 
+/* ================================
+   スマートフォン
+   タッチ操作
+================================ */
+
+const activeTouchPointers =
+  new Map();
+
+let touchNavigationActive =
+  false;
+
+let previousTouchCenterX = 0;
+let previousTouchCenterY = 0;
+
+let previousTouchDistance = 0;
+
+
+/*
+  バケツ／スポイトは
+  pointerdownでは実行せず、
+  1本指のタップだと確定した
+  pointerup時に実行する
+*/
+
+let pendingTouchTap = null;
+
+
+/*
+  現在のタッチ位置を保存
+*/
+
+function updateTouchPointer(
+  event
+) {
+
+  activeTouchPointers.set(
+    event.pointerId,
+    {
+      x: event.clientX,
+      y: event.clientY
+    }
+  );
+}
+
+
+/*
+  2本指の中心位置と
+  指同士の距離を取得
+*/
+
+function getTouchGestureState() {
+
+  const touches =
+    Array.from(
+      activeTouchPointers.values()
+    );
+
+
+  if (touches.length < 2) {
+    return null;
+  }
+
+
+  const first =
+    touches[0];
+
+  const second =
+    touches[1];
+
+
+  const centerX =
+    (
+      first.x +
+      second.x
+    ) / 2;
+
+
+  const centerY =
+    (
+      first.y +
+      second.y
+    ) / 2;
+
+
+  const distance =
+    Math.hypot(
+      second.x - first.x,
+      second.y - first.y
+    );
+
+
+  return {
+    centerX,
+    centerY,
+    distance
+  };
+}
+
+
+/*
+  1本目の指で描き始めたあと、
+  2本目の指が置かれた場合は
+  その描画を取り消す
+*/
+
+function cancelCurrentTouchStroke() {
+
+  if (!isDrawing) {
+    return;
+  }
+
+
+  isDrawing = false;
+
+  currentStroke = null;
+
+  previousPaintX = null;
+  previousPaintY = null;
+
+  previousMidX = null;
+  previousMidY = null;
+
+
+  /*
+    現在のストロークはまだ
+    strokeHistoryへ入っていないため、
+    履歴から描き直すことで
+    誤描画だけを消せる
+  */
+
+  rebuildDrawing();
+
+  requestPaintUpdate();
+}
+
+
+/*
+  2本指操作開始
+*/
+
+function startTouchNavigation() {
+
+  cancelCurrentTouchStroke();
+
+  pendingTouchTap = null;
+
+
+  const gesture =
+    getTouchGestureState();
+
+
+  if (!gesture) {
+    return;
+  }
+
+
+  touchNavigationActive =
+    true;
+
+
+  previousTouchCenterX =
+    gesture.centerX;
+
+  previousTouchCenterY =
+    gesture.centerY;
+
+  previousTouchDistance =
+    gesture.distance;
+
+
+  eraserCursor.visible =
+    false;
+}
+
+
+/*
+  Pointer Captureを解除
+*/
+
+function releaseTouchPointer(
+  event
+) {
+
+  if (
+    renderer.domElement
+      .hasPointerCapture(
+        event.pointerId
+      )
+  ) {
+
+    renderer.domElement
+      .releasePointerCapture(
+        event.pointerId
+      );
+  }
+}
+
+
+/*
+  タッチ開始
+
+  trueを返した場合は
+  通常のpointerdown処理を
+  ここで終了する
+*/
+
+function handleTouchPointerDown(
+  event
+) {
+
+  if (
+    event.pointerType !== "touch"
+  ) {
+    return false;
+  }
+
+
+  event.preventDefault();
+
+  updateTouchPointer(
+    event
+  );
+
+
+  renderer.domElement
+    .setPointerCapture(
+      event.pointerId
+    );
+
+
+  /*
+    2本以上になったら
+    視点操作へ切り替える
+  */
+
+  if (
+    activeTouchPointers.size >= 2
+  ) {
+
+    startTouchNavigation();
+
+    return true;
+  }
+
+
+  /*
+    バケツ／スポイトは
+    2本目の指が来ないことを
+    確認してから実行する
+  */
+
+  if (
+    currentTool === "bucket" ||
+    currentTool === "eyedropper"
+  ) {
+
+    pendingTouchTap = {
+
+      pointerId:
+        event.pointerId,
+
+      startX:
+        event.clientX,
+
+      startY:
+        event.clientY,
+
+      moved:
+        false,
+
+      tool:
+        currentTool,
+
+      color:
+        penColor,
+
+      layerId:
+        activeLayerId
+    };
+
+
+    return true;
+  }
+
+
+  /*
+    ペン／消しゴムは
+    既存のpointerdown処理を使う
+  */
+
+  return false;
+}
+
+
+/*
+  タッチ移動
+*/
+
+function handleTouchPointerMove(
+  event
+) {
+
+  if (
+    event.pointerType !== "touch"
+  ) {
+    return false;
+  }
+
+
+  if (
+    !activeTouchPointers.has(
+      event.pointerId
+    )
+  ) {
+    return false;
+  }
+
+
+  event.preventDefault();
+
+  updateTouchPointer(
+    event
+  );
+
+
+  /*
+    2本指なら
+    見回し＋ピンチズーム
+  */
+
+  if (
+    activeTouchPointers.size >= 2
+  ) {
+
+    if (!touchNavigationActive) {
+
+      startTouchNavigation();
+    }
+
+
+    const gesture =
+      getTouchGestureState();
+
+
+    if (!gesture) {
+      return true;
+    }
+
+
+    /*
+      2本指ドラッグ
+      → 視点回転
+    */
+
+    const deltaX =
+      gesture.centerX -
+      previousTouchCenterX;
+
+    const deltaY =
+      gesture.centerY -
+      previousTouchCenterY;
+
+
+    const lookSensitivity =
+      0.003;
+
+
+    yaw -=
+      deltaX *
+      lookSensitivity;
+
+    pitch -=
+      deltaY *
+      lookSensitivity;
+
+
+    const limit =
+      Math.PI / 2 -
+      0.01;
+
+
+    pitch =
+      Math.max(
+        -limit,
+        Math.min(
+          limit,
+          pitch
+        )
+      );
+
+
+    /*
+      ピンチ
+      指を広げる → ズームイン
+      指を狭める → ズームアウト
+    */
+
+    const distanceDelta =
+      gesture.distance -
+      previousTouchDistance;
+
+
+    const pinchSensitivity =
+      0.12;
+
+
+    camera.fov -=
+      distanceDelta *
+      pinchSensitivity;
+
+
+    camera.fov =
+      Math.max(
+        20,
+        Math.min(
+          120,
+          camera.fov
+        )
+      );
+
+
+    camera.updateProjectionMatrix();
+
+
+    previousTouchCenterX =
+      gesture.centerX;
+
+    previousTouchCenterY =
+      gesture.centerY;
+
+    previousTouchDistance =
+      gesture.distance;
+
+
+    return true;
+  }
+
+
+  /*
+    一度2本指操作になったら、
+    片方を離しても残った1本では
+    描画を開始しない
+  */
+
+  if (touchNavigationActive) {
+    return true;
+  }
+
+
+  /*
+    バケツ／スポイトの
+    タップ判定。
+
+    10px以上動いた場合は
+    タップとはみなさない。
+  */
+
+  if (
+    pendingTouchTap &&
+    pendingTouchTap.pointerId ===
+      event.pointerId
+  ) {
+
+    const movedDistance =
+      Math.hypot(
+        event.clientX -
+          pendingTouchTap.startX,
+
+        event.clientY -
+          pendingTouchTap.startY
+      );
+
+
+    if (movedDistance > 10) {
+
+      pendingTouchTap.moved =
+        true;
+    }
+
+
+    return true;
+  }
+
+
+  /*
+    ペン／消しゴムは
+    既存のpointermove処理を使う
+  */
+
+  return false;
+}
+
+
+/*
+  タッチ終了
+*/
+
+function handleTouchPointerEnd(
+  event,
+  canceled = false
+) {
+
+  if (
+    event.pointerType !== "touch"
+  ) {
+    return false;
+  }
+
+
+  event.preventDefault();
+
+
+  /*
+    2本指操作中
+  */
+
+  if (touchNavigationActive) {
+
+    activeTouchPointers.delete(
+      event.pointerId
+    );
+
+
+    if (
+      activeTouchPointers.size >= 2
+    ) {
+
+      const gesture =
+        getTouchGestureState();
+
+
+      if (gesture) {
+
+        previousTouchCenterX =
+          gesture.centerX;
+
+        previousTouchCenterY =
+          gesture.centerY;
+
+        previousTouchDistance =
+          gesture.distance;
+      }
+    }
+
+
+    /*
+      指がすべて離れるまでは
+      描画へ戻さない
+    */
+
+    if (
+      activeTouchPointers.size === 0
+    ) {
+
+      touchNavigationActive =
+        false;
+    }
+
+
+    releaseTouchPointer(
+      event
+    );
+
+
+    return true;
+  }
+
+
+  /*
+    バケツ／スポイトの
+    タップを確定
+  */
+
+  if (
+    pendingTouchTap &&
+    pendingTouchTap.pointerId ===
+      event.pointerId
+  ) {
+
+    const tap =
+      pendingTouchTap;
+
+
+    pendingTouchTap = null;
+
+
+    activeTouchPointers.delete(
+      event.pointerId
+    );
+
+
+    releaseTouchPointer(
+      event
+    );
+
+
+    if (
+      canceled ||
+      tap.moved
+    ) {
+      return true;
+    }
+
+
+    const position =
+      getPaintPosition(
+        event
+      );
+
+
+    if (!position) {
+      return true;
+    }
+
+
+    /*
+      スポイト
+    */
+
+    if (
+      tap.tool === "eyedropper"
+    ) {
+
+      pickColorAt(
+        position.x,
+        position.y
+      );
+
+
+      return true;
+    }
+
+
+    /*
+      バケツ
+    */
+
+    if (
+      tap.tool === "bucket"
+    ) {
+
+      const changed =
+        floodFill(
+          position.x,
+          position.y,
+          tap.color,
+          tap.layerId
+        );
+
+
+      if (!changed) {
+        return true;
+      }
+
+
+      redoStrokeHistory.length =
+        0;
+
+
+      strokeHistory.push({
+
+        tool:
+          "bucket",
+
+        layerId:
+          tap.layerId,
+
+        color:
+          tap.color,
+
+        x:
+          position.x,
+
+        y:
+          position.y
+      });
+
+
+      rememberColor(
+        tap.color
+      );
+
+
+      requestPaintUpdate();
+
+
+      return true;
+    }
+
+
+    return true;
+  }
+
+
+  /*
+    通常の1本指描画
+  */
+
+  activeTouchPointers.delete(
+    event.pointerId
+  );
+
+
+  /*
+    OSなどによるキャンセル時は
+    描画中の線を破棄する
+  */
+
+  if (canceled) {
+
+    cancelCurrentTouchStroke();
+
+    releaseTouchPointer(
+      event
+    );
+
+    return true;
+  }
+
+
+  /*
+    通常のpointerup処理へ渡し、
+    ストロークを確定する
+  */
+
+  return false;
+}
+
+
 renderer.domElement.addEventListener(
   "pointerleave",
   () => {
@@ -5601,7 +6330,21 @@ renderer.domElement.addEventListener(
   "pointerdown",
   (event) => {
 
-    if (event.button !== 0) {
+if (event.button !== 0) {
+      return;
+    }
+
+
+    /*
+      スマートフォンの
+      タッチ開始処理
+    */
+
+    if (
+      handleTouchPointerDown(
+        event
+      )
+    ) {
       return;
     }
 
@@ -5839,12 +6582,32 @@ renderer.domElement.addEventListener(
   (event) => {
 
     /*
-      ペン／消しゴムカーソル
+      スマートフォンの
+      タッチ移動処理
     */
 
-    updateEraserCursor(
-      event
-    );
+    if (
+      handleTouchPointerMove(
+        event
+      )
+    ) {
+      return;
+    }
+
+
+    /*
+      ペン／消しゴムカーソルは
+      マウス使用時だけ表示する
+    */
+
+    if (
+      event.pointerType !== "touch"
+    ) {
+
+      updateEraserCursor(
+        event
+      );
+    }
 
 
     /*
@@ -6196,6 +6959,20 @@ renderer.domElement.addEventListener(
   "pointerup",
   (event) => {
 
+    /*
+      スマートフォンの
+      タッチ終了処理
+    */
+
+    if (
+      handleTouchPointerEnd(
+        event
+      )
+    ) {
+      return;
+    }
+
+
     isLooking = false;
     isZooming = false;
 
@@ -6271,6 +7048,24 @@ renderer.domElement.addEventListener(
       }
     );
 
+  }
+);
+
+
+/*
+  スマートフォンで、
+  OSやブラウザによって
+  タッチが中断された場合
+*/
+
+renderer.domElement.addEventListener(
+  "pointercancel",
+  (event) => {
+
+    handleTouchPointerEnd(
+      event,
+      true
+    );
   }
 );
 
