@@ -866,3 +866,394 @@ canvas {
 
   font-size: 13px;
 }
+
+
+/* ================================
+   スマートフォン用 下部UI
+================================ */
+
+.mobile-bottom-tabs {
+  display: none;
+}
+
+
+@media (max-width: 700px) {
+
+  /*
+    上部はタイトルと
+    ヘルプだけにする
+  */
+
+  .toolbar {
+    height: 44px;
+
+    padding: 0 10px;
+
+    overflow: visible;
+  }
+
+
+  .toolbar__title {
+    font-size: 14px;
+  }
+
+
+  #helpButton {
+    margin-left: auto;
+  }
+
+
+  /*
+    360°表示領域
+  */
+
+  #viewport {
+    height: calc(
+      100dvh - 44px
+    );
+  }
+
+
+  /*
+    下部タブ
+  */
+
+  .mobile-bottom-tabs {
+    position: fixed;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    z-index: 300;
+
+    display: flex;
+
+    height:
+      calc(
+        52px +
+        env(
+          safe-area-inset-bottom
+        )
+      );
+
+    padding-bottom:
+      env(
+        safe-area-inset-bottom
+      );
+
+    background: #2a2a2a;
+
+    border-top:
+      1px solid #555;
+  }
+
+
+  .mobile-bottom-tab {
+    flex: 1;
+
+    min-width: 0;
+
+    padding: 0 6px;
+
+    border: 0;
+    border-right:
+      1px solid #444;
+
+    background: #2a2a2a;
+    color: #bbb;
+
+    font: inherit;
+    font-size: 13px;
+
+    cursor: pointer;
+  }
+
+
+  .mobile-bottom-tab:last-child {
+    border-right: 0;
+  }
+
+
+  .mobile-bottom-tab.is-active {
+    background: #ddd;
+    color: #222;
+
+    font-weight: 600;
+  }
+
+
+  /*
+    3つの下部パネル共通
+  */
+
+  .drawing-tools,
+  .layer-panel,
+  .toolbar__tools {
+
+    position: fixed !important;
+
+    left: 0 !important;
+    right: 0 !important;
+
+    top: auto !important;
+
+    bottom:
+      calc(
+        52px +
+        env(
+          safe-area-inset-bottom
+        )
+      ) !important;
+
+    z-index: 250;
+
+    width: auto !important;
+
+    margin: 0;
+
+    border-radius: 0;
+
+    cursor: default;
+  }
+
+
+  /*
+    ========================
+    描画
+    ========================
+  */
+
+  .drawing-tools {
+    display: none !important;
+
+    max-height: 240px;
+
+    padding: 10px;
+
+    overflow-y: auto;
+
+    background: #333;
+
+    border:
+      1px solid #555;
+  }
+
+
+  .drawing-tools.is-mobile-open {
+    display: grid !important;
+
+    grid-template-columns:
+      repeat(
+        4,
+        minmax(0, 1fr)
+      );
+
+    gap: 8px;
+  }
+
+
+  .drawing-tools > .tool-button {
+    width: 100%;
+    min-height: 38px;
+  }
+
+
+  .drawing-tools__separator {
+    grid-column: 1 / -1;
+
+    margin: 0;
+  }
+
+
+  .drawing-tools
+    .pen-size-control {
+
+    grid-column: 1 / -1;
+
+    width: 100%;
+
+    margin-left: 0;
+  }
+
+
+  .drawing-tools
+    .pen-color-control {
+
+    grid-column: 1 / 2;
+
+    margin-left: 0;
+  }
+
+
+  .drawing-tools
+    .recent-colors {
+
+    grid-column: 2 / -1;
+
+    width: 100%;
+    margin-left: 0;
+  }
+
+
+  .drawing-tools
+    .history-controls {
+
+    grid-column: 1 / -1;
+
+    width: 100%;
+    margin-left: 0;
+  }
+
+
+  .drawing-tools
+    .history-controls
+    .tool-button {
+
+    min-height: 36px;
+  }
+
+
+  /*
+    ========================
+    レイヤー
+    ========================
+  */
+
+  .layer-panel {
+    display: none !important;
+
+    max-height: 280px;
+
+    padding: 10px;
+
+    overflow: hidden;
+
+    background: #333;
+
+    border:
+      1px solid #555;
+  }
+
+
+  .layer-panel.is-mobile-open {
+    display: block !important;
+  }
+
+
+  .layer-list {
+    max-height: 190px;
+  }
+
+
+  /*
+    ========================
+    設定
+    ========================
+  */
+
+  .toolbar__tools {
+    display: none;
+
+    flex-wrap: wrap;
+    align-items: center;
+
+    gap: 8px;
+
+    max-height: 280px;
+
+    padding: 10px;
+
+    overflow-y: auto;
+
+    background: #333;
+
+    border-top:
+      1px solid #555;
+  }
+
+
+  .toolbar__tools.is-mobile-open {
+    display: flex;
+  }
+
+
+  .toolbar__tools
+    .canvas-size-control {
+
+    width: 100%;
+
+    margin-left: 0;
+
+    justify-content:
+      space-between;
+  }
+
+
+  .toolbar__tools
+    .eye-height-control {
+
+    width: 100%;
+
+    margin-left: 0;
+  }
+
+
+  .toolbar__tools
+    .eye-height-control
+    input[type="range"] {
+
+    flex: 1;
+
+    min-width: 60px;
+  }
+
+
+  .toolbar__tools
+    .guide-toggle {
+
+    width: 100%;
+
+    min-height: 32px;
+  }
+
+
+  .toolbar__tools
+    > .tool-button {
+
+    flex:
+      1 1
+      calc(
+        50% - 4px
+      );
+
+    min-height: 40px;
+  }
+
+
+  /*
+    ヘルプ
+  */
+
+  .help-panel {
+    top: 54px;
+    right: 10px;
+
+    width:
+      calc(
+        100% - 20px
+      );
+
+    max-width: 320px;
+  }
+
+
+  /*
+    プレビュー
+  */
+
+  .preview-overlay {
+    padding: 10px;
+  }
+
+}

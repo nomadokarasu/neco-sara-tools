@@ -3758,9 +3758,24 @@ function makePanelDraggable(
   let startPanelTop = 0;
 
 
-  panel.addEventListener(
+panel.addEventListener(
     "pointerdown",
     (event) => {
+
+      /*
+        スマートフォンでは
+        パネルを下部固定にするため
+        ドラッグ移動を無効にする
+      */
+
+      if (
+        window.matchMedia(
+          "(max-width: 700px)"
+        ).matches
+      ) {
+        return;
+      }
+
 
       /*
         左クリック以外では
@@ -3977,6 +3992,99 @@ makePanelDraggable(
   document.querySelector(
     ".layer-panel"
   )
+);
+
+
+/* ================================
+   スマートフォン用
+   下部パネル切り替え
+================================ */
+
+const mobileBottomTabButtons =
+  document.querySelectorAll(
+    ".mobile-bottom-tab"
+  );
+
+const drawingToolsPanel =
+  document.querySelector(
+    ".drawing-tools"
+  );
+
+const layerPanel =
+  document.querySelector(
+    ".layer-panel"
+  );
+
+const settingsPanel =
+  document.querySelector(
+    ".toolbar__tools"
+  );
+
+
+function setMobilePanel(
+  panelName
+) {
+
+  drawingToolsPanel
+    ?.classList
+    .toggle(
+      "is-mobile-open",
+      panelName === "draw"
+    );
+
+
+  layerPanel
+    ?.classList
+    .toggle(
+      "is-mobile-open",
+      panelName === "layer"
+    );
+
+
+  settingsPanel
+    ?.classList
+    .toggle(
+      "is-mobile-open",
+      panelName === "settings"
+    );
+
+
+  mobileBottomTabButtons.forEach(
+    (button) => {
+
+      button.classList.toggle(
+        "is-active",
+        button.dataset.mobilePanel ===
+          panelName
+      );
+    }
+  );
+}
+
+
+mobileBottomTabButtons.forEach(
+  (button) => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        setMobilePanel(
+          button.dataset.mobilePanel
+        );
+      }
+    );
+  }
+);
+
+
+/*
+  初期状態では
+  描画パネルを表示する
+*/
+
+setMobilePanel(
+  "draw"
 );
 
 
