@@ -2905,6 +2905,96 @@ penSizeValue.addEventListener(
 
 
 /*
+  スマートフォンでは
+  Enterで太さを確定して
+  入力欄からフォーカスを外す
+*/
+
+penSizeValue.addEventListener(
+  "keydown",
+  (event) => {
+
+    if (
+      !isMobileDevice ||
+      event.key !== "Enter"
+    ) {
+      return;
+    }
+
+
+    event.preventDefault();
+
+
+    let value =
+      Number(
+        penSizeValue.value
+      );
+
+
+    /*
+      不正な値の場合は
+      現在の太さへ戻す
+    */
+
+    if (!Number.isFinite(value)) {
+
+      penSizeValue.value =
+        penSize;
+
+      penSizeValue.blur();
+
+      return;
+    }
+
+
+    /*
+      1～50の範囲に収めて確定
+    */
+
+    value =
+      Math.max(
+        1,
+        Math.min(
+          50,
+          value
+        )
+      );
+
+
+    penSize =
+      value;
+
+    penSizeInput.value =
+      value;
+
+    penSizeValue.value =
+      value;
+
+
+    if (currentTool === "pen") {
+
+      savedPenSize =
+        penSize;
+
+    } else if (
+      currentTool === "eraser"
+    ) {
+
+      savedEraserSize =
+        penSize;
+    }
+
+
+    /*
+      数字キーボードを閉じる
+    */
+
+    penSizeValue.blur();
+  }
+);
+
+
+/*
   太さ −
 */
 
