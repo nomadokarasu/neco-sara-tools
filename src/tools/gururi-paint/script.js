@@ -174,8 +174,25 @@ const renderer =
     antialias: true
   });
 
+/*
+  スマートフォンでは
+  Three.jsの描画解像度を抑えて
+  動作を軽くする
+*/
+
+const isMobileDevice =
+  window.matchMedia(
+    "(max-width: 700px)"
+  ).matches;
+
+
 renderer.setPixelRatio(
-  Math.min(window.devicePixelRatio, 2)
+  isMobileDevice
+    ? 1
+    : Math.min(
+        window.devicePixelRatio,
+        2
+      )
 );
 
 renderer.setSize(
@@ -425,6 +442,20 @@ drawBaseCanvas();
 */
 
 let paintUpdateRequested = false;
+
+
+/*
+  スマートフォンでは
+  360°テクスチャ更新を
+  最大30fps程度に抑える
+*/
+
+let lastPaintUpdateTime = 0;
+
+const paintUpdateInterval =
+  isMobileDevice
+    ? 1000 / 30
+    : 0;
 
 
 function requestPaintUpdate() {
@@ -2241,7 +2272,16 @@ const colorPicker =
     {
       width: 150,
 
-      color: penColor,
+      /*
+        カラーホイールの初期状態は
+        明度100%から開始する
+      */
+
+      color: {
+        h: 0,
+        s: 0,
+        v: 100
+      },
 
       borderWidth: 1,
       borderColor: "#555",
@@ -7395,11 +7435,25 @@ function animate() {
     360°テクスチャを更新する
   */
 
-  if (paintUpdateRequested) {
+const now =
+    performance.now();
+
+
+  if (
+    paintUpdateRequested &&
+    (
+      paintUpdateInterval === 0 ||
+      now - lastPaintUpdateTime >=
+        paintUpdateInterval
+    )
+  ) {
 
     updatePaintCanvas();
 
     paintUpdateRequested = false;
+
+    lastPaintUpdateTime =
+      now;
   }
 
 
