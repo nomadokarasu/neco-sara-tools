@@ -381,6 +381,12 @@ let appData =
   );
 
 
+let lastSavedAppData =
+  structuredClone(
+    defaultData
+  );
+
+
 // ========================================
 // 初期表示
 // ========================================
@@ -391,6 +397,13 @@ initializeApp();
 async function initializeApp() {
   appData =
     await loadAppData();
+
+
+  lastSavedAppData =
+    structuredClone(
+      appData
+    );
+
 
   ensureInitialCategories();
 
@@ -587,14 +600,6 @@ let serverSavePromise = null;
 
 
 function saveAppData() {
-  localStorage.setItem(
-    STORAGE_KEY,
-
-    JSON.stringify(
-      appData
-    )
-  );
-
   pendingServerData =
     structuredClone(
       appData
@@ -617,6 +622,38 @@ function saveAppData() {
 }
 
 
+function restoreLastSavedAppData(
+  message
+) {
+  pendingServerData =
+    null;
+
+
+  appData =
+    structuredClone(
+      lastSavedAppData
+    );
+
+
+  localStorage.setItem(
+    STORAGE_KEY,
+
+    JSON.stringify(
+      lastSavedAppData
+    )
+  );
+
+
+  window.alert(
+    message +
+    "\n\n変更前の状態に戻します。"
+  );
+
+
+  window.location.reload();
+}
+
+
 async function saveQueuedDataToServer() {
   while (pendingServerData) {
     const dataToSave =
@@ -632,8 +669,8 @@ async function saveQueuedDataToServer() {
         );
 
       if (!enteredPassword) {
-        showStatusMessage(
-          "サーバーへの保存を中止しました。ブラウザ内には保存されています。"
+        restoreLastSavedAppData(
+          "保存を中止しました。"
         );
 
         return;
@@ -684,6 +721,22 @@ async function saveQueuedDataToServer() {
         );
       }
 
+
+      localStorage.setItem(
+        STORAGE_KEY,
+
+        JSON.stringify(
+          dataToSave
+        )
+      );
+
+
+      lastSavedAppData =
+        structuredClone(
+          dataToSave
+        );
+
+
       showStatusMessage(
         "ブラウザとサーバーに保存しました。"
       );
@@ -693,10 +746,12 @@ async function saveQueuedDataToServer() {
         error
       );
 
-      showStatusMessage(
+
+      restoreLastSavedAppData(
         error.message ||
         "サーバーへの保存に失敗しました。"
       );
+
 
       return;
     }
