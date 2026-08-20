@@ -5107,6 +5107,28 @@ function initializeRecordForm() {
   );
 
 
+  recordEditStartTimeInput.addEventListener(
+    "blur",
+
+    function() {
+      normalizeRecordTimeInput(
+        recordEditStartTimeInput
+      );
+    }
+  );
+
+
+  recordEditEndTimeInput.addEventListener(
+    "blur",
+
+    function() {
+      normalizeRecordTimeInput(
+        recordEditEndTimeInput
+      );
+    }
+  );
+
+
   recordForm.addEventListener(
   "submit",
 
@@ -5116,6 +5138,91 @@ function initializeRecordForm() {
     saveRecordForm();
   }
 );
+}
+
+
+function normalizeRecordTimeInput(
+  input
+) {
+  const currentValue =
+    input.value.trim();
+
+
+  if (
+    /^([01]\d|2[0-3]):[0-5]\d$/.test(
+      currentValue
+    )
+  ) {
+    return true;
+  }
+
+
+  let digits =
+    currentValue.replace(
+      /\D/g,
+      ""
+    );
+
+
+  if (digits.length === 3) {
+    digits =
+      digits.padStart(
+        4,
+        "0"
+      );
+  }
+
+
+  if (digits.length !== 4) {
+    return false;
+  }
+
+
+  const hours =
+    Number(
+      digits.slice(
+        0,
+        2
+      )
+    );
+
+
+  const minutes =
+    Number(
+      digits.slice(
+        2,
+        4
+      )
+    );
+
+
+  if (
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return false;
+  }
+
+
+  input.value =
+    String(
+      hours
+    ).padStart(
+      2,
+      "0"
+    ) +
+    ":" +
+    String(
+      minutes
+    ).padStart(
+      2,
+      "0"
+    );
+
+
+  return true;
 }
 
 
@@ -5447,6 +5554,29 @@ function deleteRecord(
 }
 
 function saveRecordForm() {
+  const startTimeIsValid =
+    normalizeRecordTimeInput(
+      recordEditStartTimeInput
+    );
+
+
+  const endTimeIsValid =
+    normalizeRecordTimeInput(
+      recordEditEndTimeInput
+    );
+
+
+  if (
+    !startTimeIsValid ||
+    !endTimeIsValid
+  ) {
+    recordFormError.textContent =
+      "時刻は0930や18:45の形式で入力してください。";
+
+    return;
+  }
+
+
   const projectId =
     recordEditProjectSelect.value;
 
