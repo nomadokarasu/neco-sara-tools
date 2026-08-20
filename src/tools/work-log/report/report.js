@@ -1214,12 +1214,25 @@ function renderDailyWorkTimeline(
                   ${formatClockTime(item.endedAt)}
                 </time>
 
-                <span class="daily-work-project">
+                <strong class="daily-work-project">
                   【${escapeHtml(item.categoryName)}/${escapeHtml(item.projectName)}】
-                </span>
+                </strong>
 
                 <span class="daily-work-content">
                   ${escapeHtml(item.text)}
+                  （${formatSecondsAsText(
+                    Math.max(
+                      0,
+
+                      Math.floor(
+                        (
+                          item.endedAt -
+                          item.startedAt
+                        ) /
+                        1000
+                      )
+                    )
+                  )}）
                 </span>
               </li>
             `;
@@ -1630,10 +1643,16 @@ function renderCurrentSummary(
                       </summary>
 
                       <div class="summary-project-detail">
-                        ${createWorkDayHtml(
-                          workDays,
-                          true
-                        )}
+                        ${
+                          selectedPeriod === "day"
+                            ? createDayProjectWorkHtml(
+                                workDays
+                              )
+                            : createWorkDayHtml(
+                                workDays,
+                                true
+                              )
+                        }
                       </div>
                     </details>
                   `;
@@ -2441,6 +2460,86 @@ function groupSessionsByDay(
       );
     }
   );
+}
+
+
+// ========================================
+// 日表示のプロジェクト別作業内容
+// ========================================
+
+function createDayProjectWorkHtml(
+  workDays
+) {
+  if (workDays.length === 0) {
+    return `
+      <p class="empty-message">
+        この日の作業記録はありません。
+      </p>
+    `;
+  }
+
+
+  const notes =
+    workDays.flatMap(
+      function(workDay) {
+        return Array.isArray(
+          workDay.notes
+        )
+          ? workDay.notes
+          : [];
+      }
+    );
+
+
+  notes.sort(
+    function(a, b) {
+      return (
+        Number(
+          a.startedAt || 0
+        ) -
+        Number(
+          b.startedAt || 0
+        )
+      );
+    }
+  );
+
+
+  if (notes.length === 0) {
+    return `
+      <p class="empty-message">
+        作業内容の記録はありません。
+      </p>
+    `;
+  }
+
+
+  return `
+    <ul class="work-content-list">
+      ${notes
+        .map(
+          function(note) {
+            return `
+              <li>
+                <time
+                  class="work-time-range"
+                  datetime="${new Date(
+                    note.startedAt
+                  ).toISOString()}"
+                >
+                  ${formatWorkTimeRange(note)}
+                </time>
+
+                <span class="work-content-text">
+                  ${escapeHtml(note.text)}
+                </span>
+              </li>
+            `;
+          }
+        )
+        .join("")}
+    </ul>
+  `;
 }
 
 
