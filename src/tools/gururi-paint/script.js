@@ -6478,19 +6478,48 @@ function renderLayerPanel() {
 
     function startLayerNameEditing() {
 
+      /*
+        readonly状態のinputには
+        すでにフォーカスが当たっている
+        場合がある。
+
+        スマートフォンでキーボードを
+        確実に開き直すため、
+        一度フォーカスを外す。
+      */
+
+      nameInput.blur();
+
+
+      /*
+        編集可能にする
+      */
+
       nameInput.readOnly =
         false;
 
 
-      nameInput.focus();
+      /*
+        pointerup / dblclick の
+        ユーザー操作中に
+        すぐフォーカスし直す。
+
+        遅延処理にはしない。
+      */
+
+      nameInput.focus({
+        preventScroll: true
+      });
 
 
       /*
-        編集開始時には
         名前全体を選択する
       */
 
-      nameInput.select();
+      nameInput.setSelectionRange(
+        0,
+        nameInput.value.length
+      );
     }
 
 
@@ -6718,12 +6747,18 @@ function renderLayerPanel() {
           false;
 
 
-        event.preventDefault();
+        /*
+          キーボード表示のため、
+          preventDefaultは行わない。
 
-        event.stopPropagation();
-
+          このpointerupイベント中に
+          編集状態へ切り替える。
+        */
 
         startLayerNameEditing();
+
+
+        event.stopPropagation();
       }
     );
 

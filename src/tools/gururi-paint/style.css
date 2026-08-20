@@ -1001,7 +1001,28 @@ body {
 .layer-name-input[readonly] {
   cursor: default;
 
+  /*
+    長押しをブラウザ標準の
+    テキスト選択として扱わせない
+  */
+
+  user-select: none;
+  -webkit-user-select: none;
+
   -webkit-touch-callout: none;
+}
+
+
+.layer-name-input:not([readonly]) {
+  cursor: text;
+
+  /*
+    編集状態になった後は
+    通常どおり文字を選択できる
+  */
+
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 
@@ -1009,10 +1030,6 @@ body {
   編集中だけ
   入力欄らしい表示にする
 */
-
-.layer-name-input:not([readonly]) {
-  cursor: text;
-}
 
 
 .layer-name-input:not([readonly]):focus {
