@@ -158,6 +158,20 @@
   "useUrl": "./tools/gururi-paint/",
   "detailUrl": "",
   "privacy": "描画データや読み込んだ保存データはブラウザ内で処理され、サーバーには送信されません。"
+},
+{
+  "name": "作業記録ツール",
+  "slug": "work-log",
+  "description": "日々の作業時間と作業内容を記録するためのツール",
+  "version": "1.0.0",
+  "category": "制作補助",
+  "status": "公開中",
+  "publishedAt": "2026-08-20",
+  "updatedAt": "2026-08-20",
+  "image": "",
+  "useUrl": "./tools/work-log/",
+  "detailUrl": "",
+  "privacy": "描画データや読み込んだ保存データはブラウザ内で処理され、サーバーには送信されません。"
 }
 
 ]
