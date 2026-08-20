@@ -497,6 +497,147 @@ summary:focus-visible {
 
 
 /* ========================================
+   日別作業内容
+======================================== */
+
+.daily-work-details {
+  margin:
+    -8px 0 18px;
+}
+
+
+.daily-work-details[hidden] {
+  display:
+    none;
+}
+
+
+.daily-work-summary {
+  margin:
+    0;
+
+  padding:
+    8px 10px 8px 40px !important;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background:
+    #f7f7f7;
+
+  cursor:
+    pointer;
+
+  font-weight:
+    600;
+}
+
+
+.daily-work-summary:hover {
+  background:
+    #eeeeee;
+}
+
+
+.daily-work-timeline {
+  border:
+    1px solid var(--border-color);
+
+  border-top:
+    0;
+
+  border-radius:
+    0 0 var(--border-radius) var(--border-radius);
+
+  padding:
+    14px 16px;
+}
+
+
+.daily-work-list {
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  margin:
+    0;
+
+  padding:
+    0;
+
+  list-style:
+    none;
+}
+
+
+.daily-work-list li {
+  display:
+    grid;
+
+  grid-template-columns:
+    120px
+    auto
+    minmax(0, 1fr);
+
+  align-items:
+    start;
+
+  gap:
+    10px;
+
+  padding:
+    6px 0;
+
+  border-bottom:
+    1px solid var(--border-color);
+}
+
+
+.daily-work-list li:last-child {
+  border-bottom:
+    0;
+}
+
+
+.daily-work-time {
+  color:
+    var(--sub-text-color);
+
+  font-size:
+    0.8rem;
+
+  white-space:
+    nowrap;
+}
+
+
+.daily-work-project {
+  font-size:
+    0.85rem;
+
+  font-weight:
+    600;
+
+  overflow-wrap:
+    anywhere;
+}
+
+
+.daily-work-content {
+  min-width:
+    0;
+
+  overflow-wrap:
+    anywhere;
+}
+
+
+/* ========================================
    大分類別の集計
 ======================================== */
 
@@ -1120,6 +1261,21 @@ summary:focus-visible {
       1fr;
     gap:
       5px;
+  }
+
+
+  .daily-work-list li {
+    grid-template-columns:
+      1fr;
+
+    gap:
+      2px;
+  }
+
+
+  .daily-work-project {
+    margin-top:
+      2px;
   }
 
 

@@ -122,6 +122,24 @@ const reportDateRange =
   );
 
 
+const dailyWorkDetails =
+  document.getElementById(
+    "daily-work-details"
+  );
+
+
+const dailyWorkDate =
+  document.getElementById(
+    "daily-work-date"
+  );
+
+
+const dailyWorkTimeline =
+  document.getElementById(
+    "daily-work-timeline"
+  );
+
+
 const categorySummaryList =
   document.getElementById(
     "category-summary-list"
@@ -764,6 +782,11 @@ function renderReport() {
   );
 
 
+  renderDailyWorkTimeline(
+    sessions
+  );
+
+
   renderActiveWork();
 
   renderCurrentSummary(
@@ -1001,14 +1024,210 @@ if (selectedPeriod === "week") {
     );
 
 
-  reportDateRange.textContent =
-    formatJapaneseDate(
-      periodRange.start
-    ) +
-    " ～ " +
-    formatJapaneseDate(
-      displayEnd
-    );
+  if (selectedPeriod === "day") {
+    reportDateRange.hidden =
+      true;
+
+
+    dailyWorkDetails.hidden =
+      false;
+
+
+    dailyWorkDate.textContent =
+      formatJapaneseDate(
+        periodRange.start
+      );
+  } else {
+    reportDateRange.hidden =
+      false;
+
+
+    dailyWorkDetails.hidden =
+      true;
+
+
+    dailyWorkDetails.open =
+      false;
+
+
+    reportDateRange.textContent =
+      formatJapaneseDate(
+        periodRange.start
+      ) +
+      " ～ " +
+      formatJapaneseDate(
+        displayEnd
+      );
+  }
+}
+
+
+// ========================================
+// 日別作業内容
+// ========================================
+
+function renderDailyWorkTimeline(
+  sessions
+) {
+  if (selectedPeriod !== "day") {
+    return;
+  }
+
+
+  const timelineItems =
+    [];
+
+
+  sessions.forEach(
+    function(session) {
+      const projectInformation =
+        findProjectInformation(
+          session.projectId
+        );
+
+
+      const categoryName =
+        projectInformation
+          ? projectInformation.category.name
+          : "分類情報なし";
+
+
+      const projectName =
+        projectInformation
+          ? projectInformation.project.name
+          : "プロジェクト情報なし";
+
+
+      const notes =
+        Array.isArray(
+          session.notes
+        )
+          ? session.notes
+          : [];
+
+
+      if (notes.length === 0) {
+        timelineItems.push(
+          {
+            startedAt:
+              Number(
+                session.startedAt
+              ),
+
+            endedAt:
+              Number(
+                session.endedAt
+              ) ||
+              Number(
+                session.startedAt
+              ),
+
+            categoryName:
+              categoryName,
+
+            projectName:
+              projectName,
+
+            text:
+              "作業内容の記録なし"
+          }
+        );
+
+        return;
+      }
+
+
+      notes.forEach(
+        function(note) {
+          timelineItems.push(
+            {
+              startedAt:
+                Number(
+                  note.startedAt
+                ) ||
+                Number(
+                  session.startedAt
+                ),
+
+              endedAt:
+                Number(
+                  note.endedAt
+                ) ||
+                Number(
+                  note.createdAt
+                ) ||
+                Number(
+                  session.endedAt
+                ) ||
+                Number(
+                  session.startedAt
+                ),
+
+              categoryName:
+                categoryName,
+
+              projectName:
+                projectName,
+
+              text:
+                note.text ||
+                "作業内容の記録なし"
+            }
+          );
+        }
+      );
+    }
+  );
+
+
+  timelineItems.sort(
+    function(a, b) {
+      return (
+        a.startedAt -
+        b.startedAt
+      );
+    }
+  );
+
+
+  if (timelineItems.length === 0) {
+    dailyWorkTimeline.innerHTML = `
+      <p class="empty-message">
+        この日の作業記録はありません。
+      </p>
+    `;
+
+    return;
+  }
+
+
+  dailyWorkTimeline.innerHTML = `
+    <ul class="daily-work-list">
+      ${timelineItems
+        .map(
+          function(item) {
+            return `
+              <li>
+                <time class="daily-work-time">
+                  ${formatClockTime(item.startedAt)}
+                  ～
+                  ${formatClockTime(item.endedAt)}
+                </time>
+
+                <span class="daily-work-project">
+                  【${escapeHtml(item.categoryName)}/${escapeHtml(item.projectName)}】
+                </span>
+
+                <span class="daily-work-content">
+                  ${escapeHtml(item.text)}
+                </span>
+              </li>
+            `;
+          }
+        )
+        .join("")}
+    </ul>
+  `;
 }
 
 
