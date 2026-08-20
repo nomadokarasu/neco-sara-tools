@@ -192,10 +192,131 @@ async function initializeReport() {
       appData =
         await loadAppData();
 
+
+      const openDetailsState =
+        captureOpenDetailsState();
+
+
       renderReport();
+
+
+      restoreOpenDetailsState(
+        openDetailsState
+      );
     },
 
     15000
+  );
+}
+
+
+// ========================================
+// 折りたたみの展開状態を保存する
+// ========================================
+
+function captureOpenDetailsState() {
+  const rootIds = [
+    "category-summary-list",
+    "current-project-list",
+    "project-report-list"
+  ];
+
+
+  return rootIds
+    .map(
+      function(rootId) {
+        const root =
+          document.getElementById(
+            rootId
+          );
+
+
+        if (!root) {
+          return null;
+        }
+
+
+        const details =
+          Array.from(
+            root.querySelectorAll(
+              "details"
+            )
+          );
+
+
+        const openIndexes =
+          [];
+
+
+        details.forEach(
+          function(detail, index) {
+            if (detail.open) {
+              openIndexes.push(
+                index
+              );
+            }
+          }
+        );
+
+
+        return {
+          rootId:
+            rootId,
+
+          openIndexes:
+            openIndexes
+        };
+      }
+    )
+    .filter(
+      function(state) {
+        return state !== null;
+      }
+    );
+}
+
+
+// ========================================
+// 折りたたみの展開状態を復元する
+// ========================================
+
+function restoreOpenDetailsState(
+  savedState
+) {
+  savedState.forEach(
+    function(rootState) {
+      const root =
+        document.getElementById(
+          rootState.rootId
+        );
+
+
+      if (!root) {
+        return;
+      }
+
+
+      const details =
+        Array.from(
+          root.querySelectorAll(
+            "details"
+          )
+        );
+
+
+      rootState.openIndexes.forEach(
+        function(index) {
+          const detail =
+            details[index];
+
+
+          if (detail) {
+            detail.open =
+              true;
+          }
+        }
+      );
+    }
   );
 }
 
@@ -2085,8 +2206,8 @@ function groupSessionsByDay(
   ).sort(
     function(a, b) {
       return (
-        b.date -
-        a.date
+        a.date -
+        b.date
       );
     }
   );
