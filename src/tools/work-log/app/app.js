@@ -5108,11 +5108,33 @@ function initializeRecordForm() {
 
 
   recordEditStartTimeInput.addEventListener(
+    "input",
+
+    function() {
+      formatRecordTimeWhileTyping(
+        recordEditStartTimeInput
+      );
+    }
+  );
+
+
+  recordEditStartTimeInput.addEventListener(
     "blur",
 
     function() {
       normalizeRecordTimeInput(
         recordEditStartTimeInput
+      );
+    }
+  );
+
+
+  recordEditEndTimeInput.addEventListener(
+    "input",
+
+    function() {
+      formatRecordTimeWhileTyping(
+        recordEditEndTimeInput
       );
     }
   );
@@ -5138,6 +5160,24 @@ function initializeRecordForm() {
     saveRecordForm();
   }
 );
+}
+
+
+function formatRecordTimeWhileTyping(
+  input
+) {
+  const value =
+    input.value.trim();
+
+
+  if (!/^\d{4}$/.test(value)) {
+    return;
+  }
+
+
+  normalizeRecordTimeInput(
+    input
+  );
 }
 
 
