@@ -1176,9 +1176,20 @@ function renderCurrentSummary(
     );
 
 
+  const periodPlannedSeconds =
+    Math.round(
+      periodHours *
+      3600
+    );
+
+
   reportTotalTime.textContent =
     formatSecondsAsText(
       totalSeconds
+    ) +
+    " / " +
+    formatSecondsAsText(
+      periodPlannedSeconds
     );
 
 
