@@ -1034,8 +1034,10 @@ function downloadProject() {
       fov:
         camera.fov,
 
-      guideVisible:
-        groundToggle.checked
+guideVisible:
+        groundToggle.checked,
+
+      previewSeamRatio
     },
 
 
@@ -1900,6 +1902,45 @@ updateGroundGridSize(
 
   horizontalGuides.visible =
     guideVisible;
+
+
+  /*
+    プレビュー画像の
+    左端位置を復元する。
+
+    古い保存データには
+    この値がないため0を使用する。
+  */
+
+  previewSeamRatio =
+    clampProjectNumber(
+      projectData.view
+        ?.previewSeamRatio,
+      0,
+      1,
+      0
+    );
+
+
+  /*
+    1は0と同じ位置なので
+    0へ統一する
+  */
+
+  if (
+    previewSeamRatio >= 1
+  ) {
+    previewSeamRatio = 0;
+  }
+
+
+  previewDragRatio = 0;
+
+
+  previewSeamHandle
+    .style
+    .left =
+      "0px";
 
 
   /*
@@ -8404,6 +8445,46 @@ redoButton.addEventListener(
 window.addEventListener(
   "keydown",
   (event) => {
+
+    /*
+      入力欄を操作している間は
+      描画用キーボードショートカットを
+      実行しない。
+
+      レイヤー名はreadOnly時なら
+      通常のショートカットを使用できる。
+    */
+
+    const target =
+      event.target;
+
+
+    const isEditableInput =
+      target instanceof HTMLInputElement &&
+      (
+        !target.classList.contains(
+          "layer-name-input"
+        ) ||
+        !target.readOnly
+      );
+
+
+    const isOtherEditableElement =
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      (
+        target instanceof HTMLElement &&
+        target.isContentEditable
+      );
+
+
+    if (
+      isEditableInput ||
+      isOtherEditableElement
+    ) {
+      return;
+    }
+
 
     /*
       Ctrl + Z
