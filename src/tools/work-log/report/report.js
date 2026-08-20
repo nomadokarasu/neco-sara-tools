@@ -128,6 +128,12 @@ const categorySummaryList =
   );
 
 
+const currentProjectList =
+  document.getElementById(
+    "current-project-list"
+  );
+
+
 const projectReportList =
   document.getElementById(
     "project-report-list"
@@ -642,6 +648,9 @@ function renderReport() {
   renderCurrentSummary(
     sessions
   );
+
+
+  renderCurrentProjectReports();
 
 
   renderArchiveReports();
@@ -1270,7 +1279,10 @@ function renderCurrentSummary(
                       </summary>
 
                       <div class="summary-project-detail">
-                        ${createWorkDayHtml(workDays)}
+                        ${createWorkDayHtml(
+                          workDays,
+                          true
+                        )}
                       </div>
                     </details>
                   `;
@@ -1324,6 +1336,171 @@ function renderCurrentSummary(
         }
       )
       .join("");
+}
+
+
+// ========================================
+// 現在のプロジェクト
+// ========================================
+
+function renderCurrentProjectReports() {
+  const categoryItems =
+    [];
+
+
+  appData.categories.forEach(
+    function(category) {
+      const projects =
+        Array.isArray(
+          category.projects
+        )
+          ? category.projects.filter(
+              function(project) {
+                return (
+                  project.isCurrent !==
+                  false
+                );
+              }
+            )
+          : [];
+
+
+      if (projects.length === 0) {
+        return;
+      }
+
+
+      const projectItems =
+        projects
+          .map(
+            function(project) {
+              const projectSessions =
+                appData.sessions.filter(
+                  function(session) {
+                    return (
+                      session.projectId ===
+                      project.id
+                    );
+                  }
+                );
+
+
+              const totalSeconds =
+                projectSessions.reduce(
+                  function(
+                    total,
+                    session
+                  ) {
+                    return (
+                      total +
+                      Number(
+                        session.elapsedSeconds || 0
+                      )
+                    );
+                  },
+
+                  0
+                );
+
+
+              const workDays =
+                groupSessionsByDay(
+                  projectSessions
+                );
+
+
+              let workPeriodText =
+                "作業記録なし";
+
+
+              if (workDays.length > 0) {
+                const newestDate =
+                  workDays[0].date;
+
+
+                const oldestDate =
+                  workDays[
+                    workDays.length - 1
+                  ].date;
+
+
+                workPeriodText =
+                  formatJapaneseDate(
+                    oldestDate
+                  ) +
+                  " ～ " +
+                  formatJapaneseDate(
+                    newestDate
+                  );
+              }
+
+
+              return `
+                <details class="project-report-item">
+                  <summary>
+                    <span class="project-name">
+                      ${escapeHtml(project.name)}
+                    </span>
+
+                    <span class="project-total-information">
+                      <span class="project-total-time">
+                        ${formatSecondsAsText(totalSeconds)}
+                      </span>
+
+                      <span class="project-work-days">
+                        作業日数：
+                        ${workDays.length}日
+                      </span>
+                    </span>
+                  </summary>
+
+                  <div class="project-detail">
+                    <p class="archive-work-period">
+                      作業期間：
+                      ${workPeriodText}
+                    </p>
+
+                    ${createWorkDayHtml(workDays)}
+                  </div>
+                </details>
+              `;
+            }
+          )
+          .join("");
+
+
+      categoryItems.push(`
+        <details class="archive-category-item">
+          <summary>
+            <strong>
+              ${escapeHtml(category.name)}
+            </strong>
+          </summary>
+
+          <div class="archive-project-list">
+            ${projectItems}
+          </div>
+        </details>
+      `);
+    }
+  );
+
+
+  if (
+    categoryItems.length === 0
+  ) {
+    currentProjectList.innerHTML = `
+      <p class="empty-message">
+        現在のプロジェクトはありません。
+      </p>
+    `;
+
+    return;
+  }
+
+
+  currentProjectList.innerHTML =
+    categoryItems.join("");
 }
 
 
@@ -1921,7 +2098,8 @@ function groupSessionsByDay(
 // ========================================
 
 function createWorkDayHtml(
-  workDays
+  workDays,
+  isCollapsible = false
 ) {
   if (workDays.length === 0) {
     return `
@@ -1935,8 +2113,25 @@ function createWorkDayHtml(
   return workDays
     .map(
       function(workDay) {
-                const noteHtml =
+        const sortedNotes =
           workDay.notes
+            .slice()
+            .sort(
+              function(a, b) {
+                return (
+                  Number(
+                    a.startedAt || 0
+                  ) -
+                  Number(
+                    b.startedAt || 0
+                  )
+                );
+              }
+            );
+
+
+        const noteHtml =
+          sortedNotes
             .map(
               function(note) {
                 return `
@@ -1960,23 +2155,51 @@ function createWorkDayHtml(
             .join("");
 
 
+        const dateHtml = `
+          <time
+            class="work-day-date"
+            datetime="${formatDateForInput(workDay.date)}"
+          >
+            ${formatJapaneseDate(workDay.date)}
+          </time>
+        `;
+
+
+        const totalHtml = `
+          <span class="work-day-total">
+            合計
+            ${formatSecondsAsText(workDay.totalSeconds)}
+          </span>
+        `;
+
+
+        if (isCollapsible) {
+          return `
+            <details class="work-day-item is-collapsible">
+              <summary>
+                ${dateHtml}
+                ${totalHtml}
+              </summary>
+
+              <div class="work-day-content">
+                <ul class="work-content-list">
+                  ${noteHtml}
+                </ul>
+              </div>
+            </details>
+          `;
+        }
+
+
         return `
           <article class="work-day-item">
-            <time
-              class="work-day-date"
-              datetime="${formatDateForInput(workDay.date)}"
-            >
-              ${formatJapaneseDate(workDay.date)}
-            </time>
+            ${dateHtml}
 
             <ul class="work-content-list">
               ${noteHtml}
             </ul>
 
-            <span class="work-day-total">
-              合計
-              ${formatSecondsAsText(workDay.totalSeconds)}
-            </span>
+            ${totalHtml}
           </article>
         `;
       }

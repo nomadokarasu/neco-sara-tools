@@ -868,6 +868,62 @@ summary:focus-visible {
 }
 
 
+/* ========================================
+   SUMMARY内の日付折りたたみ
+======================================== */
+
+.work-day-item.is-collapsible {
+  display:
+    block;
+}
+
+
+.work-day-item.is-collapsible > summary {
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  align-items:
+    center;
+
+  gap:
+    12px;
+
+  padding:
+    10px 0 10px 40px !important;
+
+  cursor:
+    pointer;
+}
+
+
+.work-day-item.is-collapsible > summary::before {
+  top:
+    50%;
+
+  left:
+    14px;
+
+  transform:
+    translateY(-50%);
+}
+
+
+.work-day-item.is-collapsible > summary:hover {
+  background:
+    #f5f5f5;
+}
+
+
+.work-day-content {
+  padding:
+    8px 0 12px 40px;
+}
+
+
 .work-content-list {
   margin: 0;
   padding-left: 20px;
