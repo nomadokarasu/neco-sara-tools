@@ -172,6 +172,20 @@
   "useUrl": "https://tools.neco-sara.com/tools/work-log/report/",
   "detailUrl": "",
   "privacy": "描画データや読み込んだ保存データはブラウザ内で処理され、サーバーには送信されません。"
+},
+{
+  "name": "角背上製本 寸法計算ツール",
+  "slug": "hardcover-calculator",
+  "description": "本文サイズや束の厚さなどを入力すると、角背上製本に必要な表紙・裏表紙・背板紙・表紙材の寸法を計算できるWebツールです。",
+  "version": "1.0.0",
+  "category": "本づくり",
+  "status": "公開中",
+  "publishedAt": "2026-08-21",
+  "updatedAt": "2026-08-21",
+  "image": "",
+  "useUrl": "./tools/hardcover-calculator/app/",
+  "detailUrl": "https://neco-sara.com/2026/08/21/hardcover-binding-calculator/",
+  "privacy": "入力した数値はブラウザ内で処理され、サーバーには送信されません。"
 }
 
 ]

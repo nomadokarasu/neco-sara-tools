@@ -1,0 +1,2158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>角背上製本 寸法計算ツール</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+      background: #f5f5f5;
+      color: #222;
+    }
+
+    main {
+      width: 90%;
+      max-width: 700px;
+
+      margin: 40px auto;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+
+      font-size: 28px;
+    }
+
+    .description {
+      margin-bottom: 12px;
+
+      line-height: 1.7;
+      color: #555;
+    }
+
+    .guide-links {
+      margin-bottom: 30px;
+
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .guide-links p {
+      margin: 4px 0;
+    }
+
+    .guide-links a {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+
+    .panel {
+      margin-bottom: 24px;
+      padding: 24px;
+
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+
+      font-size: 20px;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 160px;
+      gap: 16px;
+      align-items: center;
+
+      margin-bottom: 16px;
+    }
+
+    .input-row:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      line-height: 1.5;
+    }
+
+    .input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+
+      padding: 10px 12px;
+
+      font-size: 16px;
+
+      border: 1px solid #bbb;
+      border-radius: 4px;
+    }
+
+    input[type="number"]:focus {
+      outline: 2px solid #555;
+      outline-offset: 1px;
+    }
+
+    .unit {
+      color: #555;
+    }
+
+    .result-group {
+      margin-bottom: 28px;
+    }
+
+    .result-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .result-group h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+
+      font-size: 17px;
+    }
+
+    .result-box {
+      padding: 16px;
+
+      background: #f7f7f7;
+      border-radius: 6px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+
+      padding: 7px 0;
+
+      border-bottom: 1px solid #ddd;
+    }
+
+    .result-row:last-child {
+      border-bottom: none;
+    }
+
+    .result-value {
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .size-summary {
+      display: none;
+    }
+
+    .empty {
+      color: #999;
+    }
+
+    @media (max-width: 600px) {
+      main {
+        margin: 24px auto;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .input-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .input-wrap {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main>
+
+    <h1>角背上製本 寸法計算ツール</h1>
+
+    <p class="description">
+      本文のサイズ・束の厚さ・板紙の厚さ・表紙の折り返し寸法を入力すると、
+      角背上製本に必要な板紙と表紙の寸法を計算します。
+    </p>
+
+    <div class="guide-links">
+      <p>
+        ・計算方法はこちら▶
+        <a href="#">
+          角背上製本の寸法計算について
+        </a>
+      </p>
+
+      <p>
+        ・角背上製本の製本方法はこちら▶
+        <a href="#">
+          角背上製本のやりかた
+        </a>
+      </p>
+    </div>
+
+
+    <!-- 入力 -->
+    <section class="panel">
+
+      <h2>入力</h2>
+
+      <div class="input-row">
+
+        <button
+          type="button"
+          class="input-help"
+          data-help-image="images/body-height.png"
+          data-help-title="本文の天地寸法"
+        >
+          本文の天地寸法
+          <span class="input-help__mark">?</span>
+        </button>
+
+        <div class="input-wrap">
+          <input
+            type="number"
+            id="bodyHeight"
+            min="0"
+            step="0.1"
+            placeholder="例：210"
+          >
+          <span class="unit">mm</span>
+        </div>
+
+      </div>
+
+
+      <div class="input-row">
+        <button
+          type="button"
+          class="input-help"
+          data-help-image="images/body-width.png"
+          data-help-title="本文の幅寸法"
+        >
+          本文の幅寸法
+          <span class="input-help__mark">?</span>
+        </button>
+
+        <div class="input-wrap">
+          <input
+            type="number"
+            id="bodyWidth"
+            min="0"
+            step="0.1"
+            placeholder="例：148"
+          >
+          <span class="unit">mm</span>
+        </div>
+      </div>
+
+
+      <div class="input-row">
+        <button
+          type="button"
+          class="input-help"
+          data-help-image="images/body-thickness.png"
+          data-help-title="本文束の厚さ"
+        >
+          本文束の厚さ
+          <span class="input-help__mark">?</span>
+        </button>
+
+        <div class="input-wrap">
+          <input
+            type="number"
+            id="bodyThickness"
+            min="0"
+            step="0.1"
+            placeholder="例：10"
+          >
+          <span class="unit">mm</span>
+        </div>
+      </div>
+
+
+      <div class="input-row">
+        <button
+          type="button"
+          class="input-help"
+          data-help-image="images/board-thickness.png"
+          data-help-title="板紙の厚さ"
+        >
+          板紙の厚さ
+          <span class="input-help__mark">?</span>
+        </button>
+
+        <div class="input-wrap">
+          <input
+            type="number"
+            id="boardThickness"
+            min="0"
+            step="0.1"
+            placeholder="例：2"
+          >
+          <span class="unit">mm</span>
+        </div>
+      </div>
+
+
+      <div class="input-row">
+        <button
+          type="button"
+          class="input-help"
+          data-help-image="images/cover-fold.png"
+          data-help-title="表紙の折り返し"
+        >
+          表紙の折り返し
+          <span class="input-help__mark">?</span>
+        </button>
+
+        <div class="input-wrap">
+          <input
+            type="number"
+            id="coverFold"
+            min="0"
+            step="0.1"
+            placeholder="例：25"
+          >
+          <span class="unit">mm</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        id="calculateButton"
+        class="calculate-button"
+      >
+        計算する
+      </button>
+
+    </section>
+
+
+      <!-- 計算結果 -->
+<section class="panel">
+
+<h2>計算結果</h2>
+
+
+      <!-- 表紙・裏表紙の板紙 -->
+      <div class="result-group">
+
+        <h3>板紙（表紙・裏表紙）</h3>
+
+        <div class="result-box">
+
+          <div class="result-row">
+            <span>天地</span>
+            <span
+              id="coverBoardHeight"
+              class="result-value empty"
+            >
+              ―
+            </span>
+          </div>
+
+          <div class="result-row">
+            <span>幅</span>
+            <span
+              id="coverBoardWidth"
+              class="result-value empty"
+            >
+              ―
+            </span>
+          </div>
+
+          <div
+            id="coverBoardSummary"
+            class="size-summary empty"
+          >
+            ― × ― mm
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- 背の板紙 -->
+      <div class="result-group">
+
+        <h3>板紙（背）</h3>
+
+        <div class="result-box">
+
+          <div class="result-row">
+            <span>天地</span>
+            <span
+              id="spineBoardHeight"
+              class="result-value empty"
+            >
+              ―
+            </span>
+          </div>
+
+          <div class="result-row">
+            <span>幅</span>
+            <span
+              id="spineBoardWidth"
+              class="result-value empty"
+            >
+              ―
+            </span>
+          </div>
+
+          <div
+            id="spineBoardSummary"
+            class="size-summary empty"
+          >
+            ― × ― mm
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- 表紙 -->
+      <div class="result-group">
+
+        <h3>表紙</h3>
+
+        <div class="result-box">
+
+          <div class="result-row">
+            <span>天地</span>
+            <span
+              id="coverHeight"
+              class="result-value empty"
+            >
+              ―
+            </span>
+          </div>
+
+          <div class="result-row">
+            <span>幅</span>
+            <span
+              id="coverWidth"
+              class="result-value empty"
+            >
+              ―
+            </span>
+          </div>
+
+          <div
+            id="coverSummary"
+            class="size-summary empty"
+          >
+            ― × ― mm
+          </div>
+
+        </div>
+
+      </div>
+
+          <!-- 寸法図 -->
+      <div class="result-group">
+
+        <h3>寸法図</h3>
+
+        <div class="result-box">
+
+          <p class="diagram-note">
+            入力値をもとに、表紙全体と板紙の配置を図で表示します。
+          </p>
+
+          <div class="diagram-wrap">
+            <p
+              id="diagramEmpty"
+              class="diagram-empty"
+            >
+              すべての数値を入力すると図が表示されます。
+            </p>
+
+            <svg
+              id="dimensionDiagram"
+              viewBox="0 0 960 560"
+              aria-label="角背上製本の寸法図"
+            ></svg>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <div class="pdf-title-input">
+
+      <label for="bookTitle">
+        本のタイトル
+      </label>
+
+      <input
+        type="text"
+        id="bookTitle"
+        maxlength="100"
+        placeholder="例：山の向こう"
+      >
+
+    </div>
+
+
+    <button
+      type="button"
+      id="pdfDownloadButton"
+      class="pdf-download-button"
+      disabled
+    >
+      PDFをダウンロード
+    </button>
+
+  </main>
+
+  <!-- PDF作成専用 -->
+<div
+  id="pdfExportArea"
+  class="pdf-export-area"
+>
+  <svg
+    id="pdfDiagram"
+    viewBox="0 0 960 650"
+    aria-label="角背上製本の寸法図 PDF用"
+  ></svg>
+
+  <div
+    id="pdfExportTitle"
+    class="pdf-export-title"
+  ></div>
+</div>
+
+
+  <!-- 入力項目の解説 -->
+  <div
+    id="inputHelpModal"
+    class="input-help-modal"
+    aria-hidden="true"
+  >
+
+    <div class="input-help-modal__window">
+
+      <button
+        type="button"
+        id="inputHelpClose"
+        class="input-help-modal__close"
+        aria-label="閉じる"
+      >
+        ×
+      </button>
+
+      <h2 id="inputHelpTitle"></h2>
+
+      <img
+        id="inputHelpImage"
+        src=""
+        alt=""
+      >
+
+    </div>
+
+  </div>
+
+
+  <!-- 寸法図 拡大表示 -->
+  <div
+    id="diagramModal"
+    class="diagram-modal"
+    aria-hidden="true"
+  >
+
+    <div class="diagram-modal__content">
+
+      <button
+        type="button"
+        id="diagramModalClose"
+        class="diagram-modal__close"
+        aria-label="拡大表示を閉じる"
+      >
+        ×
+      </button>
+
+      <svg
+        id="dimensionDiagramLarge"
+        aria-label="角背上製本の寸法図 拡大表示"
+      ></svg>
+
+    </div>
+
+  </div>
+
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
+  ></script>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"
+  ></script>
+
+  <script>
+
+    const bodyHeightInput =
+      document.getElementById("bodyHeight");
+
+    const bodyWidthInput =
+      document.getElementById("bodyWidth");
+
+    const bodyThicknessInput =
+      document.getElementById("bodyThickness");
+
+    const boardThicknessInput =
+      document.getElementById("boardThickness");
+
+    const coverFoldInput =
+      document.getElementById("coverFold");
+
+
+    const coverBoardHeightElement =
+      document.getElementById("coverBoardHeight");
+
+    const coverBoardWidthElement =
+      document.getElementById("coverBoardWidth");
+
+    const coverBoardSummaryElement =
+      document.getElementById("coverBoardSummary");
+
+
+    const spineBoardHeightElement =
+      document.getElementById("spineBoardHeight");
+
+    const spineBoardWidthElement =
+      document.getElementById("spineBoardWidth");
+
+    const spineBoardSummaryElement =
+      document.getElementById("spineBoardSummary");
+
+
+    const coverHeightElement =
+      document.getElementById("coverHeight");
+
+    const coverWidthElement =
+      document.getElementById("coverWidth");
+
+    const coverSummaryElement =
+      document.getElementById("coverSummary");
+
+    const diagramElement =
+      document.getElementById("dimensionDiagram");
+
+    const diagramEmptyElement =
+      document.getElementById("diagramEmpty");
+
+    const diagramModal =
+      document.getElementById("diagramModal");
+
+    const diagramModalClose =
+      document.getElementById("diagramModalClose");
+
+    const dimensionDiagramLarge =
+      document.getElementById("dimensionDiagramLarge");
+
+const pdfDownloadButton =
+  document.getElementById("pdfDownloadButton");
+
+const bookTitleInput =
+  document.getElementById("bookTitle");
+
+const pdfExportArea =
+  document.getElementById("pdfExportArea");
+
+const pdfDiagram =
+  document.getElementById("pdfDiagram");
+
+const pdfExportTitle =
+  document.getElementById("pdfExportTitle");
+
+
+    function formatNumber(value) {
+
+      return Number(
+        value.toFixed(1)
+      ).toString();
+
+    }
+
+
+    function setResult(
+      element,
+      value
+    ) {
+
+      element.textContent =
+        `${formatNumber(value)} mm`;
+
+      element.classList.remove("empty");
+
+    }
+
+
+    function setSummary(
+      element,
+      height,
+      width
+    ) {
+
+      element.textContent =
+        `${formatNumber(height)} × ${formatNumber(width)} mm`;
+
+      element.classList.remove("empty");
+
+    }
+
+
+    function resetDiagram() {
+
+      diagramElement.innerHTML = "";
+      diagramElement.style.display = "none";
+      diagramEmptyElement.style.display = "block";
+
+    }
+
+
+    function resetResults() {
+
+      const resultElements = [
+        coverBoardHeightElement,
+        coverBoardWidthElement,
+        spineBoardHeightElement,
+        spineBoardWidthElement,
+        coverHeightElement,
+        coverWidthElement
+      ];
+
+
+      resultElements.forEach(
+        element => {
+
+          element.textContent = "―";
+          element.classList.add("empty");
+
+        }
+      );
+
+
+      const summaryElements = [
+        coverBoardSummaryElement,
+        spineBoardSummaryElement,
+        coverSummaryElement
+      ];
+
+
+      summaryElements.forEach(
+        element => {
+
+          element.textContent =
+            "― × ― mm";
+
+          element.classList.add("empty");
+
+        }
+      );
+
+      resetDiagram();
+
+      pdfDownloadButton.disabled =
+        true;
+
+    }
+
+
+        function drawDiagram({
+      coverBoardHeight,
+      coverBoardWidth,
+      spineBoardHeight,
+      spineBoardWidth,
+      coverHeight,
+      coverWidth,
+      coverFold
+    }) {
+
+      if (
+        coverHeight <= 0 ||
+        coverWidth <= 0
+      ) {
+        resetDiagram();
+        return;
+      }
+
+      const svgWidth = 960;
+      const svgHeight = 650;
+
+      const topMargin = 110;
+      const leftMargin = 110;
+      const rightMargin = 110;
+      const bottomMargin = 160;
+
+      const drawableWidth =
+        svgWidth - leftMargin - rightMargin;
+
+      const drawableHeight =
+        svgHeight - topMargin - bottomMargin;
+
+      const scale =
+        Math.min(
+          drawableWidth / coverWidth,
+          drawableHeight / coverHeight
+        );
+
+      const outerWidth =
+        coverWidth * scale;
+
+      const outerHeight =
+        coverHeight * scale;
+
+      const startX =
+        (svgWidth - outerWidth) / 2;
+
+      const startY =
+        topMargin +
+        ((drawableHeight - outerHeight) / 2);
+
+      const outerRightX =
+        startX + outerWidth;
+
+      const outerBottomY =
+        startY + outerHeight;
+
+      const flap =
+        coverFold * scale;
+
+      const boardHeight =
+        coverBoardHeight * scale;
+
+      const boardWidth =
+        coverBoardWidth * scale;
+
+      const spineWidth =
+        spineBoardWidth * scale;
+
+      const hingeMm = 9;
+      const hinge =
+        hingeMm * scale;
+
+      const boardY =
+        startY + flap;
+
+      const leftBoardX =
+        startX + flap;
+
+      const spineX =
+        leftBoardX + boardWidth + hinge;
+
+      const rightBoardX =
+        spineX + spineWidth + hinge;
+
+      const topFoldY =
+        startY + flap;
+
+      const bottomFoldY =
+        outerBottomY - flap;
+
+      const tickSize = 8;
+
+      const boardBottomY =
+        boardY + boardHeight;
+
+      const rightBoardRightX =
+        rightBoardX + boardWidth;
+
+      const innerBoardDimensionY =
+        boardBottomY - (boardHeight / 6);
+
+      const cornerGapMm = 5;
+
+      const cornerGap =
+        (cornerGapMm / Math.sqrt(2)) * scale;
+
+      const dimensionColor =
+        "#2563eb";
+
+      // 表紙材の角から
+      // 45度カット線との交点までの寸法
+      const cutPositionMm =
+        (coverFold * 2)
+        - (cornerGapMm * Math.sqrt(2));
+
+      const cutPosition =
+        cutPositionMm * scale;
+
+      // 45度線と表紙材外周との交点
+      const topLeftCutX =
+        startX + cutPosition;
+
+      const topRightCutX =
+        outerRightX - cutPosition;
+
+      const bottomLeftCutX =
+        startX + cutPosition;
+
+      const bottomRightCutX =
+        outerRightX - cutPosition;
+
+      function horizontalDimension(
+        x1,
+        x2,
+        objectY,
+        dimensionY,
+        label
+      ) {
+
+        const centerX =
+          (x1 + x2) / 2;
+
+        return `
+          <line
+            x1="${x1}"
+            y1="${objectY}"
+            x2="${x1}"
+            y2="${dimensionY}"
+            stroke="${dimensionColor}"
+            stroke-width="1.2"
+          />
+          <line
+            x1="${x2}"
+            y1="${objectY}"
+            x2="${x2}"
+            y2="${dimensionY}"
+            stroke="${dimensionColor}"
+            stroke-width="1.2"
+          />
+          <line
+            x1="${x1}"
+            y1="${dimensionY}"
+            x2="${x2}"
+            y2="${dimensionY}"
+            stroke="${dimensionColor}"
+            stroke-width="1.2"
+          />
+          <circle
+            cx="${x1}"
+            cy="${dimensionY}"
+            r="3"
+            fill="${dimensionColor}"
+          />
+          <circle
+            cx="${x2}"
+            cy="${dimensionY}"
+            r="3"
+            fill="${dimensionColor}"
+          />
+          <rect
+            x="${centerX - 34}"
+            y="${dimensionY - 22}"
+            width="68"
+            height="18"
+            fill="#fff"
+          />
+          <text
+            x="${centerX}"
+            y="${dimensionY - 8}"
+            text-anchor="middle"
+            font-size="14"
+            fill="${dimensionColor}"
+          >
+            ${label}
+          </text>
+        `;
+      }
+
+            function diagonalDimension(
+        x1,
+        y1,
+        x2,
+        y2,
+        label,
+        labelOffsetX,
+        labelOffsetY
+      ) {
+
+        const dx =
+          x2 - x1;
+
+        const dy =
+          y2 - y1;
+
+        const length =
+          Math.sqrt(
+            (dx * dx) +
+            (dy * dy)
+          );
+
+        if (length === 0) {
+          return "";
+        }
+
+        const unitX =
+          dx / length;
+
+        const unitY =
+          dy / length;
+
+        const perpendicularX =
+          -unitY;
+
+        const perpendicularY =
+          unitX;
+
+        const slashLength = 8;
+
+        const centerX =
+          (x1 + x2) / 2;
+
+        const centerY =
+          (y1 + y2) / 2;
+
+        const labelX =
+          centerX + labelOffsetX;
+
+        const labelY =
+          centerY + labelOffsetY;
+
+        return `
+          <line
+            x1="${x1}"
+            y1="${y1}"
+            x2="${x2}"
+            y2="${y2}"
+            stroke="#222"
+            stroke-width="1.2"
+          />
+
+          <line
+            x1="${x1 - (perpendicularX * slashLength / 2)}"
+            y1="${y1 - (perpendicularY * slashLength / 2)}"
+            x2="${x1 + (perpendicularX * slashLength / 2)}"
+            y2="${y1 + (perpendicularY * slashLength / 2)}"
+            stroke="#222"
+            stroke-width="1.2"
+          />
+
+          <line
+            x1="${x2 - (perpendicularX * slashLength / 2)}"
+            y1="${y2 - (perpendicularY * slashLength / 2)}"
+            x2="${x2 + (perpendicularX * slashLength / 2)}"
+            y2="${y2 + (perpendicularY * slashLength / 2)}"
+            stroke="#222"
+            stroke-width="1.2"
+          />
+
+          <line
+            x1="${centerX}"
+            y1="${centerY}"
+            x2="${labelX}"
+            y2="${labelY}"
+            stroke="#666"
+            stroke-width="1"
+          />
+
+          <rect
+            x="${labelX - 12}"
+            y="${labelY - 14}"
+            width="24"
+            height="18"
+            fill="#fff"
+          />
+
+          <text
+            x="${labelX}"
+            y="${labelY}"
+            text-anchor="middle"
+            font-size="14"
+            fill="#222"
+          >
+            ${label}
+          </text>
+        `;
+
+      }
+
+            function innerHorizontalDimension(
+        x1,
+        x2,
+        y,
+        label
+      ) {
+
+        const centerX =
+          (x1 + x2) / 2;
+
+        return `
+          <line
+            x1="${x1}"
+            y1="${y}"
+            x2="${x2}"
+            y2="${y}"
+            stroke="${dimensionColor}"
+            stroke-width="1.2"
+          />
+
+          <circle
+            cx="${x1}"
+            cy="${y}"
+            r="3"
+            fill="${dimensionColor}"
+          />
+
+          <circle
+            cx="${x2}"
+            cy="${y}"
+            r="3"
+            fill="${dimensionColor}"
+          />
+
+          <rect
+            x="${centerX - 24}"
+            y="${y - 24}"
+            width="48"
+            height="18"
+            fill="#fff"
+          />
+
+          <text
+            x="${centerX}"
+            y="${y - 10}"
+            text-anchor="middle"
+            font-size="13"
+            fill="${dimensionColor}"
+          >
+            ${label}
+          </text>
+        `;
+
+      }
+
+            function hingeDimension(
+        x1,
+        x2,
+        objectY,
+        dimensionY
+      ) {
+
+        const centerX =
+          (x1 + x2) / 2;
+
+        return `
+          <line
+            x1="${x1}"
+            y1="${objectY}"
+            x2="${x1}"
+            y2="${dimensionY}"
+            stroke="${dimensionColor}"
+            stroke-width="1.2"
+          />
+
+          <line
+            x1="${x2}"
+            y1="${objectY}"
+            x2="${x2}"
+            y2="${dimensionY}"
+            stroke="${dimensionColor}"
+            stroke-width="1.2"
+          />
+
+          <line
+            x1="${x1}"
+            y1="${dimensionY}"
+            x2="${x2}"
+            y2="${dimensionY}"
+            stroke="${dimensionColor}"
+            stroke-width="1.2"
+          />
+
+          <circle
+            cx="${x1}"
+            cy="${dimensionY}"
+            r="3"
+            fill="${dimensionColor}"
+          />
+
+          <circle
+            cx="${x2}"
+            cy="${dimensionY}"
+            r="3"
+            fill="${dimensionColor}"
+          />
+
+          <text
+            x="${centerX}"
+            y="${dimensionY - 8}"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="bold"
+            fill="${dimensionColor}"
+            stroke="#fff"
+            stroke-width="4"
+            paint-order="stroke"
+          >
+            9
+          </text>
+        `;
+
+      }
+
+                       function verticalDimension(
+        y1,
+        y2,
+        objectX,
+        dimensionX,
+        label
+      ) {
+
+        const centerY =
+          (y1 + y2) / 2;
+
+        const labelX =
+          dimensionX - 14;
+
+        return `
+          <line
+            x1="${objectX}"
+            y1="${y1}"
+            x2="${dimensionX}"
+            y2="${y1}"
+            stroke="${dimensionColor}"
+            stroke-width="1.2"
+          />
+
+          <line
+            x1="${objectX}"
+            y1="${y2}"
+            x2="${dimensionX}"
+            y2="${y2}"
+            stroke="${dimensionColor}"
+            stroke-width="1.2"
+          />
+
+          <line
+            x1="${dimensionX}"
+            y1="${y1}"
+            x2="${dimensionX}"
+            y2="${y2}"
+            stroke="${dimensionColor}"
+            stroke-width="1.2"
+          />
+
+          <circle
+            cx="${dimensionX}"
+            cy="${y1}"
+            r="3"
+            fill="${dimensionColor}"
+          />
+
+          <circle
+            cx="${dimensionX}"
+            cy="${y2}"
+            r="3"
+            fill="${dimensionColor}"
+          />
+
+          <text
+            x="${labelX}"
+            y="${centerY}"
+            text-anchor="middle"
+            dominant-baseline="middle"
+            font-size="14"
+            fill="${dimensionColor}"
+            transform="rotate(-90 ${labelX} ${centerY})"
+            stroke="#fff"
+            stroke-width="4"
+            paint-order="stroke"
+          >
+            ${label}
+          </text>
+        `;
+      }
+
+      const diagramSvg = `
+        <rect
+          x="${startX}"
+          y="${startY}"
+          width="${outerWidth}"
+          height="${outerHeight}"
+          fill="#fffdf7"
+          stroke="#222"
+          stroke-width="1.5"
+        />
+
+        <line
+          x1="${startX + flap}"
+          y1="${startY}"
+          x2="${startX + flap}"
+          y2="${outerBottomY}"
+          stroke="#666"
+          stroke-width="1"
+          stroke-dasharray="5 4"
+        />
+        <line
+          x1="${outerRightX - flap}"
+          y1="${startY}"
+          x2="${outerRightX - flap}"
+          y2="${outerBottomY}"
+          stroke="#666"
+          stroke-width="1"
+          stroke-dasharray="5 4"
+        />
+        <line
+          x1="${startX}"
+          y1="${topFoldY}"
+          x2="${outerRightX}"
+          y2="${topFoldY}"
+          stroke="#666"
+          stroke-width="1"
+          stroke-dasharray="5 4"
+        />
+        <line
+          x1="${startX}"
+          y1="${bottomFoldY}"
+          x2="${outerRightX}"
+          y2="${bottomFoldY}"
+          stroke="#666"
+          stroke-width="1"
+          stroke-dasharray="5 4"
+        />
+
+        <!-- 左上 -->
+        <line
+          x1="${leftBoardX + flap - (cornerGap * 2)}"
+          y1="${startY}"
+          x2="${startX}"
+          y2="${boardY + flap - (cornerGap * 2)}"
+          stroke="#222"
+          stroke-width="1.2"
+        />
+
+        <!-- 左下 -->
+        <line
+          x1="${startX}"
+          y1="${boardBottomY - flap + (cornerGap * 2)}"
+          x2="${leftBoardX + flap - (cornerGap * 2)}"
+          y2="${outerBottomY}"
+          stroke="#222"
+          stroke-width="1.2"
+        />
+
+        <!-- 右上 -->
+        <line
+          x1="${rightBoardRightX - flap + (cornerGap * 2)}"
+          y1="${startY}"
+          x2="${outerRightX}"
+          y2="${boardY + flap - (cornerGap * 2)}"
+          stroke="#222"
+          stroke-width="1.2"
+        />
+
+        <!-- 右下 -->
+        <line
+          x1="${rightBoardRightX - flap + (cornerGap * 2)}"
+          y1="${outerBottomY}"
+          x2="${outerRightX}"
+          y2="${boardBottomY - flap + (cornerGap * 2)}"
+          stroke="#222"
+          stroke-width="1.2"
+        />
+
+
+
+        <rect
+          x="${leftBoardX}"
+          y="${boardY}"
+          width="${boardWidth}"
+          height="${boardHeight}"
+          fill="none"
+          stroke="#222"
+          stroke-width="1.5"
+        />
+        <rect
+          x="${spineX}"
+          y="${boardY}"
+          width="${spineWidth}"
+          height="${boardHeight}"
+          fill="none"
+          stroke="#222"
+          stroke-width="1.5"
+        />
+        <rect
+          x="${rightBoardX}"
+          y="${boardY}"
+          width="${boardWidth}"
+          height="${boardHeight}"
+          fill="none"
+          stroke="#222"
+          stroke-width="1.5"
+        />
+
+        <text
+          x="${leftBoardX + (boardWidth / 2)}"
+          y="${boardY + (boardHeight / 2)}"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          font-size="14"
+          fill="#222"
+          writing-mode="vertical-rl"
+          text-orientation="upright"
+        >
+          裏表紙板紙
+        </text>
+
+        <text
+          x="${spineX + (spineWidth / 2)}"
+          y="${boardY + (boardHeight / 2)}"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          font-size="14"
+          fill="#222"
+          writing-mode="vertical-rl"
+          text-orientation="upright"
+        >
+          背板紙
+        </text>
+
+        <text
+          x="${rightBoardX + (boardWidth / 2)}"
+          y="${boardY + (boardHeight / 2)}"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          font-size="14"
+          fill="#222"
+          writing-mode="vertical-rl"
+          text-orientation="upright"
+        >
+          表紙板紙
+        </text>
+
+        ${innerHorizontalDimension(
+          leftBoardX,
+          leftBoardX + boardWidth,
+          innerBoardDimensionY,
+          `${formatNumber(coverBoardWidth)}`
+        )}
+
+        ${innerHorizontalDimension(
+          spineX,
+          spineX + spineWidth,
+          innerBoardDimensionY,
+          `${formatNumber(spineBoardWidth)}`
+        )}
+
+        ${innerHorizontalDimension(
+          rightBoardX,
+          rightBoardX + boardWidth,
+          innerBoardDimensionY,
+          `${formatNumber(coverBoardWidth)}`
+        )}
+
+        ${horizontalDimension(
+          startX,
+          outerRightX,
+          startY,
+          startY - 42,
+          `${formatNumber(coverWidth)}`
+        )}
+
+                ${horizontalDimension(
+          startX,
+          topLeftCutX,
+          startY,
+          startY - 18,
+          `${formatNumber(cutPositionMm)}`
+        )}
+
+        ${horizontalDimension(
+          topRightCutX,
+          outerRightX,
+          startY,
+          startY - 18,
+          `${formatNumber(cutPositionMm)}`
+        )}
+
+        ${horizontalDimension(
+          startX,
+          startX + flap,
+          outerBottomY,
+          outerBottomY + 78,
+          `${formatNumber(coverFold)}`
+        )}
+
+
+
+        ${hingeDimension(
+          leftBoardX + boardWidth,
+          spineX,
+          outerBottomY,
+          outerBottomY + 62
+        )}
+
+        ${hingeDimension(
+          spineX + spineWidth,
+          rightBoardX,
+          outerBottomY,
+          outerBottomY + 62
+        )}
+
+
+
+        ${horizontalDimension(
+          outerRightX - flap,
+          outerRightX,
+          outerBottomY,
+          outerBottomY + 78,
+          `${formatNumber(coverFold)}`
+        )}
+
+
+
+        ${verticalDimension(
+          startY,
+          outerBottomY,
+          startX,
+          startX - 52,
+          `${formatNumber(coverHeight)}`
+        )}
+
+        ${verticalDimension(
+          startY,
+          topFoldY,
+          outerRightX,
+          outerRightX + 38,
+          `${formatNumber(coverFold)}`
+        )}
+
+        ${verticalDimension(
+          topFoldY,
+          bottomFoldY,
+          outerRightX,
+          outerRightX + 38,
+          `${formatNumber(coverBoardHeight)}`
+        )}
+
+        ${verticalDimension(
+          bottomFoldY,
+          outerBottomY,
+          outerRightX,
+          outerRightX + 38,
+          `${formatNumber(coverFold)}`
+        )}
+
+        <text
+          x="${startX}"
+          y="${startY - 68}"
+          text-anchor="start"
+          font-size="14"
+          fill="#222"
+        >
+          単位：mm
+        </text>
+      `;
+
+      diagramEmptyElement.style.display = "none";
+      diagramElement.style.display = "block";
+      diagramElement.setAttribute(
+        "viewBox",
+        `0 0 ${svgWidth} ${svgHeight}`
+      );
+      diagramElement.innerHTML = diagramSvg;
+
+    }
+
+    function calculate() {
+
+      const bodyHeight =
+        parseFloat(
+          bodyHeightInput.value
+        );
+
+      const bodyWidth =
+        parseFloat(
+          bodyWidthInput.value
+        );
+
+      const bodyThickness =
+        parseFloat(
+          bodyThicknessInput.value
+        );
+
+      const boardThickness =
+        parseFloat(
+          boardThicknessInput.value
+        );
+
+      const coverFold =
+        parseFloat(
+          coverFoldInput.value
+        );
+
+
+      if (
+        Number.isNaN(bodyHeight) ||
+        Number.isNaN(bodyWidth) ||
+        Number.isNaN(bodyThickness) ||
+        Number.isNaN(boardThickness) ||
+        Number.isNaN(coverFold)
+      ) {
+
+        resetResults();
+        return;
+
+      }
+
+
+      // ========================================
+      // 板紙（表紙・裏表紙）
+      // ========================================
+
+      const coverBoardHeight =
+        bodyHeight + 6;
+
+      const coverBoardWidth =
+        bodyWidth
+        - 9
+        + boardThickness
+        + 3
+        + 2;
+
+
+      // ========================================
+      // 板紙（背）
+      // ========================================
+
+      const spineBoardHeight =
+        bodyHeight + 6;
+
+      const spineBoardWidth =
+        bodyThickness
+        + (2 * boardThickness);
+
+
+      // ========================================
+      // 表紙
+      // ========================================
+
+      const coverHeight =
+        coverBoardHeight
+        + (coverFold * 2);
+
+      const coverWidth =
+        (coverBoardWidth * 2)
+        + 18
+        + spineBoardWidth
+        + (coverFold * 2);
+
+
+      // ========================================
+      // 結果表示
+      // ========================================
+
+      setResult(
+        coverBoardHeightElement,
+        coverBoardHeight
+      );
+
+      setResult(
+        coverBoardWidthElement,
+        coverBoardWidth
+      );
+
+      setSummary(
+        coverBoardSummaryElement,
+        coverBoardHeight,
+        coverBoardWidth
+      );
+
+
+      setResult(
+        spineBoardHeightElement,
+        spineBoardHeight
+      );
+
+      setResult(
+        spineBoardWidthElement,
+        spineBoardWidth
+      );
+
+      setSummary(
+        spineBoardSummaryElement,
+        spineBoardHeight,
+        spineBoardWidth
+      );
+
+
+      setResult(
+        coverHeightElement,
+        coverHeight
+      );
+
+      setResult(
+        coverWidthElement,
+        coverWidth
+      );
+
+      setSummary(
+        coverSummaryElement,
+        coverHeight,
+        coverWidth
+      );
+
+      drawDiagram({
+        coverBoardHeight,
+        coverBoardWidth,
+        spineBoardHeight,
+        spineBoardWidth,
+        coverHeight,
+        coverWidth,
+        coverFold
+      });
+
+      pdfDownloadButton.disabled =
+        false;
+
+
+    }
+
+
+    const calculateButton =
+      document.getElementById("calculateButton");
+
+
+    calculateButton.addEventListener(
+      "click",
+      calculate
+    );
+
+
+    function openDiagramModal() {
+
+      if (
+        diagramElement.style.display === "none" ||
+        !diagramElement.innerHTML.trim()
+      ) {
+        return;
+      }
+
+      const viewBox =
+        diagramElement.getAttribute("viewBox");
+
+      dimensionDiagramLarge.setAttribute(
+        "viewBox",
+        viewBox
+      );
+
+      dimensionDiagramLarge.innerHTML =
+        diagramElement.innerHTML;
+
+      diagramModal.classList.add("is-open");
+
+      diagramModal.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+
+      document.body.style.overflow =
+        "hidden";
+
+    }
+
+
+    function closeDiagramModal() {
+
+      diagramModal.classList.remove("is-open");
+
+      diagramModal.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+
+      document.body.style.overflow =
+        "";
+
+    }
+
+
+    diagramElement.addEventListener(
+      "click",
+      openDiagramModal
+    );
+
+
+    diagramModalClose.addEventListener(
+      "click",
+      closeDiagramModal
+    );
+
+
+    diagramModal.addEventListener(
+      "click",
+      event => {
+
+        if (
+          event.target === diagramModal
+        ) {
+
+          closeDiagramModal();
+
+        }
+
+      }
+    );
+
+
+    document.addEventListener(
+      "keydown",
+      event => {
+
+        if (
+          event.key === "Escape" &&
+          diagramModal.classList.contains("is-open")
+        ) {
+
+          closeDiagramModal();
+
+        }
+
+      }
+    );
+
+        const inputHelpButtons =
+      document.querySelectorAll(".input-help");
+
+    const inputHelpModal =
+      document.getElementById("inputHelpModal");
+
+    const inputHelpClose =
+      document.getElementById("inputHelpClose");
+
+    const inputHelpTitle =
+      document.getElementById("inputHelpTitle");
+
+    const inputHelpImage =
+      document.getElementById("inputHelpImage");
+
+
+    function openInputHelp(button) {
+
+      const image =
+        button.dataset.helpImage;
+
+      const title =
+        button.dataset.helpTitle;
+
+      inputHelpTitle.textContent =
+        title;
+
+      inputHelpImage.src =
+        image;
+
+      inputHelpImage.alt =
+        `${title}の解説`;
+
+      inputHelpModal.classList.add(
+        "is-open"
+      );
+
+      inputHelpModal.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+
+      document.body.style.overflow =
+        "hidden";
+
+    }
+
+
+    function closeInputHelp() {
+
+      inputHelpModal.classList.remove(
+        "is-open"
+      );
+
+      inputHelpModal.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+
+      document.body.style.overflow =
+        "";
+
+    }
+
+
+    inputHelpButtons.forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            openInputHelp(button);
+
+          }
+        );
+
+      }
+    );
+
+
+    inputHelpClose.addEventListener(
+      "click",
+      closeInputHelp
+    );
+
+
+    inputHelpModal.addEventListener(
+      "click",
+      event => {
+
+        if (
+          event.target === inputHelpModal
+        ) {
+
+          closeInputHelp();
+
+        }
+
+      }
+    );
+
+
+    document.addEventListener(
+      "keydown",
+      event => {
+
+        if (
+          event.key === "Escape" &&
+          inputHelpModal.classList.contains("is-open")
+        ) {
+
+          closeInputHelp();
+
+        }
+
+      }
+    );
+
+    async function downloadPdf() {
+
+  if (
+    pdfDownloadButton.disabled ||
+    !diagramElement.innerHTML.trim()
+  ) {
+    return;
+  }
+
+
+  const originalText =
+    pdfDownloadButton.textContent;
+
+
+  pdfDownloadButton.disabled =
+    true;
+
+  pdfDownloadButton.textContent =
+    "PDFを作成中…";
+
+
+  try {
+
+    /* ----------------------------------------
+       現在の寸法図をPDF用SVGへコピー
+       ---------------------------------------- */
+
+    const viewBox =
+      diagramElement.getAttribute("viewBox");
+
+    pdfDiagram.setAttribute(
+      "viewBox",
+      viewBox
+    );
+
+    pdfDiagram.innerHTML =
+      diagramElement.innerHTML;
+
+
+    /* ----------------------------------------
+       本のタイトル
+       ---------------------------------------- */
+
+    const bookTitle =
+      bookTitleInput.value.trim();
+
+    pdfExportTitle.textContent =
+      bookTitle;
+
+
+    /* ----------------------------------------
+       PDF用エリアを画像化
+       ---------------------------------------- */
+
+    const canvas =
+      await html2canvas(
+        pdfExportArea,
+        {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          logging: false
+        }
+      );
+
+
+    const imageData =
+      canvas.toDataURL(
+        "image/png"
+      );
+
+
+    /* ----------------------------------------
+       A4横向きPDF
+       ---------------------------------------- */
+
+    const {
+      jsPDF
+    } = window.jspdf;
+
+
+    const pdf =
+      new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4"
+      });
+
+
+    const pageWidth =
+      297;
+
+    const pageHeight =
+      210;
+
+
+    const margin =
+      5;
+
+
+    const availableWidth =
+      pageWidth - (margin * 2);
+
+    const availableHeight =
+      pageHeight - (margin * 2);
+
+
+    let imageWidth =
+      availableWidth;
+
+    let imageHeight =
+      canvas.height
+      * imageWidth
+      / canvas.width;
+
+
+    if (
+      imageHeight > availableHeight
+    ) {
+
+      imageHeight =
+        availableHeight;
+
+      imageWidth =
+        canvas.width
+        * imageHeight
+        / canvas.height;
+
+    }
+
+
+    const imageX =
+      (pageWidth - imageWidth) / 2;
+
+    const imageY =
+      (pageHeight - imageHeight) / 2;
+
+
+    pdf.addImage(
+      imageData,
+      "PNG",
+      imageX,
+      imageY,
+      imageWidth,
+      imageHeight,
+      undefined,
+      "FAST"
+    );
+
+
+    pdf.save(
+      "hardcover-binding-dimensions.pdf"
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "PDFの作成に失敗しました。"
+    );
+
+
+  } finally {
+
+    pdfDownloadButton.disabled =
+      false;
+
+    pdfDownloadButton.textContent =
+      originalText;
+
+  }
+
+}
+
+
+    pdfDownloadButton.addEventListener(
+      "click",
+      downloadPdf
+    );
+
+  </script>
+
+</body>
+</html>
