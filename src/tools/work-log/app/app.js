@@ -1538,115 +1538,20 @@ function renderMonthlyPlanForm() {
               class="project-status-category monthly-plan-category"
               ${categoryHasPlan ? "open" : ""}
             >
-  const categoryMinutesMap =
-    new Map();
+              <summary>
+                <span>
+                  ${escapeHtml(category.name)}
+                </span>
 
+                <span
+                  class="monthly-plan-category-total"
+                  data-category-id="${escapeHtml(category.id)}"
+                >
+                  0％ / 0時間
+                </span>
+              </summary>
 
-  const assignedMinutes =
-    Array.from(
-      monthlyPlanProjectList
-        .querySelectorAll(
-          ".monthly-plan-project-check:checked"
-        )
-    ).reduce(
-      function(
-        total,
-        checkbox
-      ) {
-        const projectItem =
-          checkbox.closest(
-            ".monthly-plan-project-item"
-          );
-
-
-        const hoursInput =
-          projectItem.querySelector(
-            ".monthly-plan-project-hours"
-          );
-
-
-        const projectMinutes =
-          Math.max(
-            0,
-
-            Math.round(
-              Number(
-                hoursInput.value
-              ) *
-              60
-            ) ||
-            0
-          );
-
-
-        const categoryId =
-          checkbox.dataset.categoryId;
-
-
-        categoryMinutesMap.set(
-          categoryId,
-
-          (
-            categoryMinutesMap.get(
-              categoryId
-            ) ||
-            0
-          ) +
-          projectMinutes
-        );
-
-
-        return (
-          total +
-          projectMinutes
-        );
-      },
-
-      0
-    );
-
-
-  monthlyPlanProjectList
-    .querySelectorAll(
-      ".monthly-plan-category-total"
-    )
-    .forEach(
-      function(categoryTotal) {
-        const categoryId =
-          categoryTotal.dataset.categoryId;
-
-
-        const categoryMinutes =
-          categoryMinutesMap.get(
-            categoryId
-          ) ||
-          0;
-
-
-        const categoryPercent =
-          totalMinutes > 0
-            ? (
-                categoryMinutes /
-                totalMinutes *
-                100
-              )
-            : 0;
-
-
-        categoryTotal.textContent =
-          formatInputNumber(
-            categoryPercent
-          ) +
-          "％ / " +
-          formatHours(
-            categoryMinutes /
-            60
-          );
-      }
-    );
-
-
-  const difference =
+              <div class="project-status-project-list">
                 ${
                   projectHtml ||
                   `
@@ -1831,6 +1736,10 @@ function updateMonthlyPlanSummary() {
     );
 
 
+  const categoryMinutesMap =
+    new Map();
+
+
   const assignedMinutes =
     Array.from(
       monthlyPlanProjectList
@@ -1854,8 +1763,7 @@ function updateMonthlyPlanSummary() {
           );
 
 
-        return (
-          total +
+        const projectMinutes =
           Math.max(
             0,
 
@@ -1866,11 +1774,73 @@ function updateMonthlyPlanSummary() {
               60
             ) ||
             0
-          )
+          );
+
+
+        const categoryId =
+          checkbox.dataset.categoryId;
+
+
+        categoryMinutesMap.set(
+          categoryId,
+
+          (
+            categoryMinutesMap.get(
+              categoryId
+            ) ||
+            0
+          ) +
+          projectMinutes
+        );
+
+
+        return (
+          total +
+          projectMinutes
         );
       },
 
       0
+    );
+
+
+  monthlyPlanProjectList
+    .querySelectorAll(
+      ".monthly-plan-category-total"
+    )
+    .forEach(
+      function(categoryTotal) {
+        const categoryId =
+          categoryTotal.dataset.categoryId;
+
+
+        const categoryMinutes =
+          categoryMinutesMap.get(
+            categoryId
+          ) ||
+          0;
+
+
+        const categoryPercent =
+          totalMinutes > 0
+            ? (
+                categoryMinutes /
+                totalMinutes *
+                100
+              )
+            : 0;
+
+
+        categoryTotal.textContent =
+          formatInputNumber(
+            categoryPercent
+          ) +
+          "％ / " +
+          formatHours(
+            categoryMinutes /
+            60
+          );
+      }
     );
 
 
