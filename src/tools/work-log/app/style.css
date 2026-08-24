@@ -2934,3 +2934,306 @@ details[open] > summary::before {
   color:
     var(--danger-color);
 }
+
+
+/* ========================================
+   記録編集 SUMMARY
+======================================== */
+
+.summary-work-accordions {
+  display: grid;
+  gap: 10px;
+
+  margin: 16px 0 20px;
+}
+
+
+.summary-work-accordion {
+  overflow: hidden;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background:
+    #ffffff;
+}
+
+
+.summary-work-accordion > summary {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  min-height: 52px;
+
+  padding:
+    12px 16px 12px 44px !important;
+
+  cursor: pointer;
+
+  font-weight: 600;
+}
+
+
+.summary-work-accordion > summary::before {
+  top: 50%;
+
+  transform:
+    translateY(-50%);
+}
+
+
+.summary-work-accordion > summary:hover {
+  background:
+    #f5f5f5;
+}
+
+
+.summary-work-accordion > summary strong {
+  flex-shrink: 0;
+
+  text-align: right;
+}
+
+
+.summary-work-day-list {
+  display: grid;
+  gap: 8px;
+
+  border-top:
+    1px solid var(--border-color);
+
+  padding: 12px;
+}
+
+
+.summary-work-day-list > .empty-message {
+  margin: 0;
+}
+
+
+.work-day-item.is-collapsible {
+  display: block;
+
+  margin: 0;
+
+  border-bottom:
+    1px solid var(--border-color);
+
+  padding: 0;
+}
+
+
+.work-day-item.is-collapsible:last-child {
+  border-bottom: 0;
+}
+
+
+.work-day-item.is-collapsible > summary {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 12px;
+
+  min-height: 44px;
+
+  padding:
+    10px 12px 10px 40px !important;
+
+  cursor: pointer;
+}
+
+
+.work-day-item.is-collapsible > summary::before {
+  top: 50%;
+  left: 14px;
+
+  transform:
+    translateY(-50%);
+}
+
+
+.work-day-item.is-collapsible > summary:hover {
+  background:
+    #f5f5f5;
+}
+
+
+.work-day-date {
+  font-weight: 600;
+}
+
+
+.work-day-content {
+  padding:
+    8px 12px 14px 40px;
+}
+
+
+.work-day-content .work-content-list {
+  display: grid;
+  gap: 8px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+
+.work-day-content .work-content-list li {
+  display: grid;
+
+  grid-template-columns:
+    105px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: start;
+
+  gap: 10px;
+
+  margin: 0;
+
+  border-bottom:
+    1px solid #eeeeee;
+
+  padding: 8px 0;
+}
+
+
+.summary-work-day-list
+.work-content-list li {
+  grid-template-columns:
+    105px
+    minmax(180px, 0.9fr)
+    minmax(180px, 1.3fr)
+    auto;
+}
+
+
+.work-day-content
+.work-content-list li:last-child {
+  border-bottom: 0;
+}
+
+
+.summary-work-project {
+  min-width: 0;
+
+  overflow-wrap: anywhere;
+}
+
+
+.work-content-text {
+  min-width: 0;
+
+  overflow-wrap: anywhere;
+}
+
+
+.record-item-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  white-space: nowrap;
+}
+
+
+.record-item-actions button {
+  min-height: 32px;
+
+  padding: 5px 9px;
+}
+
+
+@media (max-width: 900px) {
+  .summary-work-day-list
+  .work-content-list li {
+    grid-template-columns:
+      95px
+      minmax(150px, 1fr)
+      minmax(0, 1.2fr);
+
+    gap: 6px 10px;
+  }
+
+
+  .summary-work-day-list
+  .record-item-actions {
+    grid-column:
+      2 / -1;
+  }
+}
+
+
+@media (max-width: 640px) {
+  .summary-work-accordion > summary {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 2px;
+  }
+
+
+  .summary-work-accordion > summary strong {
+    text-align: left;
+  }
+
+
+  .summary-work-day-list {
+    padding: 8px;
+  }
+
+
+  .work-day-item.is-collapsible > summary {
+    align-items: flex-start;
+
+    grid-template-columns: 1fr;
+
+    gap: 2px;
+
+    padding-right:
+      10px !important;
+  }
+
+
+  .work-day-content {
+    padding:
+      8px 10px 12px 24px;
+  }
+
+
+  .work-day-content
+  .work-content-list li,
+  .summary-work-day-list
+  .work-content-list li {
+    grid-template-columns: 1fr;
+
+    gap: 4px;
+  }
+
+
+  .summary-work-day-list
+  .record-item-actions {
+    grid-column: auto;
+  }
+
+
+  .record-item-actions {
+    margin-top: 4px;
+  }
+}

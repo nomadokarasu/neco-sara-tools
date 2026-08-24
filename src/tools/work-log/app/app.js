@@ -7983,29 +7983,33 @@ function createRecordWorkDayHtml(
             .join("");
 
         return `
-          <article class="work-day-item">
-            <time
-              class="work-day-date"
-              datetime="${formatRecordDateForInput(
-                workDay.date
-              )}"
-            >
-              ${formatRecordDisplayDate(
-                workDay.date
-              )}
-            </time>
+          <details class="work-day-item is-collapsible">
+            <summary>
+              <time
+                class="work-day-date"
+                datetime="${formatRecordDateForInput(
+                  workDay.date
+                )}"
+              >
+                ${formatRecordDisplayDate(
+                  workDay.date
+                )}
+              </time>
 
-            <ul class="work-content-list">
-              ${recordHtml}
-            </ul>
+              <span class="work-day-total">
+                合計
+                ${formatSecondsAsText(
+                  workDay.totalSeconds
+                )}
+              </span>
+            </summary>
 
-            <span class="work-day-total">
-              合計
-              ${formatSecondsAsText(
-                workDay.totalSeconds
-              )}
-            </span>
-          </article>
+            <div class="work-day-content">
+              <ul class="work-content-list">
+                ${recordHtml}
+              </ul>
+            </div>
+          </details>
         `;
       }
     )
