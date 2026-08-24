@@ -43,40 +43,11 @@ const nextPeriodButton =
   );
 
 
-const reportDateInput =
-  document.getElementById(
-    "report-date"
-  );
-
-
 const reportMonthInput =
   document.getElementById(
     "report-month"
   );
 
-
-const dateInputLabel =
-  document.getElementById(
-    "date-input-label"
-  );
-
-
-const monthInputLabel =
-  document.getElementById(
-    "month-input-label"
-  );
-
-
-const weekRangeDisplay =
-  document.getElementById(
-    "week-range-display"
-  );
-
-
-const weekRangeText =
-  document.getElementById(
-    "week-range-text"
-  );
 
 
 const activeWorkPanel =
@@ -217,8 +188,6 @@ async function initializeReport() {
     await loadAppData();
 
   setDateInputValues();
-
-  updateDateInputDisplay();
 
   renderReport();
 
@@ -708,44 +677,9 @@ function normalizeReportData(data) {
 // ========================================
 
 function setDateInputValues() {
-  reportDateInput.value =
-    formatDateForInput(
-      selectedDate
-    );
-
-
   reportMonthInput.value =
     formatMonthForInput(
       selectedDate
-    );
-
-
-  updateReportWeekRange();
-}
-
-
-function updateReportWeekRange() {
-  const weekStart =
-    getWeekStart(
-      selectedDate
-    );
-
-  const weekEnd =
-    new Date(
-      weekStart
-    );
-
-  weekEnd.setDate(
-    weekEnd.getDate() + 6
-  );
-
-  weekRangeText.textContent =
-    formatReportMonthDay(
-      weekStart
-    ) +
-    "～" +
-    formatReportMonthDay(
-      weekEnd
     );
 }
 
@@ -763,67 +697,6 @@ function formatReportMonthDay(
   );
 }
 
-
-// ========================================
-// 日付入力欄の切り替え
-// ========================================
-
-function updateDateInputDisplay() {
-  const isDay =
-    selectedPeriod ===
-    "day";
-
-  const isWeek =
-    selectedPeriod ===
-    "week";
-
-  const isMonth =
-    selectedPeriod ===
-    "month";
-
-
-  dateInputLabel.hidden =
-    !isDay;
-
-  weekRangeDisplay.hidden =
-    !isWeek;
-
-  monthInputLabel.hidden =
-    !isMonth;
-
-
-  if (isDay) {
-    dateInputLabel.firstChild.textContent =
-      "表示する日";
-  }
-
-
-  setDateInputValues();
-}
-
-
-// ========================================
-// 日付を選択する
-// ========================================
-
-reportDateInput.addEventListener(
-  "change",
-
-  function() {
-    if (!reportDateInput.value) {
-      return;
-    }
-
-
-    selectedDate =
-      createLocalDateFromInput(
-        reportDateInput.value
-      );
-
-
-    renderReport();
-  }
-);
 
 
 // ========================================
