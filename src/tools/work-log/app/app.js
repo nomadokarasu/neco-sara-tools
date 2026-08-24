@@ -118,12 +118,6 @@ const monthlyPlanAddCategoryButton =
   );
 
 
-const monthlyPlanSaveButton =
-  document.getElementById(
-    "monthly-plan-save-button"
-  );
-
-
 const workTimeLabel =
   document.getElementById(
     "work-time-label"
@@ -1142,8 +1136,7 @@ function updatePeriodButtons() {
 function initializeMonthlyPlan() {
   if (
     !monthlyPlanForm ||
-    !monthlyPlanMonthInput ||
-    !monthlyPlanSaveButton
+    !monthlyPlanMonthInput
   ) {
     return;
   }
@@ -1314,14 +1307,15 @@ function initializeMonthlyPlan() {
   );
 
 
-  monthlyPlanSaveButton.addEventListener(
-    "click",
+  monthlyPlanForm.addEventListener(
+    "submit",
 
-    function() {
+    function(event) {
+      event.preventDefault();
+
       saveMonthlyPlan();
     }
   );
-
 
   copyPreviousPlanButton.addEventListener(
     "click",
