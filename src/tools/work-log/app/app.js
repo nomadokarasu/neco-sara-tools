@@ -14,9 +14,9 @@ const STORAGE_KEY =
 // ========================================
 
 const defaultData = {
-    settings: {
+  settings: {
     weeklyHours: 30,
-    selectedPeriod: "week",
+    selectedPeriod: "month",
     selectedScreen: "work"
   },
 
@@ -829,7 +829,10 @@ function normalizeAppData(data) {
     settings: {
       ...defaultData.settings,
 
-      ...(data.settings || {})
+      ...(data.settings || {}),
+
+      selectedPeriod:
+        "month"
     },
 
     categories:
