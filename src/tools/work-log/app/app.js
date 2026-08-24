@@ -2776,7 +2776,47 @@ stopButton.addEventListener(
   "click",
 
   function() {
-    finishActiveSession();
+    if (!appData.activeSession) {
+      return;
+    }
+
+
+    const endedAt =
+      Date.now();
+
+
+    const enteredWorkContent =
+      window.prompt(
+        "終了する作業の内容を入力してください。"
+      );
+
+
+    if (enteredWorkContent === null) {
+      showStatusMessage(
+        "作業の終了を中止しました。タイマーは継続しています。"
+      );
+
+      return;
+    }
+
+
+    const workContent =
+      enteredWorkContent.trim();
+
+
+    if (!workContent) {
+      showStatusMessage(
+        "作業内容を入力してください。タイマーは継続しています。"
+      );
+
+      return;
+    }
+
+
+    finishActiveSession(
+      endedAt,
+      workContent
+    );
   }
 );
 
@@ -2788,14 +2828,13 @@ stopButton.addEventListener(
 // 作業を終了して保存
 // ========================================
 
-function finishActiveSession() {
+function finishActiveSession(
+  endedAt,
+  workContent
+) {
   if (!appData.activeSession) {
     return;
   }
-
-
-  const endedAt =
-    Date.now();
 
 
   const elapsedSeconds =
@@ -2820,6 +2859,42 @@ function finishActiveSession() {
           ...appData.activeSession.notes
         ]
       : [];
+
+
+  const segmentStartedAt =
+    Number(
+      appData.activeSession
+        .segmentStartedAt
+    ) ||
+    Number(
+      appData.activeSession
+        .startedAt
+    );
+
+
+  savedNotes.push(
+    {
+      id:
+        createId(
+          "note"
+        ),
+
+      text:
+        workContent,
+
+      startedAt:
+        Math.min(
+          segmentStartedAt,
+          endedAt
+        ),
+
+      endedAt:
+        endedAt,
+
+      createdAt:
+        endedAt
+    }
+  );
 
 
   appData.sessions.push(
