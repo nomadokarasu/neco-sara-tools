@@ -248,6 +248,36 @@ const recordTotalTime =
   );
 
 
+const recordPlannedWorkTotal =
+  document.getElementById(
+    "record-planned-work-total"
+  );
+
+
+const recordUnplannedWorkTotal =
+  document.getElementById(
+    "record-unplanned-work-total"
+  );
+
+
+const recordSummaryAllWorkDays =
+  document.getElementById(
+    "record-summary-all-work-days"
+  );
+
+
+const recordSummaryPlannedWorkDays =
+  document.getElementById(
+    "record-summary-planned-work-days"
+  );
+
+
+const recordSummaryUnplannedWorkDays =
+  document.getElementById(
+    "record-summary-unplanned-work-days"
+  );
+
+
 const recordCategorySummaryList =
   document.getElementById(
     "record-category-summary-list"
@@ -6986,9 +7016,51 @@ function setRecordDateInputValues() {
 // 記録編集の集計
 // ========================================
 
+function isRecordSessionPlanned(
+  session
+) {
+  const sessionDate =
+    new Date(
+      Number(
+        session.startedAt
+      )
+    );
+
+
+  const monthKey =
+    createMonthKey(
+      sessionDate
+    );
+
+
+  const monthlyPlan =
+    appData.monthlyPlans &&
+    appData.monthlyPlans[
+      monthKey
+    ];
+
+
+  const projectPlan =
+    findMonthlyProjectPlan(
+      monthlyPlan,
+      session.projectId
+    );
+
+
+  return Boolean(
+    projectPlan &&
+    Number(
+      projectPlan.plannedMinutes ||
+      0
+    ) > 0
+  );
+}
+
+
 function renderRecordSummary() {
   const periodRange =
     getRecordPeriodRange();
+
 
   const sessions =
     appData.sessions.filter(
@@ -6998,6 +7070,7 @@ function renderRecordSummary() {
             session.startedAt
           );
 
+
         return (
           startedAt >=
             periodRange.start.getTime() &&
@@ -7006,6 +7079,7 @@ function renderRecordSummary() {
         );
       }
     );
+
 
   const totalSeconds =
     sessions.reduce(
@@ -7024,19 +7098,149 @@ function renderRecordSummary() {
       0
     );
 
+
+  const plannedSessions =
+    sessions.filter(
+      function(session) {
+        return isRecordSessionPlanned(
+          session
+        );
+      }
+    );
+
+
+  const unplannedSessions =
+    sessions.filter(
+      function(session) {
+        return !isRecordSessionPlanned(
+          session
+        );
+      }
+    );
+
+
+  const plannedActualSeconds =
+    plannedSessions.reduce(
+      function(
+        total,
+        session
+      ) {
+        return (
+          total +
+          Number(
+            session.elapsedSeconds || 0
+          )
+        );
+      },
+
+      0
+    );
+
+
+  const unplannedActualSeconds =
+    unplannedSessions.reduce(
+      function(
+        total,
+        session
+      ) {
+        return (
+          total +
+          Number(
+            session.elapsedSeconds || 0
+          )
+        );
+      },
+
+      0
+    );
+
+
+  const monthKey =
+    createMonthKey(
+      selectedRecordDate
+    );
+
+
+  const monthlyPlan =
+    appData.monthlyPlans &&
+    appData.monthlyPlans[
+      monthKey
+    ];
+
+
+  const plannedTotalSeconds =
+    monthlyPlan
+      ? Math.max(
+          0,
+
+          Math.round(
+            Number(
+              monthlyPlan.totalMinutes ||
+              0
+            ) *
+            60
+          )
+        )
+      : 0;
+
+
   recordPeriodTitle.textContent =
     createRecordPeriodTitle(
       periodRange
     );
 
-  recordDateRange.textContent =
-    createRecordDateRangeText(
-      periodRange
-    );
+
+  recordDateRange.hidden =
+    true;
+
 
   recordTotalTime.textContent =
     formatSecondsAsText(
       totalSeconds
+    ) +
+    " / " +
+    (
+      monthlyPlan
+        ? formatSecondsAsText(
+            plannedTotalSeconds
+          )
+        : "計画なし"
+    );
+
+
+  recordPlannedWorkTotal.textContent =
+    formatSecondsAsText(
+      plannedActualSeconds
+    );
+
+
+  recordUnplannedWorkTotal.textContent =
+    formatSecondsAsText(
+      unplannedActualSeconds
+    );
+
+
+  recordSummaryAllWorkDays.innerHTML =
+    createRecordWorkDayHtml(
+      groupRecordSessionsByDay(
+        sessions
+      )
+    );
+
+
+  recordSummaryPlannedWorkDays.innerHTML =
+    createRecordWorkDayHtml(
+      groupRecordSessionsByDay(
+        plannedSessions
+      )
+    );
+
+
+  recordSummaryUnplannedWorkDays.innerHTML =
+    createRecordWorkDayHtml(
+      groupRecordSessionsByDay(
+        unplannedSessions
+      )
     );
 
 
