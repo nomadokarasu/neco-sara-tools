@@ -6903,33 +6903,14 @@ function initializeRecordNavigation() {
 function moveRecordPeriod(
   direction
 ) {
-  const movedDate =
-    new Date(
-      selectedRecordDate
-    );
-
-  const selectedPeriod =
-    appData.settings.selectedPeriod;
-
-  if (selectedPeriod === "month") {
-    movedDate.setMonth(
-      movedDate.getMonth() +
-      direction
-    );
-  } else if (selectedPeriod === "week") {
-    movedDate.setDate(
-      movedDate.getDate() +
-      direction * 7
-    );
-  } else {
-    movedDate.setDate(
-      movedDate.getDate() +
-      direction
-    );
-  }
-
   selectedRecordDate =
-    movedDate;
+    new Date(
+      selectedRecordDate.getFullYear(),
+      selectedRecordDate.getMonth() +
+      direction,
+      1
+    );
+
 
   setRecordDateInputValues();
 }
@@ -7793,62 +7774,21 @@ function createRecordWorkDayHtml(
 }
 
 function getRecordPeriodRange() {
-  const selectedPeriod =
-    appData.settings.selectedPeriod;
-
-  let start;
-  let end;
-
-  if (selectedPeriod === "month") {
-    start =
-      new Date(
-        selectedRecordDate.getFullYear(),
-        selectedRecordDate.getMonth(),
-        1
-      );
-
-    end =
-      new Date(
-        selectedRecordDate.getFullYear(),
-        selectedRecordDate.getMonth() + 1,
-        1
-      );
-  } else if (selectedPeriod === "week") {
-    start =
-      getRecordWeekStart(
-        selectedRecordDate
-      );
-
-    end =
-      new Date(
-        start
-      );
-
-    end.setDate(
-      end.getDate() + 7
-    );
-  } else {
-    start =
-      new Date(
-        selectedRecordDate
-      );
-
-    start.setHours(
-      0,
-      0,
-      0,
-      0
+  const start =
+    new Date(
+      selectedRecordDate.getFullYear(),
+      selectedRecordDate.getMonth(),
+      1
     );
 
-    end =
-      new Date(
-        start
-      );
 
-    end.setDate(
-      end.getDate() + 1
+  const end =
+    new Date(
+      selectedRecordDate.getFullYear(),
+      selectedRecordDate.getMonth() + 1,
+      1
     );
-  }
+
 
   return {
     start:
@@ -7860,50 +7800,14 @@ function getRecordPeriodRange() {
 }
 
 
-function createRecordPeriodTitle(
-  periodRange
-) {
-  const selectedPeriod =
-    appData.settings.selectedPeriod;
-
-  if (selectedPeriod === "month") {
-    return (
-      selectedRecordDate.getFullYear() +
-      "年" +
-      (
-        selectedRecordDate.getMonth() + 1
-      ) +
-      "月の集計"
-    );
-  }
-
-  if (selectedPeriod === "week") {
-    const weekEnd =
-      new Date(
-        periodRange.end
-      );
-
-    weekEnd.setDate(
-      weekEnd.getDate() - 1
-    );
-
-    return (
-      formatRecordDisplayDate(
-        periodRange.start
-      ) +
-      "〜" +
-      formatRecordDisplayDate(
-        weekEnd
-      ) +
-      "の集計"
-    );
-  }
-
+function createRecordPeriodTitle() {
   return (
-    formatRecordDisplayDate(
-      periodRange.start
+    selectedRecordDate.getFullYear() +
+    "年" +
+    (
+      selectedRecordDate.getMonth() + 1
     ) +
-    "の集計"
+    "月の集計"
   );
 }
 
