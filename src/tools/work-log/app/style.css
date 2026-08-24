@@ -531,6 +531,38 @@ a:focus-visible {
 }
 
 
+.monthly-plan-category-actions {
+  display:
+    flex;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    6px;
+
+  justify-content:
+    flex-end;
+
+  margin:
+    10px 0;
+}
+
+
+.monthly-plan-project-actions {
+  display:
+    flex;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    6px;
+
+  justify-content:
+    flex-end;
+}
+
 .monthly-plan-project-item {
   display:
     flex;

@@ -112,6 +112,12 @@ const copyPreviousPlanButton =
   );
 
 
+const monthlyPlanAddCategoryButton =
+  document.getElementById(
+    "monthly-plan-add-category-button"
+  );
+
+
 const workTimeLabel =
   document.getElementById(
     "work-time-label"
@@ -1279,6 +1285,750 @@ function initializeMonthlyPlan() {
 
     copyPreviousMonthlyPlan
   );
+
+
+  monthlyPlanAddCategoryButton.addEventListener(
+    "click",
+
+    function() {
+      const enteredName =
+        window.prompt(
+          "追加する大分類名を入力してください。"
+        );
+
+
+      if (enteredName === null) {
+        return;
+      }
+
+
+      const categoryName =
+        enteredName.trim();
+
+
+      if (!categoryName) {
+        showStatusMessage(
+          "大分類名を入力してください。"
+        );
+
+        return;
+      }
+
+
+      appData.categories.push(
+        {
+          id:
+            createId(
+              "category"
+            ),
+
+          name:
+            categoryName,
+
+          allocationPercent:
+            0,
+
+          projects: []
+        }
+      );
+
+
+      saveAppData();
+
+      renderMonthlyPlanForm();
+
+      updateWorkTimeDisplay();
+
+      showStatusMessage(
+        "大分類を追加しました。"
+      );
+    }
+  );
+}
+
+
+// ========================================
+// 月間計画からプロジェクトを追加する
+// ========================================
+
+monthlyPlanProjectList.addEventListener(
+  "click",
+
+  function(event) {
+    const button =
+      event.target.closest(
+        "[data-action='monthly-plan-add-project']"
+      );
+
+
+    if (!button) {
+      return;
+    }
+
+
+    const category =
+      findCategory(
+        button.dataset.categoryId
+      );
+
+
+    if (!category) {
+      return;
+    }
+
+
+    const enteredName =
+      window.prompt(
+        "追加するプロジェクト名を入力してください。"
+      );
+
+
+    if (enteredName === null) {
+      return;
+    }
+
+
+    const projectName =
+      enteredName.trim();
+
+
+    if (!projectName) {
+      showStatusMessage(
+        "プロジェクト名を入力してください。"
+      );
+
+      return;
+    }
+
+
+    category.projects.push(
+      {
+        id:
+          createId(
+            "project"
+          ),
+
+        name:
+          projectName,
+
+        allocationPercent:
+          0,
+
+        isCurrent:
+          true
+      }
+    );
+
+
+    saveAppData();
+
+    renderMonthlyPlanForm();
+
+    updateWorkTimeDisplay();
+
+    showStatusMessage(
+      "プロジェクトを追加しました。"
+    );
+  }
+);
+
+
+// ========================================
+// 月間計画内のプロジェクト管理
+// ========================================
+
+monthlyPlanProjectList.addEventListener(
+  "click",
+
+  function(event) {
+    const button =
+      event.target.closest(
+        "button[data-action]"
+      );
+
+
+    if (!button) {
+      return;
+    }
+
+
+    const action =
+      button.dataset.action;
+
+
+    const category =
+      findCategory(
+        button.dataset.categoryId
+      );
+
+
+    if (!category) {
+      return;
+    }
+
+
+    if (
+      action ===
+      "monthly-plan-rename-category"
+    ) {
+      const enteredName =
+        window.prompt(
+          "新しい大分類名を入力してください。",
+          category.name
+        );
+
+
+      if (enteredName === null) {
+        return;
+      }
+
+
+      const categoryName =
+        enteredName.trim();
+
+
+      if (!categoryName) {
+        showStatusMessage(
+          "大分類名を入力してください。"
+        );
+
+        return;
+      }
+
+
+      category.name =
+        categoryName;
+
+
+      saveAppData();
+
+      renderMonthlyPlanForm();
+
+      updateWorkTimeDisplay();
+
+      renderRecordSummary();
+
+
+      showStatusMessage(
+        "大分類名を変更しました。"
+      );
+
+      return;
+    }
+
+
+    if (
+      action !==
+        "monthly-plan-rename-project" &&
+      action !==
+        "monthly-plan-toggle-current"
+    ) {
+      return;
+    }
+
+
+    const project =
+      findProject(
+        category,
+        button.dataset.projectId
+      );
+
+
+    if (!project) {
+      return;
+    }
+
+
+    if (
+      action ===
+      "monthly-plan-rename-project"
+    ) {
+      const enteredName =
+        window.prompt(
+          "新しいプロジェクト名を入力してください。",
+          project.name
+        );
+
+
+      if (enteredName === null) {
+        return;
+      }
+
+
+      const projectName =
+        enteredName.trim();
+
+
+      if (!projectName) {
+        showStatusMessage(
+          "プロジェクト名を入力してください。"
+        );
+
+        return;
+      }
+
+
+      project.name =
+        projectName;
+
+
+      saveAppData();
+
+      renderMonthlyPlanForm();
+
+      updateWorkTimeDisplay();
+
+      renderRecordSummary();
+
+
+      showStatusMessage(
+        "プロジェクト名を変更しました。"
+      );
+
+      return;
+    }
+
+
+    project.isCurrent =
+      project.isCurrent === false;
+
+
+    if (
+      project.isCurrent === false
+    ) {
+      project.allocationPercent =
+        0;
+    }
+
+
+    saveAppData();
+
+    renderMonthlyPlanForm();
+
+    updateWorkTimeDisplay();
+
+    renderRecordSummary();
+
+
+    showStatusMessage(
+      project.isCurrent
+        ? "現在のプロジェクトに戻しました。"
+        : "プロジェクトをアーカイブへ移動しました。"
+    );
+  }
+);
+
+
+// ========================================
+// 月間計画内から削除する
+// ========================================
+
+monthlyPlanProjectList.addEventListener(
+  "click",
+
+  function(event) {
+    const button =
+      event.target.closest(
+        "button[data-action]"
+      );
+
+
+    if (!button) {
+      return;
+    }
+
+
+    const action =
+      button.dataset.action;
+
+
+    if (
+      action !==
+        "monthly-plan-delete-category" &&
+      action !==
+        "monthly-plan-delete-project"
+    ) {
+      return;
+    }
+
+
+    const categoryId =
+      button.dataset.categoryId;
+
+
+    const category =
+      findCategory(
+        categoryId
+      );
+
+
+    if (!category) {
+      return;
+    }
+
+
+    if (
+      action ===
+      "monthly-plan-delete-category"
+    ) {
+      const projectIds =
+        new Set(
+          category.projects.map(
+            function(project) {
+              return String(
+                project.id
+              );
+            }
+          )
+        );
+
+
+      const hasSavedRecords =
+        appData.sessions.some(
+          function(session) {
+            return projectIds.has(
+              String(
+                session.projectId
+              )
+            );
+          }
+        );
+
+
+      const hasActiveRecord =
+        Boolean(
+          appData.activeSession &&
+          projectIds.has(
+            String(
+              appData.activeSession.projectId
+            )
+          )
+        );
+
+
+      if (
+        hasSavedRecords ||
+        hasActiveRecord
+      ) {
+        window.alert(
+          "作業記録があるため、この大分類は削除できません。配下のプロジェクトをアーカイブへ移してください。"
+        );
+
+        return;
+      }
+
+
+      const shouldDelete =
+        window.confirm(
+          "この大分類と、その中のプロジェクトを削除しますか？"
+        );
+
+
+      if (!shouldDelete) {
+        return;
+      }
+
+
+      appData.categories =
+        appData.categories.filter(
+          function(item) {
+            return (
+              String(
+                item.id
+              ) !==
+              String(
+                categoryId
+              )
+            );
+          }
+        );
+
+
+      Object.values(
+        appData.monthlyPlans
+      ).forEach(
+        function(monthlyPlan) {
+          if (
+            !Array.isArray(
+              monthlyPlan.categories
+            )
+          ) {
+            return;
+          }
+
+
+          monthlyPlan.categories =
+            monthlyPlan.categories.filter(
+              function(categoryPlan) {
+                return (
+                  String(
+                    categoryPlan.categoryId
+                  ) !==
+                  String(
+                    categoryId
+                  )
+                );
+              }
+            );
+
+
+          recalculateStoredMonthlyPlan(
+            monthlyPlan
+          );
+        }
+      );
+
+
+      saveAppData();
+
+      renderMonthlyPlanForm();
+
+      updateWorkTimeDisplay();
+
+      renderRecordSummary();
+
+
+      showStatusMessage(
+        "大分類を削除しました。"
+      );
+
+      return;
+    }
+
+
+    const projectId =
+      button.dataset.projectId;
+
+
+    const project =
+      findProject(
+        category,
+        projectId
+      );
+
+
+    if (!project) {
+      return;
+    }
+
+
+    const hasSavedRecords =
+      appData.sessions.some(
+        function(session) {
+          return (
+            String(
+              session.projectId
+            ) ===
+            String(
+              projectId
+            )
+          );
+        }
+      );
+
+
+    const hasActiveRecord =
+      Boolean(
+        appData.activeSession &&
+        String(
+          appData.activeSession.projectId
+        ) ===
+        String(
+          projectId
+        )
+      );
+
+
+    if (
+      hasSavedRecords ||
+      hasActiveRecord
+    ) {
+      window.alert(
+        "作業記録があるため、このプロジェクトは削除できません。「アーカイブへ移動」を使用してください。"
+      );
+
+      return;
+    }
+
+
+    const shouldDelete =
+      window.confirm(
+        "このプロジェクトを削除しますか？"
+      );
+
+
+    if (!shouldDelete) {
+      return;
+    }
+
+
+    category.projects =
+      category.projects.filter(
+        function(item) {
+          return (
+            String(
+              item.id
+            ) !==
+            String(
+              projectId
+            )
+          );
+        }
+      );
+
+
+    Object.values(
+      appData.monthlyPlans
+    ).forEach(
+      function(monthlyPlan) {
+        if (
+          !Array.isArray(
+            monthlyPlan.categories
+          )
+        ) {
+          return;
+        }
+
+
+        monthlyPlan.categories.forEach(
+          function(categoryPlan) {
+            if (
+              !Array.isArray(
+                categoryPlan.projects
+              )
+            ) {
+              return;
+            }
+
+
+            categoryPlan.projects =
+              categoryPlan.projects.filter(
+                function(projectPlan) {
+                  return (
+                    String(
+                      projectPlan.projectId
+                    ) !==
+                    String(
+                      projectId
+                    )
+                  );
+                }
+              );
+          }
+        );
+
+
+        recalculateStoredMonthlyPlan(
+          monthlyPlan
+        );
+      }
+    );
+
+
+    saveAppData();
+
+    renderMonthlyPlanForm();
+
+    updateWorkTimeDisplay();
+
+    renderRecordSummary();
+
+
+    showStatusMessage(
+      "プロジェクトを削除しました。"
+    );
+  }
+);
+
+
+// ========================================
+// 削除後の月間計画を再集計する
+// ========================================
+
+function recalculateStoredMonthlyPlan(
+  monthlyPlan
+) {
+  if (
+    !monthlyPlan ||
+    !Array.isArray(
+      monthlyPlan.categories
+    )
+  ) {
+    return;
+  }
+
+
+  const totalMinutes =
+    Number(
+      monthlyPlan.totalMinutes ||
+      0
+    );
+
+
+  monthlyPlan.categories =
+    monthlyPlan.categories.filter(
+      function(categoryPlan) {
+        const projects =
+          Array.isArray(
+            categoryPlan.projects
+          )
+            ? categoryPlan.projects
+            : [];
+
+
+        categoryPlan.projects =
+          projects;
+
+
+        categoryPlan.plannedMinutes =
+          projects.reduce(
+            function(
+              total,
+              projectPlan
+            ) {
+              return (
+                total +
+                Number(
+                  projectPlan.plannedMinutes ||
+                  0
+                )
+              );
+            },
+
+            0
+          );
+
+
+        categoryPlan.allocationPercent =
+          totalMinutes > 0
+            ? (
+                categoryPlan.plannedMinutes /
+                totalMinutes *
+                100
+              )
+            : 0;
+
+
+        projects.forEach(
+          function(projectPlan) {
+            projectPlan.allocationPercent =
+              totalMinutes > 0
+                ? (
+                    Number(
+                      projectPlan.plannedMinutes ||
+                      0
+                    ) /
+                    totalMinutes *
+                    100
+                  )
+                : 0;
+          }
+        );
+
+
+        return projects.length > 0;
+      }
+    );
 }
 
 
@@ -1754,6 +2504,42 @@ function renderMonthlyPlanForm() {
                           </span>
                         </label>
                       </div>
+
+                      <div class="monthly-plan-project-actions">
+                        <button
+                          class="small-button"
+                          type="button"
+                          data-action="monthly-plan-rename-project"
+                          data-category-id="${escapeHtml(category.id)}"
+                          data-project-id="${escapeHtml(project.id)}"
+                        >
+                          名称変更
+                        </button>
+
+                        <button
+                          class="small-button"
+                          type="button"
+                          data-action="monthly-plan-toggle-current"
+                          data-category-id="${escapeHtml(category.id)}"
+                          data-project-id="${escapeHtml(project.id)}"
+                        >
+                          ${
+                            project.isCurrent === false
+                              ? "現在のプロジェクトに戻す"
+                              : "アーカイブへ移動"
+                          }
+                        </button>
+
+                        <button
+                          class="small-button delete-button"
+                          type="button"
+                          data-action="monthly-plan-delete-project"
+                          data-category-id="${escapeHtml(category.id)}"
+                          data-project-id="${escapeHtml(project.id)}"
+                        >
+                          削除
+                        </button>
+                      </div>
                     </div>
                   `;
                 }
@@ -1791,6 +2577,26 @@ function renderMonthlyPlanForm() {
                 </span>
               </summary>
 
+              <div class="monthly-plan-category-actions">
+                <button
+                  class="small-button"
+                  type="button"
+                  data-action="monthly-plan-rename-category"
+                  data-category-id="${escapeHtml(category.id)}"
+                >
+                  大分類名を変更
+                </button>
+
+                <button
+                  class="small-button delete-button"
+                  type="button"
+                  data-action="monthly-plan-delete-category"
+                  data-category-id="${escapeHtml(category.id)}"
+                >
+                  大分類を削除
+                </button>
+              </div>
+
               <div class="project-status-project-list">
                 ${
                   projectHtml ||
@@ -1800,6 +2606,15 @@ function renderMonthlyPlanForm() {
                     </p>
                   `
                 }
+
+                <button
+                  class="small-button monthly-plan-add-project-button"
+                  type="button"
+                  data-action="monthly-plan-add-project"
+                  data-category-id="${escapeHtml(category.id)}"
+                >
+                  プロジェクトを追加
+                </button>
               </div>
             </details>
           `;
