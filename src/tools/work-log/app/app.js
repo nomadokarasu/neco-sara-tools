@@ -34,11 +34,6 @@ const defaultData = {
 // HTML要素
 // ========================================
 
-const periodButtons =
-  document.querySelectorAll(
-    ".period-button"
-  );
-
 
 const workTimeForm =
   document.getElementById(
@@ -482,8 +477,6 @@ async function initializeApp() {
   ensureInitialCategories();
 
   initializeMonthlyPlan();
-
-  updatePeriodButtons();
 
   updateScreenTabs();
 
@@ -1054,82 +1047,6 @@ function saveDisplaySettingsLocally() {
   );
 }
 
-
-// ========================================
-// 日・週・月ボタン
-// ========================================
-
-periodButtons.forEach(
-  function(periodButton) {
-    periodButton.addEventListener(
-      "click",
-
-      function() {
-        const selectedPeriod =
-          periodButton.dataset.period;
-
-
-        if (!selectedPeriod) {
-          return;
-        }
-
-
-        const previousPeriod =
-          appData.settings.selectedPeriod;
-
-
-        convertMonthlyPlanInputsBetweenPeriods(
-          previousPeriod,
-          selectedPeriod
-        );
-
-
-        appData.settings.selectedPeriod =
-          selectedPeriod;
-
-
-        saveDisplaySettingsLocally();
-
-        updatePeriodButtons();
-
-        updateMonthlyPlanPeriodLabels();
-
-        updateMonthlyPlanSummary();
-
-        updateWorkTimeDisplay();
-
-        updateRecordDateInputDisplay();
-
-        renderRecordSummary();
-      }
-    );
-  }
-);
-
-
-// ========================================
-// 選択中の期間をボタンに反映
-// ========================================
-
-function updatePeriodButtons() {
-  periodButtons.forEach(
-    function(periodButton) {
-      const buttonPeriod =
-        periodButton.dataset.period;
-
-
-      const isSelected =
-        buttonPeriod ===
-        appData.settings.selectedPeriod;
-
-
-      periodButton.classList.toggle(
-        "is-active",
-        isSelected
-      );
-    }
-  );
-}
 
 
 // ========================================
@@ -2176,72 +2093,7 @@ function updateMonthlyPlanPeriodLabels() {
 }
 
 
-// ========================================
-// 表示期間変更時に入力値を換算する
-// ========================================
 
-function convertMonthlyPlanInputsBetweenPeriods(
-  previousPeriod,
-  nextPeriod
-) {
-  if (
-    !monthlyPlanTotalHoursInput ||
-    previousPeriod === nextPeriod
-  ) {
-    return;
-  }
-
-
-  const previousFactor =
-    getMonthlyPlanPeriodFactor(
-      previousPeriod
-    );
-
-
-  const nextFactor =
-    getMonthlyPlanPeriodFactor(
-      nextPeriod
-    );
-
-
-  if (previousFactor <= 0) {
-    return;
-  }
-
-
-  const conversionRate =
-    nextFactor /
-    previousFactor;
-
-
-  monthlyPlanTotalHoursInput.value =
-    formatInputNumber(
-      Number(
-        monthlyPlanTotalHoursInput.value ||
-        0
-      ) *
-      conversionRate
-    );
-
-
-  monthlyPlanProjectList
-    .querySelectorAll(
-      ".monthly-plan-category-hours, " +
-      ".monthly-plan-project-hours"
-    )
-    .forEach(
-      function(hoursInput) {
-        hoursInput.value =
-          formatInputNumber(
-            Number(
-              hoursInput.value ||
-              0
-            ) *
-            conversionRate
-          );
-      }
-    );
-}
 
 
 // ========================================
