@@ -7267,9 +7267,88 @@ function renderRecordIntegratedSummary(
     new Set(
       sessions.map(
         function(session) {
-          return session.projectId;
+          return String(
+            session.projectId
+          );
         }
       )
+    );
+
+
+  const monthKey =
+    createMonthKey(
+      selectedRecordDate
+    );
+
+
+  const monthlyPlan =
+    appData.monthlyPlans &&
+    appData.monthlyPlans[
+      monthKey
+    ];
+
+
+  const plannedCategories =
+    monthlyPlan &&
+    Array.isArray(
+      monthlyPlan.categories
+    )
+      ? monthlyPlan.categories
+      : [];
+
+
+  const plannedCategoryIds =
+    new Set(
+      plannedCategories.map(
+        function(categoryPlan) {
+          return String(
+            categoryPlan.categoryId
+          );
+        }
+      )
+    );
+
+
+  const plannedProjectIds =
+    new Set();
+
+
+  plannedCategories.forEach(
+    function(categoryPlan) {
+      const projects =
+        Array.isArray(
+          categoryPlan.projects
+        )
+          ? categoryPlan.projects
+          : [];
+
+
+      projects.forEach(
+        function(projectPlan) {
+          if (
+            Number(
+              projectPlan.plannedMinutes ||
+              0
+            ) > 0
+          ) {
+            plannedProjectIds.add(
+              String(
+                projectPlan.projectId
+              )
+            );
+          }
+        }
+      );
+    }
+  );
+
+
+  const summaryProjectIds =
+    new Set(
+      [
+        ...periodProjectIds,
+        ...plannedProjectIds
+      ]
     );
 
 
@@ -7284,12 +7363,21 @@ function renderRecordIntegratedSummary(
             : [];
 
 
-        return projects.some(
-          function(project) {
-            return periodProjectIds.has(
-              project.id
-            );
-          }
+        return (
+          plannedCategoryIds.has(
+            String(
+              category.id
+            )
+          ) ||
+          projects.some(
+            function(project) {
+              return summaryProjectIds.has(
+                String(
+                  project.id
+                )
+              );
+            }
+          )
         );
       }
     );
@@ -7324,8 +7412,10 @@ function renderRecordIntegratedSummary(
           const projects =
             allProjects.filter(
               function(project) {
-                return periodProjectIds.has(
-                  project.id
+                return summaryProjectIds.has(
+                  String(
+                    project.id
+                  )
                 );
               }
             );
