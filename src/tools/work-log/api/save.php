@@ -12,6 +12,20 @@ header(
     'Cache-Control: no-store, no-cache, must-revalidate'
 );
 
+session_set_cookie_params(
+    [
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' =>
+            !empty($_SERVER['HTTPS']) &&
+            $_SERVER['HTTPS'] !== 'off',
+        'httponly' => true,
+        'samesite' => 'Strict'
+    ]
+);
+
+session_start();
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
 
@@ -44,30 +58,51 @@ try {
             JSON_THROW_ON_ERROR
         );
 
-    $receivedPassword =
-        isset($requestData['password'])
-            ? (string) $requestData['password']
-            : '';
-
-    if (
-        ADMIN_PASSWORD === '' ||
-        !hash_equals(
-            ADMIN_PASSWORD,
-            $receivedPassword
-        )
-    ) {
-        http_response_code(401);
-
-        echo json_encode(
-            [
-                'error' =>
-                    '管理用パスワードが正しくありません。'
-            ],
-            JSON_UNESCAPED_UNICODE
+    $isAuthenticated =
+        !empty(
+            $_SESSION[
+                'work_log_authenticated'
+            ]
         );
 
-        exit;
+
+    // 既存画面との互換用
+    if (!$isAuthenticated) {
+        $receivedPassword =
+            isset($requestData['password'])
+                ? (string) $requestData['password']
+                : '';
+
+        if (
+            ADMIN_PASSWORD === '' ||
+            !hash_equals(
+                ADMIN_PASSWORD,
+                $receivedPassword
+            )
+        ) {
+            http_response_code(401);
+
+            echo json_encode(
+                [
+                    'error' =>
+                        'ログインが必要です。'
+                ],
+                JSON_UNESCAPED_UNICODE
+            );
+
+            exit;
+        }
+
+
+        session_regenerate_id(
+            true
+        );
+
+        $_SESSION[
+            'work_log_authenticated'
+        ] = true;
     }
+
 
     $workLogData =
         $requestData['data'] ?? null;
