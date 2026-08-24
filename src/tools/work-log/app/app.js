@@ -1197,44 +1197,10 @@ function initializeMonthlyPlan() {
 
       if (
         event.target.classList.contains(
-          "monthly-plan-category-hours"
-        )
-      ) {
-        updateCategoryPercentFromHours(
-          event.target
-        );
-
-        recalculateCategoryProjectHours(
-          event.target.dataset.categoryId
-        );
-
-        updateMonthlyPlanSummary();
-
-        return;
-      }
-
-
-      if (
-        event.target.classList.contains(
           "monthly-plan-project-percent"
         )
       ) {
         updateProjectHoursFromPercent(
-          event.target
-        );
-
-        updateMonthlyPlanSummary();
-
-        return;
-      }
-
-
-      if (
-        event.target.classList.contains(
-          "monthly-plan-project-hours"
-        )
-      ) {
-        updateProjectPercentFromHours(
           event.target
         );
 
@@ -2594,6 +2560,8 @@ function renderMonthlyPlanForm() {
                             value="${formatInputNumber(plannedHours)}"
                             data-category-id="${escapeHtml(category.id)}"
                             data-project-id="${escapeHtml(project.id)}"
+                            readonly
+                            tabindex="-1"
                             ${isSelected ? "" : "disabled"}
                           >
 
@@ -2694,6 +2662,8 @@ function renderMonthlyPlanForm() {
                       step="0.5"
                       value="${formatInputNumber(categoryPlannedHours)}"
                       data-category-id="${escapeHtml(category.id)}"
+                      readonly
+                      tabindex="-1"
                     >
 
                     <span>
