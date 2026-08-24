@@ -2235,14 +2235,10 @@ function renderCurrentSummary(
 
                       <div class="summary-project-detail">
                         ${
-                          selectedPeriod === "day"
-                            ? createDayProjectWorkHtml(
-                                workDays
-                              )
-                            : createWorkDayHtml(
-                                workDays,
-                                true
-                              )
+                          createWorkDayHtml(
+                            workDays,
+                            true
+                          )
                         }
                       </div>
                     </details>
