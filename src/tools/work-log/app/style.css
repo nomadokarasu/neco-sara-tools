@@ -3237,3 +3237,161 @@ details[open] > summary::before {
     margin-top: 4px;
   }
 }
+
+/* ========================================
+   月間計画：プロジェクト行の右寄せ
+======================================== */
+
+.monthly-plan-project-item {
+  justify-content:
+    flex-start;
+}
+
+
+.monthly-plan-project-check-label {
+  flex:
+    1 1 auto;
+
+  min-width:
+    0;
+}
+
+
+.monthly-plan-project-item
+.monthly-plan-value-fields {
+  flex-shrink:
+    0;
+
+  margin-left:
+    auto;
+}
+
+
+.monthly-plan-project-item
+.monthly-plan-project-actions {
+  flex:
+    0 0 auto;
+
+  flex-wrap:
+    nowrap;
+}
+
+
+@media (max-width: 640px) {
+  .monthly-plan-project-item {
+    display:
+      grid;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto
+      auto;
+
+    align-items:
+      center;
+
+    gap:
+      8px;
+
+    padding:
+      10px;
+  }
+
+
+  .monthly-plan-project-item
+  .monthly-plan-value-fields {
+    display:
+      flex;
+
+    gap:
+      6px;
+
+    width:
+      auto;
+
+    margin-left:
+      0;
+  }
+
+
+  .monthly-plan-project-item
+  .monthly-plan-percent-field,
+  .monthly-plan-project-item
+  .monthly-plan-hours-field {
+    display:
+      flex;
+
+    grid-template-columns:
+      none;
+
+    gap:
+      3px;
+
+    width:
+      auto;
+  }
+
+
+  .monthly-plan-project-item
+  .monthly-plan-percent-field input,
+  .monthly-plan-project-item
+  .monthly-plan-hours-field input {
+    width:
+      54px;
+
+    padding:
+      7px 5px;
+  }
+
+
+  .monthly-plan-project-item
+  .monthly-plan-project-actions {
+    display:
+      flex;
+
+    grid-template-columns:
+      none;
+
+    width:
+      auto;
+  }
+
+
+  .monthly-plan-project-item
+  .monthly-plan-project-actions button {
+    width:
+      auto;
+  }
+}
+
+
+@media (max-width: 420px) {
+  .monthly-plan-project-item {
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto;
+  }
+
+
+  .monthly-plan-project-check-label {
+    grid-column:
+      1 / -1;
+  }
+
+
+  .monthly-plan-project-item
+  .monthly-plan-value-fields {
+    grid-column:
+      1;
+
+    justify-self:
+      end;
+  }
+
+
+  .monthly-plan-project-item
+  .monthly-plan-project-actions {
+    grid-column:
+      2;
+  }
+}
