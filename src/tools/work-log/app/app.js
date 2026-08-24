@@ -2317,15 +2317,16 @@ function renderMonthlyPlanForm() {
 
 
                   const plannedPercent =
-                    categoryPlannedMinutes > 0
+                    (
+                      savedProject &&
+                      categoryPlannedMinutes > 0
+                    )
                       ? (
                           Number(
                             savedProject
-                              .plannedMinutes ||
+                              .allocationPercent ||
                             0
-                          ) /
-                          categoryPlannedMinutes *
-                          100
+                          )
                         )
                       : 0;
 
