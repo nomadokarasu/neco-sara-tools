@@ -2482,15 +2482,6 @@ function renderMonthlyPlanForm() {
                     </p>
                   `
                 }
-
-                <button
-                  class="small-button monthly-plan-add-project-button"
-                  type="button"
-                  data-action="monthly-plan-add-project"
-                  data-category-id="${escapeHtml(category.id)}"
-                >
-                  プロジェクトを追加
-                </button>
               </div>
             </details>
           `;
@@ -4286,10 +4277,6 @@ function renderProjectStatusList() {
           : [];
 
 
-      if (projects.length === 0) {
-        return;
-      }
-
 
       const projectItems =
         projects
@@ -4300,23 +4287,35 @@ function renderProjectStatusList() {
 
 
               return `
-                <label class="project-status-item">
+                <div class="project-status-item">
                   <strong class="project-status-name">
                     ${escapeHtml(project.name)}
                   </strong>
 
-                  <span class="project-status-check">
-                    <input
-                      type="checkbox"
-                      data-action="project-current"
+                  <div class="project-status-item-actions">
+                    <label class="project-status-check">
+                      <input
+                        type="checkbox"
+                        data-action="project-current"
+                        data-category-id="${category.id}"
+                        data-project-id="${project.id}"
+                        ${isCurrent ? "checked" : ""}
+                      >
+
+                      現在のプロジェクト
+                    </label>
+
+                    <button
+                      class="small-button"
+                      type="button"
+                      data-action="project-status-rename-project"
                       data-category-id="${category.id}"
                       data-project-id="${project.id}"
-                      ${isCurrent ? "checked" : ""}
                     >
-
-                    現在のプロジェクト
-                  </span>
-                </label>
+                      名称変更
+                    </button>
+                  </div>
+                </div>
               `;
             }
           )
@@ -4344,7 +4343,34 @@ function renderProjectStatusList() {
           </summary>
 
           <div class="project-status-category-list">
-            ${projectItems}
+            <div class="project-status-category-actions">
+              <button
+                class="small-button"
+                type="button"
+                data-action="project-status-rename-category"
+                data-category-id="${category.id}"
+              >
+                大分類名を変更
+              </button>
+
+              <button
+                class="small-button"
+                type="button"
+                data-action="project-status-add-project"
+                data-category-id="${category.id}"
+              >
+                プロジェクトを追加
+              </button>
+            </div>
+
+            ${
+              projectItems ||
+              `
+                <p class="empty-message">
+                  プロジェクトがありません。
+                </p>
+              `
+            }
           </div>
         </details>
       `);
@@ -4439,6 +4465,216 @@ projectStatusList.addEventListener(
         ? "現在のプロジェクトに戻しました。"
         : "プロジェクトをアーカイブへ移動しました。"
     );
+  }
+);
+
+
+// ========================================
+// プロジェクト一覧の追加・名称変更
+// ========================================
+
+projectStatusList.addEventListener(
+  "click",
+
+  function(event) {
+    const button =
+      event.target.closest(
+        "button[data-action]"
+      );
+
+
+    if (!button) {
+      return;
+    }
+
+
+    const action =
+      button.dataset.action;
+
+
+    const category =
+      findCategory(
+        button.dataset.categoryId
+      );
+
+
+    if (!category) {
+      return;
+    }
+
+
+    if (
+      action ===
+      "project-status-rename-category"
+    ) {
+      const enteredName =
+        window.prompt(
+          "新しい大分類名を入力してください。",
+          category.name
+        );
+
+
+      if (enteredName === null) {
+        return;
+      }
+
+
+      const categoryName =
+        enteredName.trim();
+
+
+      if (!categoryName) {
+        showStatusMessage(
+          "大分類名を入力してください。"
+        );
+
+        return;
+      }
+
+
+      category.name =
+        categoryName;
+
+
+      saveAppData();
+
+      updateWorkTimeDisplay();
+
+      renderMonthlyPlanForm();
+
+      renderRecordSummary();
+
+
+      showStatusMessage(
+        "大分類名を変更しました。"
+      );
+
+      return;
+    }
+
+
+    if (
+      action ===
+      "project-status-add-project"
+    ) {
+      const enteredName =
+        window.prompt(
+          "追加するプロジェクト名を入力してください。"
+        );
+
+
+      if (enteredName === null) {
+        return;
+      }
+
+
+      const projectName =
+        enteredName.trim();
+
+
+      if (!projectName) {
+        showStatusMessage(
+          "プロジェクト名を入力してください。"
+        );
+
+        return;
+      }
+
+
+      category.projects.push(
+        {
+          id:
+            createId(
+              "project"
+            ),
+
+          name:
+            projectName,
+
+          allocationPercent:
+            0,
+
+          isCurrent:
+            true
+        }
+      );
+
+
+      saveAppData();
+
+      updateWorkTimeDisplay();
+
+      renderMonthlyPlanForm();
+
+      renderRecordSummary();
+
+
+      showStatusMessage(
+        "プロジェクトを追加しました。"
+      );
+
+      return;
+    }
+
+
+    if (
+      action ===
+      "project-status-rename-project"
+    ) {
+      const project =
+        findProject(
+          category,
+          button.dataset.projectId
+        );
+
+
+      if (!project) {
+        return;
+      }
+
+
+      const enteredName =
+        window.prompt(
+          "新しいプロジェクト名を入力してください。",
+          project.name
+        );
+
+
+      if (enteredName === null) {
+        return;
+      }
+
+
+      const projectName =
+        enteredName.trim();
+
+
+      if (!projectName) {
+        showStatusMessage(
+          "プロジェクト名を入力してください。"
+        );
+
+        return;
+      }
+
+
+      project.name =
+        projectName;
+
+
+      saveAppData();
+
+      updateWorkTimeDisplay();
+
+      renderMonthlyPlanForm();
+
+      renderRecordSummary();
+
+
+      showStatusMessage(
+        "プロジェクト名を変更しました。"
+      );
+    }
   }
 );
 
