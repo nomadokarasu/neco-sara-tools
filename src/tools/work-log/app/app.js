@@ -1178,6 +1178,44 @@ function initializeMonthlyPlan() {
 
       if (
         event.target.classList.contains(
+          "monthly-plan-category-percent"
+        )
+      ) {
+        updateCategoryHoursFromPercent(
+          event.target
+        );
+
+        recalculateCategoryProjectHours(
+          event.target.dataset.categoryId
+        );
+
+        updateMonthlyPlanSummary();
+
+        return;
+      }
+
+
+      if (
+        event.target.classList.contains(
+          "monthly-plan-category-hours"
+        )
+      ) {
+        updateCategoryPercentFromHours(
+          event.target
+        );
+
+        recalculateCategoryProjectHours(
+          event.target.dataset.categoryId
+        );
+
+        updateMonthlyPlanSummary();
+
+        return;
+      }
+
+
+      if (
+        event.target.classList.contains(
           "monthly-plan-project-percent"
         )
       ) {
@@ -2272,6 +2310,7 @@ function convertMonthlyPlanInputsBetweenPeriods(
 
   monthlyPlanProjectList
     .querySelectorAll(
+      ".monthly-plan-category-hours, " +
       ".monthly-plan-project-hours"
     )
     .forEach(
@@ -2477,11 +2516,14 @@ function renderMonthlyPlanForm() {
 
 
                   const plannedPercent =
-                    totalMinutes > 0
+                    categoryPlannedMinutes > 0
                       ? (
-                          plannedHours *
-                          60 /
-                          totalMinutes *
+                          Number(
+                            savedProject
+                              .plannedMinutes ||
+                            0
+                          ) /
+                          categoryPlannedMinutes *
                           100
                         )
                       : 0;
@@ -2709,26 +2751,26 @@ function renderMonthlyPlanForm() {
 
 
 // ========================================
-// ％から予定時間を計算する
+// 大分類の％から予定時間を計算する
 // ========================================
 
-function updateProjectHoursFromPercent(
+function updateCategoryHoursFromPercent(
   percentInput
 ) {
-  const projectItem =
+  const categoryAllocation =
     percentInput.closest(
-      ".monthly-plan-project-item"
+      ".monthly-plan-category-allocation"
     );
 
 
-  if (!projectItem) {
+  if (!categoryAllocation) {
     return;
   }
 
 
   const hoursInput =
-    projectItem.querySelector(
-      ".monthly-plan-project-hours"
+    categoryAllocation.querySelector(
+      ".monthly-plan-category-hours"
     );
 
 
@@ -2764,26 +2806,26 @@ function updateProjectHoursFromPercent(
 
 
 // ========================================
-// 予定時間から％を計算する
+// 大分類の予定時間から％を計算する
 // ========================================
 
-function updateProjectPercentFromHours(
+function updateCategoryPercentFromHours(
   hoursInput
 ) {
-  const projectItem =
+  const categoryAllocation =
     hoursInput.closest(
-      ".monthly-plan-project-item"
+      ".monthly-plan-category-allocation"
     );
 
 
-  if (!projectItem) {
+  if (!categoryAllocation) {
     return;
   }
 
 
   const percentInput =
-    projectItem.querySelector(
-      ".monthly-plan-project-percent"
+    categoryAllocation.querySelector(
+      ".monthly-plan-category-percent"
     );
 
 
@@ -2798,7 +2840,7 @@ function updateProjectPercentFromHours(
     );
 
 
-  const projectHours =
+  const categoryHours =
     Math.max(
       0,
 
@@ -2813,7 +2855,7 @@ function updateProjectPercentFromHours(
     formatInputNumber(
       totalHours > 0
         ? (
-            projectHours /
+            categoryHours /
             totalHours *
             100
           )
@@ -2823,11 +2865,46 @@ function updateProjectPercentFromHours(
 
 
 // ========================================
-// 月の総時間変更時に再計算する
+// 大分類内のプロジェクト時間を再計算する
 // ========================================
 
-function recalculateMonthlyPlanHours() {
-  monthlyPlanProjectList
+function recalculateCategoryProjectHours(
+  categoryId
+) {
+  const categoryDetails =
+    Array.from(
+      monthlyPlanProjectList
+        .querySelectorAll(
+          ".monthly-plan-category"
+        )
+    ).find(
+      function(details) {
+        const categoryHoursInput =
+          details.querySelector(
+            ".monthly-plan-category-hours"
+          );
+
+
+        return (
+          categoryHoursInput &&
+          String(
+            categoryHoursInput
+              .dataset.categoryId
+          ) ===
+          String(
+            categoryId
+          )
+        );
+      }
+    );
+
+
+  if (!categoryDetails) {
+    return;
+  }
+
+
+  categoryDetails
     .querySelectorAll(
       ".monthly-plan-project-check:checked"
     )
@@ -2847,6 +2924,174 @@ function recalculateMonthlyPlanHours() {
 
         updateProjectHoursFromPercent(
           percentInput
+        );
+      }
+    );
+}
+
+
+// ========================================
+// プロジェクトの％から予定時間を計算する
+// ========================================
+
+function updateProjectHoursFromPercent(
+  percentInput
+) {
+  const projectItem =
+    percentInput.closest(
+      ".monthly-plan-project-item"
+    );
+
+
+  const categoryDetails =
+    percentInput.closest(
+      ".monthly-plan-category"
+    );
+
+
+  if (
+    !projectItem ||
+    !categoryDetails
+  ) {
+    return;
+  }
+
+
+  const hoursInput =
+    projectItem.querySelector(
+      ".monthly-plan-project-hours"
+    );
+
+
+  const categoryHoursInput =
+    categoryDetails.querySelector(
+      ".monthly-plan-category-hours"
+    );
+
+
+  const categoryHours =
+    Math.max(
+      0,
+
+      Number(
+        categoryHoursInput.value
+      ) ||
+      0
+    );
+
+
+  const percent =
+    Math.max(
+      0,
+
+      Number(
+        percentInput.value
+      ) ||
+      0
+    );
+
+
+  hoursInput.value =
+    formatInputNumber(
+      categoryHours *
+      percent /
+      100
+    );
+}
+
+
+// ========================================
+// 予定時間から％を計算する
+// ========================================
+
+function updateProjectPercentFromHours(
+  hoursInput
+) {
+  const projectItem =
+    hoursInput.closest(
+      ".monthly-plan-project-item"
+    );
+
+
+  const categoryDetails =
+    hoursInput.closest(
+      ".monthly-plan-category"
+    );
+
+
+  if (
+    !projectItem ||
+    !categoryDetails
+  ) {
+    return;
+  }
+
+
+  const percentInput =
+    projectItem.querySelector(
+      ".monthly-plan-project-percent"
+    );
+
+
+  const categoryHoursInput =
+    categoryDetails.querySelector(
+      ".monthly-plan-category-hours"
+    );
+
+
+  const categoryHours =
+    Math.max(
+      0,
+
+      Number(
+        categoryHoursInput.value
+      ) ||
+      0
+    );
+
+
+  const projectHours =
+    Math.max(
+      0,
+
+      Number(
+        hoursInput.value
+      ) ||
+      0
+    );
+
+
+  percentInput.value =
+    formatInputNumber(
+      categoryHours > 0
+        ? (
+            projectHours /
+            categoryHours *
+            100
+          )
+        : 0
+    );
+}
+
+
+// ========================================
+// 月の総時間変更時に再計算する
+// ========================================
+
+function recalculateMonthlyPlanHours() {
+  monthlyPlanProjectList
+    .querySelectorAll(
+      ".monthly-plan-category-percent"
+    )
+    .forEach(
+      function(percentInput) {
+        updateCategoryHoursFromPercent(
+          percentInput
+        );
+
+
+        recalculateCategoryProjectHours(
+          percentInput.dataset.categoryId
         );
       }
     );
