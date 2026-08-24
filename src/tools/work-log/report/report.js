@@ -805,12 +805,6 @@ function renderReport() {
     periodRange
   );
 
-
-  renderDailyWorkTimeline(
-    sessions
-  );
-
-
   renderActiveWork();
 
   renderCurrentSummary(
@@ -955,14 +949,6 @@ function renderPeriodInformation(
 
   reportDateRange.hidden =
     true;
-
-
-  dailyWorkDetails.hidden =
-    true;
-
-
-  dailyWorkDetails.open =
-    false;
 }
 
 
