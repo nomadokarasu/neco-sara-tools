@@ -2489,15 +2489,6 @@ function renderMonthlyPlanForm() {
                   return `
                     <div class="monthly-plan-project-item">
                       <div class="monthly-plan-project-check-label">
-                        <input
-                          class="monthly-plan-project-check"
-                          type="checkbox"
-                          data-category-id="${escapeHtml(category.id)}"
-                          data-project-id="${escapeHtml(project.id)}"
-                          checked
-                          hidden
-                        >
-
                         <span>
                           ${escapeHtml(project.name)}
                           ${archiveLabel}
@@ -2797,25 +2788,21 @@ function recalculateCategoryProjectHours(
 
   categoryDetails
     .querySelectorAll(
-      ".monthly-plan-project-check:checked"
+      ".monthly-plan-project-item"
     )
     .forEach(
-      function(checkbox) {
-        const projectItem =
-          checkbox.closest(
-            ".monthly-plan-project-item"
-          );
-
-
+      function(projectItem) {
         const percentInput =
           projectItem.querySelector(
             ".monthly-plan-project-percent"
           );
 
 
-        updateProjectHoursFromPercent(
-          percentInput
-        );
+        if (percentInput) {
+          updateProjectHoursFromPercent(
+            percentInput
+          );
+        }
       }
     );
 }
@@ -3013,23 +3000,22 @@ function updateMonthlyPlanSummary() {
           Array.from(
             categoryDetails
               .querySelectorAll(
-                ".monthly-plan-project-check:checked"
+                ".monthly-plan-project-item"
               )
           ).reduce(
             function(
               total,
-              checkbox
+              projectItem
             ) {
-              const projectItem =
-                checkbox.closest(
-                  ".monthly-plan-project-item"
-                );
-
-
               const hoursInput =
                 projectItem.querySelector(
                   ".monthly-plan-project-hours"
                 );
+
+
+              if (!hoursInput) {
+                return total;
+              }
 
 
               return (
@@ -3222,23 +3208,22 @@ function getMonthlyPlanOverAllocationWarnings() {
           Array.from(
             categoryDetails
               .querySelectorAll(
-                ".monthly-plan-project-check:checked"
+                ".monthly-plan-project-item"
               )
           ).reduce(
             function(
               total,
-              checkbox
+              projectItem
             ) {
-              const projectItem =
-                checkbox.closest(
-                  ".monthly-plan-project-item"
-                );
-
-
               const hoursInput =
                 projectItem.querySelector(
                   ".monthly-plan-project-hours"
                 );
+
+
+              if (!hoursInput) {
+                return total;
+              }
 
 
               return (
@@ -3400,12 +3385,32 @@ function saveMonthlyPlan() {
             Array.from(
               categoryDetails
                 .querySelectorAll(
-                  ".monthly-plan-project-check:checked"
+                  ".monthly-plan-project-item"
                 )
             ).map(
-              function(checkbox) {
+              function(projectItem) {
+                const percentInput =
+                  projectItem.querySelector(
+                    ".monthly-plan-project-percent"
+                  );
+
+
+                const hoursInput =
+                  projectItem.querySelector(
+                    ".monthly-plan-project-hours"
+                  );
+
+
+                if (
+                  !percentInput ||
+                  !hoursInput
+                ) {
+                  return null;
+                }
+
+
                 const projectId =
-                  checkbox.dataset.projectId;
+                  percentInput.dataset.projectId;
 
 
                 const project =
@@ -3418,18 +3423,6 @@ function saveMonthlyPlan() {
                 if (!project) {
                   return null;
                 }
-
-
-                const projectItem =
-                  checkbox.closest(
-                    ".monthly-plan-project-item"
-                  );
-
-
-                const hoursInput =
-                  projectItem.querySelector(
-                    ".monthly-plan-project-hours"
-                  );
 
 
                 const projectPlannedMinutes =
