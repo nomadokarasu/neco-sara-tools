@@ -1065,19 +1065,33 @@ periodButtons.forEach(
         }
 
 
+        const previousPeriod =
+          appData.settings.selectedPeriod;
+
+
+        convertMonthlyPlanInputsBetweenPeriods(
+          previousPeriod,
+          selectedPeriod
+        );
+
+
         appData.settings.selectedPeriod =
-  selectedPeriod;
+          selectedPeriod;
 
 
-saveDisplaySettingsLocally();
+        saveDisplaySettingsLocally();
 
-updatePeriodButtons();
+        updatePeriodButtons();
 
-updateWorkTimeDisplay();
+        updateMonthlyPlanPeriodLabels();
 
-updateRecordDateInputDisplay();
+        updateMonthlyPlanSummary();
 
-renderRecordSummary();
+        updateWorkTimeDisplay();
+
+        updateRecordDateInputDisplay();
+
+        renderRecordSummary();
       }
     );
   }
@@ -1315,6 +1329,217 @@ function getPreviousMonthKey(
 
 
 // ========================================
+// 計画対象月の日数
+// ========================================
+
+function getMonthlyPlanDaysInMonth() {
+  const monthKey =
+    monthlyPlanMonthInput.value;
+
+
+  if (!monthKey) {
+    return 30;
+  }
+
+
+  const [
+    year,
+    month
+  ] =
+    monthKey
+      .split("-")
+      .map(Number);
+
+
+  return new Date(
+    year,
+    month,
+    0
+  ).getDate();
+}
+
+
+// ========================================
+// 表示期間の換算率
+// ========================================
+
+function getMonthlyPlanPeriodFactor(
+  period
+) {
+  const daysInMonth =
+    getMonthlyPlanDaysInMonth();
+
+
+  if (period === "day") {
+    return 1 / daysInMonth;
+  }
+
+
+  if (period === "week") {
+    return 7 / daysInMonth;
+  }
+
+
+  return 1;
+}
+
+
+// ========================================
+// 月間分数を表示時間へ換算
+// ========================================
+
+function monthlyMinutesToDisplayHours(
+  monthlyMinutes,
+  period
+) {
+  return (
+    Number(
+      monthlyMinutes || 0
+    ) /
+    60 *
+    getMonthlyPlanPeriodFactor(
+      period ||
+      appData.settings.selectedPeriod
+    )
+  );
+}
+
+
+// ========================================
+// 表示時間を月間分数へ換算
+// ========================================
+
+function displayHoursToMonthlyMinutes(
+  displayHours,
+  period
+) {
+  const factor =
+    getMonthlyPlanPeriodFactor(
+      period ||
+      appData.settings.selectedPeriod
+    );
+
+
+  if (factor <= 0) {
+    return 0;
+  }
+
+
+  return Math.max(
+    0,
+
+    Math.round(
+      Number(
+        displayHours || 0
+      ) /
+      factor *
+      60
+    )
+  );
+}
+
+
+// ========================================
+// 月間計画の見出しを更新する
+// ========================================
+
+function updateMonthlyPlanPeriodLabels() {
+  const selectedPeriod =
+    appData.settings.selectedPeriod;
+
+
+  if (selectedPeriod === "day") {
+    monthlyPlanTotalLabel.textContent =
+      "1日の予定作業時間";
+
+    monthlyPlanSummaryTotalLabel.textContent =
+      "1日の予定時間";
+  } else if (
+    selectedPeriod === "week"
+  ) {
+    monthlyPlanTotalLabel.textContent =
+      "1週間の予定作業時間";
+
+    monthlyPlanSummaryTotalLabel.textContent =
+      "1週間の予定時間";
+  } else {
+    monthlyPlanTotalLabel.textContent =
+      "月の予定作業時間";
+
+    monthlyPlanSummaryTotalLabel.textContent =
+      "月の予定時間";
+  }
+}
+
+
+// ========================================
+// 表示期間変更時に入力値を換算する
+// ========================================
+
+function convertMonthlyPlanInputsBetweenPeriods(
+  previousPeriod,
+  nextPeriod
+) {
+  if (
+    !monthlyPlanTotalHoursInput ||
+    previousPeriod === nextPeriod
+  ) {
+    return;
+  }
+
+
+  const previousFactor =
+    getMonthlyPlanPeriodFactor(
+      previousPeriod
+    );
+
+
+  const nextFactor =
+    getMonthlyPlanPeriodFactor(
+      nextPeriod
+    );
+
+
+  if (previousFactor <= 0) {
+    return;
+  }
+
+
+  const conversionRate =
+    nextFactor /
+    previousFactor;
+
+
+  monthlyPlanTotalHoursInput.value =
+    formatInputNumber(
+      Number(
+        monthlyPlanTotalHoursInput.value ||
+        0
+      ) *
+      conversionRate
+    );
+
+
+  monthlyPlanProjectList
+    .querySelectorAll(
+      ".monthly-plan-project-hours"
+    )
+    .forEach(
+      function(hoursInput) {
+        hoursInput.value =
+          formatInputNumber(
+            Number(
+              hoursInput.value ||
+              0
+            ) *
+            conversionRate
+          );
+      }
+    );
+}
+
+
+// ========================================
 // 月間計画を表示する
 // ========================================
 
@@ -1357,9 +1582,13 @@ function renderMonthlyPlanForm() {
 
   monthlyPlanTotalHoursInput.value =
     formatInputNumber(
-      totalMinutes /
-      60
+      monthlyMinutesToDisplayHours(
+        totalMinutes
+      )
     );
+
+
+  updateMonthlyPlanPeriodLabels();
 
 
   const savedProjectPlans =
@@ -1443,12 +1672,11 @@ function renderMonthlyPlanForm() {
 
                   const plannedHours =
                     savedProject
-                      ? Number(
+                      ? monthlyMinutesToDisplayHours(
                           savedProject
                             .plannedMinutes ||
                           0
-                        ) /
-                        60
+                        )
                       : 0;
 
 
@@ -1735,16 +1963,8 @@ function recalculateMonthlyPlanHours() {
 
 function updateMonthlyPlanSummary() {
   const totalMinutes =
-    Math.max(
-      0,
-
-      Math.round(
-        Number(
-          monthlyPlanTotalHoursInput.value
-        ) *
-        60
-      ) ||
-      0
+    displayHoursToMonthlyMinutes(
+      monthlyPlanTotalHoursInput.value
     );
 
 
@@ -1776,16 +1996,8 @@ function updateMonthlyPlanSummary() {
 
 
         const projectMinutes =
-          Math.max(
-            0,
-
-            Math.round(
-              Number(
-                hoursInput.value
-              ) *
-              60
-            ) ||
-            0
+          displayHoursToMonthlyMinutes(
+            hoursInput.value
           );
 
 
@@ -1863,10 +2075,10 @@ function updateMonthlyPlanSummary() {
 
   monthlyPlanTotalDisplay.textContent =
     formatHours(
-      totalMinutes /
-      60
+      monthlyMinutesToDisplayHours(
+        totalMinutes
+      )
     );
-
 
   const assignedPercent =
     totalMinutes > 0
@@ -1880,8 +2092,9 @@ function updateMonthlyPlanSummary() {
 
   monthlyPlanAssignedDisplay.textContent =
     formatHours(
-      assignedMinutes /
-      60
+      monthlyMinutesToDisplayHours(
+        assignedMinutes
+      )
     ) +
     "（" +
     formatInputNumber(
@@ -1893,8 +2106,9 @@ function updateMonthlyPlanSummary() {
   if (difference >= 0) {
     monthlyPlanUnassignedDisplay.textContent =
       formatHours(
-        difference /
-        60
+        monthlyMinutesToDisplayHours(
+          difference
+        )
       );
 
 
@@ -1907,10 +2121,11 @@ function updateMonthlyPlanSummary() {
 
     monthlyPlanWarning.textContent =
       formatHours(
-        Math.abs(
-          difference
-        ) /
-        60
+        monthlyMinutesToDisplayHours(
+          Math.abs(
+            difference
+          )
+        )
       ) +
       "超過しています。";
   }
@@ -1927,16 +2142,8 @@ function saveMonthlyPlan() {
 
 
   const totalMinutes =
-    Math.max(
-      0,
-
-      Math.round(
-        Number(
-          monthlyPlanTotalHoursInput.value
-        ) *
-        60
-      ) ||
-      0
+    displayHoursToMonthlyMinutes(
+      monthlyPlanTotalHoursInput.value
     );
 
 
@@ -1999,16 +2206,8 @@ function saveMonthlyPlan() {
 
 
         const plannedMinutes =
-          Math.max(
-            0,
-
-            Math.round(
-              Number(
-                hoursInput.value
-              ) *
-              60
-            ) ||
-            0
+          displayHoursToMonthlyMinutes(
+            hoursInput.value
           );
 
 
