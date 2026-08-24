@@ -6120,11 +6120,12 @@ function findMonthlyProjectPlan(
 // ========================================
 
 function getCategoryPlannedSeconds(
-  categoryId
+  categoryId,
+  referenceDate = new Date()
 ) {
   const monthKey =
     createMonthKey(
-      new Date()
+      referenceDate
     );
 
 
@@ -6166,11 +6167,12 @@ function getCategoryPlannedSeconds(
 // ========================================
 
 function getProjectPlannedSeconds(
-  projectId
+  projectId,
+  referenceDate = new Date()
 ) {
   const monthKey =
     createMonthKey(
-      new Date()
+      referenceDate
     );
 
 
@@ -7096,9 +7098,6 @@ function renderRecordIntegratedSummary(
   }
 
 
-  const selectedPeriodHours =
-    getSelectedPeriodHours();
-
 
   recordCategorySummaryList.innerHTML =
     periodCategories
@@ -7161,13 +7160,9 @@ function renderRecordIntegratedSummary(
 
 
           const categoryPlannedSeconds =
-            Math.round(
-              selectedPeriodHours *
-              Number(
-                category.allocationPercent || 0
-              ) /
-              100 *
-              3600
+            getCategoryPlannedSeconds(
+              category.id,
+              selectedRecordDate
             );
 
 
@@ -7226,17 +7221,9 @@ function renderRecordIntegratedSummary(
 
 
                   const projectPlannedSeconds =
-                    Math.round(
-                      selectedPeriodHours *
-                      Number(
-                        category.allocationPercent || 0
-                      ) /
-                      100 *
-                      Number(
-                        project.allocationPercent || 0
-                      ) /
-                      100 *
-                      3600
+                    getProjectPlannedSeconds(
+                      project.id,
+                      selectedRecordDate
                     );
 
 
