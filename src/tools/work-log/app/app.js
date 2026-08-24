@@ -2405,10 +2405,47 @@ function renderMonthlyPlanForm() {
   }
 
 
-  if (appData.categories.length === 0) {
+  const currentCategories =
+    appData.categories
+      .map(
+        function(category) {
+          const currentProjects =
+            Array.isArray(
+              category.projects
+            )
+              ? category.projects.filter(
+                  function(project) {
+                    return (
+                      project &&
+                      project.isCurrent !== false
+                    );
+                  }
+                )
+              : [];
+
+
+          if (
+            currentProjects.length === 0
+          ) {
+            return null;
+          }
+
+
+          return {
+            ...category,
+
+            projects:
+              currentProjects
+          };
+        }
+      )
+      .filter(Boolean);
+
+
+  if (currentCategories.length === 0) {
     monthlyPlanProjectList.innerHTML = `
       <p class="empty-message">
-        プロジェクトが設定されていません。
+        現在のプロジェクトはありません。
       </p>
     `;
 
@@ -2419,15 +2456,11 @@ function renderMonthlyPlanForm() {
 
 
   monthlyPlanProjectList.innerHTML =
-    appData.categories
+    currentCategories
       .map(
         function(category) {
           const projects =
-            Array.isArray(
-              category.projects
-            )
-              ? category.projects
-              : [];
+            category.projects;
 
 
           const savedCategory =
@@ -3655,6 +3688,113 @@ function saveMonthlyPlan() {
         }
       )
       .filter(Boolean);
+
+
+  if (
+    savedPlan &&
+    Array.isArray(
+      savedPlan.categories
+    )
+  ) {
+    savedPlan.categories.forEach(
+      function(savedCategoryPlan) {
+        const category =
+          findCategory(
+            savedCategoryPlan.categoryId
+          );
+
+
+        const archivedProjectPlans =
+          Array.isArray(
+            savedCategoryPlan.projects
+          )
+            ? savedCategoryPlan.projects.filter(
+                function(savedProjectPlan) {
+                  const project =
+                    category
+                      ? findProject(
+                          category,
+                          savedProjectPlan.projectId
+                        )
+                      : null;
+
+
+                  return (
+                    !project ||
+                    project.isCurrent === false
+                  );
+                }
+              )
+            : [];
+
+
+        if (
+          archivedProjectPlans.length === 0
+        ) {
+          return;
+        }
+
+
+        const currentCategoryPlan =
+          categoryPlans.find(
+            function(categoryPlan) {
+              return (
+                String(
+                  categoryPlan.categoryId
+                ) ===
+                String(
+                  savedCategoryPlan.categoryId
+                )
+              );
+            }
+          );
+
+
+        if (currentCategoryPlan) {
+          archivedProjectPlans.forEach(
+            function(archivedProjectPlan) {
+              const alreadyExists =
+                currentCategoryPlan.projects.some(
+                  function(projectPlan) {
+                    return (
+                      String(
+                        projectPlan.projectId
+                      ) ===
+                      String(
+                        archivedProjectPlan.projectId
+                      )
+                    );
+                  }
+                );
+
+
+              if (!alreadyExists) {
+                currentCategoryPlan.projects.push({
+                  ...archivedProjectPlan
+                });
+              }
+            }
+          );
+
+          return;
+        }
+
+
+        categoryPlans.push({
+          ...savedCategoryPlan,
+
+          projects:
+            archivedProjectPlans.map(
+              function(projectPlan) {
+                return {
+                  ...projectPlan
+                };
+              }
+            )
+        });
+      }
+    );
+  }
 
 
   appData.monthlyPlans[
