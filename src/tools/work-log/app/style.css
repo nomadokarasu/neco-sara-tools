@@ -3395,3 +3395,135 @@ details[open] > summary::before {
       2;
   }
 }
+
+/* ========================================
+   プロジェクト一覧の管理ボタン
+======================================== */
+
+.project-status-category-actions {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    flex-end;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    8px;
+
+  margin-bottom:
+    4px;
+}
+
+
+.project-status-item-actions {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    flex-end;
+
+  flex-shrink:
+    0;
+
+  gap:
+    8px;
+}
+
+
+.project-status-item-actions
+.project-status-check {
+  margin-right:
+    4px;
+}
+
+
+@media (max-width: 640px) {
+  .project-status-category-list {
+    margin-left:
+      10px;
+
+    padding:
+      10px 10px 10px 12px;
+  }
+
+
+  .project-status-category-actions {
+    display:
+      grid;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    width:
+      100%;
+  }
+
+
+  .project-status-category-actions button {
+    width:
+      100%;
+  }
+
+
+  .project-status-item {
+    display:
+      flex;
+
+    align-items:
+      stretch;
+
+    flex-direction:
+      column;
+
+    gap:
+      10px;
+  }
+
+
+  .project-status-item-actions {
+    justify-content:
+      space-between;
+
+    width:
+      100%;
+  }
+}
+
+
+@media (max-width: 420px) {
+  .project-status-category-actions {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .project-status-item-actions {
+    align-items:
+      stretch;
+
+    flex-direction:
+      column;
+  }
+
+
+  .project-status-item-actions
+  .project-status-check {
+    min-height:
+      36px;
+  }
+
+
+  .project-status-item-actions button {
+    width:
+      100%;
+  }
+}

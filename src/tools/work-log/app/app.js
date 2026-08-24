@@ -1481,13 +1481,12 @@ monthlyPlanProjectList.addEventListener(
 
 
 // ========================================
-// 月間計画内から削除する
+// 大分類・プロジェクトを削除する
 // ========================================
 
-monthlyPlanProjectList.addEventListener(
-  "click",
-
-  function(event) {
+function handleProjectDeletion(
+  event
+) {
     const button =
       event.target.closest(
         "button[data-action]"
@@ -1798,7 +1797,20 @@ monthlyPlanProjectList.addEventListener(
     showStatusMessage(
       "プロジェクトを削除しました。"
     );
-  }
+}
+
+
+monthlyPlanProjectList.addEventListener(
+  "click",
+
+  handleProjectDeletion
+);
+
+
+projectStatusList.addEventListener(
+  "click",
+
+  handleProjectDeletion
 );
 
 
@@ -2389,17 +2401,6 @@ function renderMonthlyPlanForm() {
                         </label>
                       </div>
 
-                      <div class="monthly-plan-project-actions">
-                        <button
-                          class="small-button delete-button"
-                          type="button"
-                          data-action="monthly-plan-delete-project"
-                          data-category-id="${escapeHtml(category.id)}"
-                          data-project-id="${escapeHtml(project.id)}"
-                        >
-                          削除
-                        </button>
-                      </div>
                     </div>
                   `;
                 }
@@ -4314,6 +4315,16 @@ function renderProjectStatusList() {
                     >
                       名称変更
                     </button>
+
+                    <button
+                      class="small-button delete-button"
+                      type="button"
+                      data-action="monthly-plan-delete-project"
+                      data-category-id="${category.id}"
+                      data-project-id="${project.id}"
+                    >
+                      削除
+                    </button>
                   </div>
                 </div>
               `;
@@ -4360,6 +4371,15 @@ function renderProjectStatusList() {
                 data-category-id="${category.id}"
               >
                 プロジェクトを追加
+              </button>
+
+              <button
+                class="small-button delete-button"
+                type="button"
+                data-action="monthly-plan-delete-category"
+                data-category-id="${category.id}"
+              >
+                大分類を削除
               </button>
             </div>
 
