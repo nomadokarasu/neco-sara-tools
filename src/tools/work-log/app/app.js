@@ -1142,11 +1142,14 @@ function updatePeriodButtons() {
 function initializeMonthlyPlan() {
   if (
     !monthlyPlanForm ||
-    !monthlyPlanMonthInput ||
-    !monthlyPlanSaveButton
+    !monthlyPlanMonthInput
   ) {
     return;
   }
+
+
+  monthlyPlanForm.noValidate =
+    true;
 
 
   monthlyPlanMonthInput.value =
@@ -1314,13 +1317,25 @@ function initializeMonthlyPlan() {
   );
 
 
-  monthlyPlanSaveButton.addEventListener(
-    "click",
+  if (monthlyPlanSaveButton) {
+    monthlyPlanSaveButton.addEventListener(
+      "click",
 
-    function() {
-      saveMonthlyPlan();
-    }
-  );
+      function() {
+        saveMonthlyPlan();
+      }
+    );
+  } else {
+    monthlyPlanForm.addEventListener(
+      "submit",
+
+      function(event) {
+        event.preventDefault();
+
+        saveMonthlyPlan();
+      }
+    );
+  }
 
 
   copyPreviousPlanButton.addEventListener(
