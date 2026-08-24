@@ -28,10 +28,7 @@ const defaultData = {
 // HTML要素
 // ========================================
 
-const periodButtons =
-  document.querySelectorAll(
-    ".period-button"
-  );
+
 
 
 const previousPeriodButton =
@@ -194,8 +191,8 @@ const projectReportList =
 // 表示状態
 // ========================================
 
-let selectedPeriod =
-  "week";
+const selectedPeriod =
+  "month";
 
 
 let selectedDate =
@@ -220,8 +217,6 @@ async function initializeReport() {
     await loadAppData();
 
   setDateInputValues();
-
-  updatePeriodButtons();
 
   updateDateInputDisplay();
 
@@ -705,60 +700,7 @@ function normalizeReportData(data) {
 }
 
 
-// ========================================
-// 期間切り替え
-// ========================================
 
-periodButtons.forEach(
-  function(periodButton) {
-    periodButton.addEventListener(
-      "click",
-
-      function() {
-        const period =
-          periodButton.dataset.period;
-
-
-        if (
-          period !== "day" &&
-          period !== "week" &&
-          period !== "month"
-        ) {
-          return;
-        }
-
-
-        selectedPeriod =
-          period;
-
-
-        updatePeriodButtons();
-
-        updateDateInputDisplay();
-
-        renderReport();
-      }
-    );
-  }
-);
-
-
-// ========================================
-// 選択中の期間ボタン
-// ========================================
-
-function updatePeriodButtons() {
-  periodButtons.forEach(
-    function(periodButton) {
-      periodButton.classList.toggle(
-        "is-active",
-
-        periodButton.dataset.period ===
-          selectedPeriod
-      );
-    }
-  );
-}
 
 
 // ========================================
