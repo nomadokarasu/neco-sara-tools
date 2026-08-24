@@ -16,6 +16,8 @@ const defaultData = {
 
   categories: [],
 
+  monthlyPlans: {},
+
   sessions: [],
 
   activeSession: null
@@ -113,6 +115,18 @@ const reportPeriodTitle =
 const reportTotalTime =
   document.getElementById(
     "report-total-time"
+  );
+
+
+const plannedWorkTotal =
+  document.getElementById(
+    "planned-work-total"
+  );
+
+
+const unplannedWorkTotal =
+  document.getElementById(
+    "unplanned-work-total"
   );
 
 
@@ -411,6 +425,200 @@ function loadLocalReportData() {
 }
 
 
+function normalizeReportMonthlyPlans(
+  monthlyPlans
+) {
+  if (
+    !monthlyPlans ||
+    typeof monthlyPlans !== "object" ||
+    Array.isArray(
+      monthlyPlans
+    )
+  ) {
+    return {};
+  }
+
+
+  const normalizedPlans =
+    {};
+
+
+  Object.entries(
+    monthlyPlans
+  ).forEach(
+    function(
+      [
+        monthKey,
+        plan
+      ]
+    ) {
+      if (
+        !/^\d{4}-\d{2}$/.test(
+          monthKey
+        ) ||
+        !plan ||
+        typeof plan !== "object" ||
+        Array.isArray(
+          plan
+        )
+      ) {
+        return;
+      }
+
+
+      const categories =
+        Array.isArray(
+          plan.categories
+        )
+          ? plan.categories
+              .map(
+                function(categoryPlan) {
+                  if (
+                    !categoryPlan ||
+                    !categoryPlan.categoryId
+                  ) {
+                    return null;
+                  }
+
+
+                  const projects =
+                    Array.isArray(
+                      categoryPlan.projects
+                    )
+                      ? categoryPlan.projects
+                          .map(
+                            function(projectPlan) {
+                              if (
+                                !projectPlan ||
+                                !projectPlan.projectId
+                              ) {
+                                return null;
+                              }
+
+
+                              return {
+                                projectId:
+                                  String(
+                                    projectPlan.projectId
+                                  ),
+
+                                projectName:
+                                  String(
+                                    projectPlan.projectName ||
+                                    ""
+                                  ),
+
+                                allocationPercent:
+                                  Math.max(
+                                    0,
+
+                                    Number(
+                                      projectPlan.allocationPercent
+                                    ) ||
+                                    0
+                                  ),
+
+                                plannedMinutes:
+                                  Math.max(
+                                    0,
+
+                                    Math.round(
+                                      Number(
+                                        projectPlan.plannedMinutes
+                                      ) ||
+                                      0
+                                    )
+                                  )
+                              };
+                            }
+                          )
+                          .filter(
+                            function(projectPlan) {
+                              return (
+                                projectPlan !==
+                                null
+                              );
+                            }
+                          )
+                      : [];
+
+
+                  return {
+                    categoryId:
+                      String(
+                        categoryPlan.categoryId
+                      ),
+
+                    categoryName:
+                      String(
+                        categoryPlan.categoryName ||
+                        ""
+                      ),
+
+                    allocationPercent:
+                      Math.max(
+                        0,
+
+                        Number(
+                          categoryPlan.allocationPercent
+                        ) ||
+                        0
+                      ),
+
+                    plannedMinutes:
+                      Math.max(
+                        0,
+
+                        Math.round(
+                          Number(
+                            categoryPlan.plannedMinutes
+                          ) ||
+                          0
+                        )
+                      ),
+
+                    projects:
+                      projects
+                  };
+                }
+              )
+              .filter(
+                function(categoryPlan) {
+                  return (
+                    categoryPlan !==
+                    null
+                  );
+                }
+              )
+          : [];
+
+
+      normalizedPlans[
+        monthKey
+      ] = {
+        totalMinutes:
+          Math.max(
+            0,
+
+            Math.round(
+              Number(
+                plan.totalMinutes
+              ) ||
+              0
+            )
+          ),
+
+        categories:
+          categories
+      };
+    }
+  );
+
+
+  return normalizedPlans;
+}
+
+
 function normalizeReportData(data) {
   const categories =
     Array.isArray(
@@ -457,6 +665,11 @@ function normalizeReportData(data) {
 
     categories:
       categories,
+
+    monthlyPlans:
+      normalizeReportMonthlyPlans(
+        data.monthlyPlans
+      ),
 
     sessions:
       Array.isArray(
@@ -790,7 +1003,8 @@ function renderReport() {
   renderActiveWork();
 
   renderCurrentSummary(
-    sessions
+    sessions,
+    periodRange
   );
 
 
@@ -1348,23 +1562,204 @@ function getCurrentProjects(
 
 
 // ========================================
-// 選択期間に作業したプロジェクトのSUMMARY
+// 選択期間の月間計画を計算する
+// ========================================
+
+function calculatePlanForPeriod(
+  periodRange
+) {
+  let totalPlannedSeconds =
+    0;
+
+
+  let hasMonthlyPlan =
+    false;
+
+
+  const projectPlannedSeconds =
+    new Map();
+
+
+  const currentDate =
+    startOfDay(
+      periodRange.start
+    );
+
+
+  while (
+    currentDate <
+    periodRange.end
+  ) {
+    const monthKey =
+      formatMonthForInput(
+        currentDate
+      );
+
+
+    const monthlyPlan =
+      appData.monthlyPlans[
+        monthKey
+      ];
+
+
+    if (monthlyPlan) {
+      hasMonthlyPlan =
+        true;
+
+
+      const daysInMonth =
+        new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1,
+          0
+        ).getDate();
+
+
+      const dailyTotalSeconds =
+        Number(
+          monthlyPlan.totalMinutes ||
+          0
+        ) *
+        60 /
+        daysInMonth;
+
+
+      totalPlannedSeconds +=
+        dailyTotalSeconds;
+
+
+      const categories =
+        Array.isArray(
+          monthlyPlan.categories
+        )
+          ? monthlyPlan.categories
+          : [];
+
+
+      categories.forEach(
+        function(categoryPlan) {
+          const projects =
+            Array.isArray(
+              categoryPlan.projects
+            )
+              ? categoryPlan.projects
+              : [];
+
+
+          projects.forEach(
+            function(projectPlan) {
+              const projectId =
+                String(
+                  projectPlan.projectId
+                );
+
+
+              const dailyProjectSeconds =
+                Number(
+                  projectPlan.plannedMinutes ||
+                  0
+                ) *
+                60 /
+                daysInMonth;
+
+
+              projectPlannedSeconds.set(
+                projectId,
+
+                (
+                  projectPlannedSeconds.get(
+                    projectId
+                  ) ||
+                  0
+                ) +
+                dailyProjectSeconds
+              );
+            }
+          );
+        }
+      );
+    }
+
+
+    currentDate.setDate(
+      currentDate.getDate() + 1
+    );
+  }
+
+
+  return {
+    hasMonthlyPlan:
+      hasMonthlyPlan,
+
+    totalPlannedSeconds:
+      Math.round(
+        totalPlannedSeconds
+      ),
+
+    projectPlannedSeconds:
+      new Map(
+        Array.from(
+          projectPlannedSeconds.entries()
+        ).map(
+          function(
+            [
+              projectId,
+              seconds
+            ]
+          ) {
+            return [
+              projectId,
+              Math.round(
+                seconds
+              )
+            ];
+          }
+        )
+      )
+  };
+}
+
+
+// ========================================
+// 月間計画と実績のSUMMARY
 // ========================================
 
 function renderCurrentSummary(
-  sessions
+  sessions,
+  periodRange
 ) {
-  const periodHours =
-    getSelectedPeriodHours();
+  const periodPlan =
+    calculatePlanForPeriod(
+      periodRange
+    );
 
 
-  const periodProjectIds =
+  const recordedProjectIds =
     new Set(
       sessions.map(
         function(session) {
-          return session.projectId;
+          return String(
+            session.projectId
+          );
         }
       )
+    );
+
+
+  const plannedProjectIds =
+    new Set(
+      periodPlan
+        .projectPlannedSeconds
+        .keys()
+    );
+
+
+  const summaryProjectIds =
+    new Set(
+      [
+        ...recordedProjectIds,
+        ...plannedProjectIds
+      ]
     );
 
 
@@ -1381,8 +1776,10 @@ function renderCurrentSummary(
 
         return projects.some(
           function(project) {
-            return periodProjectIds.has(
-              project.id
+            return summaryProjectIds.has(
+              String(
+                project.id
+              )
             );
           }
         );
@@ -1409,9 +1806,49 @@ function renderCurrentSummary(
 
 
   const periodPlannedSeconds =
-    Math.round(
-      periodHours *
-      3600
+    periodPlan.totalPlannedSeconds;
+
+
+  const plannedActualSeconds =
+    sessions.reduce(
+      function(
+        total,
+        session
+      ) {
+        const projectId =
+          String(
+            session.projectId
+          );
+
+
+        if (
+          !plannedProjectIds.has(
+            projectId
+          )
+        ) {
+          return total;
+        }
+
+
+        return (
+          total +
+          Number(
+            session.elapsedSeconds ||
+            0
+          )
+        );
+      },
+
+      0
+    );
+
+
+  const unplannedActualSeconds =
+    Math.max(
+      0,
+
+      totalSeconds -
+      plannedActualSeconds
     );
 
 
@@ -1420,9 +1857,39 @@ function renderCurrentSummary(
       totalSeconds
     ) +
     " / " +
-    formatSecondsAsText(
-      periodPlannedSeconds
+    (
+      periodPlan.hasMonthlyPlan
+        ? formatSecondsAsText(
+            periodPlannedSeconds
+          )
+        : "計画なし"
     );
+
+
+  plannedWorkTotal.textContent =
+    formatSecondsAsText(
+      plannedActualSeconds
+    );
+
+
+  unplannedWorkTotal.textContent =
+    formatSecondsAsText(
+      unplannedActualSeconds
+    );
+
+
+  const summaryDescription =
+    document.querySelector(
+      ".summary-description"
+    );
+
+
+  if (summaryDescription) {
+    summaryDescription.textContent =
+      periodPlan.hasMonthlyPlan
+        ? "月間計画に含まれるプロジェクトは、実績がない場合も表示します。計画にない作業には「予定外」と表示します。"
+        : "この期間には月間計画がありません。記録された作業は「予定外」として表示します。";
+  }
 
 
   if (
@@ -1430,7 +1897,7 @@ function renderCurrentSummary(
   ) {
     categorySummaryList.innerHTML = `
       <p class="empty-message">
-        この期間の作業記録はありません。
+        この期間の月間計画と作業記録はありません。
       </p>
     `;
 
@@ -1451,13 +1918,47 @@ function renderCurrentSummary(
 
 
           const periodProjects =
-            allProjects.filter(
-              function(project) {
-                return periodProjectIds.has(
-                  project.id
-                );
-              }
-            );
+            allProjects
+              .filter(
+                function(project) {
+                  return summaryProjectIds.has(
+                    String(
+                      project.id
+                    )
+                  );
+                }
+              )
+              .sort(
+                function(a, b) {
+                  const aIsPlanned =
+                    plannedProjectIds.has(
+                      String(
+                        a.id
+                      )
+                    );
+
+
+                  const bIsPlanned =
+                    plannedProjectIds.has(
+                      String(
+                        b.id
+                      )
+                    );
+
+
+                  if (
+                    aIsPlanned ===
+                    bIsPlanned
+                  ) {
+                    return 0;
+                  }
+
+
+                  return aIsPlanned
+                    ? -1
+                    : 1;
+                }
+              );
 
 
           const categoryProjectIds =
@@ -1499,13 +2000,27 @@ function renderCurrentSummary(
 
 
           const categoryPlannedSeconds =
-            Math.round(
-              periodHours *
-              Number(
-                category.allocationPercent || 0
-              ) /
-              100 *
-              3600
+            periodProjects.reduce(
+              function(
+                total,
+                project
+              ) {
+                return (
+                  total +
+                  (
+                    periodPlan
+                      .projectPlannedSeconds
+                      .get(
+                        String(
+                          project.id
+                        )
+                      ) ||
+                    0
+                  )
+                );
+              },
+
+              0
             );
 
 
@@ -1564,18 +2079,33 @@ function renderCurrentSummary(
 
 
                   const projectPlannedSeconds =
-                    Math.round(
-                      periodHours *
-                      Number(
-                        category.allocationPercent || 0
-                      ) /
-                      100 *
-                      Number(
-                        project.allocationPercent || 0
-                      ) /
-                      100 *
-                      3600
-                    );
+                    periodPlan
+                      .projectPlannedSeconds
+                      .get(
+                        String(
+                          project.id
+                        )
+                      ) ||
+                    0;
+
+
+                  const isUnplannedWork =
+                    !plannedProjectIds.has(
+                      String(
+                        project.id
+                      )
+                    ) &&
+                    projectActualSeconds > 0;
+
+
+                  const planStatusLabel =
+                    isUnplannedWork
+                      ? `
+                        <span class="unplanned-work-label">
+                          予定外
+                        </span>
+                      `
+                      : "";
 
 
                   const projectProgressRate =
@@ -1613,32 +2143,57 @@ function renderCurrentSummary(
                             <span class="category-summary-name">
                               ${escapeHtml(project.name)}
 
-                              <strong class="progress-percentage">
-                                ${projectProgressRate}
-                              </strong>
-                            </span>
+                              ${planStatusLabel}
 
+                              ${
+                                isUnplannedWork
+                                  ? ""
+                                  : `
+                                    <strong class="progress-percentage">
+                                      ${projectProgressRate}
+                                    </strong>
+                                  `
+                              }
+                            </span>
                             <span class="category-summary-times">
                               実績
                               ${formatSecondsAsText(projectActualSeconds)}
                               ／
-                              予定
-                              ${formatSecondsAsText(projectPlannedSeconds)}
+                              ${
+                                isUnplannedWork
+                                  ? "予定なし"
+                                  : (
+                                      "予定 " +
+                                      formatSecondsAsText(
+                                        projectPlannedSeconds
+                                      )
+                                    )
+                              }
                             </span>
                           </div>
 
-                          <div class="progress-bar">
-                            <span
-                              class="progress-bar__value"
-                              style="width: ${projectProgressWidth}%"
-                            ></span>
-                          </div>
+                          ${
+                            isUnplannedWork
+                              ? `
+                                <p class="category-summary-status is-unplanned">
+                                  月間計画にない作業です。
+                                </p>
+                              `
+                              : `
+                                <div class="progress-bar">
+                                  <span
+                                    class="progress-bar__value"
+                                    style="width: ${projectProgressWidth}%"
+                                  ></span>
+                                </div>
 
-                          <p
-                            class="category-summary-status${projectStatus.isOver ? " is-over" : ""}"
-                          >
-                            ${projectStatus.message}
-                          </p>
+                                <p
+                                  class="category-summary-status${projectStatus.isOver ? " is-over" : ""}"
+                                >
+                                  ${projectStatus.message}
+                                </p>
+                              `
+                          }
                         </div>
                       </summary>
 

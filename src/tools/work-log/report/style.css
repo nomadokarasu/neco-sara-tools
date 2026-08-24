@@ -497,6 +497,85 @@ summary:focus-visible {
 
 
 /* ========================================
+   計画内・予定外の作業時間
+======================================== */
+
+.summary-work-breakdown {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap:
+    10px;
+
+  margin-bottom:
+    18px;
+}
+
+
+.summary-work-breakdown p {
+  margin:
+    0;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  padding:
+    10px 12px;
+
+  background:
+    #fafafa;
+}
+
+
+.summary-work-breakdown span {
+  display:
+    block;
+
+  color:
+    var(--sub-text-color);
+
+  font-size:
+    0.75rem;
+}
+
+
+.summary-work-breakdown strong {
+  display:
+    block;
+
+  margin-top:
+    2px;
+
+  font-size:
+    1rem;
+}
+
+
+.summary-description {
+  margin:
+    0 0 18px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size:
+    0.8rem;
+}
+
+
+.category-summary-status.is-unplanned {
+  color:
+    var(--warning-text, #7a4c00);
+}
+
+
+/* ========================================
    日別作業内容
 ======================================== */
 
@@ -767,6 +846,36 @@ summary:focus-visible {
     var(--sub-text-color);
 
   font-size: 0.8rem;
+}
+
+
+.unplanned-work-label {
+  display:
+    inline-block;
+
+  margin-left:
+    8px;
+
+  border-radius:
+    var(--border-radius);
+
+  padding:
+    1px 6px;
+
+  background:
+    var(--warning-background, #fff2d8);
+
+  color:
+    var(--warning-text, #7a4c00);
+
+  font-size:
+    0.7rem;
+
+  font-weight:
+    600;
+
+  vertical-align:
+    middle;
 }
 
 
@@ -1151,6 +1260,12 @@ summary:focus-visible {
 ======================================== */
 
 @media (max-width: 700px) {
+  .summary-work-breakdown {
+    grid-template-columns:
+      1fr;
+  }
+
+
   .site-header__inner {
     padding:
       22px 0;

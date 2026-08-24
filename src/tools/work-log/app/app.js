@@ -22,6 +22,8 @@ const defaultData = {
 
   categories: [],
 
+  monthlyPlans: {},
+
   sessions: [],
 
   activeSession: null
@@ -41,6 +43,60 @@ const periodButtons =
 const workTimeForm =
   document.getElementById(
     "work-time-form"
+  );
+
+
+const monthlyPlanForm =
+  document.getElementById(
+    "monthly-plan-form"
+  );
+
+
+const monthlyPlanMonthInput =
+  document.getElementById(
+    "monthly-plan-month"
+  );
+
+
+const monthlyPlanTotalHoursInput =
+  document.getElementById(
+    "monthly-plan-total-hours"
+  );
+
+
+const monthlyPlanProjectList =
+  document.getElementById(
+    "monthly-plan-project-list"
+  );
+
+
+const monthlyPlanTotalDisplay =
+  document.getElementById(
+    "monthly-plan-total-display"
+  );
+
+
+const monthlyPlanAssignedDisplay =
+  document.getElementById(
+    "monthly-plan-assigned-display"
+  );
+
+
+const monthlyPlanUnassignedDisplay =
+  document.getElementById(
+    "monthly-plan-unassigned-display"
+  );
+
+
+const monthlyPlanWarning =
+  document.getElementById(
+    "monthly-plan-warning"
+  );
+
+
+const copyPreviousPlanButton =
+  document.getElementById(
+    "copy-previous-plan-button"
   );
 
 
@@ -407,6 +463,8 @@ async function initializeApp() {
 
   ensureInitialCategories();
 
+  initializeMonthlyPlan();
+
   updatePeriodButtons();
 
   updateScreenTabs();
@@ -518,6 +576,200 @@ function loadLocalAppData() {
 }
 
 
+function normalizeMonthlyPlans(
+  monthlyPlans
+) {
+  if (
+    !monthlyPlans ||
+    typeof monthlyPlans !== "object" ||
+    Array.isArray(
+      monthlyPlans
+    )
+  ) {
+    return {};
+  }
+
+
+  const normalizedPlans =
+    {};
+
+
+  Object.entries(
+    monthlyPlans
+  ).forEach(
+    function(
+      [
+        monthKey,
+        plan
+      ]
+    ) {
+      if (
+        !/^\d{4}-\d{2}$/.test(
+          monthKey
+        ) ||
+        !plan ||
+        typeof plan !== "object" ||
+        Array.isArray(
+          plan
+        )
+      ) {
+        return;
+      }
+
+
+      const categories =
+        Array.isArray(
+          plan.categories
+        )
+          ? plan.categories
+              .map(
+                function(categoryPlan) {
+                  if (
+                    !categoryPlan ||
+                    !categoryPlan.categoryId
+                  ) {
+                    return null;
+                  }
+
+
+                  const projects =
+                    Array.isArray(
+                      categoryPlan.projects
+                    )
+                      ? categoryPlan.projects
+                          .map(
+                            function(projectPlan) {
+                              if (
+                                !projectPlan ||
+                                !projectPlan.projectId
+                              ) {
+                                return null;
+                              }
+
+
+                              return {
+                                projectId:
+                                  String(
+                                    projectPlan.projectId
+                                  ),
+
+                                projectName:
+                                  String(
+                                    projectPlan.projectName ||
+                                    ""
+                                  ),
+
+                                allocationPercent:
+                                  Math.max(
+                                    0,
+
+                                    Number(
+                                      projectPlan.allocationPercent
+                                    ) ||
+                                    0
+                                  ),
+
+                                plannedMinutes:
+                                  Math.max(
+                                    0,
+
+                                    Math.round(
+                                      Number(
+                                        projectPlan.plannedMinutes
+                                      ) ||
+                                      0
+                                    )
+                                  )
+                              };
+                            }
+                          )
+                          .filter(
+                            function(projectPlan) {
+                              return (
+                                projectPlan !==
+                                null
+                              );
+                            }
+                          )
+                      : [];
+
+
+                  return {
+                    categoryId:
+                      String(
+                        categoryPlan.categoryId
+                      ),
+
+                    categoryName:
+                      String(
+                        categoryPlan.categoryName ||
+                        ""
+                      ),
+
+                    allocationPercent:
+                      Math.max(
+                        0,
+
+                        Number(
+                          categoryPlan.allocationPercent
+                        ) ||
+                        0
+                      ),
+
+                    plannedMinutes:
+                      Math.max(
+                        0,
+
+                        Math.round(
+                          Number(
+                            categoryPlan.plannedMinutes
+                          ) ||
+                          0
+                        )
+                      ),
+
+                    projects:
+                      projects
+                  };
+                }
+              )
+              .filter(
+                function(categoryPlan) {
+                  return (
+                    categoryPlan !==
+                    null
+                  );
+                }
+              )
+          : [];
+
+
+      normalizedPlans[
+        monthKey
+      ] = {
+        totalMinutes:
+          Math.max(
+            0,
+
+            Math.round(
+              Number(
+                plan.totalMinutes
+              ) ||
+              0
+            )
+          ),
+
+        categories:
+          categories
+      };
+    }
+  );
+
+
+  return normalizedPlans;
+}
+
+
 function normalizeAppData(data) {
   const categories =
     Array.isArray(
@@ -565,6 +817,11 @@ function normalizeAppData(data) {
     categories:
       categories,
 
+    monthlyPlans:
+      normalizeMonthlyPlans(
+        data.monthlyPlans
+      ),
+
     sessions:
       Array.isArray(
         data.sessions
@@ -580,6 +837,9 @@ function normalizeAppData(data) {
 function hasWorkLogContent(data) {
   return (
     data.categories.length > 0 ||
+    Object.keys(
+      data.monthlyPlans || {}
+    ).length > 0 ||
     data.sessions.length > 0 ||
     Boolean(
       data.activeSession
@@ -833,6 +1093,1128 @@ function updatePeriodButtons() {
         isSelected
       );
     }
+  );
+}
+
+
+// ========================================
+// 月間計画の初期化
+// ========================================
+
+function initializeMonthlyPlan() {
+  if (
+    !monthlyPlanForm ||
+    !monthlyPlanMonthInput
+  ) {
+    return;
+  }
+
+
+  monthlyPlanMonthInput.value =
+    createMonthKey(
+      new Date()
+    );
+
+
+  renderMonthlyPlanForm();
+
+
+  monthlyPlanMonthInput.addEventListener(
+    "change",
+
+    function() {
+      renderMonthlyPlanForm();
+    }
+  );
+
+
+  monthlyPlanForm.addEventListener(
+    "input",
+
+    function(event) {
+      if (
+        event.target ===
+        monthlyPlanTotalHoursInput
+      ) {
+        recalculateMonthlyPlanHours();
+
+        updateMonthlyPlanSummary();
+
+        return;
+      }
+
+
+      if (
+        event.target.classList.contains(
+          "monthly-plan-project-percent"
+        )
+      ) {
+        updateProjectHoursFromPercent(
+          event.target
+        );
+
+        updateMonthlyPlanSummary();
+
+        return;
+      }
+
+
+      if (
+        event.target.classList.contains(
+          "monthly-plan-project-hours"
+        )
+      ) {
+        updateProjectPercentFromHours(
+          event.target
+        );
+
+        updateMonthlyPlanSummary();
+      }
+    }
+  );
+
+
+  monthlyPlanForm.addEventListener(
+    "change",
+
+    function(event) {
+      if (
+        !event.target.classList.contains(
+          "monthly-plan-project-check"
+        )
+      ) {
+        return;
+      }
+
+
+      const projectItem =
+        event.target.closest(
+          ".monthly-plan-project-item"
+        );
+
+
+      const hoursInput =
+        projectItem
+          ? projectItem.querySelector(
+              ".monthly-plan-project-hours"
+            )
+          : null;
+
+
+      const percentInput =
+        projectItem
+          ? projectItem.querySelector(
+              ".monthly-plan-project-percent"
+            )
+          : null;
+
+
+      if (hoursInput) {
+        hoursInput.disabled =
+          !event.target.checked;
+      }
+
+
+      if (percentInput) {
+        percentInput.disabled =
+          !event.target.checked;
+      }
+
+
+      if (
+        event.target.checked &&
+        hoursInput &&
+        percentInput
+      ) {
+        updateProjectHoursFromPercent(
+          percentInput
+        );
+      }
+
+
+      updateMonthlyPlanSummary();
+    }
+  );
+
+
+  monthlyPlanForm.addEventListener(
+    "submit",
+
+    function(event) {
+      event.preventDefault();
+
+      saveMonthlyPlan();
+    }
+  );
+
+
+  copyPreviousPlanButton.addEventListener(
+    "click",
+
+    copyPreviousMonthlyPlan
+  );
+}
+
+
+// ========================================
+// 月を表すキー
+// ========================================
+
+function createMonthKey(
+  date
+) {
+  return (
+    date.getFullYear() +
+    "-" +
+    String(
+      date.getMonth() + 1
+    ).padStart(
+      2,
+      "0"
+    )
+  );
+}
+
+
+// ========================================
+// 前月のキー
+// ========================================
+
+function getPreviousMonthKey(
+  monthKey
+) {
+  const [
+    year,
+    month
+  ] =
+    monthKey
+      .split("-")
+      .map(Number);
+
+
+  return createMonthKey(
+    new Date(
+      year,
+      month - 2,
+      1
+    )
+  );
+}
+
+
+// ========================================
+// 月間計画を表示する
+// ========================================
+
+function renderMonthlyPlanForm() {
+  const monthKey =
+    monthlyPlanMonthInput.value;
+
+
+  if (!monthKey) {
+    return;
+  }
+
+
+  const savedPlan =
+    appData.monthlyPlans[
+      monthKey
+    ] || null;
+
+
+  const defaultTotalMinutes =
+    Math.round(
+      Number(
+        appData.settings.weeklyHours ||
+        0
+      ) *
+      52 /
+      12 *
+      60
+    );
+
+
+  const totalMinutes =
+    savedPlan
+      ? Number(
+          savedPlan.totalMinutes ||
+          0
+        )
+      : defaultTotalMinutes;
+
+
+  monthlyPlanTotalHoursInput.value =
+    formatInputNumber(
+      totalMinutes /
+      60
+    );
+
+
+  const savedProjectPlans =
+    new Map();
+
+
+  if (
+    savedPlan &&
+    Array.isArray(
+      savedPlan.categories
+    )
+  ) {
+    savedPlan.categories.forEach(
+      function(categoryPlan) {
+        const projects =
+          Array.isArray(
+            categoryPlan.projects
+          )
+            ? categoryPlan.projects
+            : [];
+
+
+        projects.forEach(
+          function(projectPlan) {
+            savedProjectPlans.set(
+              String(
+                projectPlan.projectId
+              ),
+
+              projectPlan
+            );
+          }
+        );
+      }
+    );
+  }
+
+
+  if (appData.categories.length === 0) {
+    monthlyPlanProjectList.innerHTML = `
+      <p class="empty-message">
+        プロジェクトが設定されていません。
+      </p>
+    `;
+
+    updateMonthlyPlanSummary();
+
+    return;
+  }
+
+
+  monthlyPlanProjectList.innerHTML =
+    appData.categories
+      .map(
+        function(category) {
+          const projects =
+            Array.isArray(
+              category.projects
+            )
+              ? category.projects
+              : [];
+
+
+          const projectHtml =
+            projects
+              .map(
+                function(project) {
+                  const savedProject =
+                    savedProjectPlans.get(
+                      String(
+                        project.id
+                      )
+                    );
+
+
+                  const isSelected =
+                    Boolean(
+                      savedProject
+                    );
+
+
+                  const plannedHours =
+                    savedProject
+                      ? Number(
+                          savedProject
+                            .plannedMinutes ||
+                          0
+                        ) /
+                        60
+                      : 0;
+
+
+                  const plannedPercent =
+                    totalMinutes > 0
+                      ? (
+                          plannedHours *
+                          60 /
+                          totalMinutes *
+                          100
+                        )
+                      : 0;
+
+
+                  const archiveLabel =
+                    project.isCurrent ===
+                    false
+                      ? `
+                        <span class="monthly-plan-archive-label">
+                          アーカイブ
+                        </span>
+                      `
+                      : "";
+
+
+                  return `
+                    <div class="monthly-plan-project-item">
+                      <label class="monthly-plan-project-check-label">
+                        <input
+                          class="monthly-plan-project-check"
+                          type="checkbox"
+                          data-category-id="${escapeHtml(category.id)}"
+                          data-project-id="${escapeHtml(project.id)}"
+                          ${isSelected ? "checked" : ""}
+                        >
+
+                        <span>
+                          ${escapeHtml(project.name)}
+                          ${archiveLabel}
+                        </span>
+                      </label>
+
+                      <div class="monthly-plan-value-fields">
+                        <label class="monthly-plan-percent-field">
+                          <input
+                            class="monthly-plan-project-percent"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value="${formatInputNumber(plannedPercent)}"
+                            data-category-id="${escapeHtml(category.id)}"
+                            data-project-id="${escapeHtml(project.id)}"
+                            ${isSelected ? "" : "disabled"}
+                          >
+
+                          <span>
+                            ％
+                          </span>
+                        </label>
+
+                        <label class="monthly-plan-hours-field">
+                          <input
+                            class="monthly-plan-project-hours"
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            value="${formatInputNumber(plannedHours)}"
+                            data-category-id="${escapeHtml(category.id)}"
+                            data-project-id="${escapeHtml(project.id)}"
+                            ${isSelected ? "" : "disabled"}
+                          >
+
+                          <span>
+                            時間
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  `;
+                }
+              )
+              .join("");
+
+
+          const categoryHasPlan =
+            projects.some(
+              function(project) {
+                return savedProjectPlans.has(
+                  String(
+                    project.id
+                  )
+                );
+              }
+            );
+
+
+          return `
+            <details
+              class="project-status-category monthly-plan-category"
+              ${categoryHasPlan ? "open" : ""}
+            >
+  const categoryMinutesMap =
+    new Map();
+
+
+  const assignedMinutes =
+    Array.from(
+      monthlyPlanProjectList
+        .querySelectorAll(
+          ".monthly-plan-project-check:checked"
+        )
+    ).reduce(
+      function(
+        total,
+        checkbox
+      ) {
+        const projectItem =
+          checkbox.closest(
+            ".monthly-plan-project-item"
+          );
+
+
+        const hoursInput =
+          projectItem.querySelector(
+            ".monthly-plan-project-hours"
+          );
+
+
+        const projectMinutes =
+          Math.max(
+            0,
+
+            Math.round(
+              Number(
+                hoursInput.value
+              ) *
+              60
+            ) ||
+            0
+          );
+
+
+        const categoryId =
+          checkbox.dataset.categoryId;
+
+
+        categoryMinutesMap.set(
+          categoryId,
+
+          (
+            categoryMinutesMap.get(
+              categoryId
+            ) ||
+            0
+          ) +
+          projectMinutes
+        );
+
+
+        return (
+          total +
+          projectMinutes
+        );
+      },
+
+      0
+    );
+
+
+  monthlyPlanProjectList
+    .querySelectorAll(
+      ".monthly-plan-category-total"
+    )
+    .forEach(
+      function(categoryTotal) {
+        const categoryId =
+          categoryTotal.dataset.categoryId;
+
+
+        const categoryMinutes =
+          categoryMinutesMap.get(
+            categoryId
+          ) ||
+          0;
+
+
+        const categoryPercent =
+          totalMinutes > 0
+            ? (
+                categoryMinutes /
+                totalMinutes *
+                100
+              )
+            : 0;
+
+
+        categoryTotal.textContent =
+          formatInputNumber(
+            categoryPercent
+          ) +
+          "％ / " +
+          formatHours(
+            categoryMinutes /
+            60
+          );
+      }
+    );
+
+
+  const difference =
+                ${
+                  projectHtml ||
+                  `
+                    <p class="empty-message">
+                      プロジェクトがありません。
+                    </p>
+                  `
+                }
+              </div>
+            </details>
+          `;
+        }
+      )
+      .join("");
+
+
+  updateMonthlyPlanSummary();
+}
+
+
+// ========================================
+// ％から予定時間を計算する
+// ========================================
+
+function updateProjectHoursFromPercent(
+  percentInput
+) {
+  const projectItem =
+    percentInput.closest(
+      ".monthly-plan-project-item"
+    );
+
+
+  if (!projectItem) {
+    return;
+  }
+
+
+  const hoursInput =
+    projectItem.querySelector(
+      ".monthly-plan-project-hours"
+    );
+
+
+  const totalHours =
+    Math.max(
+      0,
+
+      Number(
+        monthlyPlanTotalHoursInput.value
+      ) ||
+      0
+    );
+
+
+  const percent =
+    Math.max(
+      0,
+
+      Number(
+        percentInput.value
+      ) ||
+      0
+    );
+
+
+  hoursInput.value =
+    formatInputNumber(
+      totalHours *
+      percent /
+      100
+    );
+}
+
+
+// ========================================
+// 予定時間から％を計算する
+// ========================================
+
+function updateProjectPercentFromHours(
+  hoursInput
+) {
+  const projectItem =
+    hoursInput.closest(
+      ".monthly-plan-project-item"
+    );
+
+
+  if (!projectItem) {
+    return;
+  }
+
+
+  const percentInput =
+    projectItem.querySelector(
+      ".monthly-plan-project-percent"
+    );
+
+
+  const totalHours =
+    Math.max(
+      0,
+
+      Number(
+        monthlyPlanTotalHoursInput.value
+      ) ||
+      0
+    );
+
+
+  const projectHours =
+    Math.max(
+      0,
+
+      Number(
+        hoursInput.value
+      ) ||
+      0
+    );
+
+
+  percentInput.value =
+    formatInputNumber(
+      totalHours > 0
+        ? (
+            projectHours /
+            totalHours *
+            100
+          )
+        : 0
+    );
+}
+
+
+// ========================================
+// 月の総時間変更時に再計算する
+// ========================================
+
+function recalculateMonthlyPlanHours() {
+  monthlyPlanProjectList
+    .querySelectorAll(
+      ".monthly-plan-project-check:checked"
+    )
+    .forEach(
+      function(checkbox) {
+        const projectItem =
+          checkbox.closest(
+            ".monthly-plan-project-item"
+          );
+
+
+        const percentInput =
+          projectItem.querySelector(
+            ".monthly-plan-project-percent"
+          );
+
+
+        updateProjectHoursFromPercent(
+          percentInput
+        );
+      }
+    );
+}
+
+
+// ========================================
+// 月間計画の集計を更新する
+// ========================================
+
+function updateMonthlyPlanSummary() {
+  const totalMinutes =
+    Math.max(
+      0,
+
+      Math.round(
+        Number(
+          monthlyPlanTotalHoursInput.value
+        ) *
+        60
+      ) ||
+      0
+    );
+
+
+  const assignedMinutes =
+    Array.from(
+      monthlyPlanProjectList
+        .querySelectorAll(
+          ".monthly-plan-project-check:checked"
+        )
+    ).reduce(
+      function(
+        total,
+        checkbox
+      ) {
+        const projectItem =
+          checkbox.closest(
+            ".monthly-plan-project-item"
+          );
+
+
+        const hoursInput =
+          projectItem.querySelector(
+            ".monthly-plan-project-hours"
+          );
+
+
+        return (
+          total +
+          Math.max(
+            0,
+
+            Math.round(
+              Number(
+                hoursInput.value
+              ) *
+              60
+            ) ||
+            0
+          )
+        );
+      },
+
+      0
+    );
+
+
+  const difference =
+    totalMinutes -
+    assignedMinutes;
+
+
+  monthlyPlanTotalDisplay.textContent =
+    formatHours(
+      totalMinutes /
+      60
+    );
+
+
+  const assignedPercent =
+    totalMinutes > 0
+      ? (
+          assignedMinutes /
+          totalMinutes *
+          100
+        )
+      : 0;
+
+
+  monthlyPlanAssignedDisplay.textContent =
+    formatHours(
+      assignedMinutes /
+      60
+    ) +
+    "（" +
+    formatInputNumber(
+      assignedPercent
+    ) +
+    "％）";
+
+
+  if (difference >= 0) {
+    monthlyPlanUnassignedDisplay.textContent =
+      formatHours(
+        difference /
+        60
+      );
+
+
+    monthlyPlanWarning.textContent =
+      "";
+  } else {
+    monthlyPlanUnassignedDisplay.textContent =
+      "0時間";
+
+
+    monthlyPlanWarning.textContent =
+      formatHours(
+        Math.abs(
+          difference
+        ) /
+        60
+      ) +
+      "超過しています。";
+  }
+}
+
+
+// ========================================
+// 月間計画を保存する
+// ========================================
+
+function saveMonthlyPlan() {
+  const monthKey =
+    monthlyPlanMonthInput.value;
+
+
+  const totalMinutes =
+    Math.max(
+      0,
+
+      Math.round(
+        Number(
+          monthlyPlanTotalHoursInput.value
+        ) *
+        60
+      ) ||
+      0
+    );
+
+
+  if (!monthKey) {
+    showStatusMessage(
+      "計画する月を選択してください。"
+    );
+
+    return;
+  }
+
+
+  if (totalMinutes <= 0) {
+    showStatusMessage(
+      "月の予定作業時間を入力してください。"
+    );
+
+    return;
+  }
+
+
+  const categoryPlanMap =
+    new Map();
+
+
+  monthlyPlanProjectList
+    .querySelectorAll(
+      ".monthly-plan-project-check:checked"
+    )
+    .forEach(
+      function(checkbox) {
+        const categoryId =
+          checkbox.dataset.categoryId;
+
+        const projectId =
+          checkbox.dataset.projectId;
+
+
+        const projectInformation =
+          findProjectInformation(
+            projectId
+          );
+
+
+        if (!projectInformation) {
+          return;
+        }
+
+
+        const projectItem =
+          checkbox.closest(
+            ".monthly-plan-project-item"
+          );
+
+
+        const hoursInput =
+          projectItem.querySelector(
+            ".monthly-plan-project-hours"
+          );
+
+
+        const plannedMinutes =
+          Math.max(
+            0,
+
+            Math.round(
+              Number(
+                hoursInput.value
+              ) *
+              60
+            ) ||
+            0
+          );
+
+
+        if (
+          !categoryPlanMap.has(
+            categoryId
+          )
+        ) {
+          categoryPlanMap.set(
+            categoryId,
+
+            {
+              categoryId:
+                categoryId,
+
+              categoryName:
+                projectInformation
+                  .category.name,
+
+              allocationPercent:
+                0,
+
+              plannedMinutes:
+                0,
+
+              projects:
+                []
+            }
+          );
+        }
+
+
+        const categoryPlan =
+          categoryPlanMap.get(
+            categoryId
+          );
+
+
+        categoryPlan.projects.push(
+          {
+            projectId:
+              projectId,
+
+            projectName:
+              projectInformation
+                .project.name,
+
+            allocationPercent:
+              0,
+
+            plannedMinutes:
+              plannedMinutes
+          }
+        );
+
+
+        categoryPlan.plannedMinutes +=
+          plannedMinutes;
+      }
+    );
+
+
+  const categoryPlans =
+    Array.from(
+      categoryPlanMap.values()
+    );
+
+
+  categoryPlans.forEach(
+    function(categoryPlan) {
+      categoryPlan.allocationPercent =
+        totalMinutes > 0
+          ? (
+              categoryPlan.plannedMinutes /
+              totalMinutes *
+              100
+            )
+          : 0;
+
+
+      categoryPlan.projects.forEach(
+        function(projectPlan) {
+          projectPlan.allocationPercent =
+            totalMinutes > 0
+              ? (
+                  projectPlan.plannedMinutes /
+                  totalMinutes *
+                  100
+                )
+              : 0;
+        }
+      );
+    }
+  );
+
+
+  appData.monthlyPlans[
+    monthKey
+  ] = {
+    totalMinutes:
+      totalMinutes,
+
+    categories:
+      categoryPlans
+  };
+
+
+  saveAppData();
+
+  renderMonthlyPlanForm();
+
+
+  showStatusMessage(
+    monthKey +
+    "の月間計画を保存しました。"
+  );
+}
+
+
+// ========================================
+// 前月の計画をコピーする
+// ========================================
+
+function copyPreviousMonthlyPlan() {
+  const monthKey =
+    monthlyPlanMonthInput.value;
+
+
+  if (!monthKey) {
+    showStatusMessage(
+      "計画する月を選択してください。"
+    );
+
+    return;
+  }
+
+
+  const previousMonthKey =
+    getPreviousMonthKey(
+      monthKey
+    );
+
+
+  const previousPlan =
+    appData.monthlyPlans[
+      previousMonthKey
+    ];
+
+
+  if (!previousPlan) {
+    showStatusMessage(
+      previousMonthKey +
+      "の月間計画はありません。"
+    );
+
+    return;
+  }
+
+
+  if (
+    appData.monthlyPlans[
+      monthKey
+    ] &&
+    !window.confirm(
+      monthKey +
+      "の計画を前月の内容で上書きしますか？"
+    )
+  ) {
+    return;
+  }
+
+
+  appData.monthlyPlans[
+    monthKey
+  ] =
+    structuredClone(
+      previousPlan
+    );
+
+
+  saveAppData();
+
+  renderMonthlyPlanForm();
+
+
+  showStatusMessage(
+    previousMonthKey +
+    "の計画をコピーしました。"
   );
 }
 
@@ -2406,10 +3788,6 @@ function renderTimerProjectOptions() {
 // ========================================
 
 function renderProgressList() {
-  const selectedPeriodHours =
-    getSelectedPeriodHours();
-
-
   const currentCategories =
     appData.categories.filter(
       function(category) {
@@ -2426,7 +3804,7 @@ function renderProgressList() {
     currentCategories.length === 0
   ) {
     progressList.innerHTML = `
-            <p class="empty-message">
+      <p class="empty-message">
         現在のプロジェクトが設定されていません。
       </p>
     `;
@@ -2435,18 +3813,31 @@ function renderProgressList() {
   }
 
 
-    progressList.innerHTML =
+  progressList.innerHTML =
     currentCategories
       .map(
         function(category) {
+          const currentProjects =
+            getCurrentProjects(
+              category
+            );
+
+
           const categoryPlannedSeconds =
-            Math.round(
-              selectedPeriodHours *
-              Number(
-                category.allocationPercent
-              ) /
-              100 *
-              3600
+            currentProjects.reduce(
+              function(
+                totalSeconds,
+                project
+              ) {
+                return (
+                  totalSeconds +
+                  getProjectPlannedSeconds(
+                    project.id
+                  )
+                );
+              },
+
+              0
             );
 
 
@@ -3306,49 +4697,206 @@ function findProjectInformation(
 
 
 // ========================================
+// 現在選択している期間の範囲
+// ========================================
+
+function getCurrentPlanningPeriodRange() {
+  const now =
+    new Date();
+
+  let start;
+  let end;
+
+
+  if (
+    appData.settings.selectedPeriod ===
+    "day"
+  ) {
+    start =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+
+    end =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1
+      );
+  } else if (
+    appData.settings.selectedPeriod ===
+    "week"
+  ) {
+    start =
+      getWeekStart(
+        now
+      );
+
+    start =
+      new Date(
+        start.getFullYear(),
+        start.getMonth(),
+        start.getDate()
+      );
+
+    end =
+      new Date(
+        start.getFullYear(),
+        start.getMonth(),
+        start.getDate() + 7
+      );
+  } else {
+    start =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1
+      );
+
+    end =
+      new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        1
+      );
+  }
+
+
+  return {
+    start: start,
+    end: end
+  };
+}
+
+
+// ========================================
+// 月間計画からプロジェクトを探す
+// ========================================
+
+function findMonthlyProjectPlan(
+  monthlyPlan,
+  projectId
+) {
+  if (
+    !monthlyPlan ||
+    !Array.isArray(
+      monthlyPlan.categories
+    )
+  ) {
+    return null;
+  }
+
+
+  for (
+    const categoryPlan of
+    monthlyPlan.categories
+  ) {
+    const projects =
+      Array.isArray(
+        categoryPlan.projects
+      )
+        ? categoryPlan.projects
+        : [];
+
+
+    const projectPlan =
+      projects.find(
+        function(project) {
+          return (
+            String(
+              project.projectId
+            ) ===
+            String(
+              projectId
+            )
+          );
+        }
+      );
+
+
+    if (projectPlan) {
+      return projectPlan;
+    }
+  }
+
+
+  return null;
+}
+
+
+// ========================================
 // プロジェクトの予定秒数
 // ========================================
 
 function getProjectPlannedSeconds(
   projectId
 ) {
-  const projectInformation =
-    findProjectInformation(
-      projectId
+  const periodRange =
+    getCurrentPlanningPeriodRange();
+
+  const currentDate =
+    new Date(
+      periodRange.start
     );
 
+  let plannedSeconds = 0;
 
-  if (!projectInformation) {
-    return 0;
+
+  while (
+    currentDate <
+    periodRange.end
+  ) {
+    const monthKey =
+      createMonthKey(
+        currentDate
+      );
+
+    const monthlyPlan =
+      appData.monthlyPlans &&
+      appData.monthlyPlans[
+        monthKey
+      ];
+
+
+    const projectPlan =
+      findMonthlyProjectPlan(
+        monthlyPlan,
+        projectId
+      );
+
+
+    if (projectPlan) {
+      const daysInMonth =
+        new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1,
+          0
+        ).getDate();
+
+
+      const plannedMinutes =
+        Number(
+          projectPlan.plannedMinutes
+        ) || 0;
+
+
+      plannedSeconds +=
+        plannedMinutes *
+        60 /
+        daysInMonth;
+    }
+
+
+    currentDate.setDate(
+      currentDate.getDate() + 1
+    );
   }
 
 
-  const selectedPeriodHours =
-    getSelectedPeriodHours();
-
-
-  const categoryHours =
-    selectedPeriodHours *
-    Number(
-      projectInformation
-        .category
-        .allocationPercent
-    ) /
-    100;
-
-
-  const projectHours =
-    categoryHours *
-    Number(
-      projectInformation
-        .project
-        .allocationPercent
-    ) /
-    100;
-
-
   return Math.round(
-    projectHours * 3600
+    plannedSeconds
   );
 }
 
@@ -3535,6 +5083,19 @@ function updateRemainingTime(
     getProjectActualSeconds(
       projectId
     );
+
+
+  if (plannedSeconds <= 0) {
+    remainingTime.textContent =
+      "予定時間：設定なし";
+
+
+    remainingTime.classList.remove(
+      "is-over"
+    );
+
+    return;
+  }
 
 
   const difference =
