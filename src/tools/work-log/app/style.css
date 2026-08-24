@@ -530,6 +530,75 @@ a:focus-visible {
     right;
 }
 
+.monthly-plan-category-summary-value {
+  flex-shrink:
+    0;
+
+  color:
+    var(--sub-text-color);
+
+  font-size:
+    0.8rem;
+
+  font-weight:
+    400;
+
+  text-align:
+    right;
+}
+
+
+.monthly-plan-category-allocation {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  gap:
+    12px;
+
+  margin:
+    12px 0;
+
+  padding:
+    12px;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    6px;
+
+  background:
+    var(--base-color);
+}
+
+
+.monthly-plan-category-allocation-label {
+  font-weight:
+    700;
+}
+
+
+@media (max-width: 600px) {
+  .monthly-plan-category-allocation {
+    align-items:
+      stretch;
+
+    flex-direction:
+      column;
+  }
+
+  .monthly-plan-category-allocation
+  .monthly-plan-value-fields {
+    justify-content:
+      flex-start;
+  }
+}
 
 .monthly-plan-category-actions {
   display:

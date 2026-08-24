@@ -2341,6 +2341,10 @@ function renderMonthlyPlanForm() {
   updateMonthlyPlanPeriodLabels();
 
 
+  const savedCategoryPlans =
+    new Map();
+
+
   const savedProjectPlans =
     new Map();
 
@@ -2353,6 +2357,15 @@ function renderMonthlyPlanForm() {
   ) {
     savedPlan.categories.forEach(
       function(categoryPlan) {
+        savedCategoryPlans.set(
+          String(
+            categoryPlan.categoryId
+          ),
+
+          categoryPlan
+        );
+
+
         const projects =
           Array.isArray(
             categoryPlan.projects
@@ -2400,6 +2413,39 @@ function renderMonthlyPlanForm() {
             )
               ? category.projects
               : [];
+
+
+          const savedCategory =
+            savedCategoryPlans.get(
+              String(
+                category.id
+              )
+            );
+
+
+          const categoryPlannedMinutes =
+            savedCategory
+              ? Number(
+                  savedCategory.plannedMinutes ||
+                  0
+                )
+              : 0;
+
+
+          const categoryPlannedHours =
+            monthlyMinutesToDisplayHours(
+              categoryPlannedMinutes
+            );
+
+
+          const categoryPlannedPercent =
+            totalMinutes > 0
+              ? (
+                  categoryPlannedMinutes /
+                  totalMinutes *
+                  100
+                )
+              : 0;
 
 
           const projectHtml =
@@ -2548,14 +2594,8 @@ function renderMonthlyPlanForm() {
 
 
           const categoryHasPlan =
-            projects.some(
-              function(project) {
-                return savedProjectPlans.has(
-                  String(
-                    project.id
-                  )
-                );
-              }
+            Boolean(
+              savedCategory
             );
 
 
@@ -2569,13 +2609,54 @@ function renderMonthlyPlanForm() {
                   ${escapeHtml(category.name)}
                 </span>
 
-                <span
-                  class="monthly-plan-category-total"
-                  data-category-id="${escapeHtml(category.id)}"
-                >
-                  0％ / 0時間
+                <span class="monthly-plan-category-summary-value">
+                  ${formatInputNumber(categoryPlannedPercent)}％
+                  /
+                  ${formatHours(categoryPlannedHours)}
                 </span>
               </summary>
+
+              <div
+                class="monthly-plan-category-allocation"
+                data-category-id="${escapeHtml(category.id)}"
+              >
+                <span class="monthly-plan-category-allocation-label">
+                  大分類の予定
+                </span>
+
+                <div class="monthly-plan-value-fields">
+                  <label class="monthly-plan-percent-field">
+                    <input
+                      class="monthly-plan-category-percent"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value="${formatInputNumber(categoryPlannedPercent)}"
+                      data-category-id="${escapeHtml(category.id)}"
+                    >
+
+                    <span>
+                      ％
+                    </span>
+                  </label>
+
+                  <label class="monthly-plan-hours-field">
+                    <input
+                      class="monthly-plan-category-hours"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value="${formatInputNumber(categoryPlannedHours)}"
+                      data-category-id="${escapeHtml(category.id)}"
+                    >
+
+                    <span>
+                      時間
+                    </span>
+                  </label>
+                </div>
+              </div>
 
               <div class="monthly-plan-category-actions">
                 <button
