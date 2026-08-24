@@ -6034,69 +6034,21 @@ function getCurrentPlanningPeriodRange() {
   const now =
     new Date();
 
-  let start;
-  let end;
 
-
-  if (
-    appData.settings.selectedPeriod ===
-    "day"
-  ) {
-    start =
-      new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-      );
-
-    end =
-      new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() + 1
-      );
-  } else if (
-    appData.settings.selectedPeriod ===
-    "week"
-  ) {
-    start =
-      getWeekStart(
-        now
-      );
-
-    start =
-      new Date(
-        start.getFullYear(),
-        start.getMonth(),
-        start.getDate()
-      );
-
-    end =
-      new Date(
-        start.getFullYear(),
-        start.getMonth(),
-        start.getDate() + 7
-      );
-  } else {
-    start =
+  return {
+    start:
       new Date(
         now.getFullYear(),
         now.getMonth(),
         1
-      );
+      ),
 
-    end =
+    end:
       new Date(
         now.getFullYear(),
         now.getMonth() + 1,
         1
-      );
-  }
-
-
-  return {
-    start: start,
-    end: end
+      )
   };
 }
 
@@ -6199,72 +6151,41 @@ function findMonthlyProjectPlan(
 function getCategoryPlannedSeconds(
   categoryId
 ) {
-  const periodRange =
-    getCurrentPlanningPeriodRange();
-
-  const currentDate =
-    new Date(
-      periodRange.start
+  const monthKey =
+    createMonthKey(
+      new Date()
     );
 
-  let plannedSeconds = 0;
+
+  const monthlyPlan =
+    appData.monthlyPlans &&
+    appData.monthlyPlans[
+      monthKey
+    ];
 
 
-  while (
-    currentDate <
-    periodRange.end
-  ) {
-    const monthKey =
-      createMonthKey(
-        currentDate
-      );
-
-
-    const monthlyPlan =
-      appData.monthlyPlans &&
-      appData.monthlyPlans[
-        monthKey
-      ];
-
-
-    const categoryPlan =
-      findMonthlyCategoryPlan(
-        monthlyPlan,
-        categoryId
-      );
-
-
-    if (categoryPlan) {
-      const daysInMonth =
-        new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() + 1,
-          0
-        ).getDate();
-
-
-      const plannedMinutes =
-        Number(
-          categoryPlan.plannedMinutes
-        ) ||
-        0;
-
-
-      plannedSeconds +=
-        plannedMinutes *
-        60 /
-        daysInMonth;
-    }
-
-
-    currentDate.setDate(
-      currentDate.getDate() + 1
+  const categoryPlan =
+    findMonthlyCategoryPlan(
+      monthlyPlan,
+      categoryId
     );
+
+
+  if (!categoryPlan) {
+    return 0;
   }
 
 
-  return Math.round(
-    plannedSeconds
+  return Math.max(
+    0,
+
+    Math.round(
+      Number(
+        categoryPlan.plannedMinutes ||
+        0
+      ) *
+      60
+    )
   );
 }
 
@@ -6276,70 +6197,41 @@ function getCategoryPlannedSeconds(
 function getProjectPlannedSeconds(
   projectId
 ) {
-  const periodRange =
-    getCurrentPlanningPeriodRange();
-
-  const currentDate =
-    new Date(
-      periodRange.start
+  const monthKey =
+    createMonthKey(
+      new Date()
     );
 
-  let plannedSeconds = 0;
+
+  const monthlyPlan =
+    appData.monthlyPlans &&
+    appData.monthlyPlans[
+      monthKey
+    ];
 
 
-  while (
-    currentDate <
-    periodRange.end
-  ) {
-    const monthKey =
-      createMonthKey(
-        currentDate
-      );
-
-    const monthlyPlan =
-      appData.monthlyPlans &&
-      appData.monthlyPlans[
-        monthKey
-      ];
-
-
-    const projectPlan =
-      findMonthlyProjectPlan(
-        monthlyPlan,
-        projectId
-      );
-
-
-    if (projectPlan) {
-      const daysInMonth =
-        new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() + 1,
-          0
-        ).getDate();
-
-
-      const plannedMinutes =
-        Number(
-          projectPlan.plannedMinutes
-        ) || 0;
-
-
-      plannedSeconds +=
-        plannedMinutes *
-        60 /
-        daysInMonth;
-    }
-
-
-    currentDate.setDate(
-      currentDate.getDate() + 1
+  const projectPlan =
+    findMonthlyProjectPlan(
+      monthlyPlan,
+      projectId
     );
+
+
+  if (!projectPlan) {
+    return 0;
   }
 
 
-  return Math.round(
-    plannedSeconds
+  return Math.max(
+    0,
+
+    Math.round(
+      Number(
+        projectPlan.plannedMinutes ||
+        0
+      ) *
+      60
+    )
   );
 }
 
