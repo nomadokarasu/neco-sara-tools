@@ -2851,48 +2851,32 @@ function updateMonthlyPlanSummary() {
         }
 
 
-        const projectAssignedMinutes =
+        const projectAssignedPercent =
           Array.from(
             categoryDetails
               .querySelectorAll(
-                ".monthly-plan-project-item"
+                ".monthly-plan-project-percent"
               )
           ).reduce(
             function(
               total,
-              projectItem
+              percentInput
             ) {
-              const hoursInput =
-                projectItem.querySelector(
-                  ".monthly-plan-project-hours"
-                );
-
-
-              if (!hoursInput) {
-                return total;
-              }
-
-
               return (
                 total +
-                displayHoursToMonthlyMinutes(
-                  hoursInput.value
+                Math.max(
+                  0,
+
+                  Number(
+                    percentInput.value
+                  ) ||
+                  0
                 )
               );
             },
 
             0
           );
-
-
-        const projectAssignedPercent =
-          categoryMinutes > 0
-            ? (
-                projectAssignedMinutes /
-                categoryMinutes *
-                100
-              )
-            : 0;
 
 
         if (projectStatus) {
@@ -3040,32 +3024,26 @@ function getMonthlyPlanOverAllocationWarnings() {
           categoryMinutes;
 
 
-        const projectMinutes =
+        const projectPercent =
           Array.from(
             categoryDetails
               .querySelectorAll(
-                ".monthly-plan-project-item"
+                ".monthly-plan-project-percent"
               )
           ).reduce(
             function(
               total,
-              projectItem
+              percentInput
             ) {
-              const hoursInput =
-                projectItem.querySelector(
-                  ".monthly-plan-project-hours"
-                );
-
-
-              if (!hoursInput) {
-                return total;
-              }
-
-
               return (
                 total +
-                displayHoursToMonthlyMinutes(
-                  hoursInput.value
+                Math.max(
+                  0,
+
+                  Number(
+                    percentInput.value
+                  ) ||
+                  0
                 )
               );
             },
@@ -3075,20 +3053,16 @@ function getMonthlyPlanOverAllocationWarnings() {
 
 
         if (
-          projectMinutes >
-          categoryMinutes
+          projectPercent > 100
         ) {
           warnings.push(
             "「" +
             categoryName +
-            "」のプロジェクト予定時間が、大分類の予定時間を " +
-            formatHours(
-              monthlyMinutesToDisplayHours(
-                projectMinutes -
-                categoryMinutes
-              )
+            "」のプロジェクト割り振りが " +
+            formatInputNumber(
+              projectPercent
             ) +
-            " 超過しています。"
+            "％になっています。"
           );
         }
       }
@@ -3262,12 +3236,31 @@ function saveMonthlyPlan() {
 
 
                 const projectPlannedMinutes =
-                  displayHoursToMonthlyMinutes(
-                    hoursInput.value
+                const projectAllocationPercent =
+                  Math.max(
+                    0,
+
+                    Number(
+                      percentInput.value
+                    ) ||
+                    0
+                  );
+
+
+                const projectPlannedMinutes =
+                  Math.max(
+                    0,
+
+                    Math.round(
+                      categoryPlannedMinutes *
+                      projectAllocationPercent /
+                      100
+                    )
                   );
 
 
                 if (
+                  projectAllocationPercent <= 0 ||
                   projectPlannedMinutes <= 0
                 ) {
                   return null;
@@ -3282,13 +3275,7 @@ function saveMonthlyPlan() {
                     project.name,
 
                   allocationPercent:
-                    categoryPlannedMinutes > 0
-                      ? (
-                          projectPlannedMinutes /
-                          categoryPlannedMinutes *
-                          100
-                        )
-                      : 0,
+                    projectAllocationPercent,
 
                   plannedMinutes:
                     projectPlannedMinutes
