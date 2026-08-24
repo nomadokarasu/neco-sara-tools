@@ -3030,48 +3030,29 @@ function updateMonthlyPlanSummary() {
           );
 
 
-        const projectDifference =
-          categoryMinutes -
-          projectAssignedMinutes;
+        const projectAssignedPercent =
+          categoryMinutes > 0
+            ? (
+                projectAssignedMinutes /
+                categoryMinutes *
+                100
+              )
+            : 0;
 
 
         if (projectStatus) {
-          if (projectDifference >= 0) {
-            projectStatus.textContent =
-              "プロジェクトへ割り振り済み：" +
-              formatHours(
-                monthlyMinutesToDisplayHours(
-                  projectAssignedMinutes
-                )
-              ) +
-              "／未割り振り：" +
-              formatHours(
-                monthlyMinutesToDisplayHours(
-                  projectDifference
-                )
-              );
+          projectStatus.textContent =
+            "プロジェクトへ割り振り済み：" +
+            formatInputNumber(
+              projectAssignedPercent
+            ) +
+            "％／100％";
 
 
-            projectStatus.classList.remove(
-              "has-error"
-            );
-          } else {
-            projectStatus.textContent =
-              "プロジェクトの予定時間が、大分類の予定時間を " +
-              formatHours(
-                monthlyMinutesToDisplayHours(
-                  Math.abs(
-                    projectDifference
-                  )
-                )
-              ) +
-              " 超過しています。";
-
-
-            projectStatus.classList.add(
-              "has-error"
-            );
-          }
+          projectStatus.classList.toggle(
+            "has-error",
+            projectAssignedPercent > 100
+          );
         }
       }
     );
