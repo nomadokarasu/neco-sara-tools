@@ -3527,3 +3527,51 @@ details[open] > summary::before {
       100%;
   }
 }
+
+/* ========================================
+   ヘッダーの操作
+======================================== */
+
+.header-actions {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+}
+
+
+.header-actions
+.secondary-button {
+  white-space:
+    nowrap;
+}
+
+
+@media (max-width: 640px) {
+  .header-actions {
+    align-items:
+      stretch;
+
+    flex-direction:
+      column;
+
+    width:
+      100%;
+  }
+
+
+  .header-actions
+  .report-link,
+  .header-actions
+  .secondary-button {
+    width:
+      100%;
+
+    text-align:
+      center;
+  }
+}

@@ -193,6 +193,12 @@ const screenTabButtons =
   );
 
 
+const logoutButton =
+  document.getElementById(
+    "logout-button"
+  );
+
+
 const workPanel =
   document.getElementById(
     "work-panel"
@@ -464,7 +470,217 @@ let lastSavedAppData =
 initializeApp();
 
 
+// ========================================
+// 管理画面へログインする
+// ========================================
+
+async function ensureAuthenticated() {
+  try {
+    const statusResponse =
+      await fetch(
+        "../api/auth.php?time=" +
+        Date.now(),
+
+        {
+          method:
+            "GET",
+
+          cache:
+            "no-store",
+
+          credentials:
+            "same-origin"
+        }
+      );
+
+
+    if (!statusResponse.ok) {
+      throw new Error(
+        "認証状態を確認できませんでした。"
+      );
+    }
+
+
+    const statusResult =
+      await statusResponse.json();
+
+
+    if (
+      statusResult.authenticated ===
+      true
+    ) {
+      return true;
+    }
+
+
+    while (true) {
+      const enteredPassword =
+        window.prompt(
+          "管理用パスワードを入力してください。"
+        );
+
+
+      if (enteredPassword === null) {
+        window.location.href =
+          "../report/";
+
+        return false;
+      }
+
+
+      if (!enteredPassword) {
+        window.alert(
+          "パスワードを入力してください。"
+        );
+
+        continue;
+      }
+
+
+      const loginResponse =
+        await fetch(
+          "../api/auth.php",
+
+          {
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            cache:
+              "no-store",
+
+            credentials:
+              "same-origin",
+
+            body:
+              JSON.stringify(
+                {
+                  action:
+                    "login",
+
+                  password:
+                    enteredPassword
+                }
+              )
+          }
+        );
+
+
+      const loginResult =
+        await loginResponse.json();
+
+
+      if (
+        loginResponse.ok &&
+        loginResult.authenticated ===
+          true
+      ) {
+        return true;
+      }
+
+
+      window.alert(
+        loginResult.error ||
+        "パスワードが正しくありません。"
+      );
+    }
+  } catch (error) {
+    console.error(
+      "ログイン確認に失敗しました。",
+      error
+    );
+
+
+    window.alert(
+      "ログイン状態を確認できませんでした。"
+    );
+
+
+    return false;
+  }
+}
+
+
+// ========================================
+// ログアウトする
+// ========================================
+
+async function logout() {
+  const shouldLogout =
+    window.confirm(
+      "ログアウトしますか？"
+    );
+
+
+  if (!shouldLogout) {
+    return;
+  }
+
+
+  try {
+    await fetch(
+      "../api/auth.php",
+
+      {
+        method:
+          "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        cache:
+          "no-store",
+
+        credentials:
+          "same-origin",
+
+        body:
+          JSON.stringify(
+            {
+              action:
+                "logout"
+            }
+          )
+      }
+    );
+  } catch (error) {
+    console.error(
+      "ログアウトに失敗しました。",
+      error
+    );
+  }
+
+
+  window.location.href =
+    "../report/";
+}
+
+
 async function initializeApp() {
+  const isAuthenticated =
+    await ensureAuthenticated();
+
+
+  if (!isAuthenticated) {
+    return;
+  }
+
+
+  if (logoutButton) {
+    logoutButton.addEventListener(
+      "click",
+
+      logout
+    );
+  }
+
+
   appData =
     await loadAppData();
 
@@ -867,8 +1083,6 @@ function hasWorkLogContent(data) {
 // データの保存
 // ========================================
 
-let adminPassword = "";
-
 let pendingServerData = null;
 
 let serverSavePromise = null;
@@ -937,24 +1151,6 @@ async function saveQueuedDataToServer() {
     pendingServerData =
       null;
 
-    if (!adminPassword) {
-      const enteredPassword =
-        window.prompt(
-          "管理用パスワードを入力してください。"
-        );
-
-      if (!enteredPassword) {
-        restoreLastSavedAppData(
-          "保存を中止しました。"
-        );
-
-        return;
-      }
-
-      adminPassword =
-        enteredPassword;
-    }
-
     try {
       const response =
         await fetch(
@@ -970,11 +1166,11 @@ async function saveQueuedDataToServer() {
 
             cache: "no-store",
 
+            credentials:
+              "same-origin",
+
             body: JSON.stringify(
               {
-                password:
-                  adminPassword,
-
                 data:
                   dataToSave
               }
@@ -987,8 +1183,11 @@ async function saveQueuedDataToServer() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          adminPassword = "";
+          throw new Error(
+            "ログインの有効期限が切れました。ページを再読み込みしてください。"
+          );
         }
+
 
         throw new Error(
           result.error ||
