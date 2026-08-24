@@ -271,141 +271,51 @@
       </form>
     </section>
 
+        <!--
+      旧設定との互換性を保つための非表示領域です。
+      画面には表示されません。
+    -->
+    <div
+      id="legacy-work-settings"
+      hidden
+      aria-hidden="true"
+    >
+      <form id="work-time-form">
+        <span id="work-time-label">
+          1週間の作業時間
+        </span>
+
+        <input
+          id="total-work-hours"
+          type="number"
+          value="30"
+        >
+      </form>
+
+      <span id="converted-day"></span>
+      <span id="converted-week"></span>
+      <span id="converted-month"></span>
+
+      <p id="allocation-total"></p>
+
+      <div id="category-list"></div>
+
+      <button
+        id="add-category-button"
+        type="button"
+      >
+        大分類を追加
+      </button>
+    </div>
+
     <!-- ========================================
-         3. 作業時間の設定
+         3. プロジェクト一覧
     ========================================= -->
     <section class="panel">
       <div class="section-heading">
         <div>
           <p class="section-number">
             3
-          </p>
-
-          <div>
-            <h2>
-              作業時間の設定
-            </h2>
-
-          </div>
-        </div>
-      </div>
-
-      <form
-        id="work-time-form"
-        class="work-time-form"
-      >
-        <label for="total-work-hours">
-          <span id="work-time-label">
-            1週間の作業時間
-          </span>
-
-          <span class="input-with-unit">
-            <input
-              id="total-work-hours"
-              type="number"
-              min="0.5"
-              step="0.5"
-              value="30"
-              required
-            >
-
-            <span>
-              時間
-            </span>
-          </span>
-        </label>
-
-        <button
-          class="primary-button"
-          type="submit"
-        >
-          保存
-        </button>
-      </form>
-
-      <dl class="converted-time-list">
-        <div>
-          <dt>
-            1日
-          </dt>
-
-          <dd id="converted-day">
-            6時間
-          </dd>
-        </div>
-
-        <div>
-          <dt>
-            1週間
-          </dt>
-
-          <dd id="converted-week">
-            30時間
-          </dd>
-        </div>
-
-        <div>
-          <dt>
-            1か月
-          </dt>
-
-          <dd id="converted-month">
-            130時間
-          </dd>
-        </div>
-      </dl>
-    </section>
-
-    <!-- ========================================
-         3. 作業時間の割り振り
-    ========================================= -->
-    <section class="panel">
-      <div class="section-heading section-heading--between">
-        <div>
-          <p class="section-number">
-            4
-          </p>
-
-          <div>
-            <h2>
-              作業時間の割り振り
-            </h2>
-
-          </div>
-        </div>
-
-        <p
-          id="allocation-total"
-          class="allocation-total"
-        >
-          合計 100%
-        </p>
-      </div>
-
-      <div
-        id="category-list"
-        class="category-list"
-      >
-        <!-- JavaScriptで大分類とプロジェクトを表示します -->
-      </div>
-
-            <button
-        id="add-category-button"
-        class="secondary-button"
-        type="button"
-      >
-        大分類を追加
-      </button>
-    </section>
-
-    <!-- ========================================
-         4. プロジェクト一覧
-    ========================================= -->
-    <section class="panel">
-      <div class="section-heading">
-        <div>
-          <p class="section-number">
-            5
           </p>
 
           <div>
