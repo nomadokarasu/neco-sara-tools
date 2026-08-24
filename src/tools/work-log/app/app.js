@@ -3235,7 +3235,6 @@ function saveMonthlyPlan() {
                 }
 
 
-                const projectPlannedMinutes =
                 const projectAllocationPercent =
                   Math.max(
                     0,
