@@ -7224,7 +7224,9 @@ function renderRecordSummary() {
     createRecordWorkDayHtml(
       groupRecordSessionsByDay(
         sessions
-      )
+      ),
+
+      true
     );
 
 
@@ -7232,7 +7234,9 @@ function renderRecordSummary() {
     createRecordWorkDayHtml(
       groupRecordSessionsByDay(
         plannedSessions
-      )
+      ),
+
+      true
     );
 
 
@@ -7240,7 +7244,9 @@ function renderRecordSummary() {
     createRecordWorkDayHtml(
       groupRecordSessionsByDay(
         unplannedSessions
-      )
+      ),
+
+      true
     );
 
 
@@ -7715,6 +7721,25 @@ function groupRecordSessionsByDay(
           )
         );
 
+
+      const projectInformation =
+        findProjectInformation(
+          session.projectId
+        );
+
+
+      const categoryName =
+        projectInformation
+          ? projectInformation.category.name
+          : "分類情報なし";
+
+
+      const projectName =
+        projectInformation
+          ? projectInformation.project.name
+          : "プロジェクト情報なし";
+
+
       const dateKey =
         formatRecordDateForInput(
           sessionDate
@@ -7775,6 +7800,12 @@ function groupRecordSessionsByDay(
             noteIndex:
               null,
 
+            categoryName:
+              categoryName,
+
+            projectName:
+              projectName,
+
             text:
               "作業内容の記録なし",
 
@@ -7805,6 +7836,12 @@ function groupRecordSessionsByDay(
 
                 noteIndex:
                   noteIndex,
+
+                categoryName:
+                  categoryName,
+
+                projectName:
+                  projectName,
 
                 text:
                   note.text ||
@@ -7844,8 +7881,8 @@ function groupRecordSessionsByDay(
   ).sort(
     function(a, b) {
       return (
-        b.date -
-        a.date
+        a.date -
+        b.date
       );
     }
   );
@@ -7853,7 +7890,8 @@ function groupRecordSessionsByDay(
 
 
 function createRecordWorkDayHtml(
-  workDays
+  workDays,
+  showProjectInformation = false
 ) {
   if (workDays.length === 0) {
     return `
@@ -7889,9 +7927,19 @@ function createRecordWorkDayHtml(
                       ${formatWorkTimeRange(record)}
                     </time>
 
+                    ${
+                      showProjectInformation
+                        ? `
+                          <strong class="summary-work-project">
+                            【${escapeHtml(record.categoryName)}/${escapeHtml(record.projectName)}】
+                          </strong>
+                        `
+                        : ""
+                    }
+
                     <span class="work-content-text">
-  ${escapeHtml(record.text)}
-</span>
+                      ${escapeHtml(record.text)}
+                    </span>
 
 <span class="record-item-actions">
   <button
