@@ -488,40 +488,100 @@
 
   <!-- 選択期間の集計 -->
   <section class="panel">
-    <div class="record-summary-heading">
+        <div class="section-heading">
       <div>
         <p class="section-label">
           SUMMARY
         </p>
 
         <h2 id="record-period-title">
-          選択期間の集計
+          今月の集計
         </h2>
-
-        <p
-          id="record-date-range"
-          class="section-description"
-        >
-        </p>
-      </div>
-
-      <div class="record-total-time">
-        <span>
-          総作業時間
-        </span>
-
-        <strong id="record-total-time">
-          0秒
-        </strong>
       </div>
     </div>
+
+    <p
+      id="record-date-range"
+      class="record-date-range"
+      hidden
+    >
+    </p>
+
+    <div class="summary-work-accordions">
+      <details class="summary-work-accordion">
+        <summary>
+          <span>
+            総作業時間
+          </span>
+
+          <strong id="record-total-time">
+            0時間
+          </strong>
+        </summary>
+
+        <div
+          id="record-summary-all-work-days"
+          class="summary-work-day-list"
+        >
+          <p class="empty-message">
+            この月の作業記録はありません。
+          </p>
+        </div>
+      </details>
+
+      <details class="summary-work-accordion">
+        <summary>
+          <span>
+            計画内作業
+          </span>
+
+          <strong id="record-planned-work-total">
+            0時間
+          </strong>
+        </summary>
+
+        <div
+          id="record-summary-planned-work-days"
+          class="summary-work-day-list"
+        >
+          <p class="empty-message">
+            この月の計画内作業はありません。
+          </p>
+        </div>
+      </details>
+
+      <details class="summary-work-accordion">
+        <summary>
+          <span>
+            計画外作業
+          </span>
+
+          <strong id="record-unplanned-work-total">
+            0時間
+          </strong>
+        </summary>
+
+        <div
+          id="record-summary-unplanned-work-days"
+          class="summary-work-day-list"
+        >
+          <p class="empty-message">
+            この月の計画外作業はありません。
+          </p>
+        </div>
+      </details>
+    </div>
+
+    <p class="summary-description">
+      大分類を押すとプロジェクト一覧を表示します。プロジェクトを押すと作業記録を確認・編集できます。
+    </p>
 
     <div
       id="record-category-summary-list"
       class="category-summary-list"
     >
       <p class="empty-message">
-        大分類が設定されていません。
+        この月の作業記録はありません。
       </p>
     </div>
 
