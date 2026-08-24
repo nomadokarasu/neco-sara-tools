@@ -1576,6 +1576,10 @@ function calculatePlanForPeriod(
     false;
 
 
+  const categoryPlannedSeconds =
+    new Map();
+
+
   const projectPlannedSeconds =
     new Map();
 
@@ -1638,6 +1642,34 @@ function calculatePlanForPeriod(
 
       categories.forEach(
         function(categoryPlan) {
+          const categoryId =
+            String(
+              categoryPlan.categoryId
+            );
+
+
+          const dailyCategorySeconds =
+            Number(
+              categoryPlan.plannedMinutes ||
+              0
+            ) *
+            60 /
+            daysInMonth;
+
+
+          categoryPlannedSeconds.set(
+            categoryId,
+
+            (
+              categoryPlannedSeconds.get(
+                categoryId
+              ) ||
+              0
+            ) +
+            dailyCategorySeconds
+          );
+
+
           const projects =
             Array.isArray(
               categoryPlan.projects
@@ -1694,6 +1726,27 @@ function calculatePlanForPeriod(
     totalPlannedSeconds:
       Math.round(
         totalPlannedSeconds
+      ),
+
+    categoryPlannedSeconds:
+      new Map(
+        Array.from(
+          categoryPlannedSeconds.entries()
+        ).map(
+          function(
+            [
+              categoryId,
+              seconds
+            ]
+          ) {
+            return [
+              categoryId,
+              Math.round(
+                seconds
+              )
+            ];
+          }
+        )
       ),
 
     projectPlannedSeconds:
@@ -1763,6 +1816,14 @@ function renderCurrentSummary(
     );
 
 
+  const plannedCategoryIds =
+    new Set(
+      periodPlan
+        .categoryPlannedSeconds
+        .keys()
+    );
+
+
   const periodCategories =
     appData.categories.filter(
       function(category) {
@@ -1774,14 +1835,21 @@ function renderCurrentSummary(
             : [];
 
 
-        return projects.some(
-          function(project) {
-            return summaryProjectIds.has(
-              String(
-                project.id
-              )
-            );
-          }
+        return (
+          plannedCategoryIds.has(
+            String(
+              category.id
+            )
+          ) ||
+          projects.some(
+            function(project) {
+              return summaryProjectIds.has(
+                String(
+                  project.id
+                )
+              );
+            }
+          )
         );
       }
     );
@@ -2000,28 +2068,14 @@ function renderCurrentSummary(
 
 
           const categoryPlannedSeconds =
-            periodProjects.reduce(
-              function(
-                total,
-                project
-              ) {
-                return (
-                  total +
-                  (
-                    periodPlan
-                      .projectPlannedSeconds
-                      .get(
-                        String(
-                          project.id
-                        )
-                      ) ||
-                    0
-                  )
-                );
-              },
-
-              0
-            );
+            periodPlan
+              .categoryPlannedSeconds
+              .get(
+                String(
+                  category.id
+                )
+              ) ||
+            0;
 
 
           const categoryProgressRate =

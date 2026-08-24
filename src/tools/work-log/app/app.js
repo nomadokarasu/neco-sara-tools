@@ -2635,16 +2635,9 @@ function renderMonthlyPlanForm() {
               .join("");
 
 
-          const categoryHasPlan =
-            Boolean(
-              savedCategory
-            );
-
-
           return `
             <details
               class="project-status-category monthly-plan-category"
-              ${categoryHasPlan ? "open" : ""}
             >
               <summary>
                 <span>
