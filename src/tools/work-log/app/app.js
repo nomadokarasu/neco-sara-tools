@@ -2547,6 +2547,7 @@ function renderMonthlyPlanForm() {
 
 
                   const plannedPercent =
+                    savedProject &&
                     categoryPlannedMinutes > 0
                       ? (
                           Number(
