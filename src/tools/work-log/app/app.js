@@ -2700,6 +2700,12 @@ function renderMonthlyPlanForm() {
                 </div>
               </div>
 
+              <p
+                class="monthly-plan-category-project-status"
+                data-category-id="${escapeHtml(category.id)}"
+              >
+              </p>
+
               <div class="monthly-plan-category-actions">
                 <button
                   class="small-button"
@@ -3109,81 +3115,55 @@ function updateMonthlyPlanSummary() {
     );
 
 
-  const categoryMinutesMap =
-    new Map();
-
-
-  const assignedMinutes =
-    Array.from(
-      monthlyPlanProjectList
-        .querySelectorAll(
-          ".monthly-plan-project-check:checked"
-        )
-    ).reduce(
-      function(
-        total,
-        checkbox
-      ) {
-        const projectItem =
-          checkbox.closest(
-            ".monthly-plan-project-item"
-          );
-
-
-        const hoursInput =
-          projectItem.querySelector(
-            ".monthly-plan-project-hours"
-          );
-
-
-        const projectMinutes =
-          displayHoursToMonthlyMinutes(
-            hoursInput.value
-          );
-
-
-        const categoryId =
-          checkbox.dataset.categoryId;
-
-
-        categoryMinutesMap.set(
-          categoryId,
-
-          (
-            categoryMinutesMap.get(
-              categoryId
-            ) ||
-            0
-          ) +
-          projectMinutes
-        );
-
-
-        return (
-          total +
-          projectMinutes
-        );
-      },
-
-      0
-    );
+  let assignedMinutes = 0;
 
 
   monthlyPlanProjectList
     .querySelectorAll(
-      ".monthly-plan-category-total"
+      ".monthly-plan-category"
     )
     .forEach(
-      function(categoryTotal) {
-        const categoryId =
-          categoryTotal.dataset.categoryId;
+      function(categoryDetails) {
+        const categoryHoursInput =
+          categoryDetails.querySelector(
+            ".monthly-plan-category-hours"
+          );
+
+
+        const categoryPercentInput =
+          categoryDetails.querySelector(
+            ".monthly-plan-category-percent"
+          );
+
+
+        const categorySummaryValue =
+          categoryDetails.querySelector(
+            ".monthly-plan-category-summary-value"
+          );
+
+
+        const projectStatus =
+          categoryDetails.querySelector(
+            ".monthly-plan-category-project-status"
+          );
+
+
+        if (
+          !categoryHoursInput ||
+          !categoryPercentInput
+        ) {
+          return;
+        }
 
 
         const categoryMinutes =
-          categoryMinutesMap.get(
-            categoryId
-          ) ||
-          0;
+          displayHoursToMonthlyMinutes(
+            categoryHoursInput.value
+          );
+
+
+        assignedMinutes +=
+          categoryMinutes;
 
 
         const categoryPercent =
@@ -3196,15 +3176,104 @@ function updateMonthlyPlanSummary() {
             : 0;
 
 
-        categoryTotal.textContent =
+        categoryPercentInput.value =
           formatInputNumber(
             categoryPercent
-          ) +
-          "％ / " +
-          formatHours(
-            categoryMinutes /
-            60
           );
+
+
+        if (categorySummaryValue) {
+          categorySummaryValue.textContent =
+            formatInputNumber(
+              categoryPercent
+            ) +
+            "％ / " +
+            formatHours(
+              monthlyMinutesToDisplayHours(
+                categoryMinutes
+              )
+            );
+        }
+
+
+        const projectAssignedMinutes =
+          Array.from(
+            categoryDetails
+              .querySelectorAll(
+                ".monthly-plan-project-check:checked"
+              )
+          ).reduce(
+            function(
+              total,
+              checkbox
+            ) {
+              const projectItem =
+                checkbox.closest(
+                  ".monthly-plan-project-item"
+                );
+
+
+              const hoursInput =
+                projectItem.querySelector(
+                  ".monthly-plan-project-hours"
+                );
+
+
+              return (
+                total +
+                displayHoursToMonthlyMinutes(
+                  hoursInput.value
+                )
+              );
+            },
+
+            0
+          );
+
+
+        const projectDifference =
+          categoryMinutes -
+          projectAssignedMinutes;
+
+
+        if (projectStatus) {
+          if (projectDifference >= 0) {
+            projectStatus.textContent =
+              "プロジェクトへ割り振り済み：" +
+              formatHours(
+                monthlyMinutesToDisplayHours(
+                  projectAssignedMinutes
+                )
+              ) +
+              "／未割り振り：" +
+              formatHours(
+                monthlyMinutesToDisplayHours(
+                  projectDifference
+                )
+              );
+
+
+            projectStatus.classList.remove(
+              "has-error"
+            );
+          } else {
+            projectStatus.textContent =
+              "プロジェクトの予定時間が、大分類の予定時間を " +
+              formatHours(
+                monthlyMinutesToDisplayHours(
+                  Math.abs(
+                    projectDifference
+                  )
+                )
+              ) +
+              " 超過しています。";
+
+
+            projectStatus.classList.add(
+              "has-error"
+            );
+          }
+        }
       }
     );
 
@@ -3306,143 +3375,147 @@ function saveMonthlyPlan() {
   }
 
 
-  const categoryPlanMap =
-    new Map();
-
-
-  monthlyPlanProjectList
-    .querySelectorAll(
-      ".monthly-plan-project-check:checked"
-    )
-    .forEach(
-      function(checkbox) {
-        const categoryId =
-          checkbox.dataset.categoryId;
-
-        const projectId =
-          checkbox.dataset.projectId;
-
-
-        const projectInformation =
-          findProjectInformation(
-            projectId
-          );
-
-
-        if (!projectInformation) {
-          return;
-        }
-
-
-        const projectItem =
-          checkbox.closest(
-            ".monthly-plan-project-item"
-          );
-
-
-        const hoursInput =
-          projectItem.querySelector(
-            ".monthly-plan-project-hours"
-          );
-
-
-        const plannedMinutes =
-          displayHoursToMonthlyMinutes(
-            hoursInput.value
-          );
-
-
-        if (
-          !categoryPlanMap.has(
-            categoryId
-          )
-        ) {
-          categoryPlanMap.set(
-            categoryId,
-
-            {
-              categoryId:
-                categoryId,
-
-              categoryName:
-                projectInformation
-                  .category.name,
-
-              allocationPercent:
-                0,
-
-              plannedMinutes:
-                0,
-
-              projects:
-                []
-            }
-          );
-        }
-
-
-        const categoryPlan =
-          categoryPlanMap.get(
-            categoryId
-          );
-
-
-        categoryPlan.projects.push(
-          {
-            projectId:
-              projectId,
-
-            projectName:
-              projectInformation
-                .project.name,
-
-            allocationPercent:
-              0,
-
-            plannedMinutes:
-              plannedMinutes
-          }
-        );
-
-
-        categoryPlan.plannedMinutes +=
-          plannedMinutes;
-      }
-    );
-
-
   const categoryPlans =
     Array.from(
-      categoryPlanMap.values()
-    );
+      monthlyPlanProjectList
+        .querySelectorAll(
+          ".monthly-plan-category"
+        )
+    )
+      .map(
+        function(categoryDetails) {
+          const categoryHoursInput =
+            categoryDetails.querySelector(
+              ".monthly-plan-category-hours"
+            );
 
 
-  categoryPlans.forEach(
-    function(categoryPlan) {
-      categoryPlan.allocationPercent =
-        totalMinutes > 0
-          ? (
-              categoryPlan.plannedMinutes /
-              totalMinutes *
-              100
-            )
-          : 0;
+          if (!categoryHoursInput) {
+            return null;
+          }
 
 
-      categoryPlan.projects.forEach(
-        function(projectPlan) {
-          projectPlan.allocationPercent =
-            totalMinutes > 0
-              ? (
-                  projectPlan.plannedMinutes /
-                  totalMinutes *
-                  100
+          const categoryId =
+            categoryHoursInput
+              .dataset.categoryId;
+
+
+          const category =
+            findCategory(
+              categoryId
+            );
+
+
+          if (!category) {
+            return null;
+          }
+
+
+          const categoryPlannedMinutes =
+            displayHoursToMonthlyMinutes(
+              categoryHoursInput.value
+            );
+
+
+          const projectPlans =
+            Array.from(
+              categoryDetails
+                .querySelectorAll(
+                  ".monthly-plan-project-check:checked"
                 )
-              : 0;
+            ).map(
+              function(checkbox) {
+                const projectId =
+                  checkbox.dataset.projectId;
+
+
+                const project =
+                  findProject(
+                    category,
+                    projectId
+                  );
+
+
+                if (!project) {
+                  return null;
+                }
+
+
+                const projectItem =
+                  checkbox.closest(
+                    ".monthly-plan-project-item"
+                  );
+
+
+                const hoursInput =
+                  projectItem.querySelector(
+                    ".monthly-plan-project-hours"
+                  );
+
+
+                const projectPlannedMinutes =
+                  displayHoursToMonthlyMinutes(
+                    hoursInput.value
+                  );
+
+
+                return {
+                  projectId:
+                    project.id,
+
+                  projectName:
+                    project.name,
+
+                  allocationPercent:
+                    categoryPlannedMinutes > 0
+                      ? (
+                          projectPlannedMinutes /
+                          categoryPlannedMinutes *
+                          100
+                        )
+                      : 0,
+
+                  plannedMinutes:
+                    projectPlannedMinutes
+                };
+              }
+            )
+              .filter(Boolean);
+
+
+          if (
+            categoryPlannedMinutes <= 0 &&
+            projectPlans.length === 0
+          ) {
+            return null;
+          }
+
+
+          return {
+            categoryId:
+              category.id,
+
+            categoryName:
+              category.name,
+
+            allocationPercent:
+              totalMinutes > 0
+                ? (
+                    categoryPlannedMinutes /
+                    totalMinutes *
+                    100
+                  )
+                : 0,
+
+            plannedMinutes:
+              categoryPlannedMinutes,
+
+            projects:
+              projectPlans
+          };
         }
-      );
-    }
-  );
+      )
+      .filter(Boolean);
 
 
   appData.monthlyPlans[

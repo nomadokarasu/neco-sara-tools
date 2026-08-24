@@ -2867,3 +2867,20 @@ details[open] > summary::before {
   content:
     "▼";
 }
+
+.monthly-plan-category-project-status {
+  margin:
+    8px 0 12px;
+
+  color:
+    var(--sub-text-color);
+
+  font-size:
+    0.85rem;
+}
+
+
+.monthly-plan-category-project-status.has-error {
+  color:
+    var(--danger-color);
+}
