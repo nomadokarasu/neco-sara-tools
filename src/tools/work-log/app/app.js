@@ -5205,29 +5205,10 @@ function renderProgressList() {
     currentCategories
       .map(
         function(category) {
-          const currentProjects =
-            getCurrentProjects(
-              category
-            );
-
-
           const categoryPlannedSeconds =
-            currentProjects.reduce(
-              function(
-                totalSeconds,
-                project
-              ) {
-                return (
-                  totalSeconds +
-                  getProjectPlannedSeconds(
-                    project.id
-                  )
-                );
-              },
-
-              0
+            getCategoryPlannedSeconds(
+              category.id
             );
-
 
           const categoryActualSeconds =
             getCategoryActualSeconds(
@@ -6160,6 +6141,42 @@ function getCurrentPlanningPeriodRange() {
 
 
 // ========================================
+// 月間計画から大分類を探す
+// ========================================
+
+function findMonthlyCategoryPlan(
+  monthlyPlan,
+  categoryId
+) {
+  if (
+    !monthlyPlan ||
+    !Array.isArray(
+      monthlyPlan.categories
+    )
+  ) {
+    return null;
+  }
+
+
+  return (
+    monthlyPlan.categories.find(
+      function(categoryPlan) {
+        return (
+          String(
+            categoryPlan.categoryId
+          ) ===
+          String(
+            categoryId
+          )
+        );
+      }
+    ) ||
+    null
+  );
+}
+
+
+// ========================================
 // 月間計画からプロジェクトを探す
 // ========================================
 
@@ -6211,6 +6228,83 @@ function findMonthlyProjectPlan(
 
 
   return null;
+}
+
+
+// ========================================
+// 大分類の予定秒数
+// ========================================
+
+function getCategoryPlannedSeconds(
+  categoryId
+) {
+  const periodRange =
+    getCurrentPlanningPeriodRange();
+
+  const currentDate =
+    new Date(
+      periodRange.start
+    );
+
+  let plannedSeconds = 0;
+
+
+  while (
+    currentDate <
+    periodRange.end
+  ) {
+    const monthKey =
+      createMonthKey(
+        currentDate
+      );
+
+
+    const monthlyPlan =
+      appData.monthlyPlans &&
+      appData.monthlyPlans[
+        monthKey
+      ];
+
+
+    const categoryPlan =
+      findMonthlyCategoryPlan(
+        monthlyPlan,
+        categoryId
+      );
+
+
+    if (categoryPlan) {
+      const daysInMonth =
+        new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1,
+          0
+        ).getDate();
+
+
+      const plannedMinutes =
+        Number(
+          categoryPlan.plannedMinutes
+        ) ||
+        0;
+
+
+      plannedSeconds +=
+        plannedMinutes *
+        60 /
+        daysInMonth;
+    }
+
+
+    currentDate.setDate(
+      currentDate.getDate() + 1
+    );
+  }
+
+
+  return Math.round(
+    plannedSeconds
+  );
 }
 
 
