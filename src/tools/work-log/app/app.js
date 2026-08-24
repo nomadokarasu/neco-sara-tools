@@ -64,6 +64,18 @@ const monthlyPlanTotalHoursInput =
   );
 
 
+const monthlyPlanTotalLabel =
+  document.getElementById(
+    "monthly-plan-total-label"
+  );
+
+
+const monthlyPlanSummaryTotalLabel =
+  document.getElementById(
+    "monthly-plan-summary-total-label"
+  );
+
+
 const monthlyPlanProjectList =
   document.getElementById(
     "monthly-plan-project-list"
