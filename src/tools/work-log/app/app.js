@@ -118,12 +118,6 @@ const monthlyPlanAddCategoryButton =
   );
 
 
-const monthlyPlanSaveButton =
-  document.getElementById(
-    "monthly-plan-save-button"
-  );
-
-
 const workTimeLabel =
   document.getElementById(
     "work-time-label"
@@ -1148,10 +1142,6 @@ function initializeMonthlyPlan() {
   }
 
 
-  monthlyPlanForm.noValidate =
-    true;
-
-
   monthlyPlanMonthInput.value =
     createMonthKey(
       new Date()
@@ -1317,26 +1307,15 @@ function initializeMonthlyPlan() {
   );
 
 
-  if (monthlyPlanSaveButton) {
-    monthlyPlanSaveButton.addEventListener(
-      "click",
+  monthlyPlanForm.addEventListener(
+    "submit",
 
-      function() {
-        saveMonthlyPlan();
-      }
-    );
-  } else {
-    monthlyPlanForm.addEventListener(
-      "submit",
+    function(event) {
+      event.preventDefault();
 
-      function(event) {
-        event.preventDefault();
-
-        saveMonthlyPlan();
-      }
-    );
-  }
-
+      saveMonthlyPlan();
+    }
+  );
 
   copyPreviousPlanButton.addEventListener(
     "click",
@@ -2547,7 +2526,6 @@ function renderMonthlyPlanForm() {
 
 
                   const plannedPercent =
-                    savedProject &&
                     categoryPlannedMinutes > 0
                       ? (
                           Number(
@@ -2612,7 +2590,7 @@ function renderMonthlyPlanForm() {
                             class="monthly-plan-project-hours"
                             type="number"
                             min="0"
-                            step="0.1"
+                            step="0.5"
                             value="${formatInputNumber(plannedHours)}"
                             data-category-id="${escapeHtml(category.id)}"
                             data-project-id="${escapeHtml(project.id)}"
@@ -2697,6 +2675,7 @@ function renderMonthlyPlanForm() {
                       class="monthly-plan-category-percent"
                       type="number"
                       min="0"
+                      max="100"
                       step="0.1"
                       value="${formatInputNumber(categoryPlannedPercent)}"
                       data-category-id="${escapeHtml(category.id)}"
@@ -2712,7 +2691,7 @@ function renderMonthlyPlanForm() {
                       class="monthly-plan-category-hours"
                       type="number"
                       min="0"
-                      step="0.1"
+                      step="0.5"
                       value="${formatInputNumber(categoryPlannedHours)}"
                       data-category-id="${escapeHtml(category.id)}"
                     >
