@@ -943,91 +943,26 @@ function isTimestampInRange(
 function renderPeriodInformation(
   periodRange
 ) {
-  if (selectedPeriod === "day") {
-    reportPeriodTitle.textContent =
-      formatJapaneseDate(
-        periodRange.start
-      ) +
-      "の集計";
-  }
-
-
-if (selectedPeriod === "week") {
-  const weekEnd =
-    new Date(
-      periodRange.end
-    );
-
-  weekEnd.setDate(
-    weekEnd.getDate() - 1
-  );
-
   reportPeriodTitle.textContent =
-    formatReportMonthDay(
-      periodRange.start
-    ) +
-    "～" +
-    formatReportMonthDay(
-      weekEnd
-    ) +
-    "の集計";
-}
-
-
-  if (selectedPeriod === "month") {
-    reportPeriodTitle.textContent =
-      periodRange.start.getFullYear() +
-      "年" +
-      (
-        periodRange.start.getMonth() +
-        1
-      ) +
-      "月の集計";
-  }
-
-
-  const displayEnd =
-    new Date(
-      periodRange.end.getTime() -
+    periodRange.start.getFullYear() +
+    "年" +
+    (
+      periodRange.start.getMonth() +
       1
-    );
+    ) +
+    "月の集計";
 
 
-  if (selectedPeriod === "day") {
-    reportDateRange.hidden =
-      true;
+  reportDateRange.hidden =
+    true;
 
 
-    dailyWorkDetails.hidden =
-      false;
+  dailyWorkDetails.hidden =
+    true;
 
 
-    dailyWorkDate.textContent =
-      formatJapaneseDate(
-        periodRange.start
-      );
-  } else {
-    reportDateRange.hidden =
-      false;
-
-
-    dailyWorkDetails.hidden =
-      true;
-
-
-    dailyWorkDetails.open =
-      false;
-
-
-    reportDateRange.textContent =
-      formatJapaneseDate(
-        periodRange.start
-      ) +
-      " ～ " +
-      formatJapaneseDate(
-        displayEnd
-      );
-  }
+  dailyWorkDetails.open =
+    false;
 }
 
 
@@ -1323,12 +1258,16 @@ function getCurrentProjects(
 function calculatePlanForPeriod(
   periodRange
 ) {
-  let totalPlannedSeconds =
-    0;
+  const monthKey =
+    formatMonthForInput(
+      periodRange.start
+    );
 
 
-  let hasMonthlyPlan =
-    false;
+  const monthlyPlan =
+    appData.monthlyPlans[
+      monthKey
+    ] || null;
 
 
   const categoryPlannedSeconds =
@@ -1339,191 +1278,115 @@ function calculatePlanForPeriod(
     new Map();
 
 
-  const currentDate =
-    startOfDay(
-      periodRange.start
-    );
+  if (!monthlyPlan) {
+    return {
+      hasMonthlyPlan:
+        false,
+
+      totalPlannedSeconds:
+        0,
+
+      categoryPlannedSeconds:
+        categoryPlannedSeconds,
+
+      projectPlannedSeconds:
+        projectPlannedSeconds
+    };
+  }
 
 
-  while (
-    currentDate <
-    periodRange.end
-  ) {
-    const monthKey =
-      formatMonthForInput(
-        currentDate
-      );
+  const categories =
+    Array.isArray(
+      monthlyPlan.categories
+    )
+      ? monthlyPlan.categories
+      : [];
 
 
-    const monthlyPlan =
-      appData.monthlyPlans[
-        monthKey
-      ];
+  categories.forEach(
+    function(categoryPlan) {
+      const categoryId =
+        String(
+          categoryPlan.categoryId
+        );
 
 
-    if (monthlyPlan) {
-      hasMonthlyPlan =
-        true;
+      categoryPlannedSeconds.set(
+        categoryId,
 
+        Math.max(
+          0,
 
-      const daysInMonth =
-        new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() + 1,
-          0
-        ).getDate();
-
-
-      const dailyTotalSeconds =
-        Number(
-          monthlyPlan.totalMinutes ||
-          0
-        ) *
-        60 /
-        daysInMonth;
-
-
-      totalPlannedSeconds +=
-        dailyTotalSeconds;
-
-
-      const categories =
-        Array.isArray(
-          monthlyPlan.categories
-        )
-          ? monthlyPlan.categories
-          : [];
-
-
-      categories.forEach(
-        function(categoryPlan) {
-          const categoryId =
-            String(
-              categoryPlan.categoryId
-            );
-
-
-          const dailyCategorySeconds =
+          Math.round(
             Number(
               categoryPlan.plannedMinutes ||
               0
             ) *
-            60 /
-            daysInMonth;
+            60
+          )
+        )
+      );
 
 
-          categoryPlannedSeconds.set(
-            categoryId,
-
-            (
-              categoryPlannedSeconds.get(
-                categoryId
-              ) ||
-              0
-            ) +
-            dailyCategorySeconds
-          );
+      const projects =
+        Array.isArray(
+          categoryPlan.projects
+        )
+          ? categoryPlan.projects
+          : [];
 
 
-          const projects =
-            Array.isArray(
-              categoryPlan.projects
-            )
-              ? categoryPlan.projects
-              : [];
+      projects.forEach(
+        function(projectPlan) {
+          const projectId =
+            String(
+              projectPlan.projectId
+            );
 
 
-          projects.forEach(
-            function(projectPlan) {
-              const projectId =
-                String(
-                  projectPlan.projectId
-                );
+          projectPlannedSeconds.set(
+            projectId,
 
+            Math.max(
+              0,
 
-              const dailyProjectSeconds =
+              Math.round(
                 Number(
                   projectPlan.plannedMinutes ||
                   0
                 ) *
-                60 /
-                daysInMonth;
-
-
-              projectPlannedSeconds.set(
-                projectId,
-
-                (
-                  projectPlannedSeconds.get(
-                    projectId
-                  ) ||
-                  0
-                ) +
-                dailyProjectSeconds
-              );
-            }
+                60
+              )
+            )
           );
         }
       );
     }
-
-
-    currentDate.setDate(
-      currentDate.getDate() + 1
-    );
-  }
+  );
 
 
   return {
     hasMonthlyPlan:
-      hasMonthlyPlan,
+      true,
 
     totalPlannedSeconds:
-      Math.round(
-        totalPlannedSeconds
+      Math.max(
+        0,
+
+        Math.round(
+          Number(
+            monthlyPlan.totalMinutes ||
+            0
+          ) *
+          60
+        )
       ),
 
     categoryPlannedSeconds:
-      new Map(
-        Array.from(
-          categoryPlannedSeconds.entries()
-        ).map(
-          function(
-            [
-              categoryId,
-              seconds
-            ]
-          ) {
-            return [
-              categoryId,
-              Math.round(
-                seconds
-              )
-            ];
-          }
-        )
-      ),
+      categoryPlannedSeconds,
 
     projectPlannedSeconds:
-      new Map(
-        Array.from(
-          projectPlannedSeconds.entries()
-        ).map(
-          function(
-            [
-              projectId,
-              seconds
-            ]
-          ) {
-            return [
-              projectId,
-              Math.round(
-                seconds
-              )
-            ];
-          }
-        )
-      )
+      projectPlannedSeconds
   };
 }
 
@@ -3397,23 +3260,11 @@ function getSelectedPeriodHours() {
     ) || 0;
 
 
-  if (selectedPeriod === "day") {
-    return (
-      weeklyHours / 7
-    );
-  }
-
-
-  if (selectedPeriod === "month") {
-    return (
-      weeklyHours *
-      52 /
-      12
-    );
-  }
-
-
-  return weeklyHours;
+  return (
+    weeklyHours *
+    52 /
+    12
+  );
 }
 
 
