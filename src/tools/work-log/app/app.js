@@ -2551,20 +2551,21 @@ function renderMonthlyPlanForm() {
 
                   return `
                     <div class="monthly-plan-project-item">
-                      <label class="monthly-plan-project-check-label">
+                      <div class="monthly-plan-project-check-label">
                         <input
                           class="monthly-plan-project-check"
                           type="checkbox"
                           data-category-id="${escapeHtml(category.id)}"
                           data-project-id="${escapeHtml(project.id)}"
-                          ${isSelected ? "checked" : ""}
+                          checked
+                          hidden
                         >
 
                         <span>
                           ${escapeHtml(project.name)}
                           ${archiveLabel}
                         </span>
-                      </label>
+                      </div>
 
                       <div class="monthly-plan-value-fields">
                         <label class="monthly-plan-percent-field">
@@ -2572,11 +2573,11 @@ function renderMonthlyPlanForm() {
                             class="monthly-plan-project-percent"
                             type="number"
                             min="0"
+                            max="100"
                             step="0.1"
                             value="${formatInputNumber(plannedPercent)}"
                             data-category-id="${escapeHtml(category.id)}"
                             data-project-id="${escapeHtml(project.id)}"
-                            ${isSelected ? "" : "disabled"}
                           >
 
                           <span>
@@ -2595,7 +2596,6 @@ function renderMonthlyPlanForm() {
                             data-project-id="${escapeHtml(project.id)}"
                             readonly
                             tabindex="-1"
-                            ${isSelected ? "" : "disabled"}
                           >
 
                           <span>
@@ -3629,6 +3629,13 @@ function saveMonthlyPlan() {
                   displayHoursToMonthlyMinutes(
                     hoursInput.value
                   );
+
+
+                if (
+                  projectPlannedMinutes <= 0
+                ) {
+                  return null;
+                }
 
 
                 return {
