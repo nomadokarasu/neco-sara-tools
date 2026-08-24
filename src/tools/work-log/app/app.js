@@ -3099,6 +3099,17 @@ function saveMonthlyPlan() {
     monthlyPlanMonthInput.value;
 
 
+  const savedPlan =
+    monthKey
+      ? (
+          appData.monthlyPlans[
+            monthKey
+          ] ||
+          null
+        )
+      : null;
+
+
   const totalMinutes =
     displayHoursToMonthlyMinutes(
       monthlyPlanTotalHoursInput.value
