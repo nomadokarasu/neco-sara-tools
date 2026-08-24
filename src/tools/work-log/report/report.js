@@ -160,6 +160,24 @@ const categorySummaryList =
   );
 
 
+const summaryAllWorkDays =
+  document.getElementById(
+    "summary-all-work-days"
+  );
+
+
+const summaryPlannedWorkDays =
+  document.getElementById(
+    "summary-planned-work-days"
+  );
+
+
+const summaryUnplannedWorkDays =
+  document.getElementById(
+    "summary-unplanned-work-days"
+  );
+
+
 const currentProjectList =
   document.getElementById(
     "current-project-list"
@@ -248,6 +266,9 @@ async function initializeReport() {
 
 function captureOpenDetailsState() {
   const rootIds = [
+    "summary-all-work-days",
+    "summary-planned-work-days",
+    "summary-unplanned-work-days",
     "category-summary-list",
     "current-project-list",
     "project-report-list"
@@ -1774,6 +1795,334 @@ function calculatePlanForPeriod(
 
 
 // ========================================
+// 作業記録が計画内か確認する
+// ========================================
+
+function isSessionPlanned(
+  session
+) {
+  const sessionDate =
+    new Date(
+      session.startedAt
+    );
+
+
+  const monthKey =
+    formatMonthForInput(
+      sessionDate
+    );
+
+
+  const monthlyPlan =
+    appData.monthlyPlans[
+      monthKey
+    ];
+
+
+  if (
+    !monthlyPlan ||
+    !Array.isArray(
+      monthlyPlan.categories
+    )
+  ) {
+    return false;
+  }
+
+
+  return monthlyPlan.categories.some(
+    function(categoryPlan) {
+      const projects =
+        Array.isArray(
+          categoryPlan.projects
+        )
+          ? categoryPlan.projects
+          : [];
+
+
+      return projects.some(
+        function(projectPlan) {
+          return (
+            String(
+              projectPlan.projectId
+            ) ===
+            String(
+              session.projectId
+            )
+          );
+        }
+      );
+    }
+  );
+}
+
+
+// ========================================
+// SUMMARY用の日付一覧を作成する
+// ========================================
+
+function createSummaryWorkDaysHtml(
+  sessions,
+  emptyMessage
+) {
+  if (
+    !Array.isArray(
+      sessions
+    ) ||
+    sessions.length === 0
+  ) {
+    return `
+      <p class="empty-message">
+        ${escapeHtml(emptyMessage)}
+      </p>
+    `;
+  }
+
+
+  const workDayMap =
+    new Map();
+
+
+  sessions.forEach(
+    function(session) {
+      const sessionDate =
+        new Date(
+          session.startedAt
+        );
+
+
+      const dateKey =
+        formatDateForInput(
+          sessionDate
+        );
+
+
+      if (
+        !workDayMap.has(
+          dateKey
+        )
+      ) {
+        workDayMap.set(
+          dateKey,
+
+          {
+            date:
+              startOfDay(
+                sessionDate
+              ),
+
+            totalSeconds:
+              0,
+
+            items:
+              []
+          }
+        );
+      }
+
+
+      const workDay =
+        workDayMap.get(
+          dateKey
+        );
+
+
+      workDay.totalSeconds +=
+        Number(
+          session.elapsedSeconds ||
+          0
+        );
+
+
+      const projectInformation =
+        findProjectInformation(
+          session.projectId
+        );
+
+
+      const categoryName =
+        projectInformation
+          ? projectInformation
+              .category.name
+          : "分類情報なし";
+
+
+      const projectName =
+        projectInformation
+          ? projectInformation
+              .project.name
+          : "プロジェクト情報なし";
+
+
+      const notes =
+        Array.isArray(
+          session.notes
+        ) &&
+        session.notes.length > 0
+          ? session.notes
+          : [
+              {
+                text:
+                  "作業内容の記録なし",
+
+                startedAt:
+                  session.startedAt,
+
+                endedAt:
+                  session.endedAt ||
+                  session.startedAt
+              }
+            ];
+
+
+      notes.forEach(
+        function(note) {
+          const startedAt =
+            Number(
+              note.startedAt
+            ) ||
+            Number(
+              session.startedAt
+            );
+
+
+          const endedAt =
+            Number(
+              note.endedAt
+            ) ||
+            Number(
+              note.createdAt
+            ) ||
+            Number(
+              session.endedAt
+            ) ||
+            startedAt;
+
+
+          workDay.items.push(
+            {
+              startedAt:
+                startedAt,
+
+              endedAt:
+                endedAt,
+
+              categoryName:
+                categoryName,
+
+              projectName:
+                projectName,
+
+              text:
+                note.text ||
+                "作業内容の記録なし"
+            }
+          );
+        }
+      );
+    }
+  );
+
+
+  const workDays =
+    Array.from(
+      workDayMap.values()
+    ).sort(
+      function(a, b) {
+        return (
+          a.date -
+          b.date
+        );
+      }
+    );
+
+
+  return workDays
+    .map(
+      function(workDay) {
+        const items =
+          workDay.items
+            .slice()
+            .sort(
+              function(a, b) {
+                return (
+                  a.startedAt -
+                  b.startedAt
+                );
+              }
+            );
+
+
+        const itemHtml =
+          items
+            .map(
+              function(item) {
+                const elapsedSeconds =
+                  Math.max(
+                    0,
+
+                    Math.floor(
+                      (
+                        item.endedAt -
+                        item.startedAt
+                      ) /
+                      1000
+                    )
+                  );
+
+
+                return `
+                  <li>
+                    <time class="work-time-range">
+                      ${formatClockTime(item.startedAt)}
+                      ～
+                      ${formatClockTime(item.endedAt)}
+                    </time>
+
+                    <strong class="summary-work-project">
+                      【${escapeHtml(item.categoryName)}/${escapeHtml(item.projectName)}】
+                    </strong>
+
+                    <span class="work-content-text">
+                      ${escapeHtml(item.text)}
+                      （${formatSecondsAsText(elapsedSeconds)}）
+                    </span>
+                  </li>
+                `;
+              }
+            )
+            .join("");
+
+
+        return `
+          <details class="work-day-item is-collapsible">
+            <summary>
+              <time
+                class="work-day-date"
+                datetime="${formatDateForInput(workDay.date)}"
+              >
+                ${formatJapaneseDate(workDay.date)}
+              </time>
+
+              <span class="work-day-total">
+                合計
+                ${formatSecondsAsText(workDay.totalSeconds)}
+              </span>
+            </summary>
+
+            <div class="work-day-content">
+              <ul class="work-content-list summary-work-content-list">
+                ${itemHtml}
+              </ul>
+            </div>
+          </details>
+        `;
+      }
+    )
+    .join("");
+}
+
+
+// ========================================
 // 月間計画と実績のSUMMARY
 // ========================================
 
@@ -1877,27 +2226,32 @@ function renderCurrentSummary(
     periodPlan.totalPlannedSeconds;
 
 
+  const plannedSessions =
+    sessions.filter(
+      function(session) {
+        return isSessionPlanned(
+          session
+        );
+      }
+    );
+
+
+  const unplannedSessions =
+    sessions.filter(
+      function(session) {
+        return !isSessionPlanned(
+          session
+        );
+      }
+    );
+
+
   const plannedActualSeconds =
-    sessions.reduce(
+    plannedSessions.reduce(
       function(
         total,
         session
       ) {
-        const projectId =
-          String(
-            session.projectId
-          );
-
-
-        if (
-          !plannedProjectIds.has(
-            projectId
-          )
-        ) {
-          return total;
-        }
-
-
         return (
           total +
           Number(
@@ -1912,11 +2266,21 @@ function renderCurrentSummary(
 
 
   const unplannedActualSeconds =
-    Math.max(
-      0,
+    unplannedSessions.reduce(
+      function(
+        total,
+        session
+      ) {
+        return (
+          total +
+          Number(
+            session.elapsedSeconds ||
+            0
+          )
+        );
+      },
 
-      totalSeconds -
-      plannedActualSeconds
+      0
     );
 
 
@@ -1943,6 +2307,27 @@ function renderCurrentSummary(
   unplannedWorkTotal.textContent =
     formatSecondsAsText(
       unplannedActualSeconds
+    );
+
+
+  summaryAllWorkDays.innerHTML =
+    createSummaryWorkDaysHtml(
+      sessions,
+      "この期間の作業記録はありません。"
+    );
+
+
+  summaryPlannedWorkDays.innerHTML =
+    createSummaryWorkDaysHtml(
+      plannedSessions,
+      "この期間の計画内作業はありません。"
+    );
+
+
+  summaryUnplannedWorkDays.innerHTML =
+    createSummaryWorkDaysHtml(
+      unplannedSessions,
+      "この期間の計画外作業はありません。"
     );
 
 

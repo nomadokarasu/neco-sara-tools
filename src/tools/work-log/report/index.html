@@ -174,29 +174,72 @@
           <h2 id="report-period-title">
             今週の集計
           </h2>
-
-        </div>
-
-        <div class="total-time">
-          <span>
-            総作業時間
-          </span>
-
-          <strong id="report-total-time">
-            0分
-          </strong>
         </div>
       </div>
 
       <p
         id="report-date-range"
         class="report-date-range"
+        hidden
       >
       </p>
 
-      <details
-        id="daily-work-details"
-        class="daily-work-details"
+      <div class="summary-work-accordions">
+        <details class="summary-work-accordion">
+          <summary>
+            <span>
+              総作業時間
+            </span>
+
+            <strong id="report-total-time">
+              0時間
+            </strong>
+          </summary>
+
+          <div
+            id="summary-all-work-days"
+            class="summary-work-day-list"
+          >
+            <p class="empty-message">
+              この期間の作業記録はありません。
+            </p>
+          </div>
+        </details>
+
+        <details class="summary-work-accordion">
+          <summary>
+            <span>
+              計画内作業
+            </span>
+
+            <strong id="planned-work-total">
+              0時間
+            </strong>
+          </summary>
+
+          <div
+            id="summary-planned-work-days"
+            class="summary-work-day-list"
+          >
+            <p class="empty-message">
+              この期間の計画内作業はありません。
+            </p>
+          </div>
+        </details>
+
+        <details class="summary-work-accordion">
+          <summary>
+            <span>
+              計画外作業
+            </span>
+
+            <strong id="unplanned-work-total">
+              0時間
+            </strong>
+          </summary>
+
+          <div
+            id="summary-un
         hidden
       >
         <summary

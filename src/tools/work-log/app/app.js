@@ -2018,29 +2018,25 @@ function recalculateStoredMonthlyPlan(
           projects;
 
 
-        categoryPlan.plannedMinutes =
-          projects.reduce(
-            function(
-              total,
-              projectPlan
-            ) {
-              return (
-                total +
-                Number(
-                  projectPlan.plannedMinutes ||
-                  0
-                )
-              );
-            },
+        const categoryPlannedMinutes =
+          Math.max(
+            0,
 
-            0
+            Number(
+              categoryPlan.plannedMinutes ||
+              0
+            )
           );
+
+
+        categoryPlan.plannedMinutes =
+          categoryPlannedMinutes;
 
 
         categoryPlan.allocationPercent =
           totalMinutes > 0
             ? (
-                categoryPlan.plannedMinutes /
+                categoryPlannedMinutes /
                 totalMinutes *
                 100
               )
@@ -2049,14 +2045,26 @@ function recalculateStoredMonthlyPlan(
 
         projects.forEach(
           function(projectPlan) {
+            const projectPlannedMinutes =
+              Math.max(
+                0,
+
+                Number(
+                  projectPlan.plannedMinutes ||
+                  0
+                )
+              );
+
+
+            projectPlan.plannedMinutes =
+              projectPlannedMinutes;
+
+
             projectPlan.allocationPercent =
-              totalMinutes > 0
+              categoryPlannedMinutes > 0
                 ? (
-                    Number(
-                      projectPlan.plannedMinutes ||
-                      0
-                    ) /
-                    totalMinutes *
+                    projectPlannedMinutes /
+                    categoryPlannedMinutes *
                     100
                   )
                 : 0;
@@ -2064,7 +2072,10 @@ function recalculateStoredMonthlyPlan(
         );
 
 
-        return projects.length > 0;
+        return (
+          categoryPlannedMinutes > 0 ||
+          projects.length > 0
+        );
       }
     );
 }
@@ -3336,6 +3347,146 @@ function updateMonthlyPlanSummary() {
 
 
 // ========================================
+// 月間計画の超過状態を確認する
+// ========================================
+
+function getMonthlyPlanOverAllocationWarnings() {
+  const warnings =
+    [];
+
+
+  const totalMinutes =
+    displayHoursToMonthlyMinutes(
+      monthlyPlanTotalHoursInput.value
+    );
+
+
+  let categoryAssignedMinutes =
+    0;
+
+
+  monthlyPlanProjectList
+    .querySelectorAll(
+      ".monthly-plan-category"
+    )
+    .forEach(
+      function(categoryDetails) {
+        const categoryHoursInput =
+          categoryDetails.querySelector(
+            ".monthly-plan-category-hours"
+          );
+
+
+        if (!categoryHoursInput) {
+          return;
+        }
+
+
+        const categoryId =
+          categoryHoursInput
+            .dataset.categoryId;
+
+
+        const category =
+          findCategory(
+            categoryId
+          );
+
+
+        const categoryName =
+          category
+            ? category.name
+            : "名称未設定";
+
+
+        const categoryMinutes =
+          displayHoursToMonthlyMinutes(
+            categoryHoursInput.value
+          );
+
+
+        categoryAssignedMinutes +=
+          categoryMinutes;
+
+
+        const projectMinutes =
+          Array.from(
+            categoryDetails
+              .querySelectorAll(
+                ".monthly-plan-project-check:checked"
+              )
+          ).reduce(
+            function(
+              total,
+              checkbox
+            ) {
+              const projectItem =
+                checkbox.closest(
+                  ".monthly-plan-project-item"
+                );
+
+
+              const hoursInput =
+                projectItem.querySelector(
+                  ".monthly-plan-project-hours"
+                );
+
+
+              return (
+                total +
+                displayHoursToMonthlyMinutes(
+                  hoursInput.value
+                )
+              );
+            },
+
+            0
+          );
+
+
+        if (
+          projectMinutes >
+          categoryMinutes
+        ) {
+          warnings.push(
+            "「" +
+            categoryName +
+            "」のプロジェクト予定時間が、大分類の予定時間を " +
+            formatHours(
+              monthlyMinutesToDisplayHours(
+                projectMinutes -
+                categoryMinutes
+              )
+            ) +
+            " 超過しています。"
+          );
+        }
+      }
+    );
+
+
+  if (
+    categoryAssignedMinutes >
+    totalMinutes
+  ) {
+    warnings.unshift(
+      "大分類の予定時間合計が、全体の予定時間を " +
+      formatHours(
+        monthlyMinutesToDisplayHours(
+          categoryAssignedMinutes -
+          totalMinutes
+        )
+      ) +
+      " 超過しています。"
+    );
+  }
+
+
+  return warnings;
+}
+
+
+// ========================================
 // 月間計画を保存する
 // ========================================
 
@@ -3365,6 +3516,32 @@ function saveMonthlyPlan() {
     );
 
     return;
+  }
+
+
+  const allocationWarnings =
+    getMonthlyPlanOverAllocationWarnings();
+
+
+  if (
+    allocationWarnings.length > 0
+  ) {
+    const shouldSave =
+      window.confirm(
+        allocationWarnings.join(
+          "\n"
+        ) +
+        "\n\nこの内容で保存しますか？"
+      );
+
+
+    if (!shouldSave) {
+      showStatusMessage(
+        "月間計画の保存を中止しました。"
+      );
+
+      return;
+    }
   }
 
 

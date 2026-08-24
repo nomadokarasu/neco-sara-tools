@@ -1468,3 +1468,187 @@ details[open] > summary::before {
   content:
     "▼";
 }
+
+/* ========================================
+   SUMMARYの作業時間別折りたたみ
+======================================== */
+
+.summary-work-accordions {
+  display:
+    grid;
+
+  gap:
+    10px;
+
+  margin:
+    16px 0 20px;
+}
+
+
+.summary-work-accordion {
+  overflow:
+    hidden;
+
+  border:
+    1px solid var(--border-color);
+
+  border-radius:
+    var(--border-radius);
+
+  background:
+    #ffffff;
+}
+
+
+.summary-work-accordion > summary {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  gap:
+    12px;
+
+  min-height:
+    52px;
+
+  padding:
+    12px 16px 12px 44px !important;
+
+  cursor:
+    pointer;
+
+  font-weight:
+    600;
+}
+
+
+.summary-work-accordion > summary:hover {
+  background:
+    #f5f5f5;
+}
+
+
+.summary-work-accordion > summary strong {
+  flex-shrink:
+    0;
+
+  text-align:
+    right;
+}
+
+
+.summary-work-day-list {
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  border-top:
+    1px solid var(--border-color);
+
+  padding:
+    12px;
+}
+
+
+.summary-work-day-list >
+.empty-message {
+  margin:
+    0;
+}
+
+
+.summary-work-day-list
+.work-day-item {
+  margin:
+    0;
+}
+
+
+.summary-work-content-list li {
+  grid-template-columns:
+    110px auto minmax(0, 1fr);
+
+  align-items:
+    start;
+}
+
+
+.summary-work-project {
+  white-space:
+    normal;
+}
+
+
+@media (max-width: 640px) {
+  .summary-work-accordion > summary {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+
+    gap:
+      2px;
+  }
+
+
+  .summary-work-accordion > summary strong {
+    padding-left:
+      0;
+
+    text-align:
+      left;
+  }
+
+
+  .summary-work-day-list {
+    padding:
+      8px;
+  }
+
+
+  .summary-work-day-list
+  .work-day-item.is-collapsible >
+  summary {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+
+    gap:
+      2px;
+
+    padding-right:
+      10px;
+  }
+
+
+  .summary-work-day-list
+  .work-day-content {
+    padding:
+      8px 8px 12px 24px;
+  }
+
+
+  .summary-work-content-list li {
+    grid-template-columns:
+      1fr;
+
+    gap:
+      2px;
+  }
+
+
+  .summary-work-project {
+    display:
+      block;
+  }
+}

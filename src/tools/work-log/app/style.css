@@ -843,12 +843,15 @@ a:focus-visible {
   .monthly-plan-category > summary {
     align-items:
       flex-start;
+
+    gap:
+      8px;
   }
 
 
-  .monthly-plan-category-total {
+  .monthly-plan-category-summary-value {
     max-width:
-      45%;
+      48%;
 
     white-space:
       normal;
@@ -861,29 +864,76 @@ a:focus-visible {
 
     flex-direction:
       column;
+
+    gap:
+      12px;
   }
 
 
   .monthly-plan-value-fields {
-    justify-content:
-      flex-end;
+    display:
+      grid;
 
-    flex-wrap:
-      wrap;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap:
+      8px;
+
+    width:
+      100%;
   }
 
 
   .monthly-plan-percent-field,
   .monthly-plan-hours-field {
-    justify-content:
-      flex-end;
+    display:
+      grid;
+
+    grid-template-columns:
+      minmax(0, 1fr) auto;
+
+    gap:
+      6px;
+
+    width:
+      100%;
   }
 
 
   .monthly-plan-percent-field input,
   .monthly-plan-hours-field input {
+    min-width:
+      0;
+
     width:
-      100px;
+      100%;
+  }
+
+
+  .monthly-plan-category-actions,
+  .monthly-plan-project-actions {
+    display:
+      grid;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    width:
+      100%;
+  }
+
+
+  .monthly-plan-category-actions button,
+  .monthly-plan-project-actions button {
+    width:
+      100%;
+  }
+
+
+  .monthly-plan-add-project-button {
+    width:
+      100%;
   }
 
 
