@@ -2772,6 +2772,8 @@ function updateMonthlyPlanSummary() {
 
   let assignedMinutes = 0;
 
+  let assignedPercent = 0;
+
 
   monthlyPlanProjectList
     .querySelectorAll(
@@ -2811,9 +2813,34 @@ function updateMonthlyPlanSummary() {
         }
 
 
+        const categoryPercent =
+          Math.max(
+            0,
+
+            Number(
+              categoryPercentInput.value
+            ) ||
+            0
+          );
+
+
         const categoryMinutes =
-          displayHoursToMonthlyMinutes(
-            categoryHoursInput.value
+          Math.max(
+            0,
+
+            Math.round(
+              totalMinutes *
+              categoryPercent /
+              100
+            )
+          );
+
+
+        categoryHoursInput.value =
+          formatInputNumber(
+            monthlyMinutesToDisplayHours(
+              categoryMinutes
+            )
           );
 
 
@@ -2821,20 +2848,8 @@ function updateMonthlyPlanSummary() {
           categoryMinutes;
 
 
-        const categoryPercent =
-          totalMinutes > 0
-            ? (
-                categoryMinutes /
-                totalMinutes *
-                100
-              )
-            : 0;
-
-
-        categoryPercentInput.value =
-          formatInputNumber(
-            categoryPercent
-          );
+        assignedPercent +=
+          categoryPercent;
 
 
         if (categorySummaryValue) {
@@ -2909,15 +2924,6 @@ function updateMonthlyPlanSummary() {
       )
     );
 
-  const assignedPercent =
-    totalMinutes > 0
-      ? (
-          assignedMinutes /
-          totalMinutes *
-          100
-        )
-      : 0;
-
 
   monthlyPlanAssignedDisplay.textContent =
     formatHours(
@@ -2976,9 +2982,8 @@ function getMonthlyPlanOverAllocationWarnings() {
     );
 
 
-  let categoryAssignedMinutes =
+  let categoryAssignedPercent =
     0;
-
 
   monthlyPlanProjectList
     .querySelectorAll(
@@ -3014,14 +3019,27 @@ function getMonthlyPlanOverAllocationWarnings() {
             : "名称未設定";
 
 
-        const categoryMinutes =
-          displayHoursToMonthlyMinutes(
-            categoryHoursInput.value
+        const categoryPercentInput =
+          categoryDetails.querySelector(
+            ".monthly-plan-category-percent"
           );
 
 
-        categoryAssignedMinutes +=
-          categoryMinutes;
+        const categoryPercent =
+          categoryPercentInput
+            ? Math.max(
+                0,
+
+                Number(
+                  categoryPercentInput.value
+                ) ||
+                0
+              )
+            : 0;
+
+
+        categoryAssignedPercent +=
+          categoryPercent;
 
 
         const projectPercent =
@@ -3070,18 +3088,14 @@ function getMonthlyPlanOverAllocationWarnings() {
 
 
   if (
-    categoryAssignedMinutes >
-    totalMinutes
+    categoryAssignedPercent > 100
   ) {
     warnings.unshift(
-      "大分類の予定時間合計が、全体の予定時間を " +
-      formatHours(
-        monthlyMinutesToDisplayHours(
-          categoryAssignedMinutes -
-          totalMinutes
-        )
+      "大分類の割り振りが " +
+      formatInputNumber(
+        categoryAssignedPercent
       ) +
-      " 超過しています。"
+      "％になっています。"
     );
   }
 
@@ -3175,7 +3189,16 @@ function saveMonthlyPlan() {
             );
 
 
-          if (!categoryHoursInput) {
+          const categoryPercentInput =
+            categoryDetails.querySelector(
+              ".monthly-plan-category-percent"
+            );
+
+
+          if (
+            !categoryHoursInput ||
+            !categoryPercentInput
+          ) {
             return null;
           }
 
@@ -3196,9 +3219,26 @@ function saveMonthlyPlan() {
           }
 
 
+          const categoryAllocationPercent =
+            Math.max(
+              0,
+
+              Number(
+                categoryPercentInput.value
+              ) ||
+              0
+            );
+
+
           const categoryPlannedMinutes =
-            displayHoursToMonthlyMinutes(
-              categoryHoursInput.value
+            Math.max(
+              0,
+
+              Math.round(
+                totalMinutes *
+                categoryAllocationPercent /
+                100
+              )
             );
 
 
@@ -3311,13 +3351,7 @@ function saveMonthlyPlan() {
               category.name,
 
             allocationPercent:
-              totalMinutes > 0
-                ? (
-                    categoryPlannedMinutes /
-                    totalMinutes *
-                    100
-                  )
-                : 0,
+              categoryAllocationPercent,
 
             plannedMinutes:
               categoryPlannedMinutes,
