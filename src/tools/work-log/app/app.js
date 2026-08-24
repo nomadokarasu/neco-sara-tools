@@ -223,39 +223,10 @@ const recordNextPeriodButton =
   );
 
 
-const recordDateInput =
-  document.getElementById(
-    "record-date"
-  );
-
 
 const recordMonthInput =
   document.getElementById(
     "record-month"
-  );
-
-
-const recordDateLabel =
-  document.getElementById(
-    "record-date-label"
-  );
-
-
-const recordMonthLabel =
-  document.getElementById(
-    "record-month-label"
-  );
-
-
-const recordWeekRange =
-  document.getElementById(
-    "record-week-range"
-  );
-
-
-const recordWeekRangeText =
-  document.getElementById(
-    "record-week-range-text"
   );
 
 
@@ -6884,8 +6855,6 @@ function createProgressStatus(
 function initializeRecordNavigation() {
   setRecordDateInputValues();
 
-  updateRecordDateInputDisplay();
-
 
   recordPreviousPeriodButton.addEventListener(
     "click",
@@ -6909,24 +6878,6 @@ function initializeRecordNavigation() {
   );
 
 
-  recordDateInput.addEventListener(
-    "change",
-
-    function() {
-      if (!recordDateInput.value) {
-        return;
-      }
-
-      selectedRecordDate =
-        new Date(
-          recordDateInput.value +
-          "T00:00:00"
-        );
-
-      setRecordDateInputValues();
-    }
-  );
-
 
   recordMonthInput.addEventListener(
     "change",
@@ -6947,34 +6898,6 @@ function initializeRecordNavigation() {
   );
 }
 
-
-function updateRecordDateInputDisplay() {
-  const selectedPeriod =
-    appData.settings.selectedPeriod;
-
-  const isDay =
-    selectedPeriod ===
-    "day";
-
-  const isWeek =
-    selectedPeriod ===
-    "week";
-
-  const isMonth =
-    selectedPeriod ===
-    "month";
-
-  recordDateLabel.hidden =
-    !isDay;
-
-  recordWeekRange.hidden =
-    !isWeek;
-
-  recordMonthLabel.hidden =
-    !isMonth;
-
-  updateRecordWeekRange();
-}
 
 
 function moveRecordPeriod(
@@ -7012,30 +6935,6 @@ function moveRecordPeriod(
 }
 
 
-function updateRecordWeekRange() {
-  const weekStart =
-    getRecordWeekStart(
-      selectedRecordDate
-    );
-
-  const weekEnd =
-    new Date(
-      weekStart
-    );
-
-  weekEnd.setDate(
-    weekEnd.getDate() + 6
-  );
-
-  recordWeekRangeText.textContent =
-    formatRecordDisplayDate(
-      weekStart
-    ) +
-    "〜" +
-    formatRecordDisplayDate(
-      weekEnd
-    );
-}
 
 
 function getRecordWeekStart(
@@ -7088,11 +6987,6 @@ function formatRecordDisplayDate(
 }
 
 function setRecordDateInputValues() {
-  recordDateInput.value =
-    formatRecordDateForInput(
-      selectedRecordDate
-    );
-
   recordMonthInput.value =
     formatRecordDateForInput(
       selectedRecordDate
@@ -7101,7 +6995,6 @@ function setRecordDateInputValues() {
       7
     );
 
-  updateRecordWeekRange();
 
   renderRecordSummary();
 }
