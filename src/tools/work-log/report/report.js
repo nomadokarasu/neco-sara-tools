@@ -771,38 +771,13 @@ nextPeriodButton.addEventListener(
 function moveSelectedPeriod(
   direction
 ) {
-  const movedDate =
-    new Date(
-      selectedDate
-    );
-
-
-  if (selectedPeriod === "day") {
-    movedDate.setDate(
-      movedDate.getDate() +
-      direction
-    );
-  }
-
-
-  if (selectedPeriod === "week") {
-    movedDate.setDate(
-      movedDate.getDate() +
-      direction * 7
-    );
-  }
-
-
-  if (selectedPeriod === "month") {
-    movedDate.setMonth(
-      movedDate.getMonth() +
-      direction
-    );
-  }
-
-
   selectedDate =
-    movedDate;
+    new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth() +
+      direction,
+      1
+    );
 
 
   setDateInputValues();
@@ -856,62 +831,6 @@ function renderReport() {
 // ========================================
 
 function getSelectedPeriodRange() {
-  if (selectedPeriod === "day") {
-    const start =
-      startOfDay(
-        selectedDate
-      );
-
-
-    const end =
-      new Date(
-        start
-      );
-
-
-    end.setDate(
-      end.getDate() + 1
-    );
-
-
-    return {
-      start:
-        start,
-
-      end:
-        end
-    };
-  }
-
-
-  if (selectedPeriod === "week") {
-    const start =
-      getWeekStart(
-        selectedDate
-      );
-
-
-    const end =
-      new Date(
-        start
-      );
-
-
-    end.setDate(
-      end.getDate() + 7
-    );
-
-
-    return {
-      start:
-        start,
-
-      end:
-        end
-    };
-  }
-
-
   const start =
     new Date(
       selectedDate.getFullYear(),
