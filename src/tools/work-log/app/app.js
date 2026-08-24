@@ -2391,30 +2391,6 @@ function renderMonthlyPlanForm() {
 
                       <div class="monthly-plan-project-actions">
                         <button
-                          class="small-button"
-                          type="button"
-                          data-action="monthly-plan-rename-project"
-                          data-category-id="${escapeHtml(category.id)}"
-                          data-project-id="${escapeHtml(project.id)}"
-                        >
-                          名称変更
-                        </button>
-
-                        <button
-                          class="small-button"
-                          type="button"
-                          data-action="monthly-plan-toggle-current"
-                          data-category-id="${escapeHtml(category.id)}"
-                          data-project-id="${escapeHtml(project.id)}"
-                        >
-                          ${
-                            project.isCurrent === false
-                              ? "現在のプロジェクトに戻す"
-                              : "アーカイブへ移動"
-                          }
-                        </button>
-
-                        <button
                           class="small-button delete-button"
                           type="button"
                           data-action="monthly-plan-delete-project"
@@ -2496,26 +2472,6 @@ function renderMonthlyPlanForm() {
                 data-category-id="${escapeHtml(category.id)}"
               >
               </p>
-
-              <div class="monthly-plan-category-actions">
-                <button
-                  class="small-button"
-                  type="button"
-                  data-action="monthly-plan-rename-category"
-                  data-category-id="${escapeHtml(category.id)}"
-                >
-                  大分類名を変更
-                </button>
-
-                <button
-                  class="small-button delete-button"
-                  type="button"
-                  data-action="monthly-plan-delete-category"
-                  data-category-id="${escapeHtml(category.id)}"
-                >
-                  大分類を削除
-                </button>
-              </div>
 
               <div class="project-status-project-list">
                 ${
