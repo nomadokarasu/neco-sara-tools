@@ -51,38 +51,28 @@ href="./style.css"
 <div class="guide-content">
 
 <p>
-入力した絵の寸法・角材の横寸法・絵にかぶさる部分の寸法・クリアランスをもとに、
-縦勝ちの額縁として各寸法を計算します。
+絵の寸法・角材寸法・絵に重なる部分の寸法・クリアランスをもとに、
+額縁の各寸法を計算します。
 </p>
 
 <h3>
-勝ち部材（縦部材）
+縦部材
 </h3>
 
 <p>
 絵の縦寸法
-＋（角材の横寸法 − 絵にかぶさる部分の寸法）× 2
+＋（角材の横寸法 − 絵に重なる部分の寸法）× 2
 ＋クリアランス
 </p>
 
 <h3>
-負け部材（横部材）
+横部材
 </h3>
 
 <p>
 絵の横寸法
 ＋クリアランス
-−（絵にかぶさる部分の寸法 × 2）
-</p>
-
-<h3>
-アクリル板
-</h3>
-
-<p>
-絵と同じ寸法です。<br>
-縦：絵の縦寸法<br>
-横：絵の横寸法
+−（絵に重なる部分の寸法 × 2）
 </p>
 
 <h3>
@@ -92,14 +82,14 @@ href="./style.css"
 <p>
 縦：
 絵の縦寸法
-＋（角材の横寸法 − 絵にかぶさる部分の寸法）× 2
+＋（角材の横寸法 − 絵に重なる部分の寸法）× 2
 ＋クリアランス
 </p>
 
 <p>
 横：
 絵の横寸法
-＋（角材の横寸法 − 絵にかぶさる部分の寸法）× 2
+＋（角材の横寸法 − 絵に重なる部分の寸法）× 2
 ＋クリアランス
 </p>
 
@@ -307,6 +297,28 @@ class="profile-dimension-tick"
 
 <text
 id="dimensionCText"
+class="profile-dimension-text"
+></text>
+
+
+<!-- 絵の厚み -->
+<line
+id="dimensionThicknessLine"
+class="profile-dimension-line"
+/>
+
+<line
+id="dimensionThicknessStart"
+class="profile-dimension-tick"
+/>
+
+<line
+id="dimensionThicknessEnd"
+class="profile-dimension-tick"
+/>
+
+<text
+id="dimensionThicknessText"
 class="profile-dimension-text"
 ></text>
 

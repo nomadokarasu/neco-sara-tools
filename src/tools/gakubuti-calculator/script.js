@@ -1563,6 +1563,11 @@ parseFloat(woodVerticalInput.value);
 const inputC =
 parseFloat(overlapInput.value);
 
+const inputThickness =
+parseFloat(
+document.getElementById("artThickness").value
+);
+
 
 // ----------------------------------------
 // 未入力の寸法には仮の値を使用する
@@ -1584,6 +1589,12 @@ const c =
 Number.isNaN(inputC) || inputC < 0
 ? 5
 : inputC;
+
+const artThickness =
+Number.isNaN(inputThickness) ||
+inputThickness < 0
+? 0
+: inputThickness;
 
 
 // ----------------------------------------
@@ -1631,17 +1642,18 @@ drawingWidth
 
 
 // ----------------------------------------
-// 溝の深さ
-//
-// 現時点では断面形状を見やすくするため
-// bの約20%として表示
+// 絵が入る部分の高さ
 // ----------------------------------------
 
-const rebateDepth =
+const thicknessHeight =
 Math.min(
-drawingHeight * 0.22,
-55
+artThickness * scale,
+drawingHeight
 );
+
+const rebateDepth =
+drawingHeight -
+thicknessHeight;
 
 
 // ----------------------------------------
@@ -1843,6 +1855,61 @@ cY + 25,
 );
 
 
+// ========================================
+// 絵の厚み寸法
+// ========================================
+
+const thicknessDimensionX =
+right + 35;
+
+setLine(
+"dimensionThicknessLine",
+thicknessDimensionX,
+innerY,
+thicknessDimensionX,
+bottom
+);
+
+setLine(
+"dimensionThicknessStart",
+thicknessDimensionX - 10,
+innerY,
+thicknessDimensionX + 10,
+innerY
+);
+
+setLine(
+"dimensionThicknessEnd",
+thicknessDimensionX - 10,
+bottom,
+thicknessDimensionX + 10,
+bottom
+);
+
+const thicknessText =
+document.getElementById(
+"dimensionThicknessText"
+);
+
+thicknessText.setAttribute(
+"x",
+thicknessDimensionX + 25
+);
+
+thicknessText.setAttribute(
+"y",
+(innerY + bottom) / 2
+);
+
+thicknessText.setAttribute(
+"transform",
+`rotate(-90 ${thicknessDimensionX + 25} ${(innerY + bottom) / 2})`
+);
+
+thicknessText.textContent =
+`${formatNumber(artThickness)} mm`;
+
+
 }
 
 
@@ -2040,7 +2107,8 @@ setText(
 [
 woodVerticalInput,
 woodHorizontalInput,
-overlapInput
+overlapInput,
+document.getElementById("artThickness")
 ].forEach(input => {
 
 input.addEventListener(
