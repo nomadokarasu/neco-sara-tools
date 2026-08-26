@@ -186,6 +186,20 @@
   "useUrl": "./tools/hardcover-calculator/app/",
   "detailUrl": "https://neco-sara.com/2026/08/21/hardcover-binding-calculator/",
   "privacy": "入力した数値はブラウザ内で処理され、サーバーには送信されません。"
+},
+{
+  "name": "額縁の寸法計算ツール",
+  "slug": "gakubuti-calculator",
+  "description": "絵のサイズと角材の寸法を入力すると、額縁を作るために必要な寸法や完成外寸を計算できるWebツールです。",
+  "version": "1.0.0",
+  "category": "制作補助",
+  "status": "公開中",
+  "publishedAt": "2026-08-26",
+  "updatedAt": "2026-08-26",
+  "image": "",
+  "useUrl": "./tools/gakubuti-calculator/",
+  "detailUrl": "https://neco-sara.com/2026/07/24/howtomakeframe/",
+  "privacy": "入力した数値はブラウザ内で処理され、サーバーには送信されません。"
 }
 
 ]
