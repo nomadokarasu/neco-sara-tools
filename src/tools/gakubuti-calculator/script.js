@@ -2558,9 +2558,9 @@ function updateFrameDirectionPreview() {
 const direction =
 "vertical";
 
-const inputWoodVertical =
+const inputWoodHorizontal =
 parseFloat(
-woodVerticalInput.value
+woodHorizontalInput.value
 );
 
 const inputOverlap =
@@ -2588,11 +2588,11 @@ document.getElementById("clearance").value
 // 入力値
 // ----------------------------------------
 
-const woodVertical =
-Number.isNaN(inputWoodVertical) ||
-inputWoodVertical <= 0
-? 30
-: inputWoodVertical;
+const woodHorizontal =
+Number.isNaN(inputWoodHorizontal) ||
+inputWoodHorizontal <= 0
+? 20
+: inputWoodHorizontal;
 
 const overlap =
 Number.isNaN(inputOverlap) ||
@@ -2623,16 +2623,18 @@ inputClearance < 0
 // 完成外寸
 // ----------------------------------------
 
+const outsideAmount =
+woodHorizontal -
+overlap;
+
 const realOuterWidth =
 artWidth +
-(woodVertical * 2) -
-(overlap * 2) +
+(outsideAmount * 2) +
 clearance;
 
 const realOuterHeight =
 artHeight +
-(woodVertical * 2) -
-(overlap * 2) +
+(outsideAmount * 2) +
 clearance;
 
 
@@ -2661,7 +2663,7 @@ const outerHeight =
 realOuterHeight * scale;
 
 const partWidth =
-woodVertical * scale;
+woodHorizontal * scale;
 
 
 // ----------------------------------------
@@ -2889,7 +2891,7 @@ height
 
 
 
-woodVerticalInput.addEventListener(
+woodHorizontalInput.addEventListener(
 "input",
 updateFrameDirectionPreview
 );
