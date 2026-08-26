@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
+
+<title>額縁の寸法計算ツール</title>
+
+<link
+rel="stylesheet"
+href="./style.css"
+>
+</head>
+
+<body>
+
+<main class="container">
+
+<!-- ========================================
+タイトル
+========================================= -->
+<header class="tool-header">
+
+<h1>
+額縁の寸法計算ツール
+</h1>
+
+<p class="tool-description">
+絵のサイズと使用する角材の寸法から、
+額縁の各部材・アクリル板・完成外寸を計算します。
+</p>
+
+</header>
+
+
+<!-- ========================================
+補足説明
+========================================= -->
+<section class="guide-section">
+
+<details>
+<summary>
+計算方法について
+</summary>
+
+<div class="guide-content">
+
+<p>
+入力した絵の寸法と角材の寸法をもとに、
+縦部材・横部材のカット長さを計算します。
+</p>
+
+<h3>
+負け部材
+</h3>
+
+<p>
+対応する絵の寸法
+−（絵にかぶさる寸法 × 2）
+＋クリアランス
+</p>
+
+<h3>
+勝ち部材
+</h3>
+
+<p>
+対応する絵の辺の長さ
+＋（角材の縦寸法 × 2）
+−（絵にかぶさる寸法 × 2）
+＋クリアランス
+</p>
+
+<h3>
+アクリル板
+</h3>
+
+<p>
+絵の縦寸法 ＋ 1mm<br>
+絵の横寸法 ＋ 1mm
+</p>
+
+</div>
+</details>
+
+
+<details>
+<summary>
+額縁の作り方について
+</summary>
+
+<div class="guide-content">
+
+<p>
+額縁の作り方については、
+後ほど詳しい説明を追加します。
+</p>
+
+</div>
+</details>
+
+</section>
+
+
+<!-- ========================================
+入力
+========================================= -->
+<section class="input-section">
+
+<h2>
+寸法を入力
+</h2>
+
+
+<!-- 角材 -->
+<div class="input-group">
+
+<h3>
+角材
+</h3>
+
+<div class="form-row">
+
+<label for="woodVertical">
+角材の縦寸法
+</label>
+
+<div class="number-input">
+
+<input
+type="number"
+id="woodVertical"
+min="0"
+step="0.1"
+value="24"
+>
+
+<span>
+mm
+</span>
+
+</div>
+
+</div>
+
+
+<div class="form-row">
+
+<label for="woodHorizontal">
+角材の横寸法
+</label>
+
+<div class="number-input">
+
+<input
+type="number"
+id="woodHorizontal"
+min="0"
+step="0.1"
+value="13"
+>
+
+<span>
+mm
+</span>
+
+</div>
+
+</div>
+
+
+<div class="form-row">
+
+<label for="overlap">
+絵にかぶさる部分の寸法
+</label>
+
+<div class="number-input">
+
+<input
+type="number"
+id="overlap"
+min="0"
+step="0.1"
+value="2"
+>
+
+<span>
+mm
+</span>
+
+</div>
+
+</div>
+
+
+<!-- 角材断面プレビュー -->
+<div class="wood-profile-preview">
+
+<h4>
+角材の断面
+</h4>
+
+<div class="wood-profile-canvas">
+
+<svg
+id="woodProfileSvg"
+viewBox="0 0 500 380"
+role="img"
+aria-label="角材の断面図"
+>
+
+<!-- 角材本体 -->
+<path
+id="woodProfileShape"
+d=""
+class="wood-profile-shape"
+/>
+
+<!-- a：横寸法 -->
+<line
+id="dimensionALine"
+class="profile-dimension-line"
+/>
+
+<line
+id="dimensionAStart"
+class="profile-dimension-tick"
+/>
+
+<line
+id="dimensionAEnd"
+class="profile-dimension-tick"
+/>
+
+<text
+id="dimensionAText"
+class="profile-dimension-text"
+></text>
+
+
+<!-- b：縦寸法 -->
+<line
+id="dimensionBLine"
+class="profile-dimension-line"
+/>
+
+<line
+id="dimensionBStart"
+class="profile-dimension-tick"
+/>
+
+<line
+id="dimensionBEnd"
+class="profile-dimension-tick"
+/>
+
+<text
+id="dimensionBText"
+class="profile-dimension-text"
+></text>
+
+
+<!-- c：かぶさり -->
+<line
+id="dimensionCLine"
+class="profile-dimension-line"
+/>
+
+<line
+id="dimensionCStart"
+class="profile-dimension-tick"
+/>
+
+<line
+id="dimensionCEnd"
+class="profile-dimension-tick"
+/>
+
+<text
+id="dimensionCText"
+class="profile-dimension-text"
+></text>
+
+</svg>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- 絵 -->
+<div class="input-group">
+
+<h3>
+絵
+</h3>
+
+<div class="form-row">
+
+<label for="artHeight">
+絵の縦寸法
+</label>
+
+<div class="number-input">
+
+<input
+type="number"
+id="artHeight"
+min="0"
+step="0.1"
+value="271"
+>
+
+<span>
+mm
+</span>
+
+</div>
+
+</div>
+
+
+<div class="form-row">
+
+<label for="artWidth">
+絵の横寸法
+</label>
+
+<div class="number-input">
+
+<input
+type="number"
+id="artWidth"
+min="0"
+step="0.1"
+value="192"
+>
+
+<span>
+mm
+</span>
+
+</div>
+
+</div>
+
+
+<div class="form-row">
+
+<label for="artThickness">
+絵の厚み
+</label>
+
+<div class="number-input">
+
+<input
+type="number"
+id="artThickness"
+min="0"
+step="0.1"
+value="18"
+>
+
+<span>
+mm
+</span>
+
+</div>
+
+</div>
+
+
+<div class="form-row">
+
+<label for="clearance">
+クリアランス
+</label>
+
+<div class="number-input">
+
+<input
+type="number"
+id="clearance"
+min="0"
+step="0.1"
+value="2"
+>
+
+<span>
+mm
+</span>
+
+</div>
+
+</div>
+
+
+<!-- 絵寸法プレビュー -->
+<div class="art-size-preview">
+
+<h4>
+絵の寸法
+</h4>
+
+<div class="art-size-canvas">
+
+<svg
+id="artSizeSvg"
+viewBox="0 0 500 400"
+role="img"
+aria-label="絵の寸法図"
+>
+
+<polygon
+id="artTopShape"
+class="art-preview-side"
+/>
+
+<polygon
+id="artRightShape"
+class="art-preview-side"
+/>
+
+<defs>
+<clipPath id="artFrontClip">
+<rect id="artFrontClipRect"/>
+</clipPath>
+</defs>
+
+<rect
+id="artFrontShape"
+class="art-preview-front"
+/>
+
+<image
+id="artFrontImage"
+href="./images/sample-art.jpg"
+preserveAspectRatio="xMidYMid slice"
+clip-path="url(#artFrontClip)"
+/>
+
+
+<!-- 横寸法 -->
+<line
+id="artWidthLine"
+class="profile-dimension-line"
+/>
+
+<line
+id="artWidthStart"
+class="profile-dimension-tick"
+/>
+
+<line
+id="artWidthEnd"
+class="profile-dimension-tick"
+/>
+
+<text
+id="artWidthText"
+class="profile-dimension-text"
+></text>
+
+
+<!-- 縦寸法 -->
+<line
+id="artHeightLine"
+class="profile-dimension-line"
+/>
+
+<line
+id="artHeightStart"
+class="profile-dimension-tick"
+/>
+
+<line
+id="artHeightEnd"
+class="profile-dimension-tick"
+/>
+
+<text
+id="artHeightText"
+class="profile-dimension-text"
+></text>
+
+
+<!-- 厚み -->
+<line
+id="artThicknessLine"
+class="profile-dimension-line"
+/>
+
+<line
+id="artThicknessStart"
+class="profile-dimension-tick"
+/>
+
+<line
+id="artThicknessEnd"
+class="profile-dimension-tick"
+/>
+
+<text
+id="artThicknessText"
+class="profile-dimension-text"
+></text>
+
+</svg>
+
+</div>
+
+</div>
+
+
+
+
+</div>
+
+
+<!-- 組み方 -->
+<div class="input-group">
+
+<h3>
+プレビュー
+</h3>
+
+<!-- 勝ち方向プレビュー -->
+<div class="frame-direction-preview">
+
+<div class="frame-direction-canvas">
+
+<svg
+id="frameDirectionSvg"
+viewBox="0 0 500 400"
+role="img"
+aria-label="額縁のプレビュー"
+>
+
+<defs>
+<clipPath id="frameArtClip">
+<rect id="frameArtClipRect"/>
+</clipPath>
+</defs>
+
+<image
+id="frameArtImage"
+href="./images/sample-art.jpg"
+preserveAspectRatio="xMidYMid slice"
+clip-path="url(#frameArtClip)"
+/>
+
+<rect
+id="directionTop"
+class="direction-frame-part"
+/>
+
+<rect
+id="directionBottom"
+class="direction-frame-part"
+/>
+
+<rect
+id="directionLeft"
+class="direction-frame-part"
+/>
+
+<rect
+id="directionRight"
+class="direction-frame-part"
+/>
+
+</svg>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+
+<button
+type="button"
+id="calculateButton"
+class="primary-button"
+>
+寸法を計算
+</button>
+
+<p
+id="errorMessage"
+class="error-message"
+aria-live="polite"
+></p>
+
+</section>
+
+
+<!-- ========================================
+計算結果
+========================================= -->
+<section
+id="resultSection"
+class="result-section"
+hidden
+>
+
+<h2>
+計算結果
+</h2>
+
+
+<!-- カット寸法 -->
+<div class="result-group">
+
+<h3>
+角材のカット寸法
+</h3>
+
+<div class="result-item">
+
+<span>
+縦部材
+</span>
+
+<strong id="verticalCutResult">
+-
+</strong>
+
+<span>
+× 2本
+</span>
+
+</div>
+
+
+<div class="result-item">
+
+<span>
+横部材
+</span>
+
+<strong id="horizontalCutResult">
+-
+</strong>
+
+<span>
+× 2本
+</span>
+
+</div>
+
+</div>
+
+
+<!-- アクリル -->
+<div class="result-group">
+
+<h3>
+アクリル板
+</h3>
+
+<div class="result-item">
+
+<span>
+サイズ
+</span>
+
+<strong id="acrylicResult">
+-
+</strong>
+
+</div>
+
+</div>
+
+
+<!-- 額縁外寸 -->
+<div class="result-group">
+
+<h3>
+額縁の完成外寸
+</h3>
+
+<div class="result-item">
+
+<span>
+縦
+</span>
+
+<strong id="frameHeightResult">
+-
+</strong>
+
+</div>
+
+
+<div class="result-item">
+
+<span>
+横
+</span>
+
+<strong id="frameWidthResult">
+-
+</strong>
+
+</div>
+
+
+<div class="result-item">
+
+<span>
+厚み
+</span>
+
+<strong id="frameDepthResult">
+-
+</strong>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================
+図面
+========================================= -->
+<section
+id="drawingSection"
+class="drawing-section"
+hidden
+>
+
+<h2>
+図面
+</h2>
+
+
+<!-- 角材断面図 -->
+<div class="drawing-group">
+
+<h3>
+角材の断面図
+</h3>
+
+<div
+id="woodDrawing"
+class="drawing-area"
+>
+
+<p>
+ここに角材の断面図を表示します。
+</p>
+
+</div>
+
+</div>
+
+
+<!-- 額縁寸法図 -->
+<div class="drawing-group">
+
+<h3>
+組み立て後の寸法図
+</h3>
+
+<h4>
+表側
+</h4>
+
+<div
+id="frameDrawingFront"
+class="drawing-area"
+>
+
+<p>
+ここに表側の寸法図を表示します。
+</p>
+
+</div>
+
+<h4>
+裏側
+</h4>
+
+<div
+id="frameDrawingBack"
+class="drawing-area"
+>
+
+<p>
+ここに裏側の寸法図を表示します。
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ========================================
+ダウンロード
+========================================= -->
+<section
+id="downloadSection"
+class="download-section"
+hidden
+>
+
+<button
+type="button"
+id="downloadButton"
+class="secondary-button"
+>
+図面をダウンロード
+</button>
+
+</section>
+
+</main>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="./script.js"></script>
+
+</body>
+
+</html>
