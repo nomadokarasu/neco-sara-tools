@@ -683,3 +683,16 @@ order: 4;
 .input-section > #errorMessage {
 order: 5;
 }
+
+.frame-structure-animation {
+margin-top: 16px;
+text-align: center;
+}
+
+.frame-structure-animation img {
+display: block;
+width: 100%;
+max-width: 700px;
+height: auto;
+margin: 0 auto;
+}
