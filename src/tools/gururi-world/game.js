@@ -1098,7 +1098,7 @@ function applyZoomFromSlider() {
   */
 
   const minFov =
-    35;
+    20;
 
   const maxFov =
     120;
