@@ -9,10 +9,55 @@ import iro from
 ================================ */
 
 const viewport =
-  document.getElementById("viewport");
-
+document.getElementById("viewport");
 
 const scene = new THREE.Scene();
+
+let paintStartTracked = false;
+
+function trackGAEvent(
+eventName
+) {
+if (
+typeof window.gtag !== "function"
+) {
+return false;
+}
+
+window.gtag(
+"event",
+eventName
+);
+
+return true;
+}
+
+function trackPaintStart() {
+if (paintStartTracked) {
+return;
+}
+
+const hasPaintAction =
+strokeHistory.some(
+(action) =>
+action?.tool === "pen" ||
+action?.tool === "eraser" ||
+action?.tool === "bucket"
+);
+
+if (!hasPaintAction) {
+return;
+}
+
+const tracked =
+trackGAEvent(
+"paint_start"
+);
+
+if (tracked) {
+paintStartTracked = true;
+}
+}
 
 
 /* ================================
@@ -8449,7 +8494,11 @@ downloadButton.addEventListener(
   "click",
   () => {
 
-    downloadPNG();
+downloadPNG();
+
+trackGAEvent(
+"download_image"
+);
   }
 );
 
@@ -10191,14 +10240,21 @@ renderer.domElement.addEventListener(
 */
 
 renderer.domElement.addEventListener(
-  "pointercancel",
-  (event) => {
+"pointerup",
+() => {
+trackPaintStart();
+}
+);
 
-    handleTouchPointerEnd(
-      event,
-      true
-    );
-  }
+renderer.domElement.addEventListener(
+"pointercancel",
+(event) => {
+
+handleTouchPointerEnd(
+event,
+true
+);
+}
 );
 
 
