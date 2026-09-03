@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.1";
+"1.2";
 
 
 const appVersion =
@@ -8070,15 +8070,46 @@ moveActiveLayer(-1);
 );
 
 
-languageButton.addEventListener(
-"click",
-() => {
+function toggleLanguage() {
 
 setLanguage(
 currentLanguage === "ja"
 ? "en"
 : "ja"
 );
+}
+
+
+languageButton.addEventListener(
+"click",
+() => {
+
+toggleLanguage();
+}
+);
+
+
+/*
+スマートフォンでは
+clickが正しく発火しない場合があるため、
+touchendでも直接切り替える。
+
+preventDefaultによって、
+直後に生成されるclickとの
+二重実行を防ぐ。
+*/
+
+languageButton.addEventListener(
+"touchend",
+(event) => {
+
+event.preventDefault();
+event.stopPropagation();
+
+toggleLanguage();
+},
+{
+passive: false
 }
 );
 
