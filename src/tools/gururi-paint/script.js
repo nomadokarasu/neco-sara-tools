@@ -38,7 +38,8 @@ appVersion.textContent =
 let paintStartTracked = false;
 
 function trackGAEvent(
-eventName
+eventName,
+eventParameters = {}
 ) {
 if (
 typeof window.gtag !== "function"
@@ -48,7 +49,8 @@ return false;
 
 window.gtag(
 "event",
-eventName
+eventName,
+eventParameters
 );
 
 return true;
@@ -237,12 +239,48 @@ const helpButton =
 document.getElementById("helpButton");
 
 const helpPanel =
-  document.getElementById("helpPanel");
+document.getElementById("helpPanel");
 
 const helpCloseButton =
-  document.getElementById(
-    "helpCloseButton"
-  );
+document.getElementById(
+"helpCloseButton"
+);
+
+const welcomeLanguageButtons =
+document.querySelectorAll(
+"[data-welcome-language]"
+);
+
+const welcomeImage =
+document.getElementById(
+"welcomeImage"
+);
+
+const welcomeXLink =
+document.getElementById(
+"welcomeXLink"
+);
+
+const welcomeNoteLink =
+document.getElementById(
+"welcomeNoteLink"
+);
+
+
+/*
+言語ごとのnote記事URL
+*/
+
+const WELCOME_NOTE_URLS = {
+
+ja:
+"https://note.com/junnoota/n/n87a466960ce6",
+
+en:
+"https://note.com/junnoota/n/ne455507ce7ec"
+
+};
+
 
 const previewOverlay =
   document.getElementById("previewOverlay");
@@ -296,11 +334,7 @@ let currentLanguage =
 savedLanguage === "ja" ||
 savedLanguage === "en"
 ? savedLanguage
-: (navigator.language || "")
-.toLowerCase()
-.startsWith("ja")
-? "ja"
-: "en";
+: "ja";
 
 
 const translations = {
@@ -350,7 +384,40 @@ savePng:
 "PNG保存",
 
 help:
-"操作方法",
+"はじめに",
+
+welcomeTitle:
+"ぐるりペイントへようこそ！",
+
+welcomeIntroText:
+"360°の空間に直接絵を描けるブラウザツールです。",
+
+welcomeBasicsTitle:
+"基本操作",
+
+welcomePcTitle:
+"PC",
+
+welcomeMobileTitle:
+"スマートフォン",
+
+welcomeDevelopmentTitle:
+"ぐるりペイントは現在も開発中です",
+
+welcomeDevelopmentText:
+"これからも機能追加や改善を続けていきます。",
+
+welcomeShareTitle:
+"描いた作品をぜひ見せてください！",
+
+welcomeShareText:
+"Xでハッシュタグをつけて投稿してもらえるとうれしいです。",
+
+welcomeX:
+"Xをフォロー",
+
+welcomeNote:
+"開発について読む・応援する",
 
 pen:
 "ペン",
@@ -431,13 +498,13 @@ helpRedo:
 "Ctrl + Y：やり直す",
 
 helpMobileDraw:
-"スマートフォン：1本指で描画",
+"1本指：描画",
 
 helpMobileLook:
-"スマートフォン：2本指ドラッグで見回す",
+"2本指ドラッグ：見回す",
 
 helpMobileZoom:
-"スマートフォン：ピンチでズーム",
+"ピンチ：ズーム",
 
 previewTitle:
 "360°プレビュー",
@@ -531,7 +598,40 @@ savePng:
 "Save PNG",
 
 help:
-"Controls",
+"About",
+
+welcomeTitle:
+"Welcome to Gururi Paint!",
+
+welcomeIntroText:
+"A browser tool for painting directly inside a 360° space.",
+
+welcomeBasicsTitle:
+"Basic controls",
+
+welcomePcTitle:
+"PC",
+
+welcomeMobileTitle:
+"Mobile",
+
+welcomeDevelopmentTitle:
+"Gururi Paint is still in development",
+
+welcomeDevelopmentText:
+"We'll keep adding features and improving the tool.",
+
+welcomeShareTitle:
+"Share what you make!",
+
+welcomeShareText:
+"Post your work on X with one of these hashtags.",
+
+welcomeX:
+"Follow on X",
+
+welcomeNote:
+"Read about the project / Support",
 
 pen:
 "Pen",
@@ -612,13 +712,13 @@ helpRedo:
 "Ctrl + Y: Redo",
 
 helpMobileDraw:
-"Mobile: Draw with one finger",
+"Draw with one finger",
 
 helpMobileLook:
-"Mobile: Drag with two fingers to look around",
+"Drag with two fingers to look around",
 
 helpMobileZoom:
-"Mobile: Pinch to zoom",
+"Pinch to zoom",
 
 previewTitle:
 "360° Preview",
@@ -941,39 +1041,64 @@ t("settings")
 
 
 setElementText(
-".help-panel__header strong",
+"#welcomePanelTitle",
 t("help")
 );
 
 
-const helpParagraphs =
-helpPanel.querySelectorAll(
-".help-panel__content p"
+if (welcomeImage) {
+
+const isEnglish =
+currentLanguage === "en";
+
+welcomeImage.src =
+isEnglish
+? "./images/welcome-en.png"
+: "./images/welcome-ja.png";
+
+welcomeImage.alt =
+isEnglish
+? "Gururi Paint basic controls and introduction"
+: "ぐるりペイントの基本操作と案内";
+}
+
+
+setElementText(
+"#welcomeXLink",
+t("welcomeX")
 );
 
+setElementText(
+"#welcomeNoteLink",
+t("welcomeNote")
+);
 
-const helpKeys = [
-"helpLookAround",
-"helpZoom",
-"helpUndo",
-"helpRedo",
-"helpMobileDraw",
-"helpMobileLook",
-"helpMobileZoom"
+welcomeNoteLink.href =
+WELCOME_NOTE_URLS[
+currentLanguage
 ];
 
+helpCloseButton.setAttribute(
+"aria-label",
+t("close")
+);
 
-helpKeys.forEach(
-(key, index) => {
+welcomeLanguageButtons.forEach(
+(button) => {
 
-if (
-helpParagraphs[index]
-) {
+const isActive =
+button.dataset.welcomeLanguage ===
+currentLanguage;
 
-helpParagraphs[index]
-.textContent =
-t(key);
-}
+button.classList.toggle(
+"is-active",
+isActive
+);
+
+button.setAttribute(
+"aria-pressed",
+String(isActive)
+);
 }
 );
 
@@ -9252,29 +9377,186 @@ previewCloseButton.addEventListener(
 );
 
 /* ================================
-   ヘルプ
+はじめに
 ================================ */
 
-helpButton.addEventListener(
-  "click",
-  () => {
+const WELCOME_VERSION =
+"2";
 
-    helpPanel.classList.toggle(
-      "is-open"
-    );
-  }
+const WELCOME_STORAGE_KEY =
+"gururi-paint-welcome-version";
+
+
+function markWelcomeAsSeen() {
+
+try {
+
+localStorage.setItem(
+WELCOME_STORAGE_KEY,
+WELCOME_VERSION
+);
+
+} catch (error) {
+
+/*
+保存できない環境でも
+ウィンドウ自体は使用できる
+*/
+
+}
+}
+
+
+function showWelcomeIfNeeded() {
+
+let seenVersion = null;
+
+try {
+
+seenVersion =
+localStorage.getItem(
+WELCOME_STORAGE_KEY
+);
+
+} catch (error) {
+
+seenVersion = null;
+}
+
+
+if (
+seenVersion !==
+WELCOME_VERSION
+) {
+
+helpPanel.classList.add(
+"is-open"
+);
+
+trackGAEvent(
+"welcome_open",
+{
+source: "auto",
+ui_language:
+currentLanguage
+}
+);
+}
+}
+
+
+helpButton.addEventListener(
+"click",
+() => {
+
+helpPanel.classList.add(
+"is-open"
+);
+
+trackGAEvent(
+"welcome_open",
+{
+source: "button",
+ui_language:
+currentLanguage
+}
+);
+}
 );
 
 
 helpCloseButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    helpPanel.classList.remove(
-      "is-open"
-    );
-  }
+helpPanel.classList.remove(
+"is-open"
 );
+
+trackGAEvent(
+"welcome_close",
+{
+ui_language:
+currentLanguage
+}
+);
+
+markWelcomeAsSeen();
+}
+);
+
+
+welcomeLanguageButtons.forEach(
+(button) => {
+
+button.addEventListener(
+"click",
+() => {
+
+const language =
+button.dataset.welcomeLanguage;
+
+if (
+language ===
+currentLanguage
+) {
+
+return;
+}
+
+setLanguage(
+language
+);
+
+trackGAEvent(
+"welcome_language_click",
+{
+ui_language:
+language
+}
+);
+}
+);
+}
+);
+
+
+welcomeXLink.addEventListener(
+"click",
+() => {
+
+trackGAEvent(
+"welcome_x_click",
+{
+ui_language:
+currentLanguage
+}
+);
+}
+);
+
+
+welcomeNoteLink.addEventListener(
+"click",
+() => {
+
+trackGAEvent(
+"welcome_note_click",
+{
+ui_language:
+currentLanguage
+}
+);
+}
+);
+
+
+/*
+初回アクセス時のみ
+自動で「はじめに」を表示
+*/
+
+showWelcomeIfNeeded();
 
 
 /* ================================

@@ -1293,63 +1293,195 @@ canvas {
 
 
 /* ================================
-   ヘルプ
+はじめに
 ================================ */
 
-.help-panel {
-  position: fixed;
+.welcome-overlay {
+position: fixed;
+inset: 0;
 
-  top: 60px;
-  right: 16px;
+z-index: 1000;
 
-  z-index: 200;
+display: none;
+align-items: center;
+justify-content: center;
 
-  display: none;
+padding: 20px;
 
-  width: 280px;
-
-  padding: 12px;
-
-  background: #333;
-  color: #eee;
-
-  border: 1px solid #555;
-  border-radius: 6px;
+background:
+rgba(
+0,
+0,
+0,
+0.62
+);
 }
 
 
-.help-panel.is-open {
-  display: block;
+.welcome-overlay.is-open {
+display: flex;
 }
 
 
-.help-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.welcome-panel {
+display: flex;
+flex-direction: column;
 
-  margin-bottom: 12px;
+width: 620px;
+max-width: 100%;
+max-height: 92dvh;
+
+overflow: hidden;
+
+background: #333;
+color: #eee;
+
+border: 1px solid #666;
+border-radius: 8px;
+
+box-shadow:
+0 12px 40px
+rgba(
+0,
+0,
+0,
+0.45
+);
 }
 
 
-.help-panel__header button {
-  padding: 0;
+.welcome-panel__header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
 
-  border: 0;
+padding: 10px 12px;
 
-  background: transparent;
-  color: #eee;
-
-  font-size: 20px;
-
-  cursor: pointer;
+border-bottom:
+1px solid #555;
 }
 
 
-.help-panel__content p {
-  margin: 8px 0;
+.welcome-panel__header-actions {
+display: flex;
+align-items: center;
+gap: 10px;
+}
 
-  font-size: 13px;
+
+.welcome-language-switch {
+display: flex;
+gap: 4px;
+}
+
+
+.welcome-language-button {
+padding: 4px 7px;
+
+border: 1px solid #666;
+border-radius: 4px;
+
+background: #444;
+color: #bbb;
+
+font: inherit;
+font-size: 11px;
+
+cursor: pointer;
+}
+
+
+.welcome-language-button.is-active {
+background: #ddd;
+color: #222;
+border-color: #ddd;
+}
+
+
+.welcome-close-button {
+width: 30px;
+height: 30px;
+
+padding: 0;
+
+border: 0;
+
+background: transparent;
+color: #eee;
+
+font: inherit;
+font-size: 22px;
+line-height: 1;
+
+cursor: pointer;
+}
+
+
+.welcome-panel__content {
+padding: 12px 14px 16px;
+
+overflow-y: auto;
+overscroll-behavior: contain;
+}
+
+
+.welcome-image {
+display: block;
+
+width: 100%;
+height: auto;
+
+border-radius: 4px;
+
+user-select: none;
+-webkit-user-select: none;
+-webkit-user-drag: none;
+}
+
+
+.welcome-links {
+display: flex;
+gap: 8px;
+
+padding-top: 18px;
+}
+
+
+.welcome-link-button {
+display: flex;
+align-items: center;
+justify-content: center;
+
+flex: 1;
+
+min-height: 40px;
+padding: 8px 12px;
+
+background: #eee;
+color: #222;
+
+border:
+1px solid #eee;
+border-radius: 4px;
+
+font-size: 13px;
+font-weight: 600;
+text-align: center;
+text-decoration: none;
+}
+
+
+.welcome-link-button--secondary {
+background: transparent;
+color: #eee;
+
+border-color: #777;
+}
+
+
+.welcome-link-button:hover {
+opacity: 0.86;
 }
 
 
@@ -2060,19 +2192,48 @@ canvas {
 
 
   /*
-    ヘルプ
+    はじめに
   */
 
-  .help-panel {
-    top: 54px;
-    right: 10px;
+  .welcome-overlay {
+    padding: 10px;
+  }
 
-    width:
+
+  .welcome-panel {
+    max-height:
       calc(
-        100% - 20px
+        100dvh - 20px
       );
+  }
 
-    max-width: 320px;
+
+  .welcome-panel__header {
+    gap: 6px;
+  }
+
+
+  .welcome-panel__header-actions {
+    gap: 5px;
+  }
+
+
+  .welcome-language-button {
+    padding: 4px 6px;
+
+    font-size: 10px;
+  }
+
+
+  .welcome-panel__content {
+    padding: 10px;
+  }
+
+
+  .welcome-links {
+    flex-direction: column;
+
+    padding-top: 10px;
   }
 
 

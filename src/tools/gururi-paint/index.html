@@ -204,9 +204,9 @@ EN
 id="helpButton"
 class="tool-button"
 type="button"
-title="操作方法"
+title="はじめに"
 >
-操作方法
+はじめに
 </button>
 
   </header>
@@ -509,60 +509,104 @@ title="操作方法"
 
 
 <!-- =============================
-     ヘルプ
+はじめに
 ============================== -->
 
 <div
-  id="helpPanel"
-  class="help-panel"
+id="helpPanel"
+class="welcome-overlay"
+role="dialog"
+aria-modal="true"
+aria-labelledby="welcomePanelTitle"
 >
 
-  <div class="help-panel__header">
+<div class="welcome-panel">
 
-    <strong>
-      操作方法
-    </strong>
+<div class="welcome-panel__header">
 
-    <button
-      id="helpCloseButton"
-      type="button"
-    >
-      ×
-    </button>
+<strong id="welcomePanelTitle">
+はじめに
+</strong>
 
-  </div>
+<div class="welcome-panel__header-actions">
 
-  <div class="help-panel__content">
+<div
+class="welcome-language-switch"
+aria-label="Language"
+>
 
-    <p>
-      Space + ドラッグ：見回す
-    </p>
+<button
+class="welcome-language-button"
+type="button"
+data-welcome-language="ja"
+aria-pressed="true"
+>
+日本語
+</button>
 
-    <p>
-      Z + 上下ドラッグ：ズーム
-    </p>
+<button
+class="welcome-language-button"
+type="button"
+data-welcome-language="en"
+aria-pressed="false"
+>
+English
+</button>
 
-    <p>
-      Ctrl + Z：元に戻す
-    </p>
+</div>
 
-<p>
-      Ctrl + Y：やり直す
-    </p>
+<button
+id="helpCloseButton"
+class="welcome-close-button"
+type="button"
+aria-label="閉じる"
+>
+×
+</button>
 
-    <p>
-      スマートフォン：1本指で描画
-    </p>
+</div>
 
-    <p>
-      スマートフォン：2本指ドラッグで見回す
-    </p>
+</div>
 
-    <p>
-      スマートフォン：ピンチでズーム
-    </p>
 
-  </div>
+<div class="welcome-panel__content">
+
+<img
+id="welcomeImage"
+class="welcome-image"
+src="./images/welcome-ja.png"
+alt="ぐるりペイントの基本操作と案内"
+draggable="false"
+>
+
+
+<div class="welcome-links">
+
+<a
+id="welcomeXLink"
+class="welcome-link-button"
+href="https://x.com/_datsumori_"
+target="_blank"
+rel="noopener noreferrer"
+>
+Xをフォロー
+</a>
+
+<a
+id="welcomeNoteLink"
+class="welcome-link-button welcome-link-button--secondary"
+href="https://note.com/junnoota"
+target="_blank"
+rel="noopener noreferrer"
+>
+開発について読む・応援する
+</a>
+
+</div>
+
+</div>
+
+</div>
 
 </div>
 
