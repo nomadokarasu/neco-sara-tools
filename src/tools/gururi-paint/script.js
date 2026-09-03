@@ -13,6 +13,28 @@ document.getElementById("viewport");
 
 const scene = new THREE.Scene();
 
+
+/* ================================
+アプリバージョン
+================================ */
+
+const APP_VERSION =
+"1.1";
+
+
+const appVersion =
+document.getElementById(
+"appVersion"
+);
+
+
+if (appVersion) {
+
+appVersion.textContent =
+`ver.${APP_VERSION}`;
+}
+
+
 let paintStartTracked = false;
 
 function trackGAEvent(
@@ -204,10 +226,15 @@ const previewButton =
   document.getElementById("previewButton");
 
 const downloadButton =
-  document.getElementById("downloadButton");
+document.getElementById("downloadButton");
+
+const languageButton =
+document.getElementById(
+"languageButton"
+);
 
 const helpButton =
-  document.getElementById("helpButton");
+document.getElementById("helpButton");
 
 const helpPanel =
   document.getElementById("helpPanel");
@@ -236,15 +263,798 @@ const previewContext =
 
 
 const previewSeamHandle =
-  document.getElementById(
-    "previewSeamHandle"
-  );
+document.getElementById(
+"previewSeamHandle"
+);
+
+
+/* ================================
+言語切り替え
+================================ */
+
+const LANGUAGE_STORAGE_KEY =
+"gururi-paint-language";
+
+
+let savedLanguage = null;
+
+
+try {
+
+savedLanguage =
+localStorage.getItem(
+LANGUAGE_STORAGE_KEY
+);
+
+} catch (error) {
+
+savedLanguage = null;
+}
+
+
+let currentLanguage =
+savedLanguage === "ja" ||
+savedLanguage === "en"
+? savedLanguage
+: (navigator.language || "")
+.toLowerCase()
+.startsWith("ja")
+? "ja"
+: "en";
+
+
+const translations = {
+
+ja: {
+
+appTitle:
+"ぐるりペイント",
+
+undoTitle:
+"元に戻す（Ctrl + Z）",
+
+undo:
+"元に戻す",
+
+redoTitle:
+"やり直す（Ctrl + Y）",
+
+redo:
+"やり直す",
+
+outputSize:
+"出力サイズ",
+
+eyeHeight:
+"目線",
+
+eyeLower:
+"目線を下げる",
+
+eyeRaise:
+"目線を上げる",
+
+guideGrid:
+"補助グリッド",
+
+saveData:
+"データ保存",
+
+loadData:
+"読み込み",
+
+preview:
+"プレビュー",
+
+savePng:
+"PNG保存",
+
+help:
+"操作方法",
+
+pen:
+"ペン",
+
+eraser:
+"消しゴム",
+
+bucket:
+"バケツ",
+
+eyedropper:
+"スポイト",
+
+brushSize:
+"太さ",
+
+thinner:
+"細くする",
+
+thicker:
+"太くする",
+
+brushSizeAria:
+"ペンの太さ",
+
+brushSizeNumberAria:
+"ペンの太さを数値入力",
+
+chooseColor:
+"色を選択",
+
+color:
+"色",
+
+currentPenColor:
+"現在のペン色",
+
+recentColors:
+"最近使用した色",
+
+layers:
+"レイヤー",
+
+addLayer:
+"レイヤーを追加",
+
+moveUp:
+"上へ移動",
+
+moveDown:
+"下へ移動",
+
+deleteLayer:
+"レイヤーを削除",
+
+delete:
+"削除",
+
+controlPanels:
+"操作パネル",
+
+draw:
+"描画",
+
+settings:
+"設定",
+
+helpLookAround:
+"Space + ドラッグ：見回す",
+
+helpZoom:
+"Z + 上下ドラッグ：ズーム",
+
+helpUndo:
+"Ctrl + Z：元に戻す",
+
+helpRedo:
+"Ctrl + Y：やり直す",
+
+helpMobileDraw:
+"スマートフォン：1本指で描画",
+
+helpMobileLook:
+"スマートフォン：2本指ドラッグで見回す",
+
+helpMobileZoom:
+"スマートフォン：ピンチでズーム",
+
+previewTitle:
+"360°プレビュー",
+
+close:
+"閉じる",
+
+seamChange:
+"ドラッグして画像の左端を変更",
+
+hideLayer:
+"非表示にする",
+
+showLayer:
+"表示する",
+
+dragReorder:
+"ドラッグして並び替え",
+
+dragReorderAria:
+"レイヤーをドラッグして並び替え",
+
+editLayerNameMobile:
+"長押しでレイヤー名を編集",
+
+editLayerNameDesktop:
+"ダブルクリックでレイヤー名を編集",
+
+opacity:
+"不透明度",
+
+layerImageLoadError:
+"レイヤー画像を読み込めませんでした。",
+
+invalidProject:
+"ぐるりペイントの保存データではありません。",
+
+brokenLayerImage:
+"レイヤー画像が壊れています。",
+
+projectLoaded:
+"データを読み込みました。",
+
+projectLoadFailed:
+"データを読み込めませんでした。\nぐるりペイントで保存したデータか確認してください。"
+},
+
+
+en: {
+
+appTitle:
+"Gururi Paint",
+
+undoTitle:
+"Undo (Ctrl + Z)",
+
+undo:
+"Undo",
+
+redoTitle:
+"Redo (Ctrl + Y)",
+
+redo:
+"Redo",
+
+outputSize:
+"Output size",
+
+eyeHeight:
+"Eye height",
+
+eyeLower:
+"Lower eye height",
+
+eyeRaise:
+"Raise eye height",
+
+guideGrid:
+"Guide grid",
+
+saveData:
+"Save data",
+
+loadData:
+"Load",
+
+preview:
+"Preview",
+
+savePng:
+"Save PNG",
+
+help:
+"Controls",
+
+pen:
+"Pen",
+
+eraser:
+"Eraser",
+
+bucket:
+"Fill",
+
+eyedropper:
+"Eyedropper",
+
+brushSize:
+"Size",
+
+thinner:
+"Thinner",
+
+thicker:
+"Thicker",
+
+brushSizeAria:
+"Brush size",
+
+brushSizeNumberAria:
+"Enter brush size",
+
+chooseColor:
+"Choose color",
+
+color:
+"Color",
+
+currentPenColor:
+"Current pen color",
+
+recentColors:
+"Recent colors",
+
+layers:
+"Layers",
+
+addLayer:
+"Add layer",
+
+moveUp:
+"Move up",
+
+moveDown:
+"Move down",
+
+deleteLayer:
+"Delete layer",
+
+delete:
+"Delete",
+
+controlPanels:
+"Control panels",
+
+draw:
+"Draw",
+
+settings:
+"Settings",
+
+helpLookAround:
+"Space + Drag: Look around",
+
+helpZoom:
+"Z + Drag up/down: Zoom",
+
+helpUndo:
+"Ctrl + Z: Undo",
+
+helpRedo:
+"Ctrl + Y: Redo",
+
+helpMobileDraw:
+"Mobile: Draw with one finger",
+
+helpMobileLook:
+"Mobile: Drag with two fingers to look around",
+
+helpMobileZoom:
+"Mobile: Pinch to zoom",
+
+previewTitle:
+"360° Preview",
+
+close:
+"Close",
+
+seamChange:
+"Drag to change the left edge of the image",
+
+hideLayer:
+"Hide layer",
+
+showLayer:
+"Show layer",
+
+dragReorder:
+"Drag to reorder",
+
+dragReorderAria:
+"Drag layer to reorder",
+
+editLayerNameMobile:
+"Press and hold to edit layer name",
+
+editLayerNameDesktop:
+"Double-click to edit layer name",
+
+opacity:
+"Opacity",
+
+layerImageLoadError:
+"Could not load the layer image.",
+
+invalidProject:
+"This is not a Gururi Paint project file.",
+
+brokenLayerImage:
+"The layer image is corrupted.",
+
+projectLoaded:
+"Project loaded.",
+
+projectLoadFailed:
+"Could not load the project.\nPlease check that it was saved by Gururi Paint."
+}
+};
+
+
+function t(
+key
+) {
+
+return (
+translations[currentLanguage]
+?.[key] ??
+translations.ja[key] ??
+key
+);
+}
+
+
+function getDefaultLayerName(
+number
+) {
+
+return currentLanguage === "en"
+? `Layer ${number}`
+: `レイヤー${number}`;
+}
+
+
+function setElementText(
+selector,
+text
+) {
+
+const element =
+document.querySelector(
+selector
+);
+
+
+if (element) {
+
+element.textContent =
+text;
+}
+}
+
+
+function applyLanguage(
+rerenderLayers = true
+) {
+
+document.documentElement.lang =
+currentLanguage;
+
+
+document.title =
+t("appTitle");
+
+
+setElementText(
+".toolbar__title",
+t("appTitle")
+);
+
+
+undoButton.title =
+t("undoTitle");
+
+undoButton.setAttribute(
+"aria-label",
+t("undo")
+);
+
+
+redoButton.title =
+t("redoTitle");
+
+redoButton.setAttribute(
+"aria-label",
+t("redo")
+);
+
+
+setElementText(
+".canvas-size-control label",
+t("outputSize")
+);
+
+
+setElementText(
+".eye-height-control label",
+t("eyeHeight")
+);
+
+
+eyeHeightMinus.title =
+t("eyeLower");
+
+eyeHeightPlus.title =
+t("eyeRaise");
+
+
+setElementText(
+".guide-toggle span",
+t("guideGrid")
+);
+
+
+projectSaveButton.textContent =
+t("saveData");
+
+projectLoadButton.textContent =
+t("loadData");
+
+previewButton.textContent =
+t("preview");
+
+downloadButton.textContent =
+t("savePng");
+
+
+const languageSwitchLabel =
+currentLanguage === "ja"
+? "英語に切り替え"
+: "Switch to Japanese";
+
+
+languageButton.textContent =
+currentLanguage === "ja"
+? "EN"
+: "JA";
+
+languageButton.title =
+languageSwitchLabel;
+
+languageButton.setAttribute(
+"aria-label",
+languageSwitchLabel
+);
+
+
+helpButton.title =
+t("help");
+
+helpButton.textContent =
+t("help");
+
+
+penToolButton.textContent =
+t("pen");
+
+penToolButton.title =
+t("pen");
+
+
+eraserToolButton.textContent =
+t("eraser");
+
+eraserToolButton.title =
+t("eraser");
+
+
+bucketToolButton.textContent =
+t("bucket");
+
+bucketToolButton.title =
+t("bucket");
+
+
+eyedropperToolButton.textContent =
+t("eyedropper");
+
+eyedropperToolButton.title =
+t("eyedropper");
+
+
+setElementText(
+".pen-size-label",
+t("brushSize")
+);
+
+
+penSizeMinus.title =
+t("thinner");
+
+penSizePlus.title =
+t("thicker");
+
+
+penSizeInput.setAttribute(
+"aria-label",
+t("brushSizeAria")
+);
+
+
+penSizeValue.setAttribute(
+"aria-label",
+t("brushSizeNumberAria")
+);
+
+
+mobileColorButton.setAttribute(
+"aria-label",
+t("chooseColor")
+);
+
+
+setElementText(
+".pen-color-label",
+t("color")
+);
+
+
+currentPenColorSwatch.setAttribute(
+"aria-label",
+t("currentPenColor")
+);
+
+
+recentColorsElement.setAttribute(
+"aria-label",
+t("recentColors")
+);
+
+
+setElementText(
+".layer-panel__header strong",
+t("layers")
+);
+
+
+addLayerButton.title =
+t("addLayer");
+
+layerUpButton.title =
+t("moveUp");
+
+layerDownButton.title =
+t("moveDown");
+
+deleteLayerButton.title =
+t("deleteLayer");
+
+deleteLayerButton.textContent =
+t("delete");
+
+
+const mobileTabs =
+document.querySelector(
+".mobile-bottom-tabs"
+);
+
+
+mobileTabs?.setAttribute(
+"aria-label",
+t("controlPanels")
+);
+
+
+setElementText(
+'.mobile-bottom-tab[data-mobile-panel="draw"]',
+t("draw")
+);
+
+
+setElementText(
+'.mobile-bottom-tab[data-mobile-panel="layer"]',
+t("layers")
+);
+
+
+setElementText(
+'.mobile-bottom-tab[data-mobile-panel="settings"]',
+t("settings")
+);
+
+
+setElementText(
+".help-panel__header strong",
+t("help")
+);
+
+
+const helpParagraphs =
+helpPanel.querySelectorAll(
+".help-panel__content p"
+);
+
+
+const helpKeys = [
+"helpLookAround",
+"helpZoom",
+"helpUndo",
+"helpRedo",
+"helpMobileDraw",
+"helpMobileLook",
+"helpMobileZoom"
+];
+
+
+helpKeys.forEach(
+(key, index) => {
+
+if (
+helpParagraphs[index]
+) {
+
+helpParagraphs[index]
+.textContent =
+t(key);
+}
+}
+);
+
+
+setElementText(
+".preview-header span",
+t("previewTitle")
+);
+
+
+previewCloseButton.textContent =
+t("close");
+
+
+previewSeamHandle.title =
+t("seamChange");
+
+
+previewSeamHandle.setAttribute(
+"aria-label",
+t("seamChange")
+);
+
+
+if (rerenderLayers) {
+
+renderLayerPanel();
+}
+
+
+requestAnimationFrame(
+() => {
+
+updateMobileViewportSize();
+}
+);
+}
+
+
+function setLanguage(
+language
+) {
+
+if (
+language !== "ja" &&
+language !== "en"
+) {
+
+return;
+}
+
+
+currentLanguage =
+language;
+
+
+try {
+
+localStorage.setItem(
+LANGUAGE_STORAGE_KEY,
+currentLanguage
+);
+
+} catch (error) {
 
 /*
-  カメラ
+言語設定を保存できない環境でも
+切り替え自体はそのまま使用する
+*/
+}
 
-  FOV：75度
-  視点位置：高さ1.5m
+
+applyLanguage();
+}
+
+
+/*
+カメラ
+
+FOV：75度
+視点位置：高さ1.5m
 */
 const camera = new THREE.PerspectiveCamera(
   85,
@@ -390,10 +1200,11 @@ drawContext.imageSmoothingEnabled =
 ================================ */
 
 const layers = [
-  {
-    id: 1,
-    name: "レイヤー1",
-    canvas: drawCanvas,
+{
+id: 1,
+name:
+getDefaultLayerName(1),
+canvas: drawCanvas,
     context: drawContext,
     visible: true,
     opacity: 1
@@ -6284,10 +7095,10 @@ function renderLayerPanel() {
         ? "●"
         : "○";
 
-    visibilityButton.title =
-      layer.visible
-        ? "非表示にする"
-        : "表示する";
+visibilityButton.title =
+layer.visible
+? t("hideLayer")
+: t("showLayer");
 
 
     visibilityButton.addEventListener(
@@ -6329,14 +7140,14 @@ function renderLayerPanel() {
       "≡";
 
 
-    dragHandle.title =
-      "ドラッグして並び替え";
+dragHandle.title =
+t("dragReorder");
 
 
-    dragHandle.setAttribute(
-      "aria-label",
-      "レイヤーをドラッグして並び替え"
-    );
+dragHandle.setAttribute(
+"aria-label",
+t("dragReorderAria")
+);
 
 
     dragHandle.addEventListener(
@@ -6511,10 +7322,10 @@ function renderLayerPanel() {
       true;
 
 
-    nameInput.title =
-      isMobileDevice
-        ? "長押しでレイヤー名を編集"
-        : "ダブルクリックでレイヤー名を編集";
+nameInput.title =
+isMobileDevice
+? t("editLayerNameMobile")
+: t("editLayerNameDesktop");
 
 
     /*
@@ -6921,8 +7732,8 @@ function renderLayerPanel() {
     const opacityLabel =
       document.createElement("span");
 
-    opacityLabel.textContent =
-      "不透明度";
+opacityLabel.textContent =
+t("opacity");
 
 
     const opacityValue =
@@ -7059,10 +7870,12 @@ function addLayer() {
 
 
 const layer = {
-    id: nextLayerId,
-    name:
-      `レイヤー${nextLayerNumber}`,
-    canvas,
+id: nextLayerId,
+name:
+getDefaultLayerName(
+nextLayerNumber
+),
+canvas,
     context,
     visible: true,
     opacity: 1
@@ -7249,13 +8062,28 @@ layerUpButton.addEventListener(
 
 
 layerDownButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    moveActiveLayer(-1);
-  }
+moveActiveLayer(-1);
+}
 );
 
+
+languageButton.addEventListener(
+"click",
+() => {
+
+setLanguage(
+currentLanguage === "ja"
+? "en"
+: "ja"
+);
+}
+);
+
+
+applyLanguage(false);
 
 renderLayerPanel();
 
@@ -8419,15 +9247,42 @@ helpCloseButton.addEventListener(
 
 
 /* ================================
-   データ保存／読み込み
+ページを離れる前の確認
+================================ */
+
+/*
+タブを閉じる、
+ページを再読み込みする、
+ブラウザバックする、
+別ページへ移動する場合に
+ブラウザ標準の確認を表示する。
+*/
+
+window.addEventListener(
+"beforeunload",
+(event) => {
+
+event.preventDefault();
+
+/*
+一部ブラウザとの互換性のために必要
+*/
+
+event.returnValue = "";
+}
+);
+
+
+/* ================================
+データ保存／読み込み
 ================================ */
 
 projectSaveButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    downloadProject();
-  }
+downloadProject();
+}
 );
 
 

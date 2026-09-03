@@ -17,12 +17,21 @@
 
   <header class="toolbar">
 
+<div class="toolbar__brand">
+
 <div class="toolbar__title">
-      ぐるりペイント
-    </div>
+ぐるりペイント
+</div>
+
+<span
+id="appVersion"
+class="toolbar__version"
+></span>
+
+</div>
 
 
-    <div class="history-controls">
+<div class="history-controls">
 
       <button
         id="undoButton"
@@ -179,16 +188,26 @@
         PNG保存
       </button>
 
-    </div>
+</div>
 
-    <button
-      id="helpButton"
-      class="tool-button"
-      type="button"
-      title="操作方法"
-    >
-      ？
-    </button>
+<button
+id="languageButton"
+class="tool-button"
+type="button"
+title="英語に切り替え"
+aria-label="英語に切り替え"
+>
+EN
+</button>
+
+<button
+id="helpButton"
+class="tool-button"
+type="button"
+title="操作方法"
+>
+操作方法
+</button>
 
   </header>
 
