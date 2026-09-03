@@ -2196,15 +2196,23 @@ opacity: 0.86;
   */
 
   .welcome-overlay {
+    top: 44px;
+    right: 0;
+    bottom:
+      calc(
+        52px +
+        env(
+          safe-area-inset-bottom
+        )
+      );
+    left: 0;
+
     padding: 10px;
   }
 
 
   .welcome-panel {
-    max-height:
-      calc(
-        100dvh - 20px
-      );
+    max-height: 100%;
   }
 
 
