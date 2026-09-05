@@ -542,7 +542,7 @@ eyedropper:
 "スポイト",
 
 lookTool:
-"見回し",
+"手のひら",
 
 brushSize:
 "太さ",
@@ -780,7 +780,7 @@ eyedropper:
 "Eyedropper",
 
 lookTool:
-"Look around",
+"Hand",
 
 brushSize:
 "Size",
@@ -10796,7 +10796,7 @@ pen: "p",
 eraser: "e",
 bucket: "b",
 eyedropper: "s",
-look: "l",
+look: "h",
 lookAround: "space",
 zoom: "z"
 };
