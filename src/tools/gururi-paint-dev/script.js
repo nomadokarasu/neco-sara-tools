@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.8";
+"1.3.9";
 
 
 const appVersion =
@@ -1977,224 +1977,224 @@ height
 
 function downloadPNG() {
 
-  /*
-    念のため最新の描画内容を
-    paintCanvasへ反映
-  */
+/*
+念のため最新の描画内容を
+paintCanvasへ反映
+*/
 
-  updatePaintCanvas();
-
-
-  /*
-    書き出し専用Canvas
-  */
-
-  const exportCanvas =
-    document.createElement("canvas");
-
-  exportCanvas.width =
-    outputWidth;
-
-  exportCanvas.height =
-    outputHeight;
-
-  const exportContext =
-    exportCanvas.getContext("2d");
-
-  exportContext.imageSmoothingEnabled =
-    false;
+updatePaintCanvas();
 
 
-  /*
-    まず、プレビューと同じ並び順の
-    元画像を作るための一時Canvasを用意する
-  */
+/*
+書き出し専用Canvas
+*/
 
-  const previewLikeSourceCanvas =
-    document.createElement("canvas");
+const exportCanvas =
+document.createElement("canvas");
 
-  previewLikeSourceCanvas.width =
-    paintCanvas.width;
+exportCanvas.width =
+outputWidth;
 
-  previewLikeSourceCanvas.height =
-    paintCanvas.height;
+exportCanvas.height =
+outputHeight;
 
-  const previewLikeSourceContext =
-    previewLikeSourceCanvas.getContext("2d");
+const exportContext =
+exportCanvas.getContext("2d");
 
-  previewLikeSourceContext.imageSmoothingEnabled =
-    false;
-
-
-  /*
-    左右反転した通常の
-    360°長方形画像を作る
-  */
-
-  previewLikeSourceContext.clearRect(
-    0,
-    0,
-    previewLikeSourceCanvas.width,
-    previewLikeSourceCanvas.height
-  );
-
-  previewLikeSourceContext.save();
-
-  previewLikeSourceContext.translate(
-    previewLikeSourceCanvas.width,
-    0
-  );
-
-  previewLikeSourceContext.scale(
-    -1,
-    1
-  );
-
-  previewLikeSourceContext.drawImage(
-    paintCanvas,
-    0,
-    0
-  );
-
-  previewLikeSourceContext.restore();
+exportContext.imageSmoothingEnabled =
+false;
 
 
-  /*
-    次に、プレビューと同じく
-    左端位置を previewSeamRatio に合わせて
-    循環移動した画像を作る
-  */
+/*
+まず、プレビューと同じ並び順の
+元画像を作るための一時Canvasを用意する
+*/
 
-  const previewLikeCanvas =
-    document.createElement("canvas");
+const previewLikeSourceCanvas =
+document.createElement("canvas");
 
-  previewLikeCanvas.width =
-    paintCanvas.width;
+previewLikeSourceCanvas.width =
+paintCanvas.width;
 
-  previewLikeCanvas.height =
-    paintCanvas.height;
+previewLikeSourceCanvas.height =
+paintCanvas.height;
 
-  const previewLikeContext =
-    previewLikeCanvas.getContext("2d");
+const previewLikeSourceContext =
+previewLikeSourceCanvas.getContext("2d");
 
-  previewLikeContext.imageSmoothingEnabled =
-    false;
-
-
-  const sourceWidth =
-    previewLikeCanvas.width;
-
-  const sourceHeight =
-    previewLikeCanvas.height;
-
-  const normalizedRatio =
-    (
-      (
-        previewSeamRatio %
-        1
-      ) +
-      1
-    ) % 1;
-
-  const seamX =
-    Math.round(
-      normalizedRatio *
-      sourceWidth
-    ) % sourceWidth;
+previewLikeSourceContext.imageSmoothingEnabled =
+false;
 
 
-  previewLikeContext.clearRect(
-    0,
-    0,
-    sourceWidth,
-    sourceHeight
-  );
+/*
+左右反転した通常の
+360°長方形画像を作る
+*/
+
+previewLikeSourceContext.clearRect(
+0,
+0,
+previewLikeSourceCanvas.width,
+previewLikeSourceCanvas.height
+);
+
+previewLikeSourceContext.save();
+
+previewLikeSourceContext.translate(
+previewLikeSourceCanvas.width,
+0
+);
+
+previewLikeSourceContext.scale(
+-1,
+1
+);
+
+previewLikeSourceContext.drawImage(
+paintCanvas,
+0,
+0
+);
+
+previewLikeSourceContext.restore();
 
 
-  /*
-    seamX 以降を左側へ描画
-  */
+/*
+次に、プレビューと同じく
+左端位置を previewSeamRatio に合わせて
+循環移動した画像を作る
+*/
 
-  const rightWidth =
-    sourceWidth - seamX;
+const previewLikeCanvas =
+document.createElement("canvas");
 
-  if (rightWidth > 0) {
+previewLikeCanvas.width =
+paintCanvas.width;
 
-    previewLikeContext.drawImage(
-      previewLikeSourceCanvas,
-      seamX,
-      0,
-      rightWidth,
-      sourceHeight,
-      0,
-      0,
-      rightWidth,
-      sourceHeight
-    );
-  }
+previewLikeCanvas.height =
+paintCanvas.height;
 
+const previewLikeContext =
+previewLikeCanvas.getContext("2d");
 
-  /*
-    元画像左側を右端へつなげる
-  */
-
-  if (seamX > 0) {
-
-    previewLikeContext.drawImage(
-      previewLikeSourceCanvas,
-      0,
-      0,
-      seamX,
-      sourceHeight,
-      rightWidth,
-      0,
-      seamX,
-      sourceHeight
-    );
-  }
+previewLikeContext.imageSmoothingEnabled =
+false;
 
 
-  /*
-    プレビューと同じ並び順の画像を
-    出力サイズへ拡大して書き出す
-  */
+const sourceWidth =
+previewLikeCanvas.width;
 
-  exportContext.clearRect(
-    0,
-    0,
-    outputWidth,
-    outputHeight
-  );
+const sourceHeight =
+previewLikeCanvas.height;
 
-  exportContext.drawImage(
-    previewLikeCanvas,
-    0,
-    0,
-    sourceWidth,
-    sourceHeight,
-    0,
-    0,
-    outputWidth,
-    outputHeight
-  );
+const normalizedRatio =
+(
+(
+previewSeamRatio %
+1
+) +
+1
+) % 1;
+
+const seamX =
+Math.round(
+normalizedRatio *
+sourceWidth
+) % sourceWidth;
 
 
-  /*
-    PNGダウンロード
-  */
+previewLikeContext.clearRect(
+0,
+0,
+sourceWidth,
+sourceHeight
+);
 
-  const link =
-    document.createElement("a");
 
-  link.href =
-    exportCanvas.toDataURL(
-      "image/png"
-    );
+/*
+seamX 以降を左側へ描画
+*/
 
-  link.download =
-    "gururi-world.png";
+const rightWidth =
+sourceWidth - seamX;
 
-  link.click();
+if (rightWidth > 0) {
+
+previewLikeContext.drawImage(
+previewLikeSourceCanvas,
+seamX,
+0,
+rightWidth,
+sourceHeight,
+0,
+0,
+rightWidth,
+sourceHeight
+);
+}
+
+
+/*
+元画像左側を右端へつなげる
+*/
+
+if (seamX > 0) {
+
+previewLikeContext.drawImage(
+previewLikeSourceCanvas,
+0,
+0,
+seamX,
+sourceHeight,
+rightWidth,
+0,
+seamX,
+sourceHeight
+);
+}
+
+
+/*
+プレビューと同じ並び順の画像を
+出力サイズへ拡大して書き出す
+*/
+
+exportContext.clearRect(
+0,
+0,
+outputWidth,
+outputHeight
+);
+
+exportContext.drawImage(
+previewLikeCanvas,
+0,
+0,
+sourceWidth,
+sourceHeight,
+0,
+0,
+outputWidth,
+outputHeight
+);
+
+
+/*
+PNGダウンロード
+*/
+
+const link =
+document.createElement("a");
+
+link.href =
+exportCanvas.toDataURL(
+"image/png"
+);
+
+link.download =
+"gururi-world.png";
+
+link.click();
 }
 
 
