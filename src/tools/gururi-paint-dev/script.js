@@ -8248,14 +8248,44 @@ renderLayerPanel();
    ツール切り替え
 ================================ */
 
-penToolButton.addEventListener(
-  "click",
-  () => {
+function selectDrawingTool(
+  tool
+) {
 
-    currentTool = "pen";
+  if (
+    tool !== "pen" &&
+    tool !== "eraser" &&
+    tool !== "bucket" &&
+    tool !== "eyedropper"
+  ) {
+    return;
+  }
+
+
+  currentTool = tool;
+
+
+  /*
+    ペン・消しゴムでは
+    それぞれ保存してある太さを復元する
+  */
+
+  if (tool === "pen") {
 
     penSize =
       savedPenSize;
+
+  } else if (tool === "eraser") {
+
+    penSize =
+      savedEraserSize;
+  }
+
+
+  if (
+    tool === "pen" ||
+    tool === "eraser"
+  ) {
 
     penSizeInput.value =
       penSize;
@@ -8263,25 +8293,51 @@ penToolButton.addEventListener(
     penSizeValue.value =
       penSize;
 
-
     renderer.domElement.style.cursor =
       "none";
 
+  } else {
 
-    penToolButton.classList.add(
-      "is-active"
-    );
+    /*
+      バケツ・スポイトでは
+      円形カーソルを使わない
+    */
 
-    eraserToolButton.classList.remove(
-      "is-active"
-    );
+    eraserCursor.visible = false;
 
-    bucketToolButton.classList.remove(
-      "is-active"
-    );
+    renderer.domElement.style.cursor =
+      "crosshair";
+  }
 
-    eyedropperToolButton.classList.remove(
-      "is-active"
+
+  penToolButton.classList.toggle(
+    "is-active",
+    tool === "pen"
+  );
+
+  eraserToolButton.classList.toggle(
+    "is-active",
+    tool === "eraser"
+  );
+
+  bucketToolButton.classList.toggle(
+    "is-active",
+    tool === "bucket"
+  );
+
+  eyedropperToolButton.classList.toggle(
+    "is-active",
+    tool === "eyedropper"
+  );
+}
+
+
+penToolButton.addEventListener(
+  "click",
+  () => {
+
+    selectDrawingTool(
+      "pen"
     );
   }
 );
@@ -8291,36 +8347,8 @@ eraserToolButton.addEventListener(
   "click",
   () => {
 
-    currentTool = "eraser";
-
-    penSize =
-      savedEraserSize;
-
-    penSizeInput.value =
-      penSize;
-
-    penSizeValue.value =
-      penSize;
-
-
-    renderer.domElement.style.cursor =
-      "none";
-
-
-    eraserToolButton.classList.add(
-      "is-active"
-    );
-
-    penToolButton.classList.remove(
-      "is-active"
-    );
-
-    bucketToolButton.classList.remove(
-      "is-active"
-    );
-
-    eyedropperToolButton.classList.remove(
-      "is-active"
+    selectDrawingTool(
+      "eraser"
     );
   }
 );
@@ -8330,70 +8358,19 @@ bucketToolButton.addEventListener(
   "click",
   () => {
 
-    currentTool = "bucket";
-
-
-    /*
-      バケツでは円形カーソルを使わない
-    */
-
-    eraserCursor.visible = false;
-
-    renderer.domElement.style.cursor =
-      "crosshair";
-
-
-    bucketToolButton.classList.add(
-      "is-active"
-    );
-
-    penToolButton.classList.remove(
-      "is-active"
-    );
-
-    eraserToolButton.classList.remove(
-      "is-active"
-    );
-
-    eyedropperToolButton.classList.remove(
-      "is-active"
+    selectDrawingTool(
+      "bucket"
     );
   }
 );
-
 
 
 eyedropperToolButton.addEventListener(
   "click",
   () => {
 
-    currentTool = "eyedropper";
-
-
-    /*
-      スポイトでは円形カーソルを使わない
-    */
-
-    eraserCursor.visible = false;
-
-    renderer.domElement.style.cursor =
-      "crosshair";
-
-
-    eyedropperToolButton.classList.add(
-      "is-active"
-    );
-
-    penToolButton.classList.remove(
-      "is-active"
-    );
-
-    eraserToolButton.classList.remove(
-      "is-active"
-    );
-
-    bucketToolButton.classList.remove(
-      "is-active"
+    selectDrawingTool(
+      "eyedropper"
     );
   }
 );
@@ -9739,13 +9716,36 @@ window.addEventListener(
 
 
     /*
-      Ctrl + Z
+      Undo / Redo
+
+      Ctrl：
+      Windows / Linux
+
+      Meta：
+      macOSのCommand
+
+      event.keyを使用することで、
+      QWERTY / AZERTYなどの
+      キーボード配列にも対応する。
+    */
+
+    const shortcutModifierPressed =
+      event.ctrlKey ||
+      event.metaKey;
+
+    const shortcutKey =
+      event.key.toLowerCase();
+
+
+    /*
+      Ctrl / Command + Z
       Undo
     */
 
     if (
-      event.ctrlKey &&
-      event.code === "KeyZ"
+      shortcutModifierPressed &&
+      !event.shiftKey &&
+      shortcutKey === "z"
     ) {
 
       event.preventDefault();
@@ -9758,12 +9758,20 @@ window.addEventListener(
 
     /*
       Ctrl + Y
+      または
+      Ctrl / Command + Shift + Z
       Redo
     */
 
     if (
-      event.ctrlKey &&
-      event.code === "KeyY"
+      shortcutModifierPressed &&
+      (
+        shortcutKey === "y" ||
+        (
+          event.shiftKey &&
+          shortcutKey === "z"
+        )
+      )
     ) {
 
       event.preventDefault();
