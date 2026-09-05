@@ -10327,7 +10327,11 @@ previewDownloadButton.addEventListener(
 "click",
 () => {
 
-downloadButton.click();
+downloadPNG();
+
+trackGAEvent(
+"download_image"
+);
 }
 );
 
@@ -10614,15 +10618,11 @@ projectLoadInput.addEventListener(
 ================================ */
 
 downloadButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-downloadPNG();
-
-trackGAEvent(
-"download_image"
-);
-  }
+previewButton.click();
+}
 );
 
 /* ================================
