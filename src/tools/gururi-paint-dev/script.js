@@ -9669,7 +9669,73 @@ redoButton.addEventListener(
 );
 
 
-/* Spaceキー */
+/* ================================
+キーボードショートカット設定
+================================ */
+
+const DEFAULT_SHORTCUT_KEYS = {
+pen: "p",
+eraser: "e",
+bucket: "b",
+eyedropper: "i",
+lookAround: "space",
+zoom: "z"
+};
+
+
+let shortcutKeys = {
+...DEFAULT_SHORTCUT_KEYS
+};
+
+
+/*
+KeyboardEventを
+ショートカット判定用の文字列へ変換する。
+
+文字キーはevent.keyを使用することで、
+QWERTY / AZERTYなどの
+キーボード配列に対応する。
+*/
+
+function getShortcutKey(
+event
+) {
+
+if (
+event.code === "Space"
+) {
+return "space";
+}
+
+return event.key.toLowerCase();
+}
+
+
+/*
+描画ツールに割り当てられている
+ショートカットから
+ツール名を取得する。
+*/
+
+function getDrawingToolFromShortcut(
+key
+) {
+
+const drawingTools = [
+"pen",
+"eraser",
+"bucket",
+"eyedropper"
+];
+
+return (
+drawingTools.find(
+(tool) =>
+shortcutKeys[tool] === key
+) || null
+);
+}
+
 
 window.addEventListener(
   "keydown",
@@ -9733,8 +9799,10 @@ window.addEventListener(
       event.ctrlKey ||
       event.metaKey;
 
-    const shortcutKey =
-      event.key.toLowerCase();
+const shortcutKey =
+getShortcutKey(
+event
+);
 
 
     /*
@@ -9782,83 +9850,47 @@ window.addEventListener(
     }
 
 
-    /*
-      描画ツールショートカット
+/*
+描画ツールショートカット
+*/
 
-      P：ペン
-      E：消しゴム
-      B：バケツ
-      I：スポイト
-    */
+if (
+!event.ctrlKey &&
+!event.metaKey &&
+!event.altKey
+) {
 
-    if (
-      !event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey
-    ) {
+const shortcutTool =
+getDrawingToolFromShortcut(
+shortcutKey
+);
 
-      const toolShortcutKey =
-        event.key.toLowerCase();
+if (shortcutTool) {
 
+event.preventDefault();
 
-      if (toolShortcutKey === "p") {
+selectDrawingTool(
+shortcutTool
+);
 
-        event.preventDefault();
-
-        selectDrawingTool(
-          "pen"
-        );
-
-        return;
-      }
-
-
-      if (toolShortcutKey === "e") {
-
-        event.preventDefault();
-
-        selectDrawingTool(
-          "eraser"
-        );
-
-        return;
-      }
-
-
-      if (toolShortcutKey === "b") {
-
-        event.preventDefault();
-
-        selectDrawingTool(
-          "bucket"
-        );
-
-        return;
-      }
-
-
-      if (toolShortcutKey === "i") {
-
-        event.preventDefault();
-
-        selectDrawingTool(
-          "eyedropper"
-        );
-
-        return;
-      }
-    }
+return;
+}
+}
 
 
     /*
       Space
     */
 
-    if (event.code === "Space") {
-      isSpacePressed = true;
+if (
+shortcutKey ===
+shortcutKeys.lookAround
+) {
 
-      event.preventDefault();
-    }
+isSpacePressed = true;
+
+event.preventDefault();
+}
 
 
 /*
@@ -9872,11 +9904,13 @@ window.addEventListener(
 */
 
 if (
-  event.key.toLowerCase() === "z"
+shortcutKey ===
+shortcutKeys.zoom
 ) {
-  isZPressed = true;
 
-  event.preventDefault();
+isZPressed = true;
+
+event.preventDefault();
 }
 
   }
@@ -9891,14 +9925,20 @@ window.addEventListener(
       Spaceを離した
     */
 
-    if (event.code === "Space") {
-      isSpacePressed = false;
-      isLooking = false;
+if (
+getShortcutKey(
+event
+) ===
+shortcutKeys.lookAround
+) {
 
-      viewport.classList.remove(
-        "is-looking"
-      );
-    }
+isSpacePressed = false;
+isLooking = false;
+
+viewport.classList.remove(
+"is-looking"
+);
+}
 
 
 /*
@@ -9906,14 +9946,18 @@ window.addEventListener(
 */
 
 if (
-  event.key.toLowerCase() === "z"
+getShortcutKey(
+event
+) ===
+shortcutKeys.zoom
 ) {
-  isZPressed = false;
-  isZooming = false;
 
-  viewport.classList.remove(
-    "is-zooming"
-  );
+isZPressed = false;
+isZooming = false;
+
+viewport.classList.remove(
+"is-zooming"
+);
 }
 
   }
