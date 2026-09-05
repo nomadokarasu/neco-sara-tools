@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.10";
+"1.3.14";
 
 
 const appVersion =
@@ -2233,95 +2233,95 @@ outputHeight
 },
 
 
-    /*
-      視点
-    */
+/*
+視点
+*/
 
-    view: {
+view: {
 
-      eyeHeight:
-        camera.position.y,
+eyeHeight:
+camera.position.y,
 
-      yaw,
+yaw,
 
-      pitch,
+pitch,
 
-      fov:
-        camera.fov,
+fov:
+camera.fov,
 
 guideVisible:
-        groundToggle.checked,
+groundToggle.checked,
 
-      previewSeamRatio
-    },
-
-
-    /*
-      描画ツール
-    */
-
-    tools: {
-
-      penColor,
-
-      penSize,
-
-      savedPenSize,
-
-      savedEraserSize,
-
-      recentColors:
-        [...recentColors],
-
-      currentTool
-    },
+previewSeamRatio
+},
 
 
-    /*
-      レイヤー管理
-    */
+/*
+描画ツール
+*/
 
-    layerState: {
+tools: {
 
-      activeLayerId,
+penColor,
 
-      nextLayerId,
+penSize,
 
-      nextLayerNumber
-    },
+savedPenSize,
+
+savedEraserSize,
+
+recentColors:
+[...recentColors],
+
+currentTool
+},
 
 
-    /*
-      各レイヤーを
-      透明PNGとして保存
-    */
+/*
+レイヤー管理
+*/
 
-    layers:
-      layers.map(
-        (layer) => ({
+layerState: {
 
-          id:
-            layer.id,
+activeLayerId,
 
-          name:
-            layer.name,
+nextLayerId,
+
+nextLayerNumber
+},
+
+
+/*
+各レイヤーを
+透明PNGとして保存
+*/
+
+layers:
+layers.map(
+(layer) => ({
+
+id:
+layer.id,
+
+name:
+layer.name,
 
 visible:
-            layer.visible,
+layer.visible,
 
-          opacity:
-            typeof layer.opacity ===
-              "number"
-              ? layer.opacity
-              : 1,
+opacity:
+typeof layer.opacity ===
+"number"
+? layer.opacity
+: 1,
 
-          image:
-            layer.canvas.toDataURL(
-              "image/png"
-            )
-        })
-      )
-  };
+image:
+layer.canvas.toDataURL(
+"image/png"
+)
+})
+)
+};
 
 
   const json =
