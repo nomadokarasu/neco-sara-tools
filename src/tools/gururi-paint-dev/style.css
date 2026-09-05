@@ -23,19 +23,19 @@ body {
 }
 
 .toolbar {
-  height: 48px;
+height: 48px;
 
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+display: flex;
+align-items: center;
+justify-content: flex-start;
+gap: 8px;
 
-  padding: 0 16px;
+padding: 0 16px;
 
-  background: #333;
-  border-bottom: 1px solid #555;
+background: #333;
+border-bottom: 1px solid #555;
 
-    overflow-x: auto;
-  overflow-y: hidden;
+overflow: visible;
 }
 
 /*
@@ -71,9 +71,142 @@ color: #aaa;
 }
 
 .toolbar__tools {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+display: flex;
+align-items: center;
+gap: 2px;
+
+position: relative;
+}
+
+
+.app-menu {
+position: relative;
+}
+
+
+.app-menu__trigger {
+display: flex;
+align-items: center;
+
+height: 32px;
+
+padding: 0 10px;
+
+border: 0;
+border-radius: 4px;
+
+background: transparent;
+color: #ddd;
+
+font: inherit;
+font-size: 13px;
+
+cursor: pointer;
+}
+
+
+.app-menu__trigger:hover,
+.app-menu.is-open
+.app-menu__trigger {
+background: #4a4a4a;
+}
+
+
+.app-menu__panel {
+position: absolute;
+
+top: calc(100% + 7px);
+left: 0;
+
+z-index: 500;
+
+display: none;
+flex-direction: column;
+gap: 4px;
+
+min-width: 180px;
+
+padding: 7px;
+
+background: #333;
+
+border: 1px solid #666;
+border-radius: 6px;
+
+box-shadow:
+0 6px 18px
+rgba(
+0,
+0,
+0,
+0.3
+);
+}
+
+
+.app-menu.is-open
+.app-menu__panel {
+display: flex;
+}
+
+
+.app-menu__panel--wide {
+min-width: 310px;
+}
+
+
+.app-menu__panel
+.app-menu__item {
+width: 100%;
+
+text-align: left;
+}
+
+
+.app-menu__panel
+.canvas-size-control {
+width: 100%;
+
+margin-left: 0;
+padding: 5px 4px;
+
+justify-content: space-between;
+}
+
+
+.app-menu__panel
+.eye-height-control {
+width: 100%;
+
+margin-left: 0;
+padding: 5px 4px;
+}
+
+
+.app-menu__panel
+.eye-height-control
+input[type="range"] {
+flex: 1;
+
+min-width: 70px;
+}
+
+
+.app-menu__panel
+.guide-toggle {
+width: 100%;
+
+padding: 7px 4px;
+}
+
+
+#languageButton {
+margin-left: auto;
+}
+
+
+.toolbar__mobile-help {
+display: none;
 }
 
 .tool-button {
@@ -1777,8 +1910,13 @@ margin-left: auto;
   }
 
 
-  #helpButton {
+  #languageButton {
     margin-left: auto;
+  }
+
+
+  .toolbar__mobile-help {
+    display: block;
   }
 
 
@@ -2396,6 +2534,45 @@ margin-left: auto;
 
   .toolbar__tools.is-mobile-open {
     display: flex;
+  }
+
+
+  .toolbar__tools
+  .app-menu__trigger {
+    display: none;
+  }
+
+
+  .toolbar__tools
+  .app-menu {
+    display: contents;
+  }
+
+
+  .toolbar__tools
+  .app-menu__panel {
+    position: static;
+
+    display: contents;
+
+    min-width: 0;
+
+    padding: 0;
+
+    background: transparent;
+
+    border: 0;
+    border-radius: 0;
+
+    box-shadow: none;
+  }
+
+
+  .toolbar__tools
+  .app-menu--edit,
+  .toolbar__tools
+  .app-menu--help {
+    display: none;
   }
 
 

@@ -20,7 +20,7 @@ content="noindex, nofollow"
 
 <body>
 
-  <header class="toolbar">
+<header class="toolbar">
 
 <div class="toolbar__brand">
 
@@ -38,171 +38,283 @@ class="toolbar__version"
 
 <div class="history-controls">
 
-      <button
-        id="undoButton"
-        class="tool-button"
-        type="button"
-        title="元に戻す（Ctrl + Z）"
-        aria-label="元に戻す"
-      >
-        ↶
-      </button>
+<button
+id="undoButton"
+class="tool-button"
+type="button"
+title="元に戻す（Ctrl + Z）"
+aria-label="元に戻す"
+>
+↶
+</button>
 
-      <button
-        id="redoButton"
-        class="tool-button"
-        type="button"
-        title="やり直す（Ctrl + Y）"
-        aria-label="やり直す"
-      >
-        ↷
-      </button>
+<button
+id="redoButton"
+class="tool-button"
+type="button"
+title="やり直す（Ctrl + Y）"
+aria-label="やり直す"
+>
+↷
+</button>
 
-    </div>
+</div>
 
 
-    <div class="toolbar__tools">
+<div class="toolbar__tools">
 
-      <div class="canvas-size-control">
 
-        <label for="canvasSize">
-          出力サイズ
-        </label>
+<div class="app-menu app-menu--file">
 
-        <select id="canvasSize">
+<button
+class="app-menu__trigger"
+type="button"
+data-app-menu="file"
+>
+ファイル
+</button>
 
-          <option value="2048">
-            2048 × 1024
-          </option>
+<div class="app-menu__panel">
 
-          <option
-            value="4096"
-            selected
-          >
-            4096 × 2048
-          </option>
+<button
+id="projectSaveButton"
+class="tool-button app-menu__item"
+type="button"
+>
+データ保存
+</button>
 
-          <option value="8192">
-            8192 × 4096
-          </option>
+<button
+id="projectLoadButton"
+class="tool-button app-menu__item"
+type="button"
+>
+読み込み
+</button>
 
-        </select>
+<input
+id="projectLoadInput"
+type="file"
+accept=".gururi,application/json"
+hidden
+>
 
-      </div>
+<button
+id="downloadButton"
+class="tool-button app-menu__item"
+type="button"
+>
+PNG保存
+</button>
 
-      <div class="eye-height-control">
+</div>
 
-        <label for="eyeHeight">
-          目線
-        </label>
+</div>
 
-        <button
-          id="eyeHeightMinus"
-          class="eye-height-step-button"
-          type="button"
-          title="目線を下げる"
-        >
-          −
-        </button>
 
-        <input
-          id="eyeHeight"
-          type="range"
-          min="0.5"
-          max="30"
-          step="0.1"
-          value="1.5"
-        >
+<div class="app-menu app-menu--edit">
 
-        <button
-          id="eyeHeightPlus"
-          class="eye-height-step-button"
-          type="button"
-          title="目線を上げる"
-        >
-          ＋
-        </button>
+<button
+class="app-menu__trigger"
+type="button"
+data-app-menu="edit"
+>
+編集
+</button>
 
-        <input
-          id="eyeHeightValue"
-          class="number-input"
-          type="number"
-          min="0.5"
-          max="30"
-          step="0.1"
-          value="1.5"
-        >
+<div class="app-menu__panel">
 
-        <span>
-          m
-        </span>
+<button
+id="desktopUndoMenuButton"
+class="tool-button app-menu__item"
+type="button"
+>
+元に戻す
+</button>
 
-      </div>
+<button
+id="desktopRedoMenuButton"
+class="tool-button app-menu__item"
+type="button"
+>
+やり直す
+</button>
 
-      <label class="guide-toggle">
+</div>
 
-        <input
-          id="groundToggle"
-          type="checkbox"
-          checked
-        >
+</div>
+
+
+<div class="app-menu app-menu--view">
+
+<button
+class="app-menu__trigger"
+type="button"
+data-app-menu="view"
+>
+表示
+</button>
+
+<div class="app-menu__panel app-menu__panel--wide">
+
+<div class="canvas-size-control">
+
+<label for="canvasSize">
+出力サイズ
+</label>
+
+<select id="canvasSize">
+
+<option value="2048">
+2048 × 1024
+</option>
+
+<option
+value="4096"
+selected
+>
+4096 × 2048
+</option>
+
+<option value="8192">
+8192 × 4096
+</option>
+
+</select>
+
+</div>
+
+
+<div class="eye-height-control">
+
+<label for="eyeHeight">
+目線
+</label>
+
+<button
+id="eyeHeightMinus"
+class="eye-height-step-button"
+type="button"
+title="目線を下げる"
+>
+−
+</button>
+
+<input
+id="eyeHeight"
+type="range"
+min="0.5"
+max="30"
+step="0.1"
+value="1.5"
+>
+
+<button
+id="eyeHeightPlus"
+class="eye-height-step-button"
+type="button"
+title="目線を上げる"
+>
+＋
+</button>
+
+<input
+id="eyeHeightValue"
+class="number-input"
+type="number"
+min="0.5"
+max="30"
+step="0.1"
+value="1.5"
+>
 
 <span>
-  補助グリッド
+m
+</span>
+
+</div>
+
+
+<label class="guide-toggle">
+
+<input
+id="groundToggle"
+type="checkbox"
+checked
+>
+
+<span>
+補助グリッド
 </span>
 
 </label>
 
 
 <button
+id="previewButton"
+class="tool-button app-menu__item"
+type="button"
+>
+プレビュー
+</button>
+
+</div>
+
+</div>
+
+
+<div class="app-menu app-menu--settings">
+
+<button
+class="app-menu__trigger"
+type="button"
+data-app-menu="settings"
+>
+設定
+</button>
+
+<div class="app-menu__panel">
+
+<button
 id="shortcutSettingsButton"
-class="tool-button"
+class="tool-button app-menu__item"
 type="button"
 >
 ショートカット
 </button>
 
-
-<button
-id="projectSaveButton"
-        class="tool-button"
-        type="button"
-      >
-        データ保存
-      </button>
-
-      <button
-        id="projectLoadButton"
-        class="tool-button"
-        type="button"
-      >
-        読み込み
-      </button>
-
-      <input
-        id="projectLoadInput"
-        type="file"
-        accept=".gururi,application/json"
-        hidden
-      >
-
-      <button
-        id="previewButton"
-        class="tool-button"
-        type="button"
-      >
-        プレビュー
-      </button>
-
-      <button
-        id="downloadButton"
-        class="tool-button"
-        type="button"
-      >
-        PNG保存
-      </button>
+</div>
 
 </div>
+
+
+<div class="app-menu app-menu--help">
+
+<button
+class="app-menu__trigger"
+type="button"
+data-app-menu="help"
+>
+ヘルプ
+</button>
+
+<div class="app-menu__panel">
+
+<button
+id="desktopHelpMenuButton"
+class="tool-button app-menu__item"
+type="button"
+>
+はじめに
+</button>
+
+</div>
+
+</div>
+
+
+</div>
+
 
 <button
 id="languageButton"
@@ -214,16 +326,17 @@ aria-label="英語に切り替え"
 EN
 </button>
 
+
 <button
 id="helpButton"
-class="tool-button"
+class="tool-button toolbar__mobile-help"
 type="button"
 title="はじめに"
 >
 はじめに
 </button>
 
-  </header>
+</header>
 
 <main id="viewport"></main>
 

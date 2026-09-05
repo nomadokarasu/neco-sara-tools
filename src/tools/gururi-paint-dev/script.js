@@ -298,6 +298,32 @@ document.getElementById(
 );
 
 
+const desktopUndoMenuButton =
+document.getElementById(
+"desktopUndoMenuButton"
+);
+
+const desktopRedoMenuButton =
+document.getElementById(
+"desktopRedoMenuButton"
+);
+
+const desktopHelpMenuButton =
+document.getElementById(
+"desktopHelpMenuButton"
+);
+
+const appMenuTriggers =
+document.querySelectorAll(
+".app-menu__trigger"
+);
+
+const appMenus =
+document.querySelectorAll(
+".app-menu"
+);
+
+
 const shortcutSaveConfirmPanel =
 document.getElementById(
 "shortcutSaveConfirmPanel"
@@ -9040,6 +9066,137 @@ true
 applyLanguage(false);
 
 renderLayerPanel();
+
+
+/* ================================
+PC用 メニューバー
+================================ */
+
+function closeAllAppMenus() {
+
+appMenus.forEach(
+(menu) => {
+
+menu.classList.remove(
+"is-open"
+);
+}
+);
+}
+
+
+appMenuTriggers.forEach(
+(trigger) => {
+
+trigger.addEventListener(
+"click",
+(event) => {
+
+event.stopPropagation();
+
+
+const targetMenu =
+trigger.closest(
+".app-menu"
+);
+
+
+const shouldOpen =
+!targetMenu.classList.contains(
+"is-open"
+);
+
+
+closeAllAppMenus();
+
+
+if (shouldOpen) {
+
+targetMenu.classList.add(
+"is-open"
+);
+}
+}
+);
+}
+);
+
+
+document.addEventListener(
+"click",
+(event) => {
+
+if (
+event.target.closest(
+".app-menu"
+)
+) {
+return;
+}
+
+
+closeAllAppMenus();
+}
+);
+
+
+window.addEventListener(
+"keydown",
+(event) => {
+
+if (
+event.key !== "Escape"
+) {
+return;
+}
+
+
+closeAllAppMenus();
+}
+);
+
+
+document.querySelectorAll(
+".app-menu__item"
+).forEach(
+(button) => {
+
+button.addEventListener(
+"click",
+() => {
+
+closeAllAppMenus();
+}
+);
+}
+);
+
+
+desktopUndoMenuButton.addEventListener(
+"click",
+() => {
+
+undoButton.click();
+}
+);
+
+
+desktopRedoMenuButton.addEventListener(
+"click",
+() => {
+
+redoButton.click();
+}
+);
+
+
+desktopHelpMenuButton.addEventListener(
+"click",
+() => {
+
+helpButton.click();
+}
+);
 
 
 /* ================================
