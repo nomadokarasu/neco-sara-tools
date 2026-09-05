@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.7";
+"1.3.8";
 
 
 const appVersion =
@@ -1789,23 +1789,23 @@ texture.needsUpdate = true;
 */
 
 const previewSourceCanvas =
-  document.createElement(
-    "canvas"
-  );
+document.createElement(
+"canvas"
+);
 
 
 const previewSourceContext =
-  previewSourceCanvas.getContext(
-    "2d"
-  );
+previewSourceCanvas.getContext(
+"2d"
+);
 
 
 /*
-  360°画像の左端位置。
+360°画像の左端位置。
 
-  0 = 元の左端
-  0.5 = 画像中央
-  1 = 一周して元の左端
+0 = 元の左端
+0.5 = 画像中央
+1 = 一周して元の左端
 */
 
 let previewSeamRatio = 0;
@@ -1813,162 +1813,162 @@ let previewSeamRatio = 0;
 
 function updatePreview() {
 
-  /*
-    プレビューは
-    編集時と同じ解像度を使用
-  */
+/*
+プレビューは
+編集時と同じ解像度を使用
+*/
 
-  previewCanvas.width =
-    paintCanvas.width;
+previewCanvas.width =
+paintCanvas.width;
 
-  previewCanvas.height =
-    paintCanvas.height;
-
-
-  previewSourceCanvas.width =
-    paintCanvas.width;
-
-  previewSourceCanvas.height =
-    paintCanvas.height;
+previewCanvas.height =
+paintCanvas.height;
 
 
-  previewContext.imageSmoothingEnabled =
-    false;
+previewSourceCanvas.width =
+paintCanvas.width;
+
+previewSourceCanvas.height =
+paintCanvas.height;
 
 
-  previewSourceContext
-    .imageSmoothingEnabled =
-      false;
+previewContext.imageSmoothingEnabled =
+false;
 
 
-  /*
-    まず左右反転した
-    通常のプレビュー画像を作る
-  */
-
-  previewSourceContext.clearRect(
-    0,
-    0,
-    previewSourceCanvas.width,
-    previewSourceCanvas.height
-  );
+previewSourceContext
+.imageSmoothingEnabled =
+false;
 
 
-  previewSourceContext.save();
+/*
+まず左右反転した
+通常のプレビュー画像を作る
+*/
+
+previewSourceContext.clearRect(
+0,
+0,
+previewSourceCanvas.width,
+previewSourceCanvas.height
+);
 
 
-  previewSourceContext.translate(
-    previewSourceCanvas.width,
-    0
-  );
+previewSourceContext.save();
 
 
-  previewSourceContext.scale(
-    -1,
-    1
-  );
+previewSourceContext.translate(
+previewSourceCanvas.width,
+0
+);
 
 
-  previewSourceContext.drawImage(
-    paintCanvas,
-    0,
-    0
-  );
+previewSourceContext.scale(
+-1,
+1
+);
 
 
-  previewSourceContext.restore();
+previewSourceContext.drawImage(
+paintCanvas,
+0,
+0
+);
 
 
-  /*
-    左端位置をCanvas上の
-    X座標へ変換する
-  */
-
-  const width =
-    previewCanvas.width;
+previewSourceContext.restore();
 
 
-  const height =
-    previewCanvas.height;
+/*
+左端位置をCanvas上の
+X座標へ変換する
+*/
+
+const width =
+previewCanvas.width;
 
 
-  const normalizedRatio =
-    (
-      (
-        previewSeamRatio %
-        1
-      ) +
-      1
-    ) % 1;
+const height =
+previewCanvas.height;
 
 
-  const seamX =
-    Math.round(
-      normalizedRatio *
-      width
-    ) % width;
+const normalizedRatio =
+(
+(
+previewSeamRatio %
+1
+) +
+1
+) % 1;
 
 
-  previewContext.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
+const seamX =
+Math.round(
+normalizedRatio *
+width
+) % width;
 
 
-  /*
-    seamX以降を
-    左側へ描画
-  */
-
-  const rightWidth =
-    width -
-    seamX;
+previewContext.clearRect(
+0,
+0,
+width,
+height
+);
 
 
-  if (rightWidth > 0) {
+/*
+seamX以降を
+左側へ描画
+*/
 
-    previewContext.drawImage(
-      previewSourceCanvas,
-
-      seamX,
-      0,
-      rightWidth,
-      height,
-
-      0,
-      0,
-      rightWidth,
-      height
-    );
-  }
+const rightWidth =
+width -
+seamX;
 
 
-  /*
-    元画像の左側部分を
-    右端へつなげる。
+if (rightWidth > 0) {
 
-    360°なので継ぎ目なく
-    循環させることができる。
-  */
+previewContext.drawImage(
+previewSourceCanvas,
 
-  if (seamX > 0) {
+seamX,
+0,
+rightWidth,
+height,
 
-    previewContext.drawImage(
-      previewSourceCanvas,
+0,
+0,
+rightWidth,
+height
+);
+}
 
-      0,
-      0,
-      seamX,
-      height,
 
-      rightWidth,
-      0,
-      seamX,
-      height
-    );
-  }
+/*
+元画像の左側部分を
+右端へつなげる。
+
+360°なので継ぎ目なく
+循環させることができる。
+*/
+
+if (seamX > 0) {
+
+previewContext.drawImage(
+previewSourceCanvas,
+
+0,
+0,
+seamX,
+height,
+
+rightWidth,
+0,
+seamX,
+height
+);
+}
 }
 
 /* ================================
