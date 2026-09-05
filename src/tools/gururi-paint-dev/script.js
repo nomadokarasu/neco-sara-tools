@@ -8517,6 +8517,130 @@ shortcutPanel.classList.remove(
 }
 
 
+function hasShortcutSettingsChanges() {
+
+if (!shortcutDraftKeys) {
+return false;
+}
+
+
+const shortcutChanged =
+Object.keys(
+DEFAULT_SHORTCUT_KEYS
+).some(
+(action) =>
+shortcutDraftKeys[action] !==
+shortcutKeys[action]
+);
+
+
+const horizontalChanged =
+lookDirectionHorizontalDraft !==
+lookDirectionHorizontal;
+
+
+const verticalChanged =
+lookDirectionVerticalDraft !==
+lookDirectionVertical;
+
+
+return (
+shortcutChanged ||
+horizontalChanged ||
+verticalChanged
+);
+}
+
+
+function saveShortcutSettingsDraft() {
+
+if (
+!shortcutDraftKeys ||
+getDuplicateShortcutKeys().size > 0
+) {
+
+updateShortcutStatusForDuplicates();
+
+return false;
+}
+
+
+shortcutKeys = {
+...shortcutDraftKeys
+};
+
+
+lookDirectionHorizontal =
+lookDirectionHorizontalDraft ??
+lookDirectionHorizontal;
+
+
+lookDirectionVertical =
+lookDirectionVerticalDraft ??
+lookDirectionVertical;
+
+
+saveShortcutKeys();
+saveLookDirections();
+
+
+closeShortcutSettings();
+
+return true;
+}
+
+
+function requestCloseShortcutSettings() {
+
+stopShortcutCapture();
+
+
+if (
+!hasShortcutSettingsChanges()
+) {
+
+closeShortcutSettings();
+
+return;
+}
+
+
+const shouldSave =
+window.confirm(
+currentLanguage === "en"
+? "Save settings?\n\nOK: Save and close\nCancel: Close without saving"
+: "設定を保存しますか？\n\nOK：保存して閉じる\nキャンセル：保存せず閉じる"
+);
+
+
+if (shouldSave) {
+
+if (
+getDuplicateShortcutKeys().size > 0
+) {
+
+window.alert(
+currentLanguage === "en"
+? "Duplicate keys must be resolved before saving."
+: "キーが重複しているため保存できません。重複を解消してください。"
+);
+
+updateShortcutStatusForDuplicates();
+
+return;
+}
+
+
+saveShortcutSettingsDraft();
+
+return;
+}
+
+
+closeShortcutSettings();
+}
+
+
 function startShortcutCapture(
 action
 ) {
@@ -8568,8 +8692,8 @@ stopShortcutCapture();
 
 updateShortcutStatusForDuplicates(
 currentLanguage === "en"
-? "Change ready. Press Apply to save."
-: "変更内容を更新しました。「設定する」で確定します。"
+? "Change ready. Press Save to apply."
+: "変更内容を更新しました。「保存」で確定します。"
 );
 }
 
@@ -8587,7 +8711,7 @@ shortcutCloseButton.addEventListener(
 "click",
 () => {
 
-closeShortcutSettings();
+requestCloseShortcutSettings();
 }
 );
 
@@ -8600,7 +8724,7 @@ if (
 event.target === shortcutPanel
 ) {
 
-closeShortcutSettings();
+requestCloseShortcutSettings();
 }
 }
 );
@@ -8685,8 +8809,8 @@ stopShortcutCapture();
 
 updateShortcutStatusForDuplicates(
 currentLanguage === "en"
-? "Default settings are ready. Press Apply to save."
-: "初期設定を表示しています。「設定する」で確定します。"
+? "Default settings are ready. Press Save to apply."
+: "初期設定を表示しています。「保存」で確定します。"
 );
 }
 );
@@ -8696,35 +8820,7 @@ shortcutConfirmButton.addEventListener(
 "click",
 () => {
 
-if (
-!shortcutDraftKeys ||
-getDuplicateShortcutKeys().size > 0
-) {
-
-updateShortcutStatusForDuplicates();
-
-return;
-}
-
-
-shortcutKeys = {
-...shortcutDraftKeys
-};
-
-lookDirectionHorizontal =
-lookDirectionHorizontalDraft ??
-lookDirectionHorizontal;
-
-lookDirectionVertical =
-lookDirectionVerticalDraft ??
-lookDirectionVertical;
-
-
-saveShortcutKeys();
-saveLookDirections();
-
-
-closeShortcutSettings();
+saveShortcutSettingsDraft();
 }
 );
 
@@ -8764,7 +8860,7 @@ updateShortcutStatusForDuplicates();
 
 } else {
 
-closeShortcutSettings();
+requestCloseShortcutSettings();
 }
 
 return;
