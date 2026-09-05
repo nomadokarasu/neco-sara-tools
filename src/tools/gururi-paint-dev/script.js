@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.15";
+"1.3.16";
 
 
 const appVersion =
@@ -2346,33 +2346,33 @@ blob
 );
 
 
-  const now =
-    new Date();
+const now =
+new Date();
 
 
-  const pad =
-    (value) =>
-      String(value)
-        .padStart(2, "0");
+const pad =
+(value) =>
+String(value)
+.padStart(2, "0");
 
 
-  const filename =
-    "gururi-" +
-    now.getFullYear() +
-    pad(
-      now.getMonth() + 1
-    ) +
-    pad(
-      now.getDate()
-    ) +
-    "-" +
-    pad(
-      now.getHours()
-    ) +
-    pad(
-      now.getMinutes()
-    ) +
-    ".gururi";
+const filename =
+"gururi-" +
+now.getFullYear() +
+pad(
+now.getMonth() + 1
+) +
+pad(
+now.getDate()
+) +
+"-" +
+pad(
+now.getHours()
+) +
+pad(
+now.getMinutes()
+) +
+".gururi";
 
 
   const link =
