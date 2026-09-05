@@ -592,6 +592,24 @@ draw:
 settings:
 "設定",
 
+fileMenu:
+"ファイル",
+
+editMenu:
+"編集",
+
+settingsMenu:
+"設定",
+
+helpMenu:
+"ヘルプ",
+
+shortcutMenu:
+"ショートカット",
+
+helpMenuItem:
+"はじめに",
+
 helpLookAround:
 "Space + ドラッグ：見回す",
 
@@ -809,6 +827,24 @@ draw:
 settings:
 "Settings",
 
+fileMenu:
+"File",
+
+editMenu:
+"Edit",
+
+settingsMenu:
+"Settings",
+
+helpMenu:
+"Help",
+
+shortcutMenu:
+"Shortcuts",
+
+helpMenuItem:
+"About",
+
 helpLookAround:
 "Space + Drag: Look around",
 
@@ -938,6 +974,27 @@ t("appTitle")
 );
 
 
+setElementText(
+'[data-app-menu="file"]',
+t("fileMenu")
+);
+
+setElementText(
+'[data-app-menu="edit"]',
+t("editMenu")
+);
+
+setElementText(
+'[data-app-menu="settings"]',
+t("settingsMenu")
+);
+
+setElementText(
+'[data-app-menu="help"]',
+t("helpMenu")
+);
+
+
 undoButton.title =
 t("undoTitle");
 
@@ -954,6 +1011,13 @@ redoButton.setAttribute(
 "aria-label",
 t("redo")
 );
+
+
+desktopUndoMenuButton.textContent =
+t("undo");
+
+desktopRedoMenuButton.textContent =
+t("redo");
 
 
 setElementText(
@@ -995,6 +1059,12 @@ t("savePng");
 
 previewDownloadButton.textContent =
 t("download");
+
+shortcutSettingsButton.textContent =
+t("shortcutMenu");
+
+desktopHelpMenuButton.textContent =
+t("helpMenuItem");
 
 
 const languageSwitchLabel =
