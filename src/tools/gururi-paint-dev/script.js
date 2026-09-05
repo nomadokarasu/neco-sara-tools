@@ -476,16 +476,16 @@ guideGrid:
 "補助グリッド",
 
 saveData:
-"データ保存",
+"データ保存(.gururi)",
 
 loadData:
-"読み込み",
+"インポート",
 
 preview:
 "プレビュー",
 
 savePng:
-"PNG保存",
+"PNG保存(2：1画像)",
 
 download:
 "ダウンロード",
@@ -693,16 +693,16 @@ guideGrid:
 "Guide grid",
 
 saveData:
-"Save data",
+"Save data (.gururi)",
 
 loadData:
-"Load",
+"Import",
 
 preview:
 "Preview",
 
 savePng:
-"Save PNG",
+"Save PNG (2:1 image)",
 
 download:
 "Download",
