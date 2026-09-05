@@ -1,0 +1,2256 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background: #222;
+  color: #fff;
+}
+
+.toolbar {
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 16px;
+
+  background: #333;
+  border-bottom: 1px solid #555;
+
+    overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/*
+  ツールバー内では
+  テキストを改行しない
+*/
+
+.toolbar,
+.toolbar * {
+  white-space: nowrap;
+}
+
+.toolbar__brand {
+display: flex;
+align-items: baseline;
+gap: 6px;
+flex-shrink: 0;
+white-space: nowrap;
+}
+
+.toolbar__title {
+font-weight: 600;
+flex-shrink: 0;
+white-space: nowrap;
+}
+
+.toolbar__version {
+flex-shrink: 0;
+
+font-size: 10px;
+font-weight: 400;
+color: #aaa;
+}
+
+.toolbar__tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tool-button {
+  padding: 5px 10px;
+
+  border: 1px solid #666;
+  border-radius: 4px;
+
+  background: #444;
+  color: #ddd;
+
+  font: inherit;
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.tool-button:hover {
+  background: #555;
+}
+
+.tool-button.is-active {
+  background: #ddd;
+  color: #222;
+
+  border-color: #ddd;
+}
+
+.pen-size-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-left: 8px;
+
+  font-size: 13px;
+  color: #ddd;
+}
+
+.tool-button,
+.pen-size-control,
+.pen-color-control,
+.recent-colors,
+.history-controls,
+.canvas-size-control,
+.eye-height-control,
+.toolbar__info {
+  flex-shrink: 0;
+}
+
+.pen-size-control input {
+  width: 100px;
+}
+
+#penSizeValue {
+  min-width: 24px;
+  text-align: right;
+}
+
+
+.pen-color-control {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+
+  margin-left: 8px;
+
+  font-size: 13px;
+  color: #ddd;
+}
+
+
+.pen-color-label {
+  font-size: 13px;
+  color: #ddd;
+}
+
+
+/*
+  現在のペン色
+*/
+
+.current-pen-color-swatch {
+  box-sizing: border-box;
+
+  width:
+    calc(
+      100% + 8px
+    );
+
+  height: 28px;
+
+  margin-top: 2px;
+  margin-left: -8px;
+
+  background: #000;
+
+  border: 1px solid #777;
+  border-radius: 3px;
+}
+
+
+/*
+  現在色との間を少し空ける
+*/
+
+#colorPickerWheel {
+  margin-top: 10px;
+}
+
+
+/*
+  カラーピッカー全体
+*/
+
+#colorPickerWheel {
+  position: relative;
+
+  width: 150px;
+  height: 150px;
+
+  margin:
+    10px auto 0;
+}
+
+
+/*
+  外側の色相環
+*/
+
+#colorWheelLayer {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 1;
+
+  width: 150px;
+  height: 150px;
+
+  border-radius: 50%;
+
+  touch-action: none;
+}
+
+
+/*
+  色相そのものは
+  疑似要素で描画する。
+
+  conic-gradientなので、
+  色が円周方向へ正しく並ぶ。
+*/
+
+#colorWheelLayer::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  border-radius: 50%;
+
+  background:
+    conic-gradient(
+      hsl(0 100% 50%) 0deg,
+      hsl(60 100% 50%) 60deg,
+      hsl(120 100% 50%) 120deg,
+      hsl(180 100% 50%) 180deg,
+      hsl(240 100% 50%) 240deg,
+      hsl(300 100% 50%) 300deg,
+      hsl(360 100% 50%) 360deg
+    );
+
+  -webkit-mask:
+    radial-gradient(
+      farthest-side,
+      transparent
+        calc(100% - 24px),
+      #000
+        calc(100% - 23px)
+    );
+
+  mask:
+    radial-gradient(
+      farthest-side,
+      transparent
+        calc(100% - 24px),
+      #000
+        calc(100% - 23px)
+    );
+
+  pointer-events: none;
+}
+
+
+/*
+  色相選択ハンドル
+*/
+
+#colorHueHandle {
+  position: absolute;
+
+  z-index: 4;
+
+  width: 16px;
+  height: 16px;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+
+  border:
+    3px solid #fff;
+
+  border-radius: 50%;
+
+  background: transparent;
+
+  box-shadow:
+    0 0 0 1px #444;
+
+  pointer-events: none;
+}
+
+
+/*
+  リング中央。
+
+  リングのクリックを
+  完全に遮断する。
+*/
+
+#colorWheelHole {
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  z-index: 2;
+
+  width: 102px;
+  height: 102px;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+
+  border-radius: 50%;
+
+  background: #333;
+
+  pointer-events: auto;
+}
+
+
+/*
+  中央の彩度・明度Box。
+
+  top / left + マイナスマージンで
+  回転前の中心を正確に
+  円の中心へ合わせる。
+
+  translateとrotateは併用しない。
+*/
+
+#colorBoxLayer {
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  z-index: 3;
+
+  width: 64px;
+  height: 64px;
+
+  margin-top: -32px;
+  margin-left: -32px;
+
+  transform:
+    rotate(45deg);
+
+  transform-origin:
+    center center;
+
+  cursor: default;
+
+  touch-action: none;
+}
+
+
+/*
+  iro.js内部には
+  ポインター処理をさせない。
+
+  クリック座標は
+  独自処理で補正する。
+*/
+
+#colorBoxLayer
+  .IroColorPicker,
+#colorBoxLayer
+  svg {
+
+  pointer-events: none;
+}
+
+
+/*
+  iro.js自身には
+  Boxのポインター操作をさせない。
+
+  45°回転後の座標計算は
+  この後JavaScript側で行う。
+*/
+
+#colorBoxLayer
+  .IroColorPicker,
+#colorBoxLayer
+  svg {
+
+  pointer-events: none;
+}
+
+
+/*
+  iro.js側が作る要素の
+  余白をなくす
+*/
+
+#colorWheelLayer
+  > .IroColorPicker,
+#colorBoxLayer
+  > .IroColorPicker {
+
+  margin: 0 !important;
+}
+
+
+/*
+  中央Boxの色面を
+  ひし形に切り抜く。
+
+  iro.jsの操作座標自体は
+  回転させないので、
+  CSS transformで45度回転するより
+  操作のずれが起きにくい。
+*/
+
+
+
+
+.pen-color-control input {
+  display: none;
+}
+
+
+.recent-colors {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 5px;
+
+  width: 100%;
+
+  margin-top: 12px;
+}
+
+
+.recent-color-button {
+  width: 100%;
+  height: 24px;
+
+  padding: 0;
+
+  border: 1px solid #777;
+  border-radius: 3px;
+
+  cursor: pointer;
+}
+
+
+.recent-color-button:hover:not(:disabled) {
+  border-color: #fff;
+}
+
+
+.recent-color-button.is-empty {
+  background:
+    linear-gradient(
+      135deg,
+      #3b3b3b 25%,
+      #444 25%,
+      #444 50%,
+      #3b3b3b 50%,
+      #3b3b3b 75%,
+      #444 75%
+    );
+  background-size: 8px 8px;
+
+  opacity: 0.45;
+  cursor: default;
+}
+
+
+.history-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  margin-left: 8px;
+}
+
+
+.history-controls .tool-button {
+  width: 32px;
+  padding-left: 0;
+  padding-right: 0;
+
+  font-size: 18px;
+  line-height: 1;
+}
+
+.canvas-size-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-left: 8px;
+
+  font-size: 13px;
+  color: #ddd;
+}
+
+
+.canvas-size-control select {
+  padding: 4px 6px;
+
+  border: 1px solid #666;
+  border-radius: 4px;
+
+  background: #444;
+  color: #ddd;
+
+  font: inherit;
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.guide-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  flex-shrink: 0;
+
+  font-size: 13px;
+  color: #ddd;
+
+  cursor: pointer;
+}
+
+
+.guide-toggle input {
+  margin: 0;
+
+  cursor: pointer;
+}
+
+.eye-height-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-left: 8px;
+
+  font-size: 13px;
+  color: #ddd;
+}
+
+
+.eye-height-control input[type="range"] {
+  width: 90px;
+}
+
+
+.eye-height-step-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+
+  flex-shrink: 0;
+
+  padding: 0;
+
+  border: 1px solid #666;
+  border-radius: 3px;
+
+  background: #444;
+  color: #eee;
+
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+
+.eye-height-step-button:hover {
+  background: #555;
+}
+
+
+#eyeHeightValue {
+  min-width: 38px;
+  text-align: right;
+}
+
+.toolbar__info {
+  font-size: 13px;
+  color: #ccc;
+}
+
+/* ================================
+   描画ツールパネル
+================================ */
+
+.drawing-tools {
+  position: fixed;
+
+  top: 60px;
+  left: 16px;
+
+  z-index: 100;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  width: 160px;
+
+  padding: 10px;
+
+  background: #333;
+
+  border: 1px solid #555;
+  border-radius: 6px;
+}
+
+
+.drawing-tools .tool-button {
+  width: 100%;
+}
+
+
+.drawing-tools__separator {
+  width: 100%;
+  height: 1px;
+
+  margin: 2px 0;
+
+  background: #555;
+}
+
+
+.drawing-tools .pen-color-control {
+  margin-left: 0;
+}
+
+
+.drawing-tools .recent-colors {
+  margin-left: 0;
+}
+
+
+.drawing-tools .pen-size-control {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  width: 100%;
+}
+
+
+.pen-size-label {
+  font-size: 13px;
+  color: #ddd;
+}
+
+
+.pen-size-slider {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 6px;
+
+  width: 100%;
+}
+
+
+.pen-size-slider input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+
+.size-step-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+
+  padding: 0;
+
+  border: 1px solid #666;
+  border-radius: 3px;
+
+  background: #444;
+  color: #eee;
+
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+
+.size-step-button:hover {
+  background: #555;
+}
+
+
+.drawing-tools .pen-size-control .number-input {
+  display: block;
+
+  width: 52px;
+  height: 26px;
+
+  margin: 0 auto;
+
+  padding: 3px 6px;
+
+  border: 1px solid #666;
+  border-radius: 3px;
+
+  background: #222;
+  color: #eee;
+
+  font: inherit;
+  text-align: center;
+}
+
+
+
+
+.number-input {
+  box-sizing: border-box;
+
+  width: 42px;
+  min-width: 0;
+
+  padding: 3px 4px;
+
+  border: 1px solid #666;
+  border-radius: 3px;
+
+  background: #222;
+  color: #eee;
+
+  font: inherit;
+  text-align: right;
+}
+
+.number-input::-webkit-inner-spin-button,
+.number-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
+.number-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.drawing-tools .pen-color-control {
+  justify-content: space-between;
+}
+
+
+.drawing-tools .history-controls {
+  width: 100%;
+  margin-left: 0;
+}
+
+
+.drawing-tools .history-controls .tool-button {
+  flex: 1;
+}
+
+/* ================================
+   パネル移動
+================================ */
+
+.drawing-tools,
+.layer-panel {
+  cursor: grab;
+}
+
+
+.drawing-tools.is-dragging,
+.layer-panel.is-dragging {
+  cursor: grabbing;
+}
+
+
+/*
+  パネル内の操作部品では
+  通常のカーソルを使用する
+*/
+
+.drawing-tools button,
+.layer-panel button {
+  cursor: pointer;
+}
+
+
+.drawing-tools input,
+.layer-panel input {
+  cursor: auto;
+}
+
+
+/*
+  カラーホイール上では
+  通常のカーソルを使用する
+*/
+
+.pen-color-control,
+.pen-color-control * {
+  cursor: default;
+}
+
+
+/* ================================
+   レイヤーパネル
+================================ */
+
+.layer-panel {
+  position: fixed;
+
+  top: 60px;
+  right: 16px;
+
+  z-index: 100;
+
+  width: 220px;
+
+  padding: 10px;
+
+  background: #333;
+
+  border: 1px solid #555;
+  border-radius: 6px;
+}
+
+
+.layer-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 8px;
+
+  font-size: 13px;
+  color: #eee;
+}
+
+
+.layer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  max-height: 260px;
+
+  overflow-y: auto;
+}
+
+
+.layer-item {
+  display: grid;
+
+  grid-template-columns:
+    30px
+    minmax(0, 1fr)
+    32px;
+
+  gap: 4px;
+
+  padding: 3px;
+
+  border: 1px solid #555;
+  border-radius: 4px;
+
+  background: #2a2a2a;
+}
+
+
+.layer-item.is-active {
+  border-color: #ddd;
+  background: #444;
+}
+
+
+.layer-visibility-button,
+.layer-name-input,
+.layer-action-button {
+  border: 1px solid #666;
+  border-radius: 3px;
+
+  background: #444;
+  color: #eee;
+
+  font: inherit;
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+
+.layer-visibility-button {
+  width: 30px;
+  min-width: 30px;
+
+  padding: 4px 0;
+}
+
+
+/*
+  レイヤー並び替えハンドル
+*/
+
+.layer-drag-handle {
+  width: 32px;
+  min-width: 32px;
+
+  padding: 0;
+
+  border: 1px solid transparent;
+  border-radius: 3px;
+
+  background: transparent;
+  color: #aaa;
+
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+
+  cursor: grab;
+
+  touch-action: none;
+
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+
+.layer-drag-handle:hover {
+  background: #555;
+  color: #fff;
+}
+
+
+.layer-drag-handle:active {
+  cursor: grabbing;
+}
+
+
+/*
+  ドラッグ中のレイヤー
+*/
+
+.layer-item.is-layer-dragging {
+  opacity: 0.45;
+}
+
+
+/*
+  挿入位置
+*/
+
+.layer-item.is-drop-before {
+  box-shadow:
+    inset 0 3px 0 #ddd;
+}
+
+
+.layer-item.is-drop-after {
+  box-shadow:
+    inset 0 -3px 0 #ddd;
+}
+
+
+.layer-name-input {
+  min-width: 0;
+  width: 100%;
+
+  padding: 4px 6px;
+
+  border: 1px solid transparent;
+
+  outline: none;
+
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/*
+  通常時：
+  選択はできるが編集はしない
+*/
+
+.layer-name-input[readonly] {
+  cursor: default;
+
+  /*
+    長押しをブラウザ標準の
+    テキスト選択として扱わせない
+  */
+
+  user-select: none;
+  -webkit-user-select: none;
+
+  -webkit-touch-callout: none;
+}
+
+
+.layer-name-input:not([readonly]) {
+  cursor: text;
+
+  /*
+    編集状態になった後は
+    通常どおり文字を選択できる
+  */
+
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+
+/*
+  編集中だけ
+  入力欄らしい表示にする
+*/
+
+
+.layer-name-input:not([readonly]):focus {
+  border-color: #aaa;
+  background: #222;
+}
+
+
+/* ================================
+   レイヤー不透明度
+================================ */
+
+.layer-opacity-control {
+  grid-column: 2 / 3;
+
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  padding: 2px 4px 4px;
+}
+
+
+.layer-opacity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  font-size: 11px;
+  color: #bbb;
+}
+
+
+.layer-opacity-control input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+
+.layer-panel__actions {
+  display: grid;
+  grid-template-columns: 36px 36px minmax(0, 1fr);
+  gap: 5px;
+
+  margin-top: 8px;
+}
+
+
+.layer-action-button {
+  padding: 4px 6px;
+}
+
+
+.layer-action-button:hover:not(:disabled),
+.layer-visibility-button:hover,
+.layer-name-input:hover {
+  background: #555;
+}
+
+
+.layer-action-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+
+/* ================================
+   360°プレビュー
+================================ */
+
+.preview-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px;
+
+  background: rgba(0, 0, 0, 0.85);
+
+  z-index: 1000;
+}
+
+
+.preview-overlay.is-open {
+  display: flex;
+}
+
+
+.preview-panel {
+  width: 100%;
+  max-width: 1200px;
+
+  background: #222;
+
+  border: 1px solid #555;
+  border-radius: 6px;
+
+  overflow: hidden;
+}
+
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 10px 12px;
+
+  color: #ddd;
+
+  font-size: 14px;
+}
+
+
+.preview-canvas-area {
+  width: 100%;
+
+  padding:
+    28px
+    12px
+    12px;
+
+  background: #111;
+
+  overflow: auto;
+}
+
+
+/*
+  Canvasと▼を
+  同じ座標系にする
+*/
+
+.preview-canvas-wrap {
+  position: relative;
+
+  width: 100%;
+}
+
+
+/*
+  360°画像の
+  左端指定ハンドル
+*/
+
+.preview-seam-handle {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  z-index: 5;
+
+  width: 24px;
+  height: 24px;
+
+  padding: 0;
+
+  transform:
+    translate(
+      -50%,
+      -85%
+    );
+
+  border: 0;
+
+  background: transparent;
+  color: #fff;
+
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+
+  cursor: ew-resize;
+
+  touch-action: none;
+
+  user-select: none;
+  -webkit-user-select: none;
+
+  text-shadow:
+    0 1px 3px
+    rgba(
+      0,
+      0,
+      0,
+      0.9
+    );
+}
+
+
+.preview-seam-handle:active {
+  cursor: grabbing;
+}
+
+
+#previewCanvas {
+  display: block;
+
+  width: 100%;
+  height: auto;
+
+  aspect-ratio: 2 / 1;
+
+  image-rendering: pixelated;
+
+  background: #eee;
+}
+
+#viewport {
+  width: 100%;
+  height: calc(100vh - 48px);
+
+  cursor: default;
+}
+
+
+/*
+  360°描画領域では
+  スマートフォン標準の
+  スクロールやピンチ操作を無効化する
+*/
+
+#viewport canvas {
+  touch-action: none;
+}
+
+
+#viewport.is-looking {
+  cursor: grabbing;
+}
+
+#viewport.is-zooming {
+  cursor: ns-resize;
+}
+
+canvas {
+  display: block;
+}
+
+
+/* ================================
+はじめに
+================================ */
+
+.welcome-overlay {
+position: fixed;
+inset: 0;
+
+z-index: 1000;
+
+display: none;
+align-items: center;
+justify-content: center;
+
+padding: 20px;
+
+background:
+rgba(
+0,
+0,
+0,
+0.62
+);
+}
+
+
+.welcome-overlay.is-open {
+display: flex;
+}
+
+
+.welcome-panel {
+display: flex;
+flex-direction: column;
+
+width: 620px;
+max-width: 100%;
+max-height: 92dvh;
+
+overflow: hidden;
+
+background: #333;
+color: #eee;
+
+border: 1px solid #666;
+border-radius: 8px;
+
+box-shadow:
+0 12px 40px
+rgba(
+0,
+0,
+0,
+0.45
+);
+}
+
+
+.welcome-panel__header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+
+padding: 10px 12px;
+
+border-bottom:
+1px solid #555;
+}
+
+
+.welcome-panel__header-actions {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+
+.welcome-language-switch {
+display: flex;
+gap: 4px;
+}
+
+
+.welcome-language-button {
+padding: 4px 7px;
+
+border: 1px solid #666;
+border-radius: 4px;
+
+background: #444;
+color: #bbb;
+
+font: inherit;
+font-size: 11px;
+
+cursor: pointer;
+}
+
+
+.welcome-language-button.is-active {
+background: #ddd;
+color: #222;
+border-color: #ddd;
+}
+
+
+.welcome-close-button {
+width: 30px;
+height: 30px;
+
+padding: 0;
+
+border: 0;
+
+background: transparent;
+color: #eee;
+
+font: inherit;
+font-size: 22px;
+line-height: 1;
+
+cursor: pointer;
+}
+
+
+.welcome-panel__content {
+padding: 12px 14px 16px;
+
+overflow-y: auto;
+overscroll-behavior: contain;
+}
+
+
+.welcome-image {
+display: block;
+
+width: 100%;
+height: auto;
+
+border-radius: 4px;
+
+user-select: none;
+-webkit-user-select: none;
+-webkit-user-drag: none;
+}
+
+
+.welcome-links {
+display: flex;
+gap: 8px;
+
+padding-top: 18px;
+}
+
+
+.welcome-link-button {
+display: flex;
+align-items: center;
+justify-content: center;
+
+flex: 1;
+
+min-height: 40px;
+padding: 8px 12px;
+
+background: #eee;
+color: #222;
+
+border:
+1px solid #eee;
+border-radius: 4px;
+
+font-size: 13px;
+font-weight: 600;
+text-align: center;
+text-decoration: none;
+}
+
+
+.welcome-link-button--secondary {
+background: transparent;
+color: #eee;
+
+border-color: #777;
+}
+
+
+.welcome-link-button:hover {
+opacity: 0.86;
+}
+
+
+/* ================================
+   スマートフォン用 下部UI
+================================ */
+
+.mobile-bottom-tabs {
+  display: none;
+}
+
+
+/*
+  スマートフォン専用UIは
+  PCでは表示しない
+*/
+
+.mobile-color-swatch,
+.mobile-color-backdrop {
+  display: none;
+}
+
+
+@media (max-width: 700px) {
+
+  /*
+    上部はタイトルと
+    ヘルプだけにする
+  */
+
+  .toolbar {
+    height: 44px;
+
+    padding: 0 10px;
+
+    overflow: visible;
+  }
+
+
+  .toolbar__title {
+    font-size: 14px;
+  }
+
+
+  #helpButton {
+    margin-left: auto;
+  }
+
+
+  /*
+    360°表示領域
+  */
+
+#viewport {
+    /*
+      実際の高さはJavaScriptで
+      下部パネルの高さを測って設定する
+    */
+
+    height:
+      calc(
+        100dvh -
+        44px -
+        52px -
+        env(
+          safe-area-inset-bottom
+        )
+      );
+  }
+
+
+  /*
+    下部タブ
+  */
+
+  .mobile-bottom-tabs {
+    position: fixed;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    z-index: 300;
+
+    display: flex;
+
+    height:
+      calc(
+        52px +
+        env(
+          safe-area-inset-bottom
+        )
+      );
+
+    padding-bottom:
+      env(
+        safe-area-inset-bottom
+      );
+
+    background: #2a2a2a;
+
+    border-top:
+      1px solid #555;
+  }
+
+
+  .mobile-bottom-tab {
+    flex: 1;
+
+    min-width: 0;
+
+    padding: 0 6px;
+
+    border: 0;
+    border-right:
+      1px solid #444;
+
+    background: #2a2a2a;
+    color: #bbb;
+
+    font: inherit;
+    font-size: 13px;
+
+    cursor: pointer;
+  }
+
+
+  .mobile-bottom-tab:last-child {
+    border-right: 0;
+  }
+
+
+  .mobile-bottom-tab.is-active {
+    background: #ddd;
+    color: #222;
+
+    font-weight: 600;
+  }
+
+
+  /*
+    3つの下部パネル共通
+  */
+
+  .drawing-tools,
+  .layer-panel,
+  .toolbar__tools {
+
+    position: fixed !important;
+
+    left: 0 !important;
+    right: 0 !important;
+
+    top: auto !important;
+
+    bottom:
+      calc(
+        52px +
+        env(
+          safe-area-inset-bottom
+        )
+      ) !important;
+
+    z-index: 250;
+
+    width: auto !important;
+
+    margin: 0;
+
+    border-radius: 0;
+
+    cursor: default;
+  }
+
+
+  /*
+    ========================
+    描画
+    ========================
+  */
+
+  .drawing-tools {
+    display: none !important;
+
+    padding: 8px 10px;
+
+    overflow: visible;
+
+    background: #333;
+
+    border:
+      1px solid #555;
+  }
+
+
+  /*
+    下部には
+    4つの描画ツールだけを並べる
+  */
+
+  .drawing-tools.is-mobile-open {
+    display: grid !important;
+
+    grid-template-columns:
+      repeat(
+        4,
+        minmax(0, 1fr)
+      );
+
+    gap: 8px;
+  }
+
+
+  .drawing-tools > .tool-button {
+    width: 100%;
+
+    min-height: 40px;
+
+    padding:
+      5px 4px;
+
+    font-size: 12px;
+  }
+
+
+  /*
+    スマホでは区切り線不要
+  */
+
+  .drawing-tools__separator {
+    display: none;
+  }
+
+
+  /*
+    最近使った色は
+    スマホでは使用しない
+  */
+
+  .drawing-tools
+    .recent-colors {
+
+    display: none !important;
+  }
+
+
+  /*
+    ========================
+    太さ
+    ========================
+
+    描画エリアの右側へ
+    固定表示する
+  */
+
+  .drawing-tools
+    .pen-size-control {
+
+    position: fixed !important;
+
+    top: 50% !important;
+    right: 10px !important;
+    bottom: auto !important;
+    left: auto !important;
+
+    z-index: 20;
+
+    display: flex;
+
+    flex-direction: column;
+    align-items: center;
+
+    gap: 8px;
+
+    width: 46px !important;
+
+    margin: 0 !important;
+    padding: 8px 5px;
+
+    transform:
+      translateY(-50%);
+
+    background:
+      rgba(
+        42,
+        42,
+        42,
+        0.82
+      );
+
+    border:
+      1px solid #555;
+
+    border-radius: 8px;
+  }
+
+
+  /*
+    「太さ」の文字は
+    スマホでは非表示
+  */
+
+  .drawing-tools
+    .pen-size-label {
+
+    display: none;
+  }
+
+
+/*
+    スマホでは
+    ＋ / −ボタンを表示する
+  */
+
+  .drawing-tools
+    #penSizeMinus,
+  .drawing-tools
+    #penSizePlus {
+
+    display: flex;
+
+    width: 32px;
+    height: 32px;
+
+    flex-shrink: 0;
+
+    align-items: center;
+    justify-content: center;
+
+    margin: 0;
+
+    font-size: 18px;
+  }
+
+
+  /*
+    ＋をバーの上、
+    −をバーの下へ配置する
+  */
+
+  .drawing-tools
+    #penSizePlus {
+
+    order: 1;
+  }
+
+
+  .drawing-tools
+    .pen-size-slider
+    input[type="range"] {
+
+    order: 2;
+  }
+
+
+  .drawing-tools
+    #penSizeMinus {
+
+    order: 3;
+  }
+
+
+/*
+    数値入力は
+    太さUIの最上部へ表示する
+  */
+
+  .drawing-tools
+    #penSizeValue {
+
+    display: block;
+
+    order: 1;
+
+    width: 42px;
+    height: 30px;
+
+    margin: 0;
+
+    padding: 3px 4px;
+
+    text-align: center;
+  }
+
+
+  /*
+    横向きスライダー用の
+    グリッドを解除
+  */
+
+.drawing-tools
+    .pen-size-slider {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    order: 2;
+
+    width: 32px;
+    height: auto;
+  }
+
+
+  /*
+    スライダーを縦向きにする
+  */
+
+  .drawing-tools
+    .pen-size-slider
+    input[type="range"] {
+
+    width: 32px;
+    height: 150px;
+
+    min-width: 0;
+
+    margin: 0;
+
+    writing-mode:
+      vertical-lr;
+
+    direction: rtl;
+  }
+
+
+  /*
+    ========================
+    現在色
+    ========================
+  */
+
+.mobile-color-swatch {
+    display: block;
+
+    order: 3;
+
+    width: 36px;
+    height: 36px;
+
+    flex-shrink: 0;
+
+    padding: 0;
+
+    background: #000;
+
+    border:
+      2px solid #ddd;
+
+    border-radius: 4px;
+
+    cursor: pointer;
+  }
+/*
+    PC用の現在色表示は
+    スマホでは表示しない
+  */
+
+  .current-pen-color-swatch {
+    display: none;
+  }
+
+
+
+  /*
+    ========================
+    カラーホイール
+    ========================
+
+    通常時は隠しておく
+  */
+
+  
+
+  .drawing-tools
+    .pen-color-control {
+
+    display: none !important;
+
+    position: fixed !important;
+
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+
+    z-index: 30;
+
+    width: 190px !important;
+
+    margin: 0 !important;
+    padding: 16px;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      );
+
+    background: #333;
+
+    border:
+      1px solid #666;
+
+    border-radius: 10px;
+
+    box-shadow:
+      0 6px 24px
+      rgba(
+        0,
+        0,
+        0,
+        0.4
+      );
+  }
+
+
+  /*
+    色ボタンを押したときだけ
+    表示する
+  */
+
+  .drawing-tools
+    .pen-color-control
+    .pen-color-label {
+
+    text-align: center;
+  }
+
+
+.drawing-tools
+    .pen-color-control
+    #colorPickerWheel {
+
+    width: 150px;
+    height: 150px;
+
+    margin:
+      0 auto;
+  }
+
+
+  .drawing-tools
+    .pen-color-control
+    input {
+
+    display: none;
+  }
+
+  .drawing-tools
+    .pen-color-control.is-mobile-color-open {
+
+    display: flex !important;
+
+    flex-direction: column;
+  }
+
+
+  /*
+    カラーホイールを開いたときの
+    背景
+  */
+
+  .mobile-color-backdrop {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 10;
+
+    background:
+      rgba(
+        0,
+        0,
+        0,
+        0.3
+      );
+  }
+
+
+  .mobile-color-backdrop.is-open {
+    display: block;
+  }
+
+
+  /*
+    ========================
+    レイヤー
+    ========================
+  */
+
+  .layer-panel {
+    display: none !important;
+
+    max-height: 280px;
+
+    padding: 10px;
+
+    overflow: hidden;
+
+    background: #333;
+
+    border:
+      1px solid #555;
+  }
+
+
+  .layer-panel.is-mobile-open {
+    display: block !important;
+  }
+
+
+  .layer-list {
+    max-height: 190px;
+  }
+
+
+  /*
+    ========================
+    設定
+    ========================
+  */
+
+  .toolbar__tools {
+    display: none;
+
+    flex-wrap: wrap;
+    align-items: center;
+
+    gap: 8px;
+
+    max-height: 280px;
+
+    padding: 10px;
+
+    overflow-y: auto;
+
+    background: #333;
+
+    border-top:
+      1px solid #555;
+  }
+
+
+  .toolbar__tools.is-mobile-open {
+    display: flex;
+  }
+
+
+  .toolbar__tools
+    .canvas-size-control {
+
+    width: 100%;
+
+    margin-left: 0;
+
+    justify-content:
+      space-between;
+  }
+
+
+  .toolbar__tools
+    .eye-height-control {
+
+    width: 100%;
+
+    margin-left: 0;
+  }
+
+
+  .toolbar__tools
+    .eye-height-control
+    input[type="range"] {
+
+    flex: 1;
+
+    min-width: 60px;
+  }
+
+
+  .toolbar__tools
+    .guide-toggle {
+
+    width: 100%;
+
+    min-height: 32px;
+  }
+
+
+  .toolbar__tools
+    > .tool-button {
+
+    flex:
+      1 1
+      calc(
+        50% - 4px
+      );
+
+    min-height: 40px;
+  }
+
+
+  /*
+    はじめに
+  */
+
+  .welcome-overlay {
+    top: 44px;
+    right: 0;
+    bottom:
+      calc(
+        52px +
+        env(
+          safe-area-inset-bottom
+        )
+      );
+    left: 0;
+
+    padding: 10px;
+  }
+
+
+  .welcome-panel {
+    max-height: 100%;
+  }
+
+
+  .welcome-panel__header {
+    gap: 6px;
+  }
+
+
+  .welcome-panel__header-actions {
+    gap: 5px;
+  }
+
+
+  .welcome-language-button {
+    padding: 4px 6px;
+
+    font-size: 10px;
+  }
+
+
+  .welcome-panel__content {
+    padding: 10px;
+  }
+
+
+  .welcome-links {
+    flex-direction: column;
+
+    padding-top: 10px;
+  }
+
+
+  /*
+    プレビュー
+  */
+
+  .preview-overlay {
+    padding: 10px;
+  }
+
+}

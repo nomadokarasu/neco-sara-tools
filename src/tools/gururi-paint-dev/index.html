@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
+
+<meta
+name="robots"
+content="noindex, nofollow"
+>
+
+<title>ぐるりペイント</title>
+
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+
+  <header class="toolbar">
+
+<div class="toolbar__brand">
+
+<div class="toolbar__title">
+ぐるりペイント
+</div>
+
+<span
+id="appVersion"
+class="toolbar__version"
+></span>
+
+</div>
+
+
+<div class="history-controls">
+
+      <button
+        id="undoButton"
+        class="tool-button"
+        type="button"
+        title="元に戻す（Ctrl + Z）"
+        aria-label="元に戻す"
+      >
+        ↶
+      </button>
+
+      <button
+        id="redoButton"
+        class="tool-button"
+        type="button"
+        title="やり直す（Ctrl + Y）"
+        aria-label="やり直す"
+      >
+        ↷
+      </button>
+
+    </div>
+
+
+    <div class="toolbar__tools">
+
+      <div class="canvas-size-control">
+
+        <label for="canvasSize">
+          出力サイズ
+        </label>
+
+        <select id="canvasSize">
+
+          <option value="2048">
+            2048 × 1024
+          </option>
+
+          <option
+            value="4096"
+            selected
+          >
+            4096 × 2048
+          </option>
+
+          <option value="8192">
+            8192 × 4096
+          </option>
+
+        </select>
+
+      </div>
+
+      <div class="eye-height-control">
+
+        <label for="eyeHeight">
+          目線
+        </label>
+
+        <button
+          id="eyeHeightMinus"
+          class="eye-height-step-button"
+          type="button"
+          title="目線を下げる"
+        >
+          −
+        </button>
+
+        <input
+          id="eyeHeight"
+          type="range"
+          min="0.5"
+          max="30"
+          step="0.1"
+          value="1.5"
+        >
+
+        <button
+          id="eyeHeightPlus"
+          class="eye-height-step-button"
+          type="button"
+          title="目線を上げる"
+        >
+          ＋
+        </button>
+
+        <input
+          id="eyeHeightValue"
+          class="number-input"
+          type="number"
+          min="0.5"
+          max="30"
+          step="0.1"
+          value="1.5"
+        >
+
+        <span>
+          m
+        </span>
+
+      </div>
+
+      <label class="guide-toggle">
+
+        <input
+          id="groundToggle"
+          type="checkbox"
+          checked
+        >
+
+<span>
+  補助グリッド
+</span>
+
+      </label>
+
+
+      <button
+        id="projectSaveButton"
+        class="tool-button"
+        type="button"
+      >
+        データ保存
+      </button>
+
+      <button
+        id="projectLoadButton"
+        class="tool-button"
+        type="button"
+      >
+        読み込み
+      </button>
+
+      <input
+        id="projectLoadInput"
+        type="file"
+        accept=".gururi,application/json"
+        hidden
+      >
+
+      <button
+        id="previewButton"
+        class="tool-button"
+        type="button"
+      >
+        プレビュー
+      </button>
+
+      <button
+        id="downloadButton"
+        class="tool-button"
+        type="button"
+      >
+        PNG保存
+      </button>
+
+</div>
+
+<button
+id="languageButton"
+class="tool-button"
+type="button"
+title="英語に切り替え"
+aria-label="英語に切り替え"
+>
+EN
+</button>
+
+<button
+id="helpButton"
+class="tool-button"
+type="button"
+title="はじめに"
+>
+はじめに
+</button>
+
+  </header>
+
+<main id="viewport"></main>
+
+
+<aside class="drawing-tools">
+
+  <button
+    id="penTool"
+    class="tool-button is-active"
+    type="button"
+    title="ペン"
+  >
+    ペン
+  </button>
+
+  <button
+    id="eraserTool"
+    class="tool-button"
+    type="button"
+    title="消しゴム"
+  >
+    消しゴム
+  </button>
+
+  <button
+    id="bucketTool"
+    class="tool-button"
+    type="button"
+    title="バケツ"
+  >
+    バケツ
+  </button>
+
+  <button
+    id="eyedropperTool"
+    class="tool-button"
+    type="button"
+    title="スポイト"
+  >
+    スポイト
+  </button>
+
+
+  <div class="drawing-tools__separator"></div>
+
+
+  <div class="pen-size-control">
+
+    <div class="pen-size-label">
+      太さ
+    </div>
+
+    <div class="pen-size-slider">
+
+      <button
+        id="penSizeMinus"
+        class="size-step-button"
+        type="button"
+        title="細くする"
+      >
+        −
+      </button>
+
+      <input
+        id="penSize"
+        type="range"
+        min="1"
+        max="50"
+        value="3"
+        aria-label="ペンの太さ"
+      >
+
+      <button
+        id="penSizePlus"
+        class="size-step-button"
+        type="button"
+        title="太くする"
+      >
+        ＋
+      </button>
+
+    </div>
+
+<input
+      id="penSizeValue"
+      class="number-input"
+      type="number"
+      min="1"
+      max="50"
+      step="1"
+      value="3"
+      inputmode="numeric"
+      enterkeyhint="done"
+      aria-label="ペンの太さを数値入力"
+    >
+
+
+    <!--
+      スマートフォン用
+      現在色ボタン
+    -->
+
+    <button
+      id="mobileColorButton"
+      class="mobile-color-swatch"
+      type="button"
+      aria-label="色を選択"
+      aria-expanded="false"
+    ></button>
+
+  </div>
+
+
+<div class="pen-color-control">
+
+  <span class="pen-color-label">
+    色
+  </span>
+
+
+  <!--
+    PC用
+    現在のペン色
+  -->
+
+  <div
+    id="currentPenColorSwatch"
+    class="current-pen-color-swatch"
+    aria-label="現在のペン色"
+  ></div>
+
+
+<div id="colorPickerWheel">
+
+  <!--
+    外周：
+    色相リング
+  -->
+
+ <div id="colorWheelLayer">
+
+  <div
+    id="colorHueHandle"
+    aria-hidden="true"
+  ></div>
+
+</div>
+
+
+  <!--
+    色相リングの中央を
+    完全に操作不可にする領域
+  -->
+
+  <div
+    id="colorWheelHole"
+    aria-hidden="true"
+  ></div>
+
+
+  <!--
+    中央：
+    彩度・明度
+  -->
+
+  <div id="colorBoxLayer"></div>
+
+</div>
+
+  <input
+    id="penColorInput"
+    type="color"
+    value="#000000"
+    hidden
+  >
+
+</div>
+
+<div
+    id="recentColors"
+    class="recent-colors"
+    aria-label="最近使用した色"
+  ></div>
+
+
+  <!--
+    スマートフォン用
+    カラーホイール背景
+  -->
+
+  <div
+    id="mobileColorBackdrop"
+    class="mobile-color-backdrop"
+    aria-hidden="true"
+  ></div>
+
+
+ </aside>
+
+
+<!-- =============================
+     レイヤー
+============================== -->
+
+<aside class="layer-panel">
+
+  <div class="layer-panel__header">
+
+    <strong>
+      レイヤー
+    </strong>
+
+    <button
+      id="addLayerButton"
+      class="layer-action-button"
+      type="button"
+      title="レイヤーを追加"
+    >
+      ＋
+    </button>
+
+  </div>
+
+  <div
+    id="layerList"
+    class="layer-list"
+  ></div>
+
+  <div class="layer-panel__actions">
+
+    <button
+      id="layerUpButton"
+      class="layer-action-button"
+      type="button"
+      title="上へ移動"
+    >
+      ↑
+    </button>
+
+    <button
+      id="layerDownButton"
+      class="layer-action-button"
+      type="button"
+      title="下へ移動"
+    >
+      ↓
+    </button>
+
+    <button
+      id="deleteLayerButton"
+      class="layer-action-button layer-action-button--delete"
+      type="button"
+      title="レイヤーを削除"
+    >
+      削除
+    </button>
+
+  </div>
+
+</aside>
+
+
+<!-- =============================
+     スマートフォン用 下部タブ
+============================== -->
+
+<nav
+  class="mobile-bottom-tabs"
+  aria-label="操作パネル"
+>
+
+  <button
+    class="mobile-bottom-tab is-active"
+    type="button"
+    data-mobile-panel="draw"
+  >
+    描画
+  </button>
+
+  <button
+    class="mobile-bottom-tab"
+    type="button"
+    data-mobile-panel="layer"
+  >
+    レイヤー
+  </button>
+
+  <button
+    class="mobile-bottom-tab"
+    type="button"
+    data-mobile-panel="settings"
+  >
+    設定
+  </button>
+
+</nav>
+
+
+<!-- =============================
+はじめに
+============================== -->
+
+<div
+id="helpPanel"
+class="welcome-overlay"
+role="dialog"
+aria-modal="true"
+aria-labelledby="welcomePanelTitle"
+>
+
+<div class="welcome-panel">
+
+<div class="welcome-panel__header">
+
+<strong id="welcomePanelTitle">
+はじめに
+</strong>
+
+<div class="welcome-panel__header-actions">
+
+<div
+class="welcome-language-switch"
+aria-label="Language"
+>
+
+<button
+class="welcome-language-button"
+type="button"
+data-welcome-language="ja"
+aria-pressed="true"
+>
+日本語
+</button>
+
+<button
+class="welcome-language-button"
+type="button"
+data-welcome-language="en"
+aria-pressed="false"
+>
+English
+</button>
+
+</div>
+
+<button
+id="helpCloseButton"
+class="welcome-close-button"
+type="button"
+aria-label="閉じる"
+>
+×
+</button>
+
+</div>
+
+</div>
+
+
+<div class="welcome-panel__content">
+
+<img
+id="welcomeImage"
+class="welcome-image"
+src="./images/welcome-ja.png"
+alt="ぐるりペイントの基本操作と案内"
+draggable="false"
+>
+
+
+<div class="welcome-links">
+
+<a
+id="welcomeXLink"
+class="welcome-link-button"
+href="https://x.com/_datsumori_"
+target="_blank"
+rel="noopener noreferrer"
+>
+Xをフォロー
+</a>
+
+<a
+id="welcomeNoteLink"
+class="welcome-link-button welcome-link-button--secondary"
+href="https://note.com/junnoota"
+target="_blank"
+rel="noopener noreferrer"
+>
+開発について読む・応援する
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+  <!-- =============================
+       360°長方形プレビュー
+  ============================== -->
+
+  <div
+    id="previewOverlay"
+    class="preview-overlay"
+  >
+
+    <div class="preview-panel">
+
+      <div class="preview-header">
+
+        <span>
+          360°プレビュー
+        </span>
+
+        <button
+          id="previewCloseButton"
+          class="tool-button"
+          type="button"
+        >
+          閉じる
+        </button>
+
+      </div>
+
+<div class="preview-canvas-area">
+
+        <div class="preview-canvas-wrap">
+
+          <!--
+            360°画像の
+            左端位置を決めるハンドル
+          -->
+
+          <button
+            id="previewSeamHandle"
+            class="preview-seam-handle"
+            type="button"
+            title="ドラッグして画像の左端を変更"
+            aria-label="ドラッグして画像の左端を変更"
+          >
+            ▼
+          </button>
+
+
+          <canvas
+            id="previewCanvas"
+          ></canvas>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script
+    type="module"
+    src="./script.js"
+  ></script>
+
+</body>
+</html>
