@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.18";
+"1.3.19";
 
 
 const appVersion =
@@ -2453,33 +2453,33 @@ source;
 
 
 function clampProjectNumber(
-  value,
-  min,
-  max,
-  fallback
+value,
+min,
+max,
+fallback
 ) {
 
-  const number =
-    Number(value);
+const number =
+Number(value);
 
 
-  if (
-    !Number.isFinite(
-      number
-    )
-  ) {
+if (
+!Number.isFinite(
+number
+)
+) {
 
-    return fallback;
-  }
+return fallback;
+}
 
 
-  return Math.max(
-    min,
-    Math.min(
-      max,
-      number
-    )
-  );
+return Math.max(
+min,
+Math.min(
+max,
+number
+)
+);
 }
 
 
