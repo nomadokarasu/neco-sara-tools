@@ -461,158 +461,158 @@ d="M8 10V9a1.5 1.5 0 0 0-3 0v5c0 4 2.8 7 7 7h1c4.4 0 7-2.8 7-7v-2.5a1.5 1.5 0 0 
 <div class="drawing-tools__separator"></div>
 
 
-  <div class="pen-size-control">
+<div class="pen-size-control">
 
-    <div class="pen-size-label">
-      太さ
-    </div>
+<div class="pen-size-label">
+太さ
+</div>
 
-    <div class="pen-size-slider">
+<div class="pen-size-slider">
 
-      <button
-        id="penSizeMinus"
-        class="size-step-button"
-        type="button"
-        title="細くする"
-      >
-        −
-      </button>
-
-      <input
-        id="penSize"
-        type="range"
-        min="1"
-        max="50"
-        value="3"
-        aria-label="ペンの太さ"
-      >
-
-      <button
-        id="penSizePlus"
-        class="size-step-button"
-        type="button"
-        title="太くする"
-      >
-        ＋
-      </button>
-
-    </div>
+<button
+id="penSizeMinus"
+class="size-step-button"
+type="button"
+title="細くする"
+>
+−
+</button>
 
 <input
-      id="penSizeValue"
-      class="number-input"
-      type="number"
-      min="1"
-      max="50"
-      step="1"
-      value="3"
-      inputmode="numeric"
-      enterkeyhint="done"
-      aria-label="ペンの太さを数値入力"
-    >
+id="penSize"
+type="range"
+min="1"
+max="50"
+value="3"
+aria-label="ペンの太さ"
+>
+
+<button
+id="penSizePlus"
+class="size-step-button"
+type="button"
+title="太くする"
+>
+＋
+</button>
+
+</div>
+
+<input
+id="penSizeValue"
+class="number-input"
+type="number"
+min="1"
+max="50"
+step="1"
+value="3"
+inputmode="numeric"
+enterkeyhint="done"
+aria-label="ペンの太さを数値入力"
+>
 
 
-    <!--
-      スマートフォン用
-      現在色ボタン
-    -->
+<!--
+スマートフォン用
+現在色ボタン
+-->
 
-    <button
-      id="mobileColorButton"
-      class="mobile-color-swatch"
-      type="button"
-      aria-label="色を選択"
-      aria-expanded="false"
-    ></button>
+<button
+id="mobileColorButton"
+class="mobile-color-swatch"
+type="button"
+aria-label="色を選択"
+aria-expanded="false"
+></button>
 
-  </div>
+</div>
 
 
 <div class="pen-color-control">
 
-  <span class="pen-color-label">
-    色
-  </span>
+<span class="pen-color-label">
+色
+</span>
 
 
-  <!--
-    PC用
-    現在のペン色
-  -->
+<!--
+PC用
+現在のペン色
+-->
 
-  <div
-    id="currentPenColorSwatch"
-    class="current-pen-color-swatch"
-    aria-label="現在のペン色"
-  ></div>
+<div
+id="currentPenColorSwatch"
+class="current-pen-color-swatch"
+aria-label="現在のペン色"
+></div>
 
 
 <div id="colorPickerWheel">
 
-  <!--
-    外周：
-    色相リング
-  -->
+<!--
+外周：
+色相リング
+-->
 
- <div id="colorWheelLayer">
+<div id="colorWheelLayer">
 
-  <div
-    id="colorHueHandle"
-    aria-hidden="true"
-  ></div>
-
-</div>
-
-
-  <!--
-    色相リングの中央を
-    完全に操作不可にする領域
-  -->
-
-  <div
-    id="colorWheelHole"
-    aria-hidden="true"
-  ></div>
-
-
-  <!--
-    中央：
-    彩度・明度
-  -->
-
-  <div id="colorBoxLayer"></div>
+<div
+id="colorHueHandle"
+aria-hidden="true"
+></div>
 
 </div>
 
-  <input
-    id="penColorInput"
-    type="color"
-    value="#000000"
-    hidden
-  >
+
+<!--
+色相リングの中央を
+完全に操作不可にする領域
+-->
+
+<div
+id="colorWheelHole"
+aria-hidden="true"
+></div>
+
+
+<!--
+中央：
+彩度・明度
+-->
+
+<div id="colorBoxLayer"></div>
+
+</div>
+
+<input
+id="penColorInput"
+type="color"
+value="#000000"
+hidden
+>
 
 </div>
 
 <div
-    id="recentColors"
-    class="recent-colors"
-    aria-label="最近使用した色"
-  ></div>
+id="recentColors"
+class="recent-colors"
+aria-label="最近使用した色"
+></div>
 
 
-  <!--
-    スマートフォン用
-    カラーホイール背景
-  -->
+<!--
+スマートフォン用
+カラーホイール背景
+-->
 
-  <div
-    id="mobileColorBackdrop"
-    class="mobile-color-backdrop"
-    aria-hidden="true"
-  ></div>
+<div
+id="mobileColorBackdrop"
+class="mobile-color-backdrop"
+aria-hidden="true"
+></div>
 
 
- </aside>
+</aside>
 
 
 <!-- =============================
