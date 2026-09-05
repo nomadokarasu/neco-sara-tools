@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.14";
+"1.3.15";
 
 
 const appVersion =
@@ -2324,26 +2324,26 @@ layer.canvas.toDataURL(
 };
 
 
-  const json =
-    JSON.stringify(
-      projectData
-    );
+const json =
+JSON.stringify(
+projectData
+);
 
 
-  const blob =
-    new Blob(
-      [json],
-      {
-        type:
-          "application/json"
-      }
-    );
+const blob =
+new Blob(
+[json],
+{
+type:
+"application/json"
+}
+);
 
 
-  const url =
-    URL.createObjectURL(
-      blob
-    );
+const url =
+URL.createObjectURL(
+blob
+);
 
 
   const now =
