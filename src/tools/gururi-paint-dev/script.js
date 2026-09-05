@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.4";
+"1.3.5";
 
 
 const appVersion =
@@ -213,19 +213,19 @@ document.getElementById(
 );
 
 const projectSaveButton =
-  document.getElementById(
-    "projectSaveButton"
-  );
+document.getElementById(
+"projectSaveButton"
+);
 
 const projectLoadButton =
-  document.getElementById(
-    "projectLoadButton"
-  );
+document.getElementById(
+"projectLoadButton"
+);
 
 const projectLoadInput =
-  document.getElementById(
-    "projectLoadInput"
-  );
+document.getElementById(
+"projectLoadInput"
+);
 
 const previewButton =
 document.getElementById("previewButton");
@@ -390,21 +390,21 @@ en:
 
 
 const previewOverlay =
-  document.getElementById("previewOverlay");
+document.getElementById("previewOverlay");
 
 const previewCloseButton =
-  document.getElementById(
-    "previewCloseButton"
-  );
+document.getElementById(
+"previewCloseButton"
+);
 
 const previewCanvas =
-  document.getElementById(
-    "previewCanvas"
-  );
+document.getElementById(
+"previewCanvas"
+);
 
 
 const previewContext =
-  previewCanvas.getContext("2d");
+previewCanvas.getContext("2d");
 
 
 const previewSeamHandle =
