@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.6";
+"1.3.7";
 
 
 const appVersion =
@@ -1619,163 +1619,163 @@ function getActiveLayer() {
 
 
 function setActiveLayerReference(
-  layerId
+layerId
 ) {
 
-  const layer =
-    getLayerById(layerId);
+const layer =
+getLayerById(layerId);
 
-  if (!layer) {
-    return false;
-  }
+if (!layer) {
+return false;
+}
 
-  activeLayerId =
-    layer.id;
+activeLayerId =
+layer.id;
 
-  drawCanvas =
-    layer.canvas;
+drawCanvas =
+layer.canvas;
 
-  drawContext =
-    layer.context;
+drawContext =
+layer.context;
 
-  return true;
+return true;
 }
 
 
 function setActiveLayer(layerId) {
 
-  if (
-    !setActiveLayerReference(
-      layerId
-    )
-  ) {
-    return;
-  }
+if (
+!setActiveLayerReference(
+layerId
+)
+) {
+return;
+}
 
-  renderLayerPanel();
+renderLayerPanel();
 }
 
 
 /*
-  テストしやすいように、
-  最初は単色で塗っておきます。
+テストしやすいように、
+最初は単色で塗っておきます。
 */
 
 function drawBaseCanvas() {
 
-  /*
-    表示用Canvasを初期化
-  */
+/*
+表示用Canvasを初期化
+*/
 
-  paintContext.clearRect(
-    0,
-    0,
-    paintCanvas.width,
-    paintCanvas.height
-  );
+paintContext.clearRect(
+0,
+0,
+paintCanvas.width,
+paintCanvas.height
+);
 
 
-  /*
-    背景
-  */
+/*
+背景
+*/
 
-  paintContext.fillStyle =
-    "#eeeeee";
+paintContext.fillStyle =
+"#eeeeee";
 
-  paintContext.fillRect(
-    0,
-    0,
-    paintCanvas.width,
-    paintCanvas.height
-  );
+paintContext.fillRect(
+0,
+0,
+paintCanvas.width,
+paintCanvas.height
+);
 }
 
 
 drawBaseCanvas();
 
 /* ================================
-   Canvas → Texture
+Canvas → Texture
 ================================ */
 
 /*
-  描画レイヤーを
-  表示用Canvasへ合成する
+描画レイヤーを
+表示用Canvasへ合成する
 */
 
 let paintUpdateRequested = false;
 
 
 /*
-  スマートフォンでは
-  360°テクスチャ更新を
-  最大30fps程度に抑える
+スマートフォンでは
+360°テクスチャ更新を
+最大30fps程度に抑える
 */
 
 let lastPaintUpdateTime = 0;
 
 const paintUpdateInterval =
-  isMobileDevice
-    ? 1000 / 30
-    : 0;
+isMobileDevice
+? 1000 / 30
+: 0;
 
 
 function requestPaintUpdate() {
 
-  paintUpdateRequested = true;
+paintUpdateRequested = true;
 }
 
 
 function updatePaintCanvas() {
 
-  /*
-    背景とグリッドを維持したまま
-    描画レイヤーを重ねるため、
-    後ほど背景を再描画する
-  */
+/*
+背景とグリッドを維持したまま
+描画レイヤーを重ねるため、
+後ほど背景を再描画する
+*/
 
-  drawBaseCanvas();
+drawBaseCanvas();
 
-  /*
-    表示中のレイヤーを
-    下から順番に合成する
-  */
+/*
+表示中のレイヤーを
+下から順番に合成する
+*/
 
-  paintContext.imageSmoothingEnabled =
-    false;
+paintContext.imageSmoothingEnabled =
+false;
 
 for (const layer of layers) {
 
-    if (!layer.visible) {
-      continue;
-    }
+if (!layer.visible) {
+continue;
+}
 
 
-    /*
-      レイヤーの不透明度
-    */
+/*
+レイヤーの不透明度
+*/
 
-    paintContext.globalAlpha =
-      typeof layer.opacity === "number"
-        ? layer.opacity
-        : 1;
-
-
-    paintContext.drawImage(
-      layer.canvas,
-      0,
-      0
-    );
-  }
+paintContext.globalAlpha =
+typeof layer.opacity === "number"
+? layer.opacity
+: 1;
 
 
-  /*
-    次の描画に影響しないよう
-    100%へ戻す
-  */
+paintContext.drawImage(
+layer.canvas,
+0,
+0
+);
+}
 
-  paintContext.globalAlpha = 1;
 
-  texture.needsUpdate = true;
+/*
+次の描画に影響しないよう
+100%へ戻す
+*/
+
+paintContext.globalAlpha = 1;
+
+texture.needsUpdate = true;
 }
 
 /* ================================
