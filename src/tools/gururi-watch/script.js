@@ -21,7 +21,7 @@ const PINNED_WORLD_IDS = [
 
 const TEXT = {
 ja: {
-siteTitle: "ぐるりウォッチ",
+siteTitle: "ぐるりうむ",
 siteDescription: "ぐるりペイントで描かれた世界たち",
 postWorld: "世界を投稿",
 gururiPaint: "ぐるりペイント",
