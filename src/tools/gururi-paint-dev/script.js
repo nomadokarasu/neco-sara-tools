@@ -225,10 +225,15 @@ const projectLoadInput =
   );
 
 const previewButton =
-  document.getElementById("previewButton");
+document.getElementById("previewButton");
 
 const downloadButton =
 document.getElementById("downloadButton");
+
+const previewDownloadButton =
+document.getElementById(
+"previewDownloadButton"
+);
 
 const languageButton =
 document.getElementById(
@@ -482,6 +487,9 @@ preview:
 savePng:
 "PNG保存",
 
+download:
+"ダウンロード",
+
 help:
 "はじめに",
 
@@ -606,7 +614,7 @@ helpMobileZoom:
 "ピンチ：ズーム",
 
 previewTitle:
-"360°プレビュー",
+"ぐるり画像プレビュー",
 
 close:
 "閉じる",
@@ -695,6 +703,9 @@ preview:
 
 savePng:
 "Save PNG",
+
+download:
+"Download",
 
 help:
 "About",
@@ -820,7 +831,7 @@ helpMobileZoom:
 "Pinch to zoom",
 
 previewTitle:
-"360° Preview",
+"Gururi Image Preview",
 
 close:
 "Close",
@@ -981,6 +992,9 @@ t("preview");
 
 downloadButton.textContent =
 t("savePng");
+
+previewDownloadButton.textContent =
+t("download");
 
 
 const languageSwitchLabel =
@@ -10299,13 +10313,22 @@ previewButton.addEventListener(
 
 
 previewCloseButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    previewOverlay.classList.remove(
-      "is-open"
-    );
-  }
+previewOverlay.classList.remove(
+"is-open"
+);
+}
+);
+
+
+previewDownloadButton.addEventListener(
+"click",
+() => {
+
+downloadButton.click();
+}
 );
 
 /* ================================

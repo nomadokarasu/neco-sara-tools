@@ -1330,15 +1330,31 @@ pointer-events: none;
 
 
 .preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
 
-  padding: 10px 12px;
+padding: 10px 12px;
 
-  color: #ddd;
+color: #ddd;
 
-  font-size: 14px;
+font-size: 14px;
+}
+
+
+.preview-header__main {
+display: flex;
+align-items: center;
+gap: 12px;
+
+min-width: 0;
+}
+
+
+.preview-header
+.canvas-size-control {
+margin-left: 0;
 }
 
 

@@ -164,35 +164,7 @@ data-app-menu="settings"
 設定
 </button>
 
-<div class="app-menu__panel app-menu__panel--wide">
-
-<div class="canvas-size-control">
-
-<label for="canvasSize">
-出力サイズ
-</label>
-
-<select id="canvasSize">
-
-<option value="2048">
-2048 × 1024
-</option>
-
-<option
-value="4096"
-selected
->
-4096 × 2048
-</option>
-
-<option value="8192">
-8192 × 4096
-</option>
-
-</select>
-
-</div>
-
+<div class="app-menu__panel">
 
 <button
 id="shortcutSettingsButton"
@@ -1053,21 +1025,63 @@ type="button"
 
     <div class="preview-panel">
 
-      <div class="preview-header">
+<div class="preview-header">
 
-        <span>
-          360°プレビュー
-        </span>
+<div class="preview-header__main">
 
-        <button
-          id="previewCloseButton"
-          class="tool-button"
-          type="button"
-        >
-          閉じる
-        </button>
+<span>
+ぐるり画像プレビュー
+</span>
 
-      </div>
+
+<div class="canvas-size-control">
+
+<label for="canvasSize">
+出力サイズ
+</label>
+
+<select id="canvasSize">
+
+<option value="2048">
+2048 × 1024
+</option>
+
+<option
+value="4096"
+selected
+>
+4096 × 2048
+</option>
+
+<option value="8192">
+8192 × 4096
+</option>
+
+</select>
+
+</div>
+
+
+<button
+id="previewDownloadButton"
+class="tool-button"
+type="button"
+>
+ダウンロード
+</button>
+
+</div>
+
+
+<button
+id="previewCloseButton"
+class="tool-button"
+type="button"
+>
+閉じる
+</button>
+
+</div>
 
 <div class="preview-canvas-area">
 
