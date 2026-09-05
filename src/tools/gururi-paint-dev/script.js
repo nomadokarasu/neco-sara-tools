@@ -1,11 +1,11 @@
 import * as THREE from
-  "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
 import iro from
-  "https://cdn.jsdelivr.net/npm/@jaames/iro@5/dist/iro.es.js";
+"https://cdn.jsdelivr.net/npm/@jaames/iro@5/dist/iro.es.js";
 
 /* ================================
-   基本設定
+基本設定
 ================================ */
 
 const viewport =
@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.3";
+"1.3.4";
 
 
 const appVersion =
@@ -85,14 +85,14 @@ paintStartTracked = true;
 
 
 /* ================================
-   ツールUI
+ツールUI
 ================================ */
 
 const penToolButton =
-  document.getElementById("penTool");
+document.getElementById("penTool");
 
 const eraserToolButton =
-  document.getElementById("eraserTool");
+document.getElementById("eraserTool");
 
 const bucketToolButton =
 document.getElementById("bucketTool");
@@ -107,110 +107,110 @@ const layerList =
 document.getElementById("layerList");
 
 const addLayerButton =
-  document.getElementById("addLayerButton");
+document.getElementById("addLayerButton");
 
 const layerUpButton =
-  document.getElementById("layerUpButton");
+document.getElementById("layerUpButton");
 
 const layerDownButton =
-  document.getElementById("layerDownButton");
+document.getElementById("layerDownButton");
 
 const deleteLayerButton =
-  document.getElementById("deleteLayerButton");
+document.getElementById("deleteLayerButton");
 
 const penSizeInput =
-  document.getElementById("penSize");
+document.getElementById("penSize");
 
 const penSizeMinus =
-  document.getElementById("penSizeMinus");
+document.getElementById("penSizeMinus");
 
 const penSizePlus =
-  document.getElementById("penSizePlus");
+document.getElementById("penSizePlus");
 
 const penSizeValue =
-  document.getElementById("penSizeValue");
+document.getElementById("penSizeValue");
 
 const colorPickerWheel =
-  document.getElementById(
-    "colorPickerWheel"
-  );
+document.getElementById(
+"colorPickerWheel"
+);
 
 
 const colorWheelLayer =
-  document.getElementById(
-    "colorWheelLayer"
-  );
+document.getElementById(
+"colorWheelLayer"
+);
 
 
 const colorBoxLayer =
-  document.getElementById(
-    "colorBoxLayer"
-  );
+document.getElementById(
+"colorBoxLayer"
+);
 
 
 const penColorInput =
-  document.getElementById("penColorInput");
+document.getElementById("penColorInput");
 
 
 const currentPenColorSwatch =
-  document.getElementById(
-    "currentPenColorSwatch"
-  );
+document.getElementById(
+"currentPenColorSwatch"
+);
 
 
 const recentColorsElement =
-  document.getElementById("recentColors");
+document.getElementById("recentColors");
 
 
 const penColorControl =
-  document.querySelector(
-    ".pen-color-control"
-  );
+document.querySelector(
+".pen-color-control"
+);
 
 
 const mobileColorButton =
-  document.getElementById(
-    "mobileColorButton"
-  );
+document.getElementById(
+"mobileColorButton"
+);
 
 
 const mobileColorBackdrop =
-  document.getElementById(
-    "mobileColorBackdrop"
-  );
+document.getElementById(
+"mobileColorBackdrop"
+);
 
 
 const undoButton =
-  document.getElementById("undoButton");
+document.getElementById("undoButton");
 
 const redoButton =
-  document.getElementById("redoButton");
+document.getElementById("redoButton");
 
 const canvasSizeSelect =
-  document.getElementById("canvasSize");
+document.getElementById("canvasSize");
 
 const eyeHeightInput =
-  document.getElementById("eyeHeight");
+document.getElementById("eyeHeight");
 
 const eyeHeightMinus =
-  document.getElementById(
-    "eyeHeightMinus"
-  );
+document.getElementById(
+"eyeHeightMinus"
+);
 
 const eyeHeightPlus =
-  document.getElementById(
-    "eyeHeightPlus"
-  );
+document.getElementById(
+"eyeHeightPlus"
+);
 
 const eyeHeightValue =
-  document.getElementById(
-    "eyeHeightValue"
-  );
+document.getElementById(
+"eyeHeightValue"
+);
 
 const groundToggle =
-  document.getElementById(
-    "groundToggle"
-  );
+document.getElementById(
+"groundToggle"
+);
 
 const projectSaveButton =
   document.getElementById(
