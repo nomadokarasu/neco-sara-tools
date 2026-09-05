@@ -287,6 +287,11 @@ document.querySelectorAll(
 "[data-shortcut-action]"
 );
 
+const lookDirectionSelect =
+document.getElementById(
+"lookDirectionSelect"
+);
+
 
 const welcomeLanguageButtons =
 document.querySelectorAll(
@@ -8323,6 +8328,13 @@ shortcutKeys[action]
 }
 
 
+function refreshLookDirectionSetting() {
+
+lookDirectionSelect.value =
+lookDirection;
+}
+
+
 function stopShortcutCapture() {
 
 shortcutCaptureAction = null;
@@ -8343,6 +8355,7 @@ function openShortcutSettings() {
 stopShortcutCapture();
 
 refreshShortcutSettingsButtons();
+refreshLookDirectionSetting();
 
 shortcutStatus.textContent = "";
 
@@ -8489,21 +8502,42 @@ button.dataset.shortcutAction
 );
 
 
+lookDirectionSelect.addEventListener(
+"change",
+() => {
+
+lookDirection =
+lookDirectionSelect.value === "reverse"
+? "reverse"
+: "standard";
+
+saveLookDirection();
+
+shortcutStatus.textContent =
+currentLanguage === "en"
+? "Look direction updated."
+: "見回し方向を変更しました。";
+}
+);
+
+
 shortcutResetButton.addEventListener(
 "click",
 () => {
 
 resetShortcutKeys();
+resetLookDirection();
 
 refreshShortcutSettingsButtons();
+refreshLookDirectionSetting();
 
 stopShortcutCapture();
 
 
 shortcutStatus.textContent =
 currentLanguage === "en"
-? "Shortcuts reset to defaults."
-: "ショートカットを初期設定に戻しました。";
+? "Settings reset to defaults."
+: "設定を初期状態に戻しました。";
 }
 );
 
@@ -10212,6 +10246,85 @@ let shortcutKeys =
 loadShortcutKeys();
 
 
+/* ================================
+見回し方向設定
+================================ */
+
+const LOOK_DIRECTION_STORAGE_KEY =
+"gururi-paint-dev-look-direction";
+
+const DEFAULT_LOOK_DIRECTION =
+"standard";
+
+
+function loadLookDirection() {
+
+try {
+
+const savedValue =
+localStorage.getItem(
+LOOK_DIRECTION_STORAGE_KEY
+);
+
+if (
+savedValue === "standard" ||
+savedValue === "reverse"
+) {
+return savedValue;
+}
+
+} catch (error) {
+
+/*
+保存データを読み込めない場合は
+初期設定を使用する。
+*/
+}
+
+
+return DEFAULT_LOOK_DIRECTION;
+}
+
+
+function saveLookDirection() {
+
+try {
+
+localStorage.setItem(
+LOOK_DIRECTION_STORAGE_KEY,
+lookDirection
+);
+
+return true;
+
+} catch (error) {
+
+return false;
+}
+}
+
+
+function resetLookDirection() {
+
+lookDirection =
+DEFAULT_LOOK_DIRECTION;
+
+saveLookDirection();
+}
+
+
+function getLookDirectionMultiplier() {
+
+return lookDirection === "reverse"
+? -1
+: 1;
+}
+
+
+let lookDirection =
+loadLookDirection();
+
+
 /*
 KeyboardEventを
 ショートカット判定用の文字列へ変換する。
@@ -10870,17 +10983,22 @@ function handleTouchPointerMove(
       previousTouchCenterY;
 
 
-    const lookSensitivity =
-      0.003;
+const lookSensitivity =
+0.003;
+
+const lookDirectionMultiplier =
+getLookDirectionMultiplier();
 
 
-    yaw -=
-      deltaX *
-      lookSensitivity;
+yaw -=
+deltaX *
+lookSensitivity *
+lookDirectionMultiplier;
 
-    pitch -=
-      deltaY *
-      lookSensitivity;
+pitch -=
+deltaY *
+lookSensitivity *
+lookDirectionMultiplier;
 
 
     const limit =
@@ -11594,13 +11712,20 @@ renderer.domElement.addEventListener(
       previousMouseX = event.clientX;
       previousMouseY = event.clientY;
 
-      const sensitivity = 0.003;
+const sensitivity = 0.003;
 
-      yaw -=
-        deltaX * sensitivity;
+const lookDirectionMultiplier =
+getLookDirectionMultiplier();
 
-      pitch -=
-        deltaY * sensitivity;
+yaw -=
+deltaX *
+sensitivity *
+lookDirectionMultiplier;
+
+pitch -=
+deltaY *
+sensitivity *
+lookDirectionMultiplier;
 
       const limit =
         Math.PI / 2 - 0.01;

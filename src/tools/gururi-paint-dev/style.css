@@ -1561,6 +1561,46 @@ border-color: #ddd;
 }
 
 
+.look-direction-setting {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 16px;
+
+min-height: 42px;
+margin-top: 10px;
+padding: 6px 8px;
+
+border-bottom:
+1px solid #4a4a4a;
+}
+
+
+.look-direction-setting label {
+font-size: 13px;
+}
+
+
+#lookDirectionSelect {
+min-width: 90px;
+min-height: 32px;
+
+padding: 5px 8px;
+
+border:
+1px solid #666;
+border-radius: 4px;
+
+background: #444;
+color: #eee;
+
+font: inherit;
+font-size: 13px;
+
+cursor: pointer;
+}
+
+
 .shortcut-status {
 min-height: 20px;
 margin-top: 10px;
