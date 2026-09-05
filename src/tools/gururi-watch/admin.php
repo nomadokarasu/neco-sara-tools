@@ -63,7 +63,7 @@ $_SESSION["gururi_admin_logged_in"]
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ぐるりウォッチ 管理</title>
+<title>ぐるりうむ 管理</title>
 
 <style>
 
@@ -263,7 +263,7 @@ grid-column: 1 / -1;
 
 <?php if (!$loggedIn): ?>
 
-<h1>ぐるりウォッチ 管理</h1>
+<h1>ぐるりうむ 管理</h1>
 
 <form class="login-form" method="post">
 
@@ -293,7 +293,7 @@ required
 
 <div class="admin-header">
 
-<h1>ぐるりウォッチ 管理</h1>
+<h1>ぐるりうむ 管理</h1>
 
 <a class="logout-link" href="./admin.php?logout=1">
 ログアウト

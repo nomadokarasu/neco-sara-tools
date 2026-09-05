@@ -170,7 +170,7 @@ $lang === "en"
 
 $pageTitle =
 $title .
-" | Gururi Watch";
+" | Gururium";
 
 $description =
 "Creator: " .
@@ -178,7 +178,7 @@ $author .
 " | Explore a world created with Gururi Paint";
 
 $siteName =
-"Gururi Watch";
+"Gururium";
 
 $linkText =
 "View this world";
@@ -187,7 +187,7 @@ $linkText =
 
 $pageTitle =
 $title .
-"｜ぐるりウォッチ";
+"｜ぐるりうむ";
 
 $description =
 "作者：" .
@@ -195,7 +195,7 @@ $author .
 "｜ぐるりペイントで描かれた世界を見る";
 
 $siteName =
-"ぐるりウォッチ";
+"ぐるりうむ";
 
 $linkText =
 "作品を見る";

@@ -61,11 +61,11 @@ shareTitle: "この世界を共有",
 shareDescription: "投稿文を自由に編集して、そのままXに投稿できます。",
 shareToX: "Xに投稿する",
 copyText: "文章をコピー",
-donationTitle: "ぐるりウォッチを楽しんでいただけましたか？",
-donationText: "ぐるりペイント・ぐるりウォッチは個人で制作・運営しています。<strong>広告はあんまり好きじゃないので、</strong>今後の開発を応援していただける場合は、寄付をしていただけるとうれしいです。",
+donationTitle: "ぐるりうむを楽しんでいただけましたか？",
+donationText: "ぐるりペイント・ぐるりうむは個人で制作・運営しています。<strong>広告はあんまり好きじゃないので、</strong>今後の開発を応援していただける場合は、寄付をしていただけるとうれしいです。",
 donationImageAlt: "寄付のお願い画像",
 donationAction: "寄付について詳しく読む",
-returnTop: "ぐるりウォッチのトップへ",
+returnTop: "ぐるりうむのトップへ",
 donationHide: "もう表示しない",
 empty: "まだ投稿された世界はありません。",
 authorX: "作者のXを見る",
@@ -83,7 +83,7 @@ fileTooLarge: "画像は10MB以下にしてください。",
 imageUnreadable: "画像を読み込めませんでした。別の画像を選択してください。"
 },
 en: {
-siteTitle: "Gururi Watch",
+siteTitle: "Gururium",
 siteDescription: "Worlds created with Gururi Paint",
 postWorld: "Post a world",
 gururiPaint: "Gururi Paint",
@@ -123,11 +123,11 @@ shareTitle: "Share this world",
 shareDescription: "Edit the text freely, then post it directly to X.",
 shareToX: "Post to X",
 copyText: "Copy text",
-donationTitle: "Did you enjoy Gururi Watch?",
-donationText: "Gururi Paint and Gururi Watch are independently created and operated by one person. <strong>I’m not a big fan of ads,</strong> so if you’d like to support future development, I’d be grateful for a donation.",
+donationTitle: "Did you enjoy Gururium?",
+donationText: "Gururi Paint and Gururium are independently created and operated by one person. <strong>I’m not a big fan of ads,</strong> so if you’d like to support future development, I’d be grateful for a donation.",
 donationImageAlt: "Donation request image",
 donationAction: "Learn more about supporting this project",
-returnTop: "Back to Gururi Watch",
+returnTop: "Back to Gururium",
 donationHide: "Don't show this again",
 empty: "No worlds have been posted yet.",
 authorX: "View creator's X",
@@ -1298,7 +1298,7 @@ Creator: ${currentWorld.author}
 
 ${shareUrl}
 
-#GururiPaint #GururiWatch`;
+#GururiPaint #Gururium`;
 
 }
 
@@ -1307,7 +1307,7 @@ return `${currentWorld.title}
 
 ${shareUrl}
 
-#ぐるりペイント #ぐるりウォッチ`;
+#ぐるりペイント #ぐるりうむ`;
 
 }
 
