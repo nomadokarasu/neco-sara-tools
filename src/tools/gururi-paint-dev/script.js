@@ -9468,8 +9468,11 @@ selectDrawingTool(
 
 
 lookToolButton.addEventListener(
-"click",
-() => {
+"pointerdown",
+(event) => {
+
+event.preventDefault();
+event.stopPropagation();
 
 selectDrawingTool(
 "look"
@@ -10793,6 +10796,7 @@ pen: "p",
 eraser: "e",
 bucket: "b",
 eyedropper: "i",
+look: "l",
 lookAround: "space",
 zoom: "z"
 };
@@ -11095,7 +11099,8 @@ const drawingTools = [
 "pen",
 "eraser",
 "bucket",
-"eyedropper"
+"eyedropper",
+"look"
 ];
 
 return (
