@@ -1280,6 +1280,75 @@ return shareUrl.toString();
 
 }
 
+
+function getXAccountFromUrl(
+xUrl
+) {
+
+if (!xUrl) {
+return "";
+}
+
+try {
+
+const url =
+new URL(
+xUrl
+);
+
+const hostname =
+url.hostname.toLowerCase();
+
+if (
+hostname !== "x.com" &&
+hostname !== "www.x.com" &&
+hostname !== "twitter.com" &&
+hostname !== "www.twitter.com"
+) {
+return "";
+}
+
+const pathParts =
+url.pathname
+.split("/")
+.filter(Boolean);
+
+if (
+pathParts.length === 0
+) {
+return "";
+}
+
+const username =
+pathParts[0];
+
+if (
+[
+"home",
+"explore",
+"notifications",
+"messages",
+"i",
+"search",
+"settings"
+].includes(
+username.toLowerCase()
+)
+) {
+return "";
+}
+
+return "@" + username;
+
+} catch {
+
+return "";
+
+}
+
+}
+
+
 function createSharePostText() {
 
 if (!currentWorld) {
@@ -1289,12 +1358,22 @@ return "";
 const shareUrl =
 getCurrentWorldShareUrl();
 
+const xAccount =
+getXAccountFromUrl(
+currentWorld.xUrl
+);
+
+const creatorText =
+xAccount
+? `${currentWorld.author} ${xAccount}`
+: currentWorld.author;
+
 if (
 currentLanguage === "en"
 ) {
 
 return `${currentWorld.title}
-Creator: ${currentWorld.author}
+Creator: ${creatorText}
 
 ${shareUrl}
 
@@ -1303,7 +1382,7 @@ ${shareUrl}
 }
 
 return `${currentWorld.title}
-作者：${currentWorld.author}
+作者：${creatorText}
 
 ${shareUrl}
 
