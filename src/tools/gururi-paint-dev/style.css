@@ -84,7 +84,8 @@ position: relative;
 }
 
 
-.app-menu__trigger {
+.app-menu__trigger,
+.toolbar-menu-button {
 display: flex;
 align-items: center;
 
@@ -106,6 +107,7 @@ cursor: pointer;
 
 
 .app-menu__trigger:hover,
+.toolbar-menu-button:hover,
 .app-menu.is-open
 .app-menu__trigger {
 background: #4a4a4a;
