@@ -635,8 +635,50 @@ color: #aaa;
 }
 
 
-.drawing-tools .tool-button {
-  width: 100%;
+.drawing-tool-buttons {
+display: grid;
+grid-template-columns:
+repeat(
+2,
+minmax(0, 1fr)
+);
+gap: 8px;
+}
+
+
+.drawing-tools .drawing-tool-button {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 4px;
+
+width: 100%;
+min-height: 58px;
+
+padding: 7px 4px;
+}
+
+
+.drawing-tool-icon {
+width: 22px;
+height: 22px;
+
+fill: none;
+stroke: currentColor;
+stroke-width: 1.8;
+stroke-linecap: round;
+stroke-linejoin: round;
+
+pointer-events: none;
+}
+
+
+.drawing-tool-label {
+font-size: 11px;
+line-height: 1.2;
+
+pointer-events: none;
 }
 
 
@@ -1892,8 +1934,11 @@ margin-left: auto;
   */
 
   .drawing-tools.is-mobile-open {
-    display: grid !important;
+    display: block !important;
+  }
 
+
+  .drawing-tools .drawing-tool-buttons {
     grid-template-columns:
       repeat(
         4,
@@ -1904,15 +1949,22 @@ margin-left: auto;
   }
 
 
-  .drawing-tools > .tool-button {
-    width: 100%;
-
-    min-height: 40px;
+  .drawing-tools .drawing-tool-button {
+    min-height: 48px;
 
     padding:
-      5px 4px;
+      5px 2px;
+  }
 
-    font-size: 12px;
+
+  .drawing-tools .drawing-tool-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+
+  .drawing-tools .drawing-tool-label {
+    font-size: 10px;
   }
 
 

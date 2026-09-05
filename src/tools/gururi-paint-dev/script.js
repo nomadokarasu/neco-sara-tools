@@ -984,31 +984,59 @@ helpButton.textContent =
 t("help");
 
 
-penToolButton.textContent =
-t("pen");
-
 penToolButton.title =
 t("pen");
 
+penToolButton.setAttribute(
+"aria-label",
+t("pen")
+);
 
-eraserToolButton.textContent =
-t("eraser");
+penToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("pen");
+
 
 eraserToolButton.title =
 t("eraser");
 
+eraserToolButton.setAttribute(
+"aria-label",
+t("eraser")
+);
 
-bucketToolButton.textContent =
-t("bucket");
+eraserToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("eraser");
+
 
 bucketToolButton.title =
 t("bucket");
 
+bucketToolButton.setAttribute(
+"aria-label",
+t("bucket")
+);
 
-eyedropperToolButton.textContent =
-t("eyedropper");
+bucketToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("bucket");
+
 
 eyedropperToolButton.title =
+t("eyedropper");
+
+eyedropperToolButton.setAttribute(
+"aria-label",
+t("eyedropper")
+);
+
+eyedropperToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
 t("eyedropper");
 
 

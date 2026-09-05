@@ -230,44 +230,132 @@ title="はじめに"
 
 <aside class="drawing-tools">
 
-  <button
-    id="penTool"
-    class="tool-button is-active"
-    type="button"
-    title="ペン"
-  >
-    ペン
-  </button>
+<div class="drawing-tool-buttons">
 
-  <button
-    id="eraserTool"
-    class="tool-button"
-    type="button"
-    title="消しゴム"
-  >
-    消しゴム
-  </button>
+<button
+id="penTool"
+class="tool-button drawing-tool-button is-active"
+type="button"
+title="ペン"
+aria-label="ペン"
+>
 
-  <button
-    id="bucketTool"
-    class="tool-button"
-    type="button"
-    title="バケツ"
-  >
-    バケツ
-  </button>
+<svg
+class="drawing-tool-icon"
+viewBox="0 0 24 24"
+aria-hidden="true"
+>
+<path
+d="M4 20l4.2-1 10.7-10.7a2.1 2.1 0 0 0 0-3l-.2-.2a2.1 2.1 0 0 0-3 0L5 15.8 4 20z"
+></path>
+<path
+d="M14.5 6.3l3.2 3.2"
+></path>
+</svg>
 
-  <button
-    id="eyedropperTool"
-    class="tool-button"
-    type="button"
-    title="スポイト"
-  >
-    スポイト
-  </button>
+<span class="drawing-tool-label">
+ペン
+</span>
+
+</button>
 
 
-  <div class="drawing-tools__separator"></div>
+<button
+id="eraserTool"
+class="tool-button drawing-tool-button"
+type="button"
+title="消しゴム"
+aria-label="消しゴム"
+>
+
+<svg
+class="drawing-tool-icon"
+viewBox="0 0 24 24"
+aria-hidden="true"
+>
+<path
+d="M7.2 18.5l-3-3a2 2 0 0 1 0-2.8l7.8-7.8a2 2 0 0 1 2.8 0l5 5a2 2 0 0 1 0 2.8l-5.8 5.8H7.2z"
+></path>
+<path
+d="M9 9l6 6"
+></path>
+<path
+d="M7.2 18.5H20"
+></path>
+</svg>
+
+<span class="drawing-tool-label">
+消しゴム
+</span>
+
+</button>
+
+
+<button
+id="bucketTool"
+class="tool-button drawing-tool-button"
+type="button"
+title="バケツ"
+aria-label="バケツ"
+>
+
+<svg
+class="drawing-tool-icon"
+viewBox="0 0 24 24"
+aria-hidden="true"
+>
+<path
+d="M5.5 11.5l7-7 7 7-7 7-7-7z"
+></path>
+<path
+d="M9.5 7.5l7 7"
+></path>
+<path
+d="M18 17c0 1.4-1.1 2.5-2.5 2.5S13 18.4 13 17c0-.9 1-2.2 2.5-4 1.5 1.8 2.5 3.1 2.5 4z"
+></path>
+</svg>
+
+<span class="drawing-tool-label">
+バケツ
+</span>
+
+</button>
+
+
+<button
+id="eyedropperTool"
+class="tool-button drawing-tool-button"
+type="button"
+title="スポイト"
+aria-label="スポイト"
+>
+
+<svg
+class="drawing-tool-icon"
+viewBox="0 0 24 24"
+aria-hidden="true"
+>
+<path
+d="M13.5 5.5l5 5"
+></path>
+<path
+d="M15.5 3.5a2.1 2.1 0 0 1 3 0l2 2a2.1 2.1 0 0 1 0 3L10 19H5v-5L15.5 3.5z"
+></path>
+<path
+d="M5 19l-1 1"
+></path>
+</svg>
+
+<span class="drawing-tool-label">
+スポイト
+</span>
+
+</button>
+
+</div>
+
+
+<div class="drawing-tools__separator"></div>
 
 
   <div class="pen-size-control">
