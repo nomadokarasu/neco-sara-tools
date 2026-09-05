@@ -267,6 +267,11 @@ document.getElementById(
 "shortcutResetButton"
 );
 
+const shortcutConfirmButton =
+document.getElementById(
+"shortcutConfirmButton"
+);
+
 const shortcutInstruction =
 document.getElementById(
 "shortcutInstruction"
@@ -8499,6 +8504,15 @@ shortcutStatus.textContent =
 currentLanguage === "en"
 ? "Shortcuts reset to defaults."
 : "ショートカットを初期設定に戻しました。";
+}
+);
+
+
+shortcutConfirmButton.addEventListener(
+"click",
+() => {
+
+closeShortcutSettings();
 }
 );
 
