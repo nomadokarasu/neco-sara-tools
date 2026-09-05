@@ -9783,6 +9783,74 @@ window.addEventListener(
 
 
     /*
+      描画ツールショートカット
+
+      P：ペン
+      E：消しゴム
+      B：バケツ
+      I：スポイト
+    */
+
+    if (
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
+    ) {
+
+      const toolShortcutKey =
+        event.key.toLowerCase();
+
+
+      if (toolShortcutKey === "p") {
+
+        event.preventDefault();
+
+        selectDrawingTool(
+          "pen"
+        );
+
+        return;
+      }
+
+
+      if (toolShortcutKey === "e") {
+
+        event.preventDefault();
+
+        selectDrawingTool(
+          "eraser"
+        );
+
+        return;
+      }
+
+
+      if (toolShortcutKey === "b") {
+
+        event.preventDefault();
+
+        selectDrawingTool(
+          "bucket"
+        );
+
+        return;
+      }
+
+
+      if (toolShortcutKey === "i") {
+
+        event.preventDefault();
+
+        selectDrawingTool(
+          "eyedropper"
+        );
+
+        return;
+      }
+    }
+
+
+    /*
       Space
     */
 
