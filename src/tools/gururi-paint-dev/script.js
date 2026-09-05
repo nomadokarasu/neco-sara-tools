@@ -10795,7 +10795,7 @@ const DEFAULT_SHORTCUT_KEYS = {
 pen: "p",
 eraser: "e",
 bucket: "b",
-eyedropper: "i",
+eyedropper: "S",
 look: "l",
 lookAround: "space",
 zoom: "z"
