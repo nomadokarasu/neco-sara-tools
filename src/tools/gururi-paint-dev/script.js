@@ -9673,6 +9673,10 @@ redoButton.addEventListener(
 キーボードショートカット設定
 ================================ */
 
+const SHORTCUT_STORAGE_KEY =
+"gururi-paint-dev-shortcuts";
+
+
 const DEFAULT_SHORTCUT_KEYS = {
 pen: "p",
 eraser: "e",
@@ -9683,9 +9687,155 @@ zoom: "z"
 };
 
 
-let shortcutKeys = {
+/*
+保存されたショートカットキーを
+安全な文字列へ変換する。
+*/
+
+function normalizeShortcutKey(
+value,
+fallback
+) {
+
+if (
+typeof value !== "string"
+) {
+return fallback;
+}
+
+
+const normalized =
+value
+.trim()
+.toLowerCase();
+
+
+if (!normalized) {
+return fallback;
+}
+
+
+return normalized;
+}
+
+
+/*
+localStorageから
+ショートカット設定を読み込む。
+*/
+
+function loadShortcutKeys() {
+
+let savedShortcutKeys = null;
+
+
+try {
+
+const savedValue =
+localStorage.getItem(
+SHORTCUT_STORAGE_KEY
+);
+
+
+if (savedValue) {
+
+savedShortcutKeys =
+JSON.parse(
+savedValue
+);
+}
+
+} catch (error) {
+
+savedShortcutKeys = null;
+}
+
+
+if (
+!savedShortcutKeys ||
+typeof savedShortcutKeys !== "object" ||
+Array.isArray(
+savedShortcutKeys
+)
+) {
+
+return {
 ...DEFAULT_SHORTCUT_KEYS
 };
+}
+
+
+const loadedShortcutKeys = {};
+
+
+for (
+const [
+action,
+defaultKey
+] of Object.entries(
+DEFAULT_SHORTCUT_KEYS
+)
+) {
+
+loadedShortcutKeys[action] =
+normalizeShortcutKey(
+savedShortcutKeys[action],
+defaultKey
+);
+}
+
+
+return loadedShortcutKeys;
+}
+
+
+/*
+現在のショートカット設定を
+localStorageへ保存する。
+*/
+
+function saveShortcutKeys() {
+
+try {
+
+localStorage.setItem(
+SHORTCUT_STORAGE_KEY,
+JSON.stringify(
+shortcutKeys
+)
+);
+
+return true;
+
+} catch (error) {
+
+return false;
+}
+}
+
+
+/*
+ショートカット設定を
+初期状態へ戻す。
+*/
+
+function resetShortcutKeys() {
+
+shortcutKeys = {
+...DEFAULT_SHORTCUT_KEYS
+};
+
+saveShortcutKeys();
+}
+
+
+/*
+保存済み設定があれば使用し、
+なければ初期設定を使用する。
+*/
+
+let shortcutKeys =
+loadShortcutKeys();
 
 
 /*
