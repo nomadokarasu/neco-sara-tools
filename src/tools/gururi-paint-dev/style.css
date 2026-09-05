@@ -1578,6 +1578,58 @@ cursor: not-allowed;
 }
 
 
+/* ================================
+設定保存の確認
+================================ */
+
+.shortcut-save-confirm-overlay {
+z-index: 1100;
+}
+
+
+.shortcut-save-confirm-panel {
+width: 300px;
+max-width: 100%;
+
+padding: 24px;
+
+background: #333;
+color: #eee;
+
+border:
+1px solid #666;
+border-radius: 8px;
+
+text-align: center;
+}
+
+
+.shortcut-save-confirm-panel p {
+margin:
+0 0 20px;
+
+font-size: 14px;
+}
+
+
+.shortcut-save-confirm-actions {
+display: flex;
+justify-content: center;
+gap: 10px;
+}
+
+
+.shortcut-save-confirm-actions .tool-button {
+min-width: 80px;
+}
+
+
+.shortcut-save-confirm-actions .tool-button:disabled {
+opacity: 0.4;
+cursor: not-allowed;
+}
+
+
 .look-direction-setting {
 display: flex;
 align-items: center;

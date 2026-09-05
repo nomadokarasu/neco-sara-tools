@@ -298,6 +298,27 @@ document.getElementById(
 );
 
 
+const shortcutSaveConfirmPanel =
+document.getElementById(
+"shortcutSaveConfirmPanel"
+);
+
+const shortcutSaveConfirmMessage =
+document.getElementById(
+"shortcutSaveConfirmMessage"
+);
+
+const shortcutSaveConfirmYesButton =
+document.getElementById(
+"shortcutSaveConfirmYesButton"
+);
+
+const shortcutSaveConfirmNoButton =
+document.getElementById(
+"shortcutSaveConfirmNoButton"
+);
+
+
 const welcomeLanguageButtons =
 document.querySelectorAll(
 "[data-welcome-language]"
@@ -8590,6 +8611,47 @@ return true;
 }
 
 
+function closeShortcutSaveConfirm() {
+
+shortcutSaveConfirmPanel.classList.remove(
+"is-open"
+);
+}
+
+
+function openShortcutSaveConfirm() {
+
+const hasDuplicates =
+getDuplicateShortcutKeys().size > 0;
+
+
+shortcutSaveConfirmMessage.textContent =
+currentLanguage === "en"
+? "Save settings?"
+: "設定を保存しますか？";
+
+
+shortcutSaveConfirmYesButton.textContent =
+currentLanguage === "en"
+? "Yes"
+: "する";
+
+shortcutSaveConfirmNoButton.textContent =
+currentLanguage === "en"
+? "No"
+: "しない";
+
+
+shortcutSaveConfirmYesButton.disabled =
+hasDuplicates;
+
+
+shortcutSaveConfirmPanel.classList.add(
+"is-open"
+);
+}
+
+
 function requestCloseShortcutSettings() {
 
 stopShortcutCapture();
@@ -8605,39 +8667,23 @@ return;
 }
 
 
-const shouldSave =
-window.confirm(
-currentLanguage === "en"
-? "Save settings?\n\nOK: Save and close\nCancel: Close without saving"
-: "設定を保存しますか？\n\nOK：保存して閉じる\nキャンセル：保存せず閉じる"
-);
-
-
-if (shouldSave) {
+/*
+キーが重複している場合は
+保存確認を出さず、
+一時変更を破棄して閉じる。
+*/
 
 if (
 getDuplicateShortcutKeys().size > 0
 ) {
 
-window.alert(
-currentLanguage === "en"
-? "Duplicate keys must be resolved before saving."
-: "キーが重複しているため保存できません。重複を解消してください。"
-);
-
-updateShortcutStatusForDuplicates();
-
-return;
-}
-
-
-saveShortcutSettingsDraft();
-
-return;
-}
-
-
 closeShortcutSettings();
+
+return;
+}
+
+
+openShortcutSaveConfirm();
 }
 
 
@@ -8825,6 +8871,35 @@ saveShortcutSettingsDraft();
 );
 
 
+shortcutSaveConfirmYesButton.addEventListener(
+"click",
+() => {
+
+if (
+getDuplicateShortcutKeys().size > 0
+) {
+return;
+}
+
+
+closeShortcutSaveConfirm();
+
+saveShortcutSettingsDraft();
+}
+);
+
+
+shortcutSaveConfirmNoButton.addEventListener(
+"click",
+() => {
+
+closeShortcutSaveConfirm();
+
+closeShortcutSettings();
+}
+);
+
+
 /*
 キー変更待ちの間だけ、
 通常の描画ショートカットより先に
@@ -8840,6 +8915,19 @@ if (
 "is-open"
 )
 ) {
+return;
+}
+
+
+if (
+shortcutSaveConfirmPanel.classList.contains(
+"is-open"
+)
+) {
+
+event.preventDefault();
+event.stopImmediatePropagation();
+
 return;
 }
 
