@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.16";
+"1.3.17";
 
 
 const appVersion =
@@ -2375,35 +2375,35 @@ now.getMinutes()
 ".gururi";
 
 
-  const link =
-    document.createElement("a");
+const link =
+document.createElement("a");
 
 
-  link.href =
-    url;
+link.href =
+url;
 
-  link.download =
-    filename;
-
-
-  document.body.appendChild(
-    link
-  );
-
-  link.click();
-
-  link.remove();
+link.download =
+filename;
 
 
-  setTimeout(
-    () => {
+document.body.appendChild(
+link
+);
 
-      URL.revokeObjectURL(
-        url
-      );
-    },
-    1000
-  );
+link.click();
+
+link.remove();
+
+
+setTimeout(
+() => {
+
+URL.revokeObjectURL(
+url
+);
+},
+1000
+);
 }
 
 
