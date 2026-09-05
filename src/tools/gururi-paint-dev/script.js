@@ -95,13 +95,16 @@ const eraserToolButton =
   document.getElementById("eraserTool");
 
 const bucketToolButton =
-  document.getElementById("bucketTool");
+document.getElementById("bucketTool");
 
 const eyedropperToolButton =
-  document.getElementById("eyedropperTool");
+document.getElementById("eyedropperTool");
+
+const lookToolButton =
+document.getElementById("lookTool");
 
 const layerList =
-  document.getElementById("layerList");
+document.getElementById("layerList");
 
 const addLayerButton =
   document.getElementById("addLayerButton");
@@ -538,6 +541,9 @@ bucket:
 eyedropper:
 "スポイト",
 
+lookTool:
+"見回し",
+
 brushSize:
 "太さ",
 
@@ -772,6 +778,9 @@ bucket:
 
 eyedropper:
 "Eyedropper",
+
+lookTool:
+"Look around",
 
 brushSize:
 "Size",
@@ -1148,6 +1157,20 @@ eyedropperToolButton.querySelector(
 ".drawing-tool-label"
 ).textContent =
 t("eyedropper");
+
+
+lookToolButton.title =
+t("lookTool");
+
+lookToolButton.setAttribute(
+"aria-label",
+t("lookTool")
+);
+
+lookToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("lookTool");
 
 
 setElementText(
@@ -2901,16 +2924,17 @@ setPenColor(
       ?.currentTool;
 
 
-  if (
-    [
-      "pen",
-      "eraser",
-      "bucket",
-      "eyedropper"
-    ].includes(
-      loadedTool
-    )
-  ) {
+if (
+[
+"pen",
+"eraser",
+"bucket",
+"eyedropper",
+"look"
+].includes(
+loadedTool
+)
+) {
 
     currentTool =
       loadedTool;
@@ -2943,34 +2967,52 @@ setPenColor(
       currentTool === "bucket"
     );
 
-  eyedropperToolButton
-    .classList
-    .toggle(
-      "is-active",
-      currentTool ===
-        "eyedropper"
-    );
+eyedropperToolButton
+.classList
+.toggle(
+"is-active",
+currentTool ===
+"eyedropper"
+);
+
+lookToolButton
+.classList
+.toggle(
+"is-active",
+currentTool ===
+"look"
+);
 
 
-  if (
-    currentTool === "bucket" ||
-    currentTool === "eyedropper"
-  ) {
+if (
+currentTool === "bucket" ||
+currentTool === "eyedropper"
+) {
 
-    renderer
-      .domElement
-      .style
-      .cursor =
-        "crosshair";
+renderer
+.domElement
+.style
+.cursor =
+"crosshair";
 
-  } else {
+} else if (
+currentTool === "look"
+) {
 
-    renderer
-      .domElement
-      .style
-      .cursor =
-        "none";
-  }
+renderer
+.domElement
+.style
+.cursor =
+"grab";
+
+} else {
+
+renderer
+.domElement
+.style
+.cursor =
+"none";
+}
 
 
   eraserCursor.visible =
@@ -5334,12 +5376,13 @@ function updateEraserCursor(event) {
     カーソルを表示しない
   */
 
-  if (
-    currentTool === "bucket" ||
-    currentTool === "eyedropper" ||
-    isLooking ||
-    isZooming
-  ) {
+if (
+currentTool === "bucket" ||
+currentTool === "eyedropper" ||
+currentTool === "look" ||
+isLooking ||
+isZooming
+) {
 
     eraserCursor.visible = false;
 
@@ -9291,14 +9334,15 @@ function selectDrawingTool(
   tool
 ) {
 
-  if (
-    tool !== "pen" &&
-    tool !== "eraser" &&
-    tool !== "bucket" &&
-    tool !== "eyedropper"
-  ) {
-    return;
-  }
+if (
+tool !== "pen" &&
+tool !== "eraser" &&
+tool !== "bucket" &&
+tool !== "eyedropper" &&
+tool !== "look"
+) {
+return;
+}
 
 
   currentTool = tool;
@@ -9321,32 +9365,35 @@ function selectDrawingTool(
   }
 
 
-  if (
-    tool === "pen" ||
-    tool === "eraser"
-  ) {
+if (
+tool === "pen" ||
+tool === "eraser"
+) {
 
-    penSizeInput.value =
-      penSize;
+penSizeInput.value =
+penSize;
 
-    penSizeValue.value =
-      penSize;
+penSizeValue.value =
+penSize;
 
-    renderer.domElement.style.cursor =
-      "none";
+renderer.domElement.style.cursor =
+"none";
 
-  } else {
+} else {
 
-    /*
-      バケツ・スポイトでは
-      円形カーソルを使わない
-    */
+eraserCursor.visible = false;
 
-    eraserCursor.visible = false;
+if (tool === "look") {
 
-    renderer.domElement.style.cursor =
-      "crosshair";
-  }
+renderer.domElement.style.cursor =
+"grab";
+
+} else {
+
+renderer.domElement.style.cursor =
+"crosshair";
+}
+}
 
 
   penToolButton.classList.toggle(
@@ -9364,10 +9411,15 @@ function selectDrawingTool(
     tool === "bucket"
   );
 
-  eyedropperToolButton.classList.toggle(
-    "is-active",
-    tool === "eyedropper"
-  );
+eyedropperToolButton.classList.toggle(
+"is-active",
+tool === "eyedropper"
+);
+
+lookToolButton.classList.toggle(
+"is-active",
+tool === "look"
+);
 }
 
 
@@ -9405,13 +9457,24 @@ bucketToolButton.addEventListener(
 
 
 eyedropperToolButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    selectDrawingTool(
-      "eyedropper"
-    );
-  }
+selectDrawingTool(
+"eyedropper"
+);
+}
+);
+
+
+lookToolButton.addEventListener(
+"click",
+() => {
+
+selectDrawingTool(
+"look"
+);
+}
 );
 
 
@@ -12063,28 +12126,32 @@ if (event.button !== 0) {
     }
 
 
-    /*
-      Space + 左ドラッグ
-      視点回転
-    */
+/*
+Space + 左ドラッグ
+または見回しツール
+→ 視点回転
+*/
 
-    if (isSpacePressed) {
+if (
+isSpacePressed ||
+currentTool === "look"
+) {
 
-      isLooking = true;
+isLooking = true;
 
-      previousMouseX = event.clientX;
-      previousMouseY = event.clientY;
+previousMouseX = event.clientX;
+previousMouseY = event.clientY;
 
-      viewport.classList.add(
-        "is-looking"
-      );
+viewport.classList.add(
+"is-looking"
+);
 
-      renderer.domElement.setPointerCapture(
-        event.pointerId
-      );
+renderer.domElement.setPointerCapture(
+event.pointerId
+);
 
-      return;
-    }
+return;
+}
 
 
     /*

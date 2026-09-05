@@ -2084,25 +2084,25 @@ margin-left: auto;
   }
 
 
-  /*
-    下部には
-    4つの描画ツールだけを並べる
-  */
+/*
+下部には
+5つの描画ツールを並べる
+*/
 
-  .drawing-tools.is-mobile-open {
-    display: block !important;
-  }
+.drawing-tools.is-mobile-open {
+display: block !important;
+}
 
 
-  .drawing-tools .drawing-tool-buttons {
-    grid-template-columns:
-      repeat(
-        4,
-        minmax(0, 1fr)
-      );
+.drawing-tools .drawing-tool-buttons {
+grid-template-columns:
+repeat(
+5,
+minmax(0, 1fr)
+);
 
-    gap: 8px;
-  }
+gap: 8px;
+}
 
 
   .drawing-tools .drawing-tool-button {
