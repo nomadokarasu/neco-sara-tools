@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.21";
+"1.3.22";
 
 
 const appVersion =
@@ -2557,45 +2557,44 @@ paintContext
 false;
 
 
-  /*
-    出力サイズ
-  */
+/*
+出力サイズ
+*/
 
-  const savedOutputWidth =
-    Number(
-      projectData.canvas
-        ?.outputWidth
-    );
+const savedOutputWidth =
+Number(
+projectData.canvas
+?.outputWidth
+);
 
+if (
+[
+2048,
+4096,
+8192
+].includes(
+savedOutputWidth
+)
+) {
 
-  if (
-    [
-      2048,
-      4096,
-      8192
-    ].includes(
-      savedOutputWidth
-    )
-  ) {
+outputWidth =
+savedOutputWidth;
 
-    outputWidth =
-      savedOutputWidth;
+} else {
 
-  } else {
-
-    outputWidth =
-      4096;
-  }
-
-
-  outputHeight =
-    outputWidth / 2;
+outputWidth =
+4096;
+}
 
 
-  canvasSizeSelect.value =
-    String(
-      outputWidth
-    );
+outputHeight =
+outputWidth / 2;
+
+
+canvasSizeSelect.value =
+String(
+outputWidth
+);
 
 
   /*
