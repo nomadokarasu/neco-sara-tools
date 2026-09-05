@@ -8297,6 +8297,11 @@ passive: false
 
 let shortcutCaptureAction = null;
 
+let shortcutDraftKeys = null;
+
+let lookDirectionHorizontalDraft = null;
+let lookDirectionVerticalDraft = null;
+
 
 function formatShortcutKey(
 key
@@ -8316,7 +8321,62 @@ return key;
 }
 
 
+function getShortcutSettingsSource() {
+
+return (
+shortcutDraftKeys ||
+shortcutKeys
+);
+}
+
+
+function getDuplicateShortcutKeys() {
+
+const keyCounts =
+new Map();
+
+const shortcutSettingsSource =
+getShortcutSettingsSource();
+
+
+Object.values(
+shortcutSettingsSource
+).forEach(
+(key) => {
+
+keyCounts.set(
+key,
+(
+keyCounts.get(key) ||
+0
+) + 1
+);
+}
+);
+
+
+return new Set(
+[...keyCounts.entries()]
+.filter(
+([, count]) =>
+count > 1
+)
+.map(
+([key]) =>
+key
+)
+);
+}
+
+
 function refreshShortcutSettingsButtons() {
+
+const shortcutSettingsSource =
+getShortcutSettingsSource();
+
+const duplicateShortcutKeys =
+getDuplicateShortcutKeys();
+
 
 shortcutKeyButtons.forEach(
 (button) => {
@@ -8324,21 +8384,66 @@ shortcutKeyButtons.forEach(
 const action =
 button.dataset.shortcutAction;
 
+const shortcutKey =
+shortcutSettingsSource[action];
+
+
 button.textContent =
 formatShortcutKey(
-shortcutKeys[action]
+shortcutKey
+);
+
+
+button.classList.toggle(
+"is-duplicate",
+duplicateShortcutKeys.has(
+shortcutKey
+)
 );
 }
 );
+}
+
+
+function updateShortcutStatusForDuplicates(
+normalMessage = ""
+) {
+
+const hasDuplicates =
+getDuplicateShortcutKeys().size > 0;
+
+
+shortcutStatus.classList.toggle(
+"is-error",
+hasDuplicates
+);
+
+shortcutConfirmButton.disabled =
+hasDuplicates;
+
+
+shortcutStatus.textContent =
+hasDuplicates
+? (
+currentLanguage === "en"
+? "Duplicate keys are assigned."
+: "キーが重複しています"
+)
+: normalMessage;
+
+
+return hasDuplicates;
 }
 
 
 function refreshLookDirectionSetting() {
 
 lookDirectionHorizontalSelect.value =
+lookDirectionHorizontalDraft ??
 lookDirectionHorizontal;
 
 lookDirectionVerticalSelect.value =
+lookDirectionVerticalDraft ??
 lookDirectionVertical;
 }
 
@@ -8362,10 +8467,22 @@ function openShortcutSettings() {
 
 stopShortcutCapture();
 
+
+shortcutDraftKeys = {
+...shortcutKeys
+};
+
+lookDirectionHorizontalDraft =
+lookDirectionHorizontal;
+
+lookDirectionVerticalDraft =
+lookDirectionVertical;
+
+
 refreshShortcutSettingsButtons();
 refreshLookDirectionSetting();
 
-shortcutStatus.textContent = "";
+updateShortcutStatusForDuplicates();
 
 shortcutPanel.classList.add(
 "is-open"
@@ -8377,11 +8494,26 @@ function closeShortcutSettings() {
 
 stopShortcutCapture();
 
-shortcutPanel.classList.remove(
-"is-open"
+
+shortcutDraftKeys = null;
+
+lookDirectionHorizontalDraft = null;
+lookDirectionVerticalDraft = null;
+
+
+shortcutStatus.classList.remove(
+"is-error"
 );
 
 shortcutStatus.textContent = "";
+
+shortcutConfirmButton.disabled =
+false;
+
+
+shortcutPanel.classList.remove(
+"is-open"
+);
 }
 
 
@@ -8405,6 +8537,10 @@ action
 );
 
 
+shortcutStatus.classList.remove(
+"is-error"
+);
+
 shortcutStatus.textContent =
 currentLanguage === "en"
 ? "Press a new key. Press Esc to cancel."
@@ -8417,48 +8553,24 @@ action,
 newKey
 ) {
 
-const previousKey =
-shortcutKeys[action];
-
-
-const duplicateAction =
-Object.keys(
-shortcutKeys
-).find(
-(otherAction) =>
-otherAction !== action &&
-shortcutKeys[otherAction] ===
-newKey
-);
-
-
-shortcutKeys[action] =
-newKey;
-
-
-/*
-すでに他の機能で使用しているキーなら、
-2つの割り当てを入れ替える。
-*/
-
-if (duplicateAction) {
-
-shortcutKeys[duplicateAction] =
-previousKey;
+if (!shortcutDraftKeys) {
+return;
 }
 
 
-saveShortcutKeys();
+shortcutDraftKeys[action] =
+newKey;
 
 refreshShortcutSettingsButtons();
 
 stopShortcutCapture();
 
 
-shortcutStatus.textContent =
+updateShortcutStatusForDuplicates(
 currentLanguage === "en"
-? "Shortcut updated."
-: "ショートカットを変更しました。";
+? "Change ready. Press Apply to save."
+: "変更内容を更新しました。「設定する」で確定します。"
+);
 }
 
 
@@ -8514,18 +8626,18 @@ lookDirectionHorizontalSelect.addEventListener(
 "change",
 () => {
 
-lookDirectionHorizontal =
+lookDirectionHorizontalDraft =
 lookDirectionHorizontalSelect.value ===
 "reverse"
 ? "reverse"
 : "standard";
 
-saveLookDirections();
 
-shortcutStatus.textContent =
+updateShortcutStatusForDuplicates(
 currentLanguage === "en"
-? "Horizontal look direction updated."
-: "見回し方向（水平）を変更しました。";
+? "Change ready. Press Apply to save."
+: "変更内容を更新しました。「設定する」で確定します。"
+);
 }
 );
 
@@ -8534,18 +8646,18 @@ lookDirectionVerticalSelect.addEventListener(
 "change",
 () => {
 
-lookDirectionVertical =
+lookDirectionVerticalDraft =
 lookDirectionVerticalSelect.value ===
 "reverse"
 ? "reverse"
 : "standard";
 
-saveLookDirections();
 
-shortcutStatus.textContent =
+updateShortcutStatusForDuplicates(
 currentLanguage === "en"
-? "Vertical look direction updated."
-: "見回し方向（垂直）を変更しました。";
+? "Change ready. Press Apply to save."
+: "変更内容を更新しました。「設定する」で確定します。"
+);
 }
 );
 
@@ -8554,8 +8666,16 @@ shortcutResetButton.addEventListener(
 "click",
 () => {
 
-resetShortcutKeys();
-resetLookDirections();
+shortcutDraftKeys = {
+...DEFAULT_SHORTCUT_KEYS
+};
+
+lookDirectionHorizontalDraft =
+DEFAULT_LOOK_DIRECTION;
+
+lookDirectionVerticalDraft =
+DEFAULT_LOOK_DIRECTION;
+
 
 refreshShortcutSettingsButtons();
 refreshLookDirectionSetting();
@@ -8563,10 +8683,11 @@ refreshLookDirectionSetting();
 stopShortcutCapture();
 
 
-shortcutStatus.textContent =
+updateShortcutStatusForDuplicates(
 currentLanguage === "en"
-? "Settings reset to defaults."
-: "設定を初期状態に戻しました。";
+? "Default settings are ready. Press Apply to save."
+: "初期設定を表示しています。「設定する」で確定します。"
+);
 }
 );
 
@@ -8574,6 +8695,34 @@ currentLanguage === "en"
 shortcutConfirmButton.addEventListener(
 "click",
 () => {
+
+if (
+!shortcutDraftKeys ||
+getDuplicateShortcutKeys().size > 0
+) {
+
+updateShortcutStatusForDuplicates();
+
+return;
+}
+
+
+shortcutKeys = {
+...shortcutDraftKeys
+};
+
+lookDirectionHorizontal =
+lookDirectionHorizontalDraft ??
+lookDirectionHorizontal;
+
+lookDirectionVertical =
+lookDirectionVerticalDraft ??
+lookDirectionVertical;
+
+
+saveShortcutKeys();
+saveLookDirections();
+
 
 closeShortcutSettings();
 }
@@ -8611,7 +8760,7 @@ if (shortcutCaptureAction) {
 
 stopShortcutCapture();
 
-shortcutStatus.textContent = "";
+updateShortcutStatusForDuplicates();
 
 } else {
 

@@ -1561,6 +1561,23 @@ border-color: #ddd;
 }
 
 
+.shortcut-key-button.is-duplicate {
+color: #ff6b6b;
+}
+
+
+.shortcut-status.is-error {
+color: #ff6b6b;
+font-weight: 600;
+}
+
+
+.shortcut-confirm-button:disabled {
+opacity: 0.4;
+cursor: not-allowed;
+}
+
+
 .look-direction-setting {
 display: flex;
 align-items: center;
