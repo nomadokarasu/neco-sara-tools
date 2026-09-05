@@ -39,3 +39,7 @@ jobs:
           port: 21
           local-dir: ./dist/
           server-dir: /tools/
+          exclude: |
+            tools/gururi-watch/data/**
+            tools/gururi-watch/uploads/**
+            tools/gururi-watch/api/admin-config.php

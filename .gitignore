@@ -1,2 +1,6 @@
 dist/
 node_modules/
+
+src/tools/gururi-watch/data/worlds.json
+src/tools/gururi-watch/uploads/
+src/tools/gururi-watch/api/admin-config.php

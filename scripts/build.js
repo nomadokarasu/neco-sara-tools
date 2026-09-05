@@ -88,11 +88,64 @@ fs.rmSync(
 // ========================================
 
 fs.cpSync(
-  sourceDirectory,
-  outputDirectory,
-  {
-    recursive: true
-  }
+sourceDirectory,
+outputDirectory,
+{
+recursive: true
+}
+);
+
+
+// ========================================
+// 本番で生成・保持されるデータをdistから除外
+// ========================================
+
+const gururiWatchDataDirectory =
+path.join(
+outputDirectory,
+"tools",
+"gururi-watch",
+"data"
+);
+
+const gururiWatchUploadsDirectory =
+path.join(
+outputDirectory,
+"tools",
+"gururi-watch",
+"uploads"
+);
+
+const gururiWatchAdminConfigFile =
+path.join(
+outputDirectory,
+"tools",
+"gururi-watch",
+"api",
+"admin-config.php"
+);
+
+fs.rmSync(
+gururiWatchDataDirectory,
+{
+recursive: true,
+force: true
+}
+);
+
+fs.rmSync(
+gururiWatchUploadsDirectory,
+{
+recursive: true,
+force: true
+}
+);
+
+fs.rmSync(
+gururiWatchAdminConfigFile,
+{
+force: true
+}
 );
 
 

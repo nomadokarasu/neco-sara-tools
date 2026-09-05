@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-E5CTR47H44"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-E5CTR47H44');
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ぐるりウォッチ</title>
+<link rel="stylesheet" href="./style.css?v=2026090422">
+</head>
+<body>
+
+<main id="app">
+
+<section id="topScreen" class="top-screen">
+
+<div class="top-content">
+
+<header class="top-header">
+
+<div class="top-title-row">
+
+<div>
+<h1 class="site-title">ぐるりウォッチ</h1>
+<p class="site-description">ぐるりペイントで描かれた世界たち</p>
+</div>
+
+<button id="topLanguageButton" class="language-switch-button" type="button">
+EN
+</button>
+
+</div>
+
+<div class="top-actions">
+<button id="postButton" class="post-button" type="button">
+世界を投稿
+</button>
+
+<a class="gururi-paint-button" href="https://tools.neco-sara.com/tools/gururi-paint/">
+ぐるりペイント
+</a>
+
+<button id="topDonateButton" class="support-button" type="button">
+JUNOTAを応援
+</button>
+</div>
+</header>
+
+<div id="worldList" class="world-list"></div>
+
+<p id="emptyMessage" class="empty-message hidden">
+まだ投稿された世界はありません。
+</p>
+
+</div>
+
+</section>
+
+<section id="viewerScreen" class="viewer-screen hidden">
+
+<header class="viewer-header">
+
+<div class="viewer-header-top">
+
+<button id="backButton" class="viewer-back-button" type="button">
+<span aria-hidden="true">‹</span>
+<span>トップへ</span>
+</button>
+
+<button id="viewerLanguageButton" class="viewer-language-button" type="button">
+EN
+</button>
+
+</div>
+
+<div class="viewer-header-actions">
+
+<button id="authorButton" class="header-button" type="button">
+作者紹介
+</button>
+
+<button id="donateButton" class="header-button" type="button">
+寄付する
+</button>
+
+<button id="shareButton" class="header-button" type="button">
+この世界を共有
+</button>
+
+<button id="reportButton" class="viewer-report-button" type="button">
+問題を報告
+</button>
+
+</div>
+
+</header>
+
+<div id="panoramaContainer"></div>
+
+</section>
+
+<div id="reportPanel" class="modal-overlay hidden">
+
+<div class="modal-panel report-panel">
+
+<button id="reportCloseButton" class="modal-close" type="button" aria-label="閉じる">
+×
+</button>
+
+<h2 class="modal-title">この世界を報告しますか？</h2>
+
+<p class="report-text">
+権利侵害、不適切な内容、その他問題があると思われる場合に報告してください。
+</p>
+
+<p class="report-note">
+報告された世界は確認のため一時的に非表示になります。
+</p>
+
+<p id="reportError" class="post-error hidden"></p>
+
+<div class="report-actions">
+
+<button id="reportSubmitButton" class="primary-button" type="button">
+問題を報告する
+</button>
+
+<button id="reportCancelButton" class="secondary-button" type="button">
+キャンセル
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="postPanel" class="modal-overlay hidden">
+
+<div class="modal-panel post-panel">
+
+<button id="postCloseButton" class="modal-close" type="button" aria-label="閉じる">
+×
+</button>
+
+<h2 class="modal-title">世界を投稿する</h2>
+
+<form id="postForm" class="post-form">
+
+<label class="form-field">
+<span>作品名</span>
+<input id="postTitle" name="title" type="text" maxlength="80" required>
+</label>
+
+<label class="form-field">
+<span>作者名</span>
+<input id="postAuthor" name="author" type="text" maxlength="80" required>
+</label>
+
+<label class="form-field">
+<span>作品紹介</span>
+<textarea id="postDescription" name="description" maxlength="1500" rows="5" placeholder="自由に文章を書いてね"></textarea>
+</label>
+
+<label class="form-field">
+<span>XのURL</span>
+<input id="postXUrl" name="xUrl" type="url" placeholder="https://x.com/...">
+</label>
+
+<label class="form-field">
+<span>Webサイトなど</span>
+<input id="postExternalUrl" name="externalUrl" type="url" placeholder="https://...">
+</label>
+
+<label class="form-field">
+<span>サムネイル画像</span>
+<input id="postThumbnail" name="thumbnail" type="file" accept="image/jpeg,image/png,image/webp" required>
+<small>正方形（1：1）のJPG / PNG / WebP、10MB以下</small>
+<p id="thumbnailWarning" class="file-warning hidden"></p>
+</label>
+
+<label class="form-field">
+<span>ぐるり画像</span>
+<input id="postPanorama" name="panorama" type="file" accept="image/jpeg,image/png,image/webp" required>
+<small>横2：縦1のJPG / PNG / WebP、10MB以下。ぐるりペイントから保存した画像をそのまま使用できます。</small>
+<p id="panoramaWarning" class="file-warning hidden"></p>
+</label>
+
+<label class="terms-check">
+<input id="postContentCheck" type="checkbox" required>
+<span>R18・過度に暴力的な内容ではありません。</span>
+</label>
+
+<label class="terms-check">
+<input id="postRightsCheck" type="checkbox" required>
+<span>他人の作品・個人情報などを無断で使用していません。</span>
+</label>
+
+<label class="terms-check">
+<input id="postTerms" type="checkbox" required>
+<span>自分が投稿する権利を持つ画像であり、問題がある場合は運営者が非表示・削除できることに同意します。</span>
+</label>
+
+<p id="postError" class="post-error hidden"></p>
+
+<button id="postSubmitButton" class="primary-button" type="submit">
+投稿する
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+<div id="postCompletePanel" class="modal-overlay hidden">
+
+<div class="modal-panel">
+
+<button id="postCompleteCloseButton" class="modal-close" type="button" aria-label="閉じる">
+×
+</button>
+
+<h2 class="modal-title">投稿しました！</h2>
+
+<p class="post-complete-text">
+この世界の共有URLです。
+</p>
+
+<div class="share-url-box">
+<input id="postShareUrl" class="share-url-input" type="text" readonly>
+<button id="copyShareUrlButton" class="primary-button" type="button">
+URLをコピー
+</button>
+</div>
+
+<p id="copyShareUrlMessage" class="copy-message hidden">
+コピーしました。
+</p>
+
+</div>
+
+</div>
+
+<div id="sharePanel" class="modal-overlay hidden">
+
+<div class="modal-panel">
+
+<button id="shareCloseButton" class="modal-close" type="button" aria-label="閉じる">
+×
+</button>
+
+<h2 class="modal-title">この世界を共有</h2>
+
+<p class="share-description">
+投稿文を自由に編集して、そのままXに投稿できます。
+</p>
+
+<textarea id="sharePostText" class="share-post-text" rows="8"></textarea>
+
+<div class="share-actions">
+
+<button id="shareToXButton" class="primary-button" type="button">
+Xに投稿する
+</button>
+
+<button id="copyShareTextButton" class="secondary-button" type="button">
+文章をコピー
+</button>
+
+</div>
+
+<p id="shareCopyMessage" class="copy-message hidden">
+コピーしました。
+</p>
+
+</div>
+
+</div>
+
+<div id="authorPanel" class="modal-overlay hidden">
+
+<div class="modal-panel">
+
+<button id="authorCloseButton" class="modal-close" type="button" aria-label="閉じる">
+×
+</button>
+
+<h2 id="authorWorkTitle" class="modal-title"></h2>
+
+<p id="authorName" class="author-name"></p>
+
+<p id="authorDescription" class="author-description"></p>
+
+<div id="authorLinks" class="author-links"></div>
+
+</div>
+
+</div>
+
+<div id="donationPanel" class="modal-overlay hidden">
+
+<div class="modal-panel donation-panel">
+
+<button id="donationCloseButton" class="modal-close" type="button" aria-label="閉じる">
+×
+</button>
+
+<h2 class="modal-title">ぐるりウォッチを楽しんでいただけましたか？</h2>
+
+<p class="donation-text">
+ぐるりペイント・ぐるりウォッチは個人で制作・運営しています。<strong>広告はあんまり好きじゃないので、</strong>今後の開発を応援していただける場合は、寄付をしていただけるとうれしいです。
+</p>
+
+<img
+id="donationImage"
+class="donation-image"
+src="./assets/donation-support.png?v=2026090422"
+alt=""
+>
+
+<div class="donation-actions">
+
+<button id="donationActionButton" class="primary-button" type="button">
+寄付する
+</button>
+
+<button id="returnTopButton" class="secondary-button" type="button">
+ぐるりウォッチのトップへ
+</button>
+
+<label class="donation-hide-option">
+<input id="donationHideCheckbox" type="checkbox">
+<span>もう表示しない</span>
+</label>
+
+</div>
+
+</div>
+
+</div>
+
+</main>
+
+<script type="module" src="./script.js?v=2026090454"></script>
+
+</body>
+</html>
