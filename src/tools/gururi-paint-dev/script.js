@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.17";
+"1.3.18";
 
 
 const appVersion =
@@ -2408,47 +2408,47 @@ url
 
 
 /* ================================
-   プロジェクト読み込み
+プロジェクト読み込み
 ================================ */
 
 function loadProjectImage(
-  source
+source
 ) {
 
-  return new Promise(
-    (
-      resolve,
-      reject
-    ) => {
+return new Promise(
+(
+resolve,
+reject
+) => {
 
-      const image =
-        new Image();
-
-
-      image.onload =
-        () => {
-
-          resolve(
-            image
-          );
-        };
+const image =
+new Image();
 
 
-      image.onerror =
-        () => {
+image.onload =
+() => {
 
-          reject(
-            new Error(
-              "レイヤー画像を読み込めませんでした。"
-            )
-          );
-        };
+resolve(
+image
+);
+};
 
 
-      image.src =
-        source;
-    }
-  );
+image.onerror =
+() => {
+
+reject(
+new Error(
+"レイヤー画像を読み込めませんでした。"
+)
+);
+};
+
+
+image.src =
+source;
+}
+);
 }
 
 
