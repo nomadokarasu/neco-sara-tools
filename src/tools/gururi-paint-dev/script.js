@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.9";
+"1.3.10";
 
 
 const appVersion =
@@ -2204,33 +2204,33 @@ link.click();
 
 function downloadProject() {
 
-  const projectData = {
+const projectData = {
 
-    format:
-      "gururi-paint-project",
+format:
+"gururi-paint-project",
 
-    version: 1,
+version: 1,
 
-    savedAt:
-      new Date().toISOString(),
+savedAt:
+new Date().toISOString(),
 
 
-    /*
-      Canvas
-    */
+/*
+Canvas
+*/
 
-    canvas: {
+canvas: {
 
-      editWidth:
-        paintCanvas.width,
+editWidth:
+paintCanvas.width,
 
-      editHeight:
-        paintCanvas.height,
+editHeight:
+paintCanvas.height,
 
-      outputWidth,
+outputWidth,
 
-      outputHeight
-    },
+outputHeight
+},
 
 
     /*
