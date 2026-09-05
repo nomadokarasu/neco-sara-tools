@@ -10389,8 +10389,8 @@ function getVerticalLookDirectionMultiplier() {
 
 return lookDirectionVertical ===
 "reverse"
-? -1
-: 1;
+? 1
+: -1;
 }
 
 
