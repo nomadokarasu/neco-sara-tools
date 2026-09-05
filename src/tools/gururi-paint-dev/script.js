@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.19";
+"1.3.20";
 
 
 const appVersion =
@@ -2484,38 +2484,38 @@ number
 
 
 async function loadProject(
-  file
+file
 ) {
 
-  const text =
-    await file.text();
+const text =
+await file.text();
 
 
-  const projectData =
-    JSON.parse(
-      text
-    );
+const projectData =
+JSON.parse(
+text
+);
 
 
-  /*
-    ぐるりペイントの
-    保存データか確認
-  */
+/*
+ぐるりペイントの
+保存データか確認
+*/
 
-  if (
-    projectData.format !==
-      "gururi-paint-project" ||
-    projectData.version !== 1 ||
-    !Array.isArray(
-      projectData.layers
-    ) ||
-    projectData.layers.length === 0
-  ) {
+if (
+projectData.format !==
+"gururi-paint-project" ||
+projectData.version !== 1 ||
+!Array.isArray(
+projectData.layers
+) ||
+projectData.layers.length === 0
+) {
 
-    throw new Error(
-      "ぐるりペイントの保存データではありません。"
-    );
-  }
+throw new Error(
+"ぐるりペイントの保存データではありません。"
+);
+}
 
 
   /*
