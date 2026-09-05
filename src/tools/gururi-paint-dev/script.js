@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.20";
+"1.3.21";
 
 
 const appVersion =
@@ -2518,43 +2518,43 @@ throw new Error(
 }
 
 
-  /*
-    編集Canvasサイズ
-  */
+/*
+編集Canvasサイズ
+*/
 
-  const editWidth =
-    Math.round(
-      clampProjectNumber(
-        projectData.canvas
-          ?.editWidth,
-        256,
-        8192,
-        2048
-      )
-    );
-
-
-  const editHeight =
-    Math.round(
-      clampProjectNumber(
-        projectData.canvas
-          ?.editHeight,
-        128,
-        4096,
-        1024
-      )
-    );
+const editWidth =
+Math.round(
+clampProjectNumber(
+projectData.canvas
+?.editWidth,
+256,
+8192,
+2048
+)
+);
 
 
-  paintCanvas.width =
-    editWidth;
+const editHeight =
+Math.round(
+clampProjectNumber(
+projectData.canvas
+?.editHeight,
+128,
+4096,
+1024
+)
+);
 
-  paintCanvas.height =
-    editHeight;
 
-  paintContext
-    .imageSmoothingEnabled =
-      false;
+paintCanvas.width =
+editWidth;
+
+paintCanvas.height =
+editHeight;
+
+paintContext
+.imageSmoothingEnabled =
+false;
 
 
   /*
