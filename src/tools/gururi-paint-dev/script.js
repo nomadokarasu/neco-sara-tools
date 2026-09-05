@@ -8555,7 +8555,7 @@ shortcutResetButton.addEventListener(
 () => {
 
 resetShortcutKeys();
-resetLookDirection();
+resetLookDirections();
 
 refreshShortcutSettingsButtons();
 refreshLookDirectionSetting();
@@ -10280,13 +10280,10 @@ loadShortcutKeys();
 ================================ */
 
 const LOOK_DIRECTION_HORIZONTAL_STORAGE_KEY =
-"gururi-paint-dev-look-direction-horizontal";
+"gururi-paint-dev-look-direction-horizontal-v2";
 
 const LOOK_DIRECTION_VERTICAL_STORAGE_KEY =
-"gururi-paint-dev-look-direction-vertical";
-
-const LEGACY_LOOK_DIRECTION_STORAGE_KEY =
-"gururi-paint-dev-look-direction";
+"gururi-paint-dev-look-direction-vertical-v2";
 
 const DEFAULT_LOOK_DIRECTION =
 "standard";
@@ -10308,24 +10305,6 @@ savedValue === "standard" ||
 savedValue === "reverse"
 ) {
 return savedValue;
-}
-
-
-/*
-旧設定が残っている場合は、
-水平・垂直の初期値として引き継ぐ。
-*/
-
-const legacyValue =
-localStorage.getItem(
-LEGACY_LOOK_DIRECTION_STORAGE_KEY
-);
-
-if (
-legacyValue === "standard" ||
-legacyValue === "reverse"
-) {
-return legacyValue;
 }
 
 } catch (error) {
