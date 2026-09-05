@@ -479,7 +479,7 @@ saveData:
 "データ保存(.gururi)",
 
 loadData:
-"インポート",
+"インポート（.gururi)",
 
 preview:
 "プレビュー",
