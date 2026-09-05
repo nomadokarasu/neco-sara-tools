@@ -151,11 +151,20 @@ class="toolbar__version"
   補助グリッド
 </span>
 
-      </label>
+</label>
 
 
-      <button
-        id="projectSaveButton"
+<button
+id="shortcutSettingsButton"
+class="tool-button"
+type="button"
+>
+ショートカット
+</button>
+
+
+<button
+id="projectSaveButton"
         class="tool-button"
         type="button"
       >
@@ -616,9 +625,144 @@ rel="noopener noreferrer"
 </div>
 
 
-  <!-- =============================
-       360°長方形プレビュー
-  ============================== -->
+<!-- =============================
+ショートカット設定
+============================== -->
+
+<div
+id="shortcutPanel"
+class="welcome-overlay shortcut-overlay"
+role="dialog"
+aria-modal="true"
+aria-labelledby="shortcutPanelTitle"
+>
+
+<div class="welcome-panel shortcut-panel">
+
+<div class="welcome-panel__header">
+
+<strong id="shortcutPanelTitle">
+ショートカット設定
+</strong>
+
+<button
+id="shortcutCloseButton"
+class="welcome-close-button"
+type="button"
+aria-label="閉じる"
+>
+×
+</button>
+
+</div>
+
+
+<div class="welcome-panel__content">
+
+<p
+id="shortcutInstruction"
+class="shortcut-instruction"
+>
+変更したい項目を押してから、新しいキーを押してください。
+</p>
+
+
+<div class="shortcut-list">
+
+<div class="shortcut-row">
+<span data-shortcut-label="pen">
+ペン
+</span>
+<button
+class="shortcut-key-button"
+type="button"
+data-shortcut-action="pen"
+></button>
+</div>
+
+<div class="shortcut-row">
+<span data-shortcut-label="eraser">
+消しゴム
+</span>
+<button
+class="shortcut-key-button"
+type="button"
+data-shortcut-action="eraser"
+></button>
+</div>
+
+<div class="shortcut-row">
+<span data-shortcut-label="bucket">
+バケツ
+</span>
+<button
+class="shortcut-key-button"
+type="button"
+data-shortcut-action="bucket"
+></button>
+</div>
+
+<div class="shortcut-row">
+<span data-shortcut-label="eyedropper">
+スポイト
+</span>
+<button
+class="shortcut-key-button"
+type="button"
+data-shortcut-action="eyedropper"
+></button>
+</div>
+
+<div class="shortcut-row">
+<span data-shortcut-label="lookAround">
+見回す
+</span>
+<button
+class="shortcut-key-button"
+type="button"
+data-shortcut-action="lookAround"
+></button>
+</div>
+
+<div class="shortcut-row">
+<span data-shortcut-label="zoom">
+ズーム
+</span>
+<button
+class="shortcut-key-button"
+type="button"
+data-shortcut-action="zoom"
+></button>
+</div>
+
+</div>
+
+
+<div
+id="shortcutStatus"
+class="shortcut-status"
+aria-live="polite"
+></div>
+
+
+<button
+id="shortcutResetButton"
+class="tool-button shortcut-reset-button"
+type="button"
+>
+初期設定に戻す
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =============================
+360°長方形プレビュー
+============================== -->
 
   <div
     id="previewOverlay"

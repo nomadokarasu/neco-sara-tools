@@ -246,6 +246,43 @@ document.getElementById(
 "helpCloseButton"
 );
 
+
+const shortcutSettingsButton =
+document.getElementById(
+"shortcutSettingsButton"
+);
+
+const shortcutPanel =
+document.getElementById(
+"shortcutPanel"
+);
+
+const shortcutCloseButton =
+document.getElementById(
+"shortcutCloseButton"
+);
+
+const shortcutResetButton =
+document.getElementById(
+"shortcutResetButton"
+);
+
+const shortcutInstruction =
+document.getElementById(
+"shortcutInstruction"
+);
+
+const shortcutStatus =
+document.getElementById(
+"shortcutStatus"
+);
+
+const shortcutKeyButtons =
+document.querySelectorAll(
+"[data-shortcut-action]"
+);
+
+
 const welcomeLanguageButtons =
 document.querySelectorAll(
 "[data-welcome-language]"
@@ -8239,6 +8276,329 @@ passive: false
 );
 
 
+/* ================================
+ショートカット設定画面
+================================ */
+
+let shortcutCaptureAction = null;
+
+
+function formatShortcutKey(
+key
+) {
+
+if (key === "space") {
+return "Space";
+}
+
+
+if (key.length === 1) {
+return key.toUpperCase();
+}
+
+
+return key;
+}
+
+
+function refreshShortcutSettingsButtons() {
+
+shortcutKeyButtons.forEach(
+(button) => {
+
+const action =
+button.dataset.shortcutAction;
+
+button.textContent =
+formatShortcutKey(
+shortcutKeys[action]
+);
+}
+);
+}
+
+
+function stopShortcutCapture() {
+
+shortcutCaptureAction = null;
+
+shortcutKeyButtons.forEach(
+(button) => {
+
+button.classList.remove(
+"is-capturing"
+);
+}
+);
+}
+
+
+function openShortcutSettings() {
+
+stopShortcutCapture();
+
+refreshShortcutSettingsButtons();
+
+shortcutStatus.textContent = "";
+
+shortcutPanel.classList.add(
+"is-open"
+);
+}
+
+
+function closeShortcutSettings() {
+
+stopShortcutCapture();
+
+shortcutPanel.classList.remove(
+"is-open"
+);
+
+shortcutStatus.textContent = "";
+}
+
+
+function startShortcutCapture(
+action
+) {
+
+shortcutCaptureAction =
+action;
+
+
+shortcutKeyButtons.forEach(
+(button) => {
+
+button.classList.toggle(
+"is-capturing",
+button.dataset.shortcutAction ===
+action
+);
+}
+);
+
+
+shortcutStatus.textContent =
+currentLanguage === "en"
+? "Press a new key. Press Esc to cancel."
+: "新しいキーを押してください。Escでキャンセルできます。";
+}
+
+
+function assignShortcutKey(
+action,
+newKey
+) {
+
+const previousKey =
+shortcutKeys[action];
+
+
+const duplicateAction =
+Object.keys(
+shortcutKeys
+).find(
+(otherAction) =>
+otherAction !== action &&
+shortcutKeys[otherAction] ===
+newKey
+);
+
+
+shortcutKeys[action] =
+newKey;
+
+
+/*
+すでに他の機能で使用しているキーなら、
+2つの割り当てを入れ替える。
+*/
+
+if (duplicateAction) {
+
+shortcutKeys[duplicateAction] =
+previousKey;
+}
+
+
+saveShortcutKeys();
+
+refreshShortcutSettingsButtons();
+
+stopShortcutCapture();
+
+
+shortcutStatus.textContent =
+currentLanguage === "en"
+? "Shortcut updated."
+: "ショートカットを変更しました。";
+}
+
+
+shortcutSettingsButton.addEventListener(
+"click",
+() => {
+
+openShortcutSettings();
+}
+);
+
+
+shortcutCloseButton.addEventListener(
+"click",
+() => {
+
+closeShortcutSettings();
+}
+);
+
+
+shortcutPanel.addEventListener(
+"click",
+(event) => {
+
+if (
+event.target === shortcutPanel
+) {
+
+closeShortcutSettings();
+}
+}
+);
+
+
+shortcutKeyButtons.forEach(
+(button) => {
+
+button.addEventListener(
+"click",
+() => {
+
+startShortcutCapture(
+button.dataset.shortcutAction
+);
+}
+);
+}
+);
+
+
+shortcutResetButton.addEventListener(
+"click",
+() => {
+
+resetShortcutKeys();
+
+refreshShortcutSettingsButtons();
+
+stopShortcutCapture();
+
+
+shortcutStatus.textContent =
+currentLanguage === "en"
+? "Shortcuts reset to defaults."
+: "ショートカットを初期設定に戻しました。";
+}
+);
+
+
+/*
+キー変更待ちの間だけ、
+通常の描画ショートカットより先に
+KeyboardEventを受け取る。
+*/
+
+window.addEventListener(
+"keydown",
+(event) => {
+
+if (
+!shortcutPanel.classList.contains(
+"is-open"
+)
+) {
+return;
+}
+
+
+if (
+event.key === "Escape"
+) {
+
+event.preventDefault();
+event.stopImmediatePropagation();
+
+
+if (shortcutCaptureAction) {
+
+stopShortcutCapture();
+
+shortcutStatus.textContent = "";
+
+} else {
+
+closeShortcutSettings();
+}
+
+return;
+}
+
+
+if (!shortcutCaptureAction) {
+return;
+}
+
+
+event.preventDefault();
+event.stopImmediatePropagation();
+
+
+if (
+event.ctrlKey ||
+event.metaKey ||
+event.altKey ||
+event.isComposing
+) {
+
+shortcutStatus.textContent =
+currentLanguage === "en"
+? "Use a single key without Ctrl, Command, or Alt."
+: "Ctrl・Command・Altを使わず、1つのキーを押してください。";
+
+return;
+}
+
+
+const newShortcutKey =
+getShortcutKey(
+event
+);
+
+
+if (
+newShortcutKey !== "space" &&
+newShortcutKey.length !== 1
+) {
+
+shortcutStatus.textContent =
+currentLanguage === "en"
+? "Please use a letter, symbol, or Space key."
+: "文字・記号・Spaceのいずれかを使用してください。";
+
+return;
+}
+
+
+assignShortcutKey(
+shortcutCaptureAction,
+newShortcutKey
+);
+},
+true
+);
+
+
 applyLanguage(false);
 
 renderLayerPanel();
@@ -9923,16 +10283,31 @@ window.addEventListener(
       );
 
 
-    if (
-      isEditableInput ||
-      isOtherEditableElement
-    ) {
-      return;
-    }
+if (
+isEditableInput ||
+isOtherEditableElement
+) {
+return;
+}
 
 
-    /*
-      Undo / Redo
+/*
+ショートカット設定画面を
+開いている間は、
+通常の描画ショートカットを停止する。
+*/
+
+if (
+shortcutPanel.classList.contains(
+"is-open"
+)
+) {
+return;
+}
+
+
+/*
+Undo / Redo
 
       Ctrl：
       Windows / Linux

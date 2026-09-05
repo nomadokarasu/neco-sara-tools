@@ -1486,6 +1486,96 @@ opacity: 0.86;
 
 
 /* ================================
+ショートカット設定
+================================ */
+
+.shortcut-panel {
+width: 440px;
+}
+
+
+.shortcut-instruction {
+margin: 0 0 14px;
+
+font-size: 13px;
+line-height: 1.6;
+color: #ccc;
+}
+
+
+.shortcut-list {
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+
+
+.shortcut-row {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 16px;
+
+min-height: 42px;
+padding: 6px 8px;
+
+border-bottom:
+1px solid #4a4a4a;
+}
+
+
+.shortcut-row > span {
+font-size: 13px;
+}
+
+
+.shortcut-key-button {
+min-width: 90px;
+min-height: 32px;
+
+padding: 5px 12px;
+
+border:
+1px solid #666;
+border-radius: 4px;
+
+background: #444;
+color: #eee;
+
+font: inherit;
+font-size: 13px;
+
+cursor: pointer;
+}
+
+
+.shortcut-key-button:hover {
+background: #555;
+}
+
+
+.shortcut-key-button.is-capturing {
+background: #ddd;
+color: #222;
+border-color: #ddd;
+}
+
+
+.shortcut-status {
+min-height: 20px;
+margin-top: 10px;
+
+font-size: 12px;
+color: #bbb;
+}
+
+
+.shortcut-reset-button {
+margin-top: 8px;
+}
+
+
+/* ================================
    スマートフォン用 下部UI
 ================================ */
 
