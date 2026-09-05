@@ -287,9 +287,14 @@ document.querySelectorAll(
 "[data-shortcut-action]"
 );
 
-const lookDirectionSelect =
+const lookDirectionHorizontalSelect =
 document.getElementById(
-"lookDirectionSelect"
+"lookDirectionHorizontalSelect"
+);
+
+const lookDirectionVerticalSelect =
+document.getElementById(
+"lookDirectionVerticalSelect"
 );
 
 
@@ -8330,8 +8335,11 @@ shortcutKeys[action]
 
 function refreshLookDirectionSetting() {
 
-lookDirectionSelect.value =
-lookDirection;
+lookDirectionHorizontalSelect.value =
+lookDirectionHorizontal;
+
+lookDirectionVerticalSelect.value =
+lookDirectionVertical;
 }
 
 
@@ -8502,21 +8510,42 @@ button.dataset.shortcutAction
 );
 
 
-lookDirectionSelect.addEventListener(
+lookDirectionHorizontalSelect.addEventListener(
 "change",
 () => {
 
-lookDirection =
-lookDirectionSelect.value === "reverse"
+lookDirectionHorizontal =
+lookDirectionHorizontalSelect.value ===
+"reverse"
 ? "reverse"
 : "standard";
 
-saveLookDirection();
+saveLookDirections();
 
 shortcutStatus.textContent =
 currentLanguage === "en"
-? "Look direction updated."
-: "見回し方向を変更しました。";
+? "Horizontal look direction updated."
+: "見回し方向（水平）を変更しました。";
+}
+);
+
+
+lookDirectionVerticalSelect.addEventListener(
+"change",
+() => {
+
+lookDirectionVertical =
+lookDirectionVerticalSelect.value ===
+"reverse"
+? "reverse"
+: "standard";
+
+saveLookDirections();
+
+shortcutStatus.textContent =
+currentLanguage === "en"
+? "Vertical look direction updated."
+: "見回し方向（垂直）を変更しました。";
 }
 );
 
@@ -10250,20 +10279,28 @@ loadShortcutKeys();
 見回し方向設定
 ================================ */
 
-const LOOK_DIRECTION_STORAGE_KEY =
+const LOOK_DIRECTION_HORIZONTAL_STORAGE_KEY =
+"gururi-paint-dev-look-direction-horizontal";
+
+const LOOK_DIRECTION_VERTICAL_STORAGE_KEY =
+"gururi-paint-dev-look-direction-vertical";
+
+const LEGACY_LOOK_DIRECTION_STORAGE_KEY =
 "gururi-paint-dev-look-direction";
 
 const DEFAULT_LOOK_DIRECTION =
 "standard";
 
 
-function loadLookDirection() {
+function loadLookDirection(
+storageKey
+) {
 
 try {
 
 const savedValue =
 localStorage.getItem(
-LOOK_DIRECTION_STORAGE_KEY
+storageKey
 );
 
 if (
@@ -10271,6 +10308,24 @@ savedValue === "standard" ||
 savedValue === "reverse"
 ) {
 return savedValue;
+}
+
+
+/*
+旧設定が残っている場合は、
+水平・垂直の初期値として引き継ぐ。
+*/
+
+const legacyValue =
+localStorage.getItem(
+LEGACY_LOOK_DIRECTION_STORAGE_KEY
+);
+
+if (
+legacyValue === "standard" ||
+legacyValue === "reverse"
+) {
+return legacyValue;
 }
 
 } catch (error) {
@@ -10286,13 +10341,18 @@ return DEFAULT_LOOK_DIRECTION;
 }
 
 
-function saveLookDirection() {
+function saveLookDirections() {
 
 try {
 
 localStorage.setItem(
-LOOK_DIRECTION_STORAGE_KEY,
-lookDirection
+LOOK_DIRECTION_HORIZONTAL_STORAGE_KEY,
+lookDirectionHorizontal
+);
+
+localStorage.setItem(
+LOOK_DIRECTION_VERTICAL_STORAGE_KEY,
+lookDirectionVertical
 );
 
 return true;
@@ -10304,25 +10364,45 @@ return false;
 }
 
 
-function resetLookDirection() {
+function resetLookDirections() {
 
-lookDirection =
+lookDirectionHorizontal =
 DEFAULT_LOOK_DIRECTION;
 
-saveLookDirection();
+lookDirectionVertical =
+DEFAULT_LOOK_DIRECTION;
+
+saveLookDirections();
 }
 
 
-function getLookDirectionMultiplier() {
+function getHorizontalLookDirectionMultiplier() {
 
-return lookDirection === "reverse"
+return lookDirectionHorizontal ===
+"reverse"
 ? -1
 : 1;
 }
 
 
-let lookDirection =
-loadLookDirection();
+function getVerticalLookDirectionMultiplier() {
+
+return lookDirectionVertical ===
+"reverse"
+? -1
+: 1;
+}
+
+
+let lookDirectionHorizontal =
+loadLookDirection(
+LOOK_DIRECTION_HORIZONTAL_STORAGE_KEY
+);
+
+let lookDirectionVertical =
+loadLookDirection(
+LOOK_DIRECTION_VERTICAL_STORAGE_KEY
+);
 
 
 /*
@@ -10986,19 +11066,22 @@ function handleTouchPointerMove(
 const lookSensitivity =
 0.003;
 
-const lookDirectionMultiplier =
-getLookDirectionMultiplier();
+const horizontalLookDirectionMultiplier =
+getHorizontalLookDirectionMultiplier();
+
+const verticalLookDirectionMultiplier =
+getVerticalLookDirectionMultiplier();
 
 
 yaw -=
 deltaX *
 lookSensitivity *
-lookDirectionMultiplier;
+horizontalLookDirectionMultiplier;
 
 pitch -=
 deltaY *
 lookSensitivity *
-lookDirectionMultiplier;
+verticalLookDirectionMultiplier;
 
 
     const limit =
@@ -11714,18 +11797,21 @@ renderer.domElement.addEventListener(
 
 const sensitivity = 0.003;
 
-const lookDirectionMultiplier =
-getLookDirectionMultiplier();
+const horizontalLookDirectionMultiplier =
+getHorizontalLookDirectionMultiplier();
+
+const verticalLookDirectionMultiplier =
+getVerticalLookDirectionMultiplier();
 
 yaw -=
 deltaX *
 sensitivity *
-lookDirectionMultiplier;
+horizontalLookDirectionMultiplier;
 
 pitch -=
 deltaY *
 sensitivity *
-lookDirectionMultiplier;
+verticalLookDirectionMultiplier;
 
       const limit =
         Math.PI / 2 - 0.01;

@@ -1581,7 +1581,8 @@ font-size: 13px;
 }
 
 
-#lookDirectionSelect {
+#lookDirectionHorizontalSelect,
+#lookDirectionVerticalSelect {
 min-width: 90px;
 min-height: 32px;
 
