@@ -9785,15 +9785,23 @@ window.addEventListener(
     }
 
 
-    /*
-      Z
-    */
+/*
+  Z
 
-    if (event.code === "KeyZ") {
-      isZPressed = true;
+  event.codeではなく
+  event.keyを使用することで、
+  QWERTY / AZERTYなどの
+  キーボード配列に関係なく、
+  実際に入力された「Z」で判定する。
+*/
 
-      event.preventDefault();
-    }
+if (
+  event.key.toLowerCase() === "z"
+) {
+  isZPressed = true;
+
+  event.preventDefault();
+}
 
   }
 );
@@ -9817,18 +9825,20 @@ window.addEventListener(
     }
 
 
-    /*
-      Zを離した
-    */
+/*
+  Zを離した
+*/
 
-    if (event.code === "KeyZ") {
-      isZPressed = false;
-      isZooming = false;
+if (
+  event.key.toLowerCase() === "z"
+) {
+  isZPressed = false;
+  isZooming = false;
 
-      viewport.classList.remove(
-        "is-zooming"
-      );
-    }
+  viewport.classList.remove(
+    "is-zooming"
+  );
+}
 
   }
 );
