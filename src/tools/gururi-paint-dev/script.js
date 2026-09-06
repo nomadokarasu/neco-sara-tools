@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.40";
+"1.3.41";
 
 
 const appVersion =
@@ -1733,7 +1733,7 @@ const VIDEO_CAPTURE_FPS =
 30;
 
 const VIDEO_CAPTURE_MAX_DURATION =
-10000;
+5000;
 
 const photoCaptureCanvas =
 document.createElement(
@@ -10331,11 +10331,24 @@ Math.floor(
 elapsedMilliseconds / 1000
 );
 
+const remainingRatio =
+Math.max(
+0,
+1 -
+elapsedMilliseconds /
+VIDEO_CAPTURE_MAX_DURATION
+);
+
 cameraRecordingTime.textContent =
 "00:" +
 String(elapsedSeconds).padStart(
 2,
 "0"
+);
+
+cameraCaptureUi.style.setProperty(
+"--camera-recording-progress",
+remainingRatio
 );
 }
 
@@ -10344,6 +10357,15 @@ function resetCameraVideoUi() {
 
 cameraShutterButton.classList.remove(
 "is-recording"
+);
+
+cameraCaptureUi.classList.remove(
+"is-recording"
+);
+
+cameraCaptureUi.style.setProperty(
+"--camera-recording-progress",
+1
 );
 
 cameraRecordingTime.hidden =
@@ -10557,6 +10579,15 @@ false;
 
 cameraRecordingTime.textContent =
 "00:00";
+
+cameraCaptureUi.style.setProperty(
+"--camera-recording-progress",
+1
+);
+
+cameraCaptureUi.classList.add(
+"is-recording"
+);
 
 cameraShutterButton.classList.add(
 "is-recording"
