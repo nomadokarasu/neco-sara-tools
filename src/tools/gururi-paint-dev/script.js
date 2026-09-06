@@ -131,6 +131,79 @@ document.getElementById(
 "cameraToolAddButton"
 );
 
+const cameraToolButton =
+document.getElementById(
+"cameraTool"
+);
+
+
+const TOOL_REGISTRY =
+Object.freeze({
+
+pen: {
+id: "pen",
+builtIn: true
+},
+
+eraser: {
+id: "eraser",
+builtIn: true
+},
+
+bucket: {
+id: "bucket",
+builtIn: true
+},
+
+eyedropper: {
+id: "eyedropper",
+builtIn: true
+},
+
+look: {
+id: "look",
+builtIn: true
+},
+
+camera: {
+id: "camera",
+builtIn: false
+}
+});
+
+
+const TOOL_PALETTE_STORAGE_KEY =
+"gururi-paint-dev-palette-tools";
+
+
+let addedPaletteToolIds = [];
+
+
+try {
+
+const savedPaletteToolIds =
+JSON.parse(
+localStorage.getItem(
+TOOL_PALETTE_STORAGE_KEY
+) || "[]"
+);
+
+if (Array.isArray(savedPaletteToolIds)) {
+
+addedPaletteToolIds =
+savedPaletteToolIds.filter(
+(toolId) =>
+TOOL_REGISTRY[toolId] &&
+!TOOL_REGISTRY[toolId].builtIn
+);
+}
+
+} catch (error) {
+
+addedPaletteToolIds = [];
+}
+
+
 const layerList =
 document.getElementById("layerList");
 
@@ -578,6 +651,9 @@ addTool:
 add:
 "追加",
 
+added:
+"追加済み",
+
 camera:
 "カメラ",
 
@@ -827,6 +903,9 @@ addTool:
 
 add:
 "Add",
+
+added:
+"Added",
 
 camera:
 "Camera",
@@ -1233,11 +1312,6 @@ addToolButton.setAttribute(
 t("addTool")
 );
 
-addToolButton.querySelector(
-".drawing-tool-label"
-).textContent =
-t("add");
-
 
 setElementText(
 "#toolLibraryPanelTitle",
@@ -1255,8 +1329,21 @@ t("camera");
 cameraToolDescription.textContent =
 t("cameraDescription");
 
-cameraToolAddButton.textContent =
-t("add");
+cameraToolButton.title =
+t("camera");
+
+cameraToolButton.setAttribute(
+"aria-label",
+t("camera")
+);
+
+cameraToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("camera");
+
+
+updateToolPalette();
 
 
 setElementText(
@@ -9566,7 +9653,49 @@ selectDrawingTool(
 );
 
 
+function saveToolPalette() {
+
+try {
+
+localStorage.setItem(
+TOOL_PALETTE_STORAGE_KEY,
+JSON.stringify(
+addedPaletteToolIds
+)
+);
+
+} catch (error) {
+
+return false;
+}
+
+return true;
+}
+
+
+function updateToolPalette() {
+
+const cameraIsAdded =
+addedPaletteToolIds.includes(
+"camera"
+);
+
+cameraToolButton.hidden =
+!cameraIsAdded;
+
+cameraToolAddButton.disabled =
+cameraIsAdded;
+
+cameraToolAddButton.textContent =
+cameraIsAdded
+? t("added")
+: t("add");
+}
+
+
 function openToolLibrary() {
+
+updateToolPalette();
 
 toolLibraryPanel.classList.add(
 "is-open"
@@ -9587,6 +9716,29 @@ addToolButton.addEventListener(
 () => {
 
 openToolLibrary();
+}
+);
+
+
+cameraToolAddButton.addEventListener(
+"click",
+() => {
+
+if (
+addedPaletteToolIds.includes(
+"camera"
+)
+) {
+return;
+}
+
+addedPaletteToolIds.push(
+"camera"
+);
+
+saveToolPalette();
+updateToolPalette();
+closeToolLibrary();
 }
 );
 
