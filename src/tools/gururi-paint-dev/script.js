@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.27";
+"1.3.28";
 
 
 const appVersion =
@@ -4774,184 +4774,184 @@ v: value
 
 
 /*
-  ひし形を押した
+ひし形を押した
 */
 
 colorBoxLayer.addEventListener(
-  "pointerdown",
-  (event) => {
+"pointerdown",
+(event) => {
 
-    isColorBoxDragging =
-      true;
-
-
-    colorBoxLayer
-      .setPointerCapture(
-        event.pointerId
-      );
+isColorBoxDragging =
+true;
 
 
-    updateColorBoxFromPointer(
-      event
-    );
+colorBoxLayer
+.setPointerCapture(
+event.pointerId
+);
 
 
-    event.preventDefault();
-    event.stopPropagation();
-  }
+updateColorBoxFromPointer(
+event
+);
+
+
+event.preventDefault();
+event.stopPropagation();
+}
 );
 
 
 /*
-  ひし形上をドラッグ
+ひし形上をドラッグ
 */
 
 colorBoxLayer.addEventListener(
-  "pointermove",
-  (event) => {
+"pointermove",
+(event) => {
 
-    if (!isColorBoxDragging) {
-      return;
-    }
-
-
-    updateColorBoxFromPointer(
-      event
-    );
+if (!isColorBoxDragging) {
+return;
+}
 
 
-    event.preventDefault();
-    event.stopPropagation();
-  }
+updateColorBoxFromPointer(
+event
+);
+
+
+event.preventDefault();
+event.stopPropagation();
+}
 );
 
 
 /*
-  操作終了
+操作終了
 */
 
 function finishColorBoxPointer(
-  event
+event
 ) {
 
-  if (!isColorBoxDragging) {
-    return;
-  }
+if (!isColorBoxDragging) {
+return;
+}
 
 
-  isColorBoxDragging =
-    false;
+isColorBoxDragging =
+false;
 
 
-  if (
-    colorBoxLayer
-      .hasPointerCapture(
-        event.pointerId
-      )
-  ) {
+if (
+colorBoxLayer
+.hasPointerCapture(
+event.pointerId
+)
+) {
 
-    colorBoxLayer
-      .releasePointerCapture(
-        event.pointerId
-      );
-  }
+colorBoxLayer
+.releasePointerCapture(
+event.pointerId
+);
+}
 
 
-  event.stopPropagation();
+event.stopPropagation();
 }
 
 
 colorBoxLayer.addEventListener(
-  "pointerup",
-  finishColorBoxPointer
+"pointerup",
+finishColorBoxPointer
 );
 
 
 colorBoxLayer.addEventListener(
-  "pointercancel",
-  finishColorBoxPointer
+"pointercancel",
+finishColorBoxPointer
 );
 
 
 /* ================================
-   スマートフォン用
-   カラーホイール
+スマートフォン用
+カラーホイール
 ================================ */
 
 function openMobileColorPicker() {
 
-  if (!isMobileDevice) {
-    return;
-  }
+if (!isMobileDevice) {
+return;
+}
 
 
-  penColorControl.classList.add(
-    "is-mobile-color-open"
-  );
+penColorControl.classList.add(
+"is-mobile-color-open"
+);
 
 
-  mobileColorBackdrop.classList.add(
-    "is-open"
-  );
+mobileColorBackdrop.classList.add(
+"is-open"
+);
 
 
-  mobileColorButton.setAttribute(
-    "aria-expanded",
-    "true"
-  );
+mobileColorButton.setAttribute(
+"aria-expanded",
+"true"
+);
 }
 
 
 function closeMobileColorPicker() {
 
-  penColorControl.classList.remove(
-    "is-mobile-color-open"
-  );
+penColorControl.classList.remove(
+"is-mobile-color-open"
+);
 
 
-  mobileColorBackdrop.classList.remove(
-    "is-open"
-  );
+mobileColorBackdrop.classList.remove(
+"is-open"
+);
 
 
-  mobileColorButton.setAttribute(
-    "aria-expanded",
-    "false"
-  );
+mobileColorButton.setAttribute(
+"aria-expanded",
+"false"
+);
 }
 
 
 mobileColorButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    if (!isMobileDevice) {
-      return;
-    }
+if (!isMobileDevice) {
+return;
+}
 
 
-    if (
-      penColorControl.classList.contains(
-        "is-mobile-color-open"
-      )
-    ) {
+if (
+penColorControl.classList.contains(
+"is-mobile-color-open"
+)
+) {
 
-      closeMobileColorPicker();
+closeMobileColorPicker();
 
-    } else {
+} else {
 
-      openMobileColorPicker();
-    }
-  }
+openMobileColorPicker();
+}
+}
 );
 
 
 mobileColorBackdrop.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    closeMobileColorPicker();
-  }
+closeMobileColorPicker();
+}
 );
 
 
