@@ -1416,72 +1416,72 @@ FOV：75度
 視点位置：高さ1.5m
 */
 const camera = new THREE.PerspectiveCamera(
-  85,
-  viewport.clientWidth / viewport.clientHeight,
-  0.1,
-  1000
+85,
+viewport.clientWidth / viewport.clientHeight,
+0.1,
+1000
 );
 
 camera.position.set(0, 1.5, 0);
 
 
 /* ================================
-   Renderer
+Renderer
 ================================ */
 
-const renderer =
-  new THREE.WebGLRenderer({
-    antialias: true
-  });
-
 /*
-  スマートフォンでは
-  Three.jsの描画解像度を抑えて
-  動作を軽くする
+スマートフォンでは
+Three.jsの描画解像度を抑えて
+動作を軽くする
 */
 
+const renderer =
+new THREE.WebGLRenderer({
+antialias: true
+});
+
 const isMobileDevice =
-  window.matchMedia(
-    "(max-width: 700px)"
-  ).matches;
+window.matchMedia(
+"(max-width: 700px)"
+).matches;
 
 
 renderer.setPixelRatio(
-  isMobileDevice
-    ? 1
-    : Math.min(
-        window.devicePixelRatio,
-        2
-      )
+isMobileDevice
+? 1
+: Math.min(
+window.devicePixelRatio,
+2
+)
 );
 
 renderer.setSize(
-  viewport.clientWidth,
-  viewport.clientHeight
+viewport.clientWidth,
+viewport.clientHeight
 );
 
 viewport.appendChild(renderer.domElement);
 
 
 /* ================================
-   360°キャンバス
+360°キャンバス
 ================================ */
 
 /*
-  最終的には、このCanvasへ絵を描きます。
+最終的には、このCanvasへ絵を描きます。
 
-  Version 1の標準サイズ：
-  4096 × 2048
+Version 1の標準サイズ：
+4096 × 2048
 */
 
 const paintCanvas =
-  document.createElement("canvas");
+document.createElement("canvas");
 
 /*
-  最終出力サイズ
+最終出力サイズ
 
-  書き出し時には
-  このサイズを使用する
+書き出し時には
+このサイズを使用する
 */
 
 let outputWidth = 4096;
@@ -1489,73 +1489,73 @@ let outputHeight = 2048;
 
 
 /*
-  編集時の解像度
+編集時の解像度
 
-  最終出力の1/2
+最終出力の1/2
 */
 
 const editScale = 0.5;
 
 paintCanvas.width =
-  Math.round(
-    outputWidth *
-    editScale
-  );
+Math.round(
+outputWidth *
+editScale
+);
 
 paintCanvas.height =
-  Math.round(
-    outputHeight *
-    editScale
-  );
+Math.round(
+outputHeight *
+editScale
+);
 
 const paintContext =
-  paintCanvas.getContext("2d");
+paintCanvas.getContext("2d");
 
 
 /* ================================
-   描画専用Canvas
+描画専用Canvas
 ================================ */
 
 /*
-  編集用Canvasの解像度。
+編集用Canvasの解像度。
 
-  0.5 = 出力サイズの1/2
-  4096 × 2048
-       ↓
-  2048 × 1024
+0.5 = 出力サイズの1/2
+4096 × 2048
+↓
+2048 × 1024
 */
 
 /*
-  描画Canvasは
-  編集用Canvasと同じ解像度にする
+描画Canvasは
+編集用Canvasと同じ解像度にする
 */
 
 const drawScale = 1;
 
 
 let drawCanvas =
-  document.createElement("canvas");
+document.createElement("canvas");
 
 drawCanvas.width =
-  paintCanvas.width;
+paintCanvas.width;
 
 drawCanvas.height =
-  paintCanvas.height;
+paintCanvas.height;
 
 let drawContext =
-  drawCanvas.getContext("2d");
+drawCanvas.getContext("2d");
 
 
 /*
-  画像拡大時の補間を無効化
+画像拡大時の補間を無効化
 */
 
 drawContext.imageSmoothingEnabled =
-  false;
+false;
 
 
 /* ================================
-   レイヤー
+レイヤー
 ================================ */
 
 const layers = [
@@ -1564,10 +1564,10 @@ id: 1,
 name:
 getDefaultLayerName(1),
 canvas: drawCanvas,
-    context: drawContext,
-    visible: true,
-    opacity: 1
-  }
+context: drawContext,
+visible: true,
+opacity: 1
+}
 ];
 
 let activeLayerId = 1;
@@ -1577,44 +1577,44 @@ let nextLayerNumber = 2;
 
 function createLayerCanvas() {
 
-  const canvas =
-    document.createElement("canvas");
+const canvas =
+document.createElement("canvas");
 
-  canvas.width =
-    paintCanvas.width;
+canvas.width =
+paintCanvas.width;
 
-  canvas.height =
-    paintCanvas.height;
+canvas.height =
+paintCanvas.height;
 
-  const context =
-    canvas.getContext("2d");
+const context =
+canvas.getContext("2d");
 
-  context.imageSmoothingEnabled =
-    false;
+context.imageSmoothingEnabled =
+false;
 
-  return {
-    canvas,
-    context
-  };
+return {
+canvas,
+context
+};
 }
 
 
 function getLayerById(layerId) {
 
-  return (
-    layers.find(
-      (layer) =>
-        layer.id === layerId
-    ) || null
-  );
+return (
+layers.find(
+(layer) =>
+layer.id === layerId
+) || null
+);
 }
 
 
 function getActiveLayer() {
 
-  return getLayerById(
-    activeLayerId
-  );
+return getLayerById(
+activeLayerId
+);
 }
 
 
@@ -3289,34 +3289,34 @@ eraserCursor
 
 
 /* ================================
-   地面グリッド
+地面グリッド
 ================================ */
 
 /*
-  巨大な1枚の平面を作り、
-  シェーダーで1m間隔のグリッドを描く。
+巨大な1枚の平面を作り、
+シェーダーで1m間隔のグリッドを描く。
 
-  カメラのfarが1000mなので、
-  2000m四方あれば
-  実質的に無限の地面として見える。
+カメラのfarが1000mなので、
+2000m四方あれば
+実質的に無限の地面として見える。
 */
 
 /*
-  地面グリッドと上空グリッドで共通して使う
-  グリッド面の大きさ。
+地面グリッドと上空グリッドで共通して使う
+グリッド面の大きさ。
 
-  かなり大きくして、
-  無限遠方まで続いて見えるようにする。
+かなり大きくして、
+無限遠方まで続いて見えるようにする。
 */
 
 const guideGridPlaneSize = 20000;
 
 
 const groundGridGeometry =
-  new THREE.PlaneGeometry(
-    guideGridPlaneSize,
-    guideGridPlaneSize
-  );
+new THREE.PlaneGeometry(
+guideGridPlaneSize,
+guideGridPlaneSize
+);
 
 
 const groundGridMaterial =
@@ -3428,31 +3428,31 @@ varying vec3 vWorldPosition;
 
 
 const groundGrid =
-  new THREE.Mesh(
-    groundGridGeometry,
-    groundGridMaterial
-  );
+new THREE.Mesh(
+groundGridGeometry,
+groundGridMaterial
+);
 
 
 /*
-  PlaneGeometryは最初は縦向きなので
-  水平な地面にする
+PlaneGeometryは最初は縦向きなので
+水平な地面にする
 */
 
 groundGrid.rotation.x =
-  -Math.PI / 2;
+-Math.PI / 2;
 
 
 /*
-  高さ0m
+高さ0m
 */
 
 groundGrid.position.y = 0;
 
 
 /*
-  球体より後、
-  アイレベルより前に描画
+球体より後、
+アイレベルより前に描画
 */
 
 groundGrid.renderOrder = 9;
@@ -3461,7 +3461,7 @@ groundGrid.frustumCulled = false;
 
 
 scene.add(
-  groundGrid
+groundGrid
 );
 
 
@@ -3485,52 +3485,52 @@ horizontalGridMaterial
 
 
 /* ================================
-   目線の高さに合わせて
-   グリッドサイズを変更
+目線の高さに合わせて
+グリッドサイズを変更
 ================================ */
 
 function updateGroundGridSize(
-  eyeHeight
+eyeHeight
 ) {
 
-  /*
-    目線1.5mのとき
-    1マス = 1m
+/*
+目線1.5mのとき
+1マス = 1m
 
-    高さに比例して
-    マス目も大きくする
-  */
+高さに比例して
+マス目も大きくする
+*/
 
 const gridSize =
-  Math.sqrt(
-    eyeHeight / 1.5
-  );
+Math.sqrt(
+eyeHeight / 1.5
+);
 
-  groundGridMaterial
-    .uniforms
-    .gridSize
-    .value =
-      gridSize;
+groundGridMaterial
+.uniforms
+.gridSize
+.value =
+gridSize;
 }
 
 
 /*
-  初期値
-  目線1.5m → 1mグリッド
+初期値
+目線1.5m → 1mグリッド
 */
 
 updateGroundGridSize(
-  camera.position.y
+camera.position.y
 );
 
 
 /* ================================
-   縦方向の補助線
+縦方向の補助線
 ================================ */
 
 /*
-  30度ごとの12方向に、
-  垂直線を遠方まで繰り返す。
+30度ごとの12方向に、
+垂直線を遠方まで繰り返す。
 */
 
 const verticalGuidePoints = [];
@@ -3539,180 +3539,180 @@ const verticalGuideCount = 12;
 
 
 /*
-  垂直線同士の奥行き間隔
+垂直線同士の奥行き間隔
 */
 
 const verticalGuideSpacing = 50;
 
 
 /*
-  カメラのfarが1000mなので、
-  その少し手前まで配置する
+カメラのfarが1000mなので、
+その少し手前まで配置する
 */
 
 const verticalGuideMaxDistance =
-  950;
+950;
 
 
 /*
-  垂直線の高さ
+垂直線の高さ
 */
 
 const verticalGuideHeight = 80;
 
 
 for (
-  let distance =
-    verticalGuideSpacing;
+let distance =
+verticalGuideSpacing;
 
-  distance <=
-    verticalGuideMaxDistance;
+distance <=
+verticalGuideMaxDistance;
 
-  distance +=
-    verticalGuideSpacing
+distance +=
+verticalGuideSpacing
 ) {
 
-  for (
-    let i = 0;
-    i < verticalGuideCount;
-    i++
-  ) {
+for (
+let i = 0;
+i < verticalGuideCount;
+i++
+) {
 
-    const angle =
-      (
-        i /
-        verticalGuideCount
-      ) *
-      Math.PI *
-      2;
-
-
-    const x =
-      Math.cos(angle) *
-      distance;
-
-    const z =
-      Math.sin(angle) *
-      distance;
+const angle =
+(
+i /
+verticalGuideCount
+) *
+Math.PI *
+2;
 
 
-    /*
-      地面から上方向へ
-      垂直線を伸ばす
-    */
+const x =
+Math.cos(angle) *
+distance;
 
-    verticalGuidePoints.push(
-      new THREE.Vector3(
-        x,
-        0,
-        z
-      )
-    );
+const z =
+Math.sin(angle) *
+distance;
 
-    verticalGuidePoints.push(
-      new THREE.Vector3(
-        x,
-        verticalGuideHeight,
-        z
-      )
-    );
-  }
+
+/*
+地面から上方向へ
+垂直線を伸ばす
+*/
+
+verticalGuidePoints.push(
+new THREE.Vector3(
+x,
+0,
+z
+)
+);
+
+verticalGuidePoints.push(
+new THREE.Vector3(
+x,
+verticalGuideHeight,
+z
+)
+);
+}
 }
 
 
 const verticalGuideGeometry =
-  new THREE.BufferGeometry()
-    .setFromPoints(
-      verticalGuidePoints
-    );
+new THREE.BufferGeometry()
+.setFromPoints(
+verticalGuidePoints
+);
 
 
 const verticalGuideMaterial =
-  new THREE.LineBasicMaterial({
+new THREE.LineBasicMaterial({
 
-    color: 0x6699ff,
+color: 0x6699ff,
 
-    transparent: true,
+transparent: true,
 
-    opacity: 0.18,
+opacity: 0.18,
 
-    depthTest: false,
+depthTest: false,
 
-    depthWrite: false
-  });
+depthWrite: false
+});
 
 
 const verticalGuides =
-  new THREE.LineSegments(
-    verticalGuideGeometry,
-    verticalGuideMaterial
-  );
+new THREE.LineSegments(
+verticalGuideGeometry,
+verticalGuideMaterial
+);
 
 
 verticalGuides.renderOrder = 10;
 
 verticalGuides.frustumCulled =
-  false;
+false;
 
 
 scene.add(
-  verticalGuides
+verticalGuides
 );
 
 
 /* ================================
-   高さ20mの水平グリッド
+高さ20mの水平グリッド
 ================================ */
 
 /*
-  地面グリッドと
-  まったく同じGeometry・Materialを使い、
-  高さ20mに1枚だけ配置する
+地面グリッドと
+まったく同じGeometry・Materialを使い、
+高さ20mに1枚だけ配置する
 */
 
 const horizontalGuides =
-  new THREE.Mesh(
-    groundGridGeometry,
-    horizontalGridMaterial
-  );
+new THREE.Mesh(
+groundGridGeometry,
+horizontalGridMaterial
+);
 
 
 horizontalGuides.rotation.x =
-  -Math.PI / 2;
+-Math.PI / 2;
 
 
 /*
-  水平グリッドは
-  常に目線より30m上へ配置する
+水平グリッドは
+常に目線より30m上へ配置する
 */
 
 function updateHorizontalGuideHeight(
-  eyeHeight
+eyeHeight
 ) {
 
-  horizontalGuides.position.y =
-    eyeHeight + 30;
+horizontalGuides.position.y =
+eyeHeight + 30;
 }
 
 
 updateHorizontalGuideHeight(
-  camera.position.y
+camera.position.y
 );
 
 
 /*
-  補助線として前面に表示
+補助線として前面に表示
 */
 
 horizontalGuides.renderOrder =
-  8;
+8;
 
 horizontalGuides.frustumCulled =
-  false;
+false;
 
 
 scene.add(
-  horizontalGuides
+horizontalGuides
 );
 
 /* ================================
@@ -3732,14 +3732,14 @@ let yaw = 0;
 let pitch = 0;
 
 /* ================================
-   ペン描画
+ペン描画
 ================================ */
 
 const raycaster =
-  new THREE.Raycaster();
+new THREE.Raycaster();
 
 const pointer =
-  new THREE.Vector2();
+new THREE.Vector2();
 
 let isDrawing = false;
 
@@ -3751,245 +3751,245 @@ let previousMidY = null;
 
 
 /* ================================
-   Undo / Redo
+Undo / Redo
 ================================ */
 
 /*
-  完了したストロークの履歴
+完了したストロークの履歴
 */
 
 const strokeHistory = [];
 
 
 /*
-  Undoしたストロークの履歴
+Undoしたストロークの履歴
 */
 
 const redoStrokeHistory = [];
 
 
 /*
-  現在描画中のストローク
+現在描画中のストローク
 */
 
 let currentStroke = null;
 
 
 /* ================================
-   高速Undo / Redo
+高速Undo / Redo
 ================================ */
 
 /*
-  Canvasを小さなタイルに分け、
-  ストロークが触ったタイルだけ
-  描画前の状態を保存する。
+Canvasを小さなタイルに分け、
+ストロークが触ったタイルだけ
+描画前の状態を保存する。
 
-  128 × 128pxにすることで、
-  短い線でも保存メモリが
-  大きくなりすぎないようにする。
+128 × 128pxにすることで、
+短い線でも保存メモリが
+大きくなりすぎないようにする。
 */
 
 const HISTORY_TILE_SIZE = 128;
 
 
 /*
-  X座標を360°Canvas内へ戻す
+X座標を360°Canvas内へ戻す
 */
 
 function wrapHistoryX(
-  x,
-  width
+x,
+width
 ) {
 
-  return (
-    (x % width) +
-    width
-  ) % width;
+return (
+(x % width) +
+width
+) % width;
 }
 
 
 /*
-  指定された範囲に含まれる
-  タイルを描画前に保存する
+指定された範囲に含まれる
+タイルを描画前に保存する
 */
 
 function captureStrokeTiles(
-  stroke,
-  minX,
-  minY,
-  maxX,
-  maxY
+stroke,
+minX,
+minY,
+maxX,
+maxY
 ) {
 
-  if (
-    !stroke ||
-    !(stroke.tileDiffs instanceof Map)
-  ) {
-    return;
-  }
+if (
+!stroke ||
+!(stroke.tileDiffs instanceof Map)
+) {
+return;
+}
 
 
-  const layer =
-    getLayerById(
-      stroke.layerId
-    );
+const layer =
+getLayerById(
+stroke.layerId
+);
 
 
-  if (!layer) {
-    return;
-  }
+if (!layer) {
+return;
+}
 
 
-  const canvas =
-    layer.canvas;
+const canvas =
+layer.canvas;
 
-  const context =
-    layer.context;
-
-
-  const yStart =
-    Math.max(
-      0,
-      Math.floor(minY)
-    );
-
-  const yEnd =
-    Math.min(
-      canvas.height - 1,
-      Math.ceil(maxY)
-    );
+const context =
+layer.context;
 
 
-  if (yEnd < yStart) {
-    return;
-  }
+const yStart =
+Math.max(
+0,
+Math.floor(minY)
+);
+
+const yEnd =
+Math.min(
+canvas.height - 1,
+Math.ceil(maxY)
+);
 
 
-  /*
-    横方向の一部分を
-    タイル単位で保存する
-  */
-
-  function captureXRange(
-    rangeStart,
-    rangeEnd
-  ) {
-
-    const xStart =
-      Math.max(
-        0,
-        Math.floor(rangeStart)
-      );
-
-    const xEnd =
-      Math.min(
-        canvas.width - 1,
-        Math.ceil(rangeEnd)
-      );
+if (yEnd < yStart) {
+return;
+}
 
 
-    if (xEnd < xStart) {
-      return;
-    }
+/*
+横方向の一部分を
+タイル単位で保存する
+*/
+
+function captureXRange(
+rangeStart,
+rangeEnd
+) {
+
+const xStart =
+Math.max(
+0,
+Math.floor(rangeStart)
+);
+
+const xEnd =
+Math.min(
+canvas.width - 1,
+Math.ceil(rangeEnd)
+);
 
 
-    const firstTileX =
-      Math.floor(
-        xStart /
-        HISTORY_TILE_SIZE
-      );
-
-    const lastTileX =
-      Math.floor(
-        xEnd /
-        HISTORY_TILE_SIZE
-      );
-
-    const firstTileY =
-      Math.floor(
-        yStart /
-        HISTORY_TILE_SIZE
-      );
-
-    const lastTileY =
-      Math.floor(
-        yEnd /
-        HISTORY_TILE_SIZE
-      );
+if (xEnd < xStart) {
+return;
+}
 
 
-    for (
-      let tileY = firstTileY;
-      tileY <= lastTileY;
-      tileY++
-    ) {
+const firstTileX =
+Math.floor(
+xStart /
+HISTORY_TILE_SIZE
+);
 
-      for (
-        let tileX = firstTileX;
-        tileX <= lastTileX;
-        tileX++
-      ) {
+const lastTileX =
+Math.floor(
+xEnd /
+HISTORY_TILE_SIZE
+);
 
-        const key =
-          `${tileX}:${tileY}`;
+const firstTileY =
+Math.floor(
+yStart /
+HISTORY_TILE_SIZE
+);
 
-
-        /*
-          同じストローク内で
-          同じタイルは一度だけ保存
-        */
-
-        if (
-          stroke.tileDiffs.has(
-            key
-          )
-        ) {
-          continue;
-        }
+const lastTileY =
+Math.floor(
+yEnd /
+HISTORY_TILE_SIZE
+);
 
 
-        const x =
-          tileX *
-          HISTORY_TILE_SIZE;
+for (
+let tileY = firstTileY;
+tileY <= lastTileY;
+tileY++
+) {
 
-        const y =
-          tileY *
-          HISTORY_TILE_SIZE;
+for (
+let tileX = firstTileX;
+tileX <= lastTileX;
+tileX++
+) {
 
-
-        const width =
-          Math.min(
-            HISTORY_TILE_SIZE,
-            canvas.width - x
-          );
-
-        const height =
-          Math.min(
-            HISTORY_TILE_SIZE,
-            canvas.height - y
-          );
+const key =
+`${tileX}:${tileY}`;
 
 
-        stroke.tileDiffs.set(
-          key,
-          {
-            x,
-            y,
-            width,
-            height,
+/*
+同じストローク内で
+同じタイルは一度だけ保存
+*/
 
-            imageData:
-              context.getImageData(
-                x,
-                y,
-                width,
-                height
-              )
-          }
-        );
-      }
-    }
-  }
+if (
+stroke.tileDiffs.has(
+key
+)
+) {
+continue;
+}
+
+
+const x =
+tileX *
+HISTORY_TILE_SIZE;
+
+const y =
+tileY *
+HISTORY_TILE_SIZE;
+
+
+const width =
+Math.min(
+HISTORY_TILE_SIZE,
+canvas.width - x
+);
+
+const height =
+Math.min(
+HISTORY_TILE_SIZE,
+canvas.height - y
+);
+
+
+stroke.tileDiffs.set(
+key,
+{
+x,
+y,
+width,
+height,
+
+imageData:
+context.getImageData(
+x,
+y,
+width,
+height
+)
+}
+);
+}
+}
+}
 
 
   const spanX =
@@ -4069,147 +4069,147 @@ function captureStrokeTiles(
 */
 
 function swapStrokeTiles(
-  stroke
+stroke
 ) {
 
-  if (
-    !stroke ||
-    !(stroke.tileDiffs instanceof Map) ||
-    stroke.tileDiffs.size === 0
-  ) {
-    return false;
-  }
+if (
+!stroke ||
+!(stroke.tileDiffs instanceof Map) ||
+stroke.tileDiffs.size === 0
+) {
+return false;
+}
 
 
-  const layer =
-    getLayerById(
-      stroke.layerId
-    );
+const layer =
+getLayerById(
+stroke.layerId
+);
 
 
-  if (!layer) {
-    return false;
-  }
+if (!layer) {
+return false;
+}
 
 
-  const context =
-    layer.context;
+const context =
+layer.context;
 
 
-  for (
-    const tile of
-      stroke.tileDiffs.values()
-  ) {
+for (
+const tile of
+stroke.tileDiffs.values()
+) {
 
-    const currentImage =
-      context.getImageData(
-        tile.x,
-        tile.y,
-        tile.width,
-        tile.height
-      );
-
-
-    context.putImageData(
-      tile.imageData,
-      tile.x,
-      tile.y
-    );
+const currentImage =
+context.getImageData(
+tile.x,
+tile.y,
+tile.width,
+tile.height
+);
 
 
-    /*
-      保存内容を現在状態へ交換する。
-      これにより同じ関数で
-      UndoとRedoの両方に対応できる。
-    */
-
-    tile.imageData =
-      currentImage;
-  }
+context.putImageData(
+tile.imageData,
+tile.x,
+tile.y
+);
 
 
-  return true;
+/*
+保存内容を現在状態へ交換する。
+これにより同じ関数で
+UndoとRedoの両方に対応できる。
+*/
+
+tile.imageData =
+currentImage;
+}
+
+
+return true;
 }
 
 
 /*
-  ペン設定
+ペン設定
 */
 
 let penColor = "#000000";
 
 
 function setPenColor(
-  color
+color
 ) {
 
-  const normalizedColor =
-    String(color)
-      .toLowerCase();
+const normalizedColor =
+String(color)
+.toLowerCase();
 
 
-  penColor =
-    normalizedColor;
+penColor =
+normalizedColor;
 
 
-  penColorInput.value =
-    normalizedColor;
+penColorInput.value =
+normalizedColor;
 
 
-  /*
-    スマートフォン用
-    現在色表示
-  */
+/*
+スマートフォン用
+現在色表示
+*/
 
-  mobileColorButton
-    .style
-    .backgroundColor =
-      normalizedColor;
-
-
-  /*
-    PC用の
-    現在色表示も更新する
-  */
-
-  currentPenColorSwatch
-    .style
-    .backgroundColor =
-      normalizedColor;
+mobileColorButton
+.style
+.backgroundColor =
+normalizedColor;
 
 
-  /*
-    中央の彩度・明度Boxへ
-    色を同期する
-  */
+/*
+PC用の
+現在色表示も更新する
+*/
 
-  if (
-    colorBoxPicker.color.hexString
-      .toLowerCase() !==
-    normalizedColor
-  ) {
-
-    colorBoxPicker.color.hexString =
-      normalizedColor;
-  }
+currentPenColorSwatch
+.style
+.backgroundColor =
+normalizedColor;
 
 
-  /*
-    色相環のハンドルも
-    現在色へ同期する
-  */
+/*
+中央の彩度・明度Boxへ
+色を同期する
+*/
 
-  const hsv =
-    colorBoxPicker.color.hsv;
+if (
+colorBoxPicker.color.hexString
+.toLowerCase() !==
+normalizedColor
+) {
+
+colorBoxPicker.color.hexString =
+normalizedColor;
+}
 
 
-  currentHue =
-    hsv.h;
+/*
+色相環のハンドルも
+現在色へ同期する
+*/
+
+const hsv =
+colorBoxPicker.color.hsv;
 
 
-  updateHueRingHandle(
-    currentHue
-  );
+currentHue =
+hsv.h;
+
+
+updateHueRingHandle(
+currentHue
+);
 }
 
 /*
@@ -4262,197 +4262,197 @@ const colorBoxPicker =
     }
   );
 
-  /* ================================
-   色相環
+/* ================================
+色相環
 ================================ */
 
 
 /*
-  色相から
-  ハンドル位置を更新する
+色相から
+ハンドル位置を更新する
 */
 
 function updateHueRingHandle(
-  hue
+hue
 ) {
 
-  const size =
-    colorWheelLayer
-      .clientWidth;
+const size =
+colorWheelLayer
+.clientWidth;
 
 
-  if (size <= 0) {
-    return;
-  }
+if (size <= 0) {
+return;
+}
 
 
-  const center =
-    size / 2;
+const center =
+size / 2;
 
 
-  /*
-    リング幅24pxなので
-    その中央をハンドルが通る
-  */
+/*
+リング幅24pxなので
+その中央をハンドルが通る
+*/
 
-  const radius =
-    center - 12;
-
-
-  /*
-    0°を円の上側にする
-  */
-
-  const angle =
-    (
-      hue - 90
-    ) *
-    Math.PI /
-    180;
+const radius =
+center - 12;
 
 
-  const x =
-    center +
-    Math.cos(angle) *
-    radius;
+/*
+0°を円の上側にする
+*/
+
+const angle =
+(
+hue - 90
+) *
+Math.PI /
+180;
 
 
-  const y =
-    center +
-    Math.sin(angle) *
-    radius;
+const x =
+center +
+Math.cos(angle) *
+radius;
 
 
-  colorHueHandle.style.left =
-    `${x}px`;
+const y =
+center +
+Math.sin(angle) *
+radius;
 
-  colorHueHandle.style.top =
-    `${y}px`;
+
+colorHueHandle.style.left =
+`${x}px`;
+
+colorHueHandle.style.top =
+`${y}px`;
 }
 
 
 /*
-  ポインター位置から
-  色相を求める
+ポインター位置から
+色相を求める
 */
 
 function updateHueFromPointer(
-  event,
-  checkRingArea = false
+event,
+checkRingArea = false
 ) {
 
-  const rect =
-    colorWheelLayer
-      .getBoundingClientRect();
+const rect =
+colorWheelLayer
+.getBoundingClientRect();
 
 
-  const centerX =
-    rect.left +
-    rect.width / 2;
+const centerX =
+rect.left +
+rect.width / 2;
 
-  const centerY =
-    rect.top +
-    rect.height / 2;
-
-
-  const dx =
-    event.clientX -
-    centerX;
-
-  const dy =
-    event.clientY -
-    centerY;
+const centerY =
+rect.top +
+rect.height / 2;
 
 
-  const distance =
-    Math.hypot(
-      dx,
-      dy
-    );
+const dx =
+event.clientX -
+centerX;
+
+const dy =
+event.clientY -
+centerY;
 
 
-  const outerRadius =
-    rect.width / 2;
+const distance =
+Math.hypot(
+dx,
+dy
+);
 
 
-  const innerRadius =
-    outerRadius - 24;
+const outerRadius =
+rect.width / 2;
 
 
-  /*
-    最初に押した位置が
-    リング上でなければ
-    色相操作を開始しない
-  */
-
-  if (
-    checkRingArea &&
-    (
-      distance <
-        innerRadius ||
-      distance >
-        outerRadius
-    )
-  ) {
-
-    return false;
-  }
+const innerRadius =
+outerRadius - 24;
 
 
-  /*
-    上 = 0°
-    右 = 90°
-    下 = 180°
-    左 = 270°
-  */
+/*
+最初に押した位置が
+リング上でなければ
+色相操作を開始しない
+*/
 
-  let hue =
-    (
-      Math.atan2(
-        dy,
-        dx
-      ) *
-      180 /
-      Math.PI +
-      90
-    );
+if (
+checkRingArea &&
+(
+distance <
+innerRadius ||
+distance >
+outerRadius
+)
+) {
 
-
-  hue =
-    (
-      hue +
-      360
-    ) % 360;
+return false;
+}
 
 
-  currentHue =
-    hue;
+/*
+上 = 0°
+右 = 90°
+下 = 180°
+左 = 270°
+*/
+
+let hue =
+(
+Math.atan2(
+dy,
+dx
+) *
+180 /
+Math.PI +
+90
+);
 
 
-  const hsv =
-    colorBoxPicker
-      .color
-      .hsv;
+hue =
+(
+hue +
+360
+) % 360;
 
 
-  /*
-    彩度・明度はそのまま、
-    色相だけ変更する
-  */
-
-  colorBoxPicker.color.hsv = {
-    h: hue,
-    s: hsv.s,
-    v: hsv.v
-  };
+currentHue =
+hue;
 
 
-  updateHueRingHandle(
-    hue
-  );
+const hsv =
+colorBoxPicker
+.color
+.hsv;
 
 
-  return true;
+/*
+彩度・明度はそのまま、
+色相だけ変更する
+*/
+
+colorBoxPicker.color.hsv = {
+h: hue,
+s: hsv.s,
+v: hsv.v
+};
+
+
+updateHueRingHandle(
+hue
+);
+
+
+return true;
 }
 
 
@@ -4460,54 +4460,54 @@ let isHueDragging = false;
 
 
 colorWheelLayer.addEventListener(
-  "pointerdown",
-  (event) => {
+"pointerdown",
+(event) => {
 
-    const started =
-      updateHueFromPointer(
-        event,
-        true
-      );
-
-
-    if (!started) {
-      return;
-    }
+const started =
+updateHueFromPointer(
+event,
+true
+);
 
 
-    isHueDragging =
-      true;
+if (!started) {
+return;
+}
 
 
-    colorWheelLayer
-      .setPointerCapture(
-        event.pointerId
-      );
+isHueDragging =
+true;
 
 
-    event.preventDefault();
-    event.stopPropagation();
-  }
+colorWheelLayer
+.setPointerCapture(
+event.pointerId
+);
+
+
+event.preventDefault();
+event.stopPropagation();
+}
 );
 
 
 colorWheelLayer.addEventListener(
-  "pointermove",
-  (event) => {
+"pointermove",
+(event) => {
 
-    if (!isHueDragging) {
-      return;
-    }
-
-
-    updateHueFromPointer(
-      event
-    );
+if (!isHueDragging) {
+return;
+}
 
 
-    event.preventDefault();
-    event.stopPropagation();
-  }
+updateHueFromPointer(
+event
+);
+
+
+event.preventDefault();
+event.stopPropagation();
+}
 );
 
 
@@ -4565,211 +4565,211 @@ colorWheelLayer.addEventListener(
 
 
 /*
-  ================================
-  中央ボックス
-  彩度・明度変更
-  ================================
+================================
+中央ボックス
+彩度・明度変更
+================================
 */
 
 colorBoxPicker.on(
-  "color:change",
-  (color) => {
+"color:change",
+(color) => {
 
-    const normalizedColor =
-      color.hexString
-        .toLowerCase();
-
-
-    /*
-      選択した色を
-      実際のペン色へ反映する
-    */
-
-    penColor =
-      normalizedColor;
+const normalizedColor =
+color.hexString
+.toLowerCase();
 
 
-    /*
-      hiddenのカラー入力も同期
-    */
+/*
+選択した色を
+実際のペン色へ反映する
+*/
 
-    penColorInput.value =
-      normalizedColor;
-
-
-    /*
-      スマートフォンの
-      現在色表示も同期
-    */
-
-    mobileColorButton
-      .style
-      .backgroundColor =
-        normalizedColor;
+penColor =
+normalizedColor;
 
 
-    /*
-      PC用の
-      現在色表示も同期する
-    */
+/*
+hiddenのカラー入力も同期
+*/
 
-    currentPenColorSwatch
-      .style
-      .backgroundColor =
-        normalizedColor;
+penColorInput.value =
+normalizedColor;
 
 
-    /*
-      色相環のハンドルを
-      現在の色相へ同期する
-    */
+/*
+スマートフォンの
+現在色表示も同期
+*/
 
-    const hsv =
-      color.hsv;
-
-
-    currentHue =
-      hsv.h;
+mobileColorButton
+.style
+.backgroundColor =
+normalizedColor;
 
 
-    updateHueRingHandle(
-      currentHue
-    );
-  }
+/*
+PC用の
+現在色表示も同期する
+*/
+
+currentPenColorSwatch
+.style
+.backgroundColor =
+normalizedColor;
+
+
+/*
+色相環のハンドルを
+現在の色相へ同期する
+*/
+
+const hsv =
+color.hsv;
+
+
+currentHue =
+hsv.h;
+
+
+updateHueRingHandle(
+currentHue
+);
+}
 );
 
 /* ================================
-   45°回転したSVひし形の操作
+45°回転したSVひし形の操作
 ================================ */
 
 let isColorBoxDragging = false;
 
 
 /*
-  画面上のポインター座標を
-  45°回転前のBox座標へ戻して、
-  彩度・明度へ変換する
+画面上のポインター座標を
+45°回転前のBox座標へ戻して、
+彩度・明度へ変換する
 */
 
 function updateColorBoxFromPointer(
-  event
+event
 ) {
 
-  const rect =
-    colorBoxLayer
-      .getBoundingClientRect();
+const rect =
+colorBoxLayer
+.getBoundingClientRect();
 
 
-  /*
-    回転後の要素の中心
-  */
+/*
+回転後の要素の中心
+*/
 
-  const centerX =
-    rect.left +
-    rect.width / 2;
+const centerX =
+rect.left +
+rect.width / 2;
 
-  const centerY =
-    rect.top +
-    rect.height / 2;
-
-
-  /*
-    中心から見た
-    マウス／指の位置
-  */
-
-  const dx =
-    event.clientX -
-    centerX;
-
-  const dy =
-    event.clientY -
-    centerY;
+const centerY =
+rect.top +
+rect.height / 2;
 
 
-  /*
-    CSSで時計回り45°回しているので、
-    座標を反時計回り45°戻す
-  */
+/*
+中心から見た
+マウス／指の位置
+*/
 
-  const angle =
-    Math.PI / 4;
+const dx =
+event.clientX -
+centerX;
 
-  const cos =
-    Math.cos(angle);
-
-  const sin =
-    Math.sin(angle);
-
-
-  const boxSize =
-    colorBoxLayer.offsetWidth;
+const dy =
+event.clientY -
+centerY;
 
 
-  const localX =
-    dx * cos +
-    dy * sin +
-    boxSize / 2;
+/*
+CSSで時計回り45°回しているので、
+座標を反時計回り45°戻す
+*/
 
-  const localY =
-    -dx * sin +
-    dy * cos +
-    boxSize / 2;
+const angle =
+Math.PI / 4;
 
+const cos =
+Math.cos(angle);
 
-  /*
-    Boxの範囲内へ収める
-  */
-
-  const x =
-    Math.max(
-      0,
-      Math.min(
-        boxSize,
-        localX
-      )
-    );
-
-  const y =
-    Math.max(
-      0,
-      Math.min(
-        boxSize,
-        localY
-      )
-    );
+const sin =
+Math.sin(angle);
 
 
-  /*
-    横軸：彩度
-    縦軸：明度
-  */
-
-  const saturation =
-    (
-      x /
-      boxSize
-    ) * 100;
-
-  const value =
-    100 -
-    (
-      y /
-      boxSize
-    ) * 100;
+const boxSize =
+colorBoxLayer.offsetWidth;
 
 
-  const currentHSV =
-    colorBoxPicker
-      .color
-      .hsv;
+const localX =
+dx * cos +
+dy * sin +
+boxSize / 2;
+
+const localY =
+-dx * sin +
+dy * cos +
+boxSize / 2;
 
 
-  colorBoxPicker.color.hsv = {
-    h: currentHSV.h,
-    s: saturation,
-    v: value
-  };
+/*
+Boxの範囲内へ収める
+*/
+
+const x =
+Math.max(
+0,
+Math.min(
+boxSize,
+localX
+)
+);
+
+const y =
+Math.max(
+0,
+Math.min(
+boxSize,
+localY
+)
+);
+
+
+/*
+横軸：彩度
+縦軸：明度
+*/
+
+const saturation =
+(
+x /
+boxSize
+) * 100;
+
+const value =
+100 -
+(
+y /
+boxSize
+) * 100;
+
+
+const currentHSV =
+colorBoxPicker
+.color
+.hsv;
+
+
+colorBoxPicker.color.hsv = {
+h: currentHSV.h,
+s: saturation,
+v: value
+};
 }
 
 
