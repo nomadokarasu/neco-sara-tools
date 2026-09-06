@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.35";
+"1.3.37";
 
 
 const appVersion =
@@ -139,6 +139,11 @@ document.getElementById(
 const cameraCaptureUi =
 document.getElementById(
 "cameraCaptureUi"
+);
+
+const cameraViewfinder =
+document.getElementById(
+"cameraViewfinder"
 );
 
 const cameraPhotoModeButton =
@@ -1711,6 +1716,15 @@ viewport.appendChild(renderer.domElement);
 const PHOTO_CAPTURE_SIZE =
 1080;
 
+const VIDEO_CAPTURE_SIZE =
+720;
+
+const VIDEO_CAPTURE_FPS =
+30;
+
+const VIDEO_CAPTURE_MAX_DURATION =
+10000;
+
 const photoCaptureCanvas =
 document.createElement(
 "canvas"
@@ -1729,6 +1743,39 @@ photoCaptureRenderer.setPixelRatio(
 
 photoCaptureRenderer.outputColorSpace =
 renderer.outputColorSpace;
+
+
+const videoCaptureCanvas =
+document.createElement(
+"canvas"
+);
+
+const videoCaptureRenderer =
+new THREE.WebGLRenderer({
+canvas: videoCaptureCanvas,
+antialias: true
+});
+
+videoCaptureRenderer.setPixelRatio(
+1
+);
+
+videoCaptureRenderer.setSize(
+VIDEO_CAPTURE_SIZE,
+VIDEO_CAPTURE_SIZE,
+false
+);
+
+videoCaptureRenderer.outputColorSpace =
+renderer.outputColorSpace;
+
+const videoCaptureCamera =
+camera.clone();
+
+videoCaptureCamera.aspect =
+1;
+
+videoCaptureCamera.updateProjectionMatrix();
 
 
 /* ================================
@@ -7293,6 +7340,8 @@ renderer.setSize(
 viewport.clientWidth,
 viewport.clientHeight
 );
+
+updateCameraViewfinder();
 }
 
 
@@ -9619,6 +9668,25 @@ visible;
 }
 
 
+function updateCameraViewfinder() {
+
+if (!cameraViewfinder) {
+return;
+}
+
+const squareSize =
+Math.min(
+viewport.clientWidth,
+viewport.clientHeight
+);
+
+cameraViewfinder.style.setProperty(
+"--camera-square-size",
+`${squareSize}px`
+);
+}
+
+
 function enterCameraMode() {
 
 if (guideVisibilityBeforeCamera === null) {
@@ -9637,12 +9705,22 @@ true;
 eraserCursor.visible =
 false;
 
+updateCameraViewfinder();
+
+cameraViewfinder.hidden =
+false;
+
 cameraCaptureUi.hidden =
 false;
 }
 
 
 function leaveCameraMode() {
+
+if (cameraVideoRecording) {
+
+stopCameraVideo();
+}
 
 if (guideVisibilityBeforeCamera === null) {
 return;
@@ -9657,6 +9735,9 @@ null;
 
 groundToggle.disabled =
 false;
+
+cameraViewfinder.hidden =
+true;
 
 cameraCaptureUi.hidden =
 true;
@@ -9862,6 +9943,14 @@ mode !== "photo" &&
 mode !== "video"
 ) {
 return;
+}
+
+if (
+cameraVideoRecording &&
+mode !== "video"
+) {
+
+stopCameraVideo();
 }
 
 cameraCaptureMode =
@@ -10084,6 +10173,432 @@ downloadUrl
 }
 
 
+let cameraMediaRecorder =
+null;
+
+let cameraVideoStream =
+null;
+
+let cameraVideoChunks =
+[];
+
+let cameraVideoRecording =
+false;
+
+let cameraVideoStartedAt =
+0;
+
+let cameraVideoTimerId =
+null;
+
+let cameraVideoStopTimerId =
+null;
+
+
+function getCameraVideoMimeType() {
+
+if (
+typeof MediaRecorder === "undefined"
+) {
+return "";
+}
+
+const mimeTypes = [
+"video/webm;codecs=vp9",
+"video/webm;codecs=vp8",
+"video/webm"
+];
+
+for (const mimeType of mimeTypes) {
+
+if (
+typeof MediaRecorder.isTypeSupported !==
+"function" ||
+MediaRecorder.isTypeSupported(
+mimeType
+)
+) {
+return mimeType;
+}
+}
+
+return "";
+}
+
+
+function getVideoCaptureFilename() {
+
+const now =
+new Date();
+
+const pad =
+(value) =>
+String(value).padStart(
+2,
+"0"
+);
+
+return (
+"gururi-video-" +
+now.getFullYear() +
+pad(now.getMonth() + 1) +
+pad(now.getDate()) +
+"-" +
+pad(now.getHours()) +
+pad(now.getMinutes()) +
+pad(now.getSeconds()) +
+".webm"
+);
+}
+
+
+function updateCameraRecordingTime() {
+
+if (!cameraVideoRecording) {
+return;
+}
+
+const elapsedMilliseconds =
+Math.min(
+performance.now() -
+cameraVideoStartedAt,
+VIDEO_CAPTURE_MAX_DURATION
+);
+
+const elapsedSeconds =
+Math.floor(
+elapsedMilliseconds / 1000
+);
+
+cameraRecordingTime.textContent =
+"00:" +
+String(elapsedSeconds).padStart(
+2,
+"0"
+);
+}
+
+
+function resetCameraVideoUi() {
+
+cameraShutterButton.classList.remove(
+"is-recording"
+);
+
+cameraRecordingTime.hidden =
+true;
+
+cameraRecordingTime.textContent =
+"00:00";
+}
+
+
+function downloadCameraVideo(
+chunks,
+mimeType
+) {
+
+if (chunks.length === 0) {
+
+alert(
+currentLanguage === "en"
+? "Could not create the video."
+: "動画を作成できませんでした。"
+);
+
+return;
+}
+
+const blob =
+new Blob(
+chunks,
+{
+type:
+mimeType || "video/webm"
+}
+);
+
+const downloadUrl =
+URL.createObjectURL(
+blob
+);
+
+const link =
+document.createElement(
+"a"
+);
+
+link.href =
+downloadUrl;
+
+link.download =
+getVideoCaptureFilename();
+
+link.click();
+
+window.setTimeout(
+() => {
+
+URL.revokeObjectURL(
+downloadUrl
+);
+},
+1000
+);
+}
+
+
+function startCameraVideo() {
+
+if (
+currentTool !== "camera" ||
+cameraCaptureMode !== "video" ||
+cameraVideoRecording
+) {
+return;
+}
+
+if (
+typeof MediaRecorder === "undefined" ||
+typeof videoCaptureCanvas.captureStream !==
+"function"
+) {
+
+alert(
+currentLanguage === "en"
+? "Video recording is not supported by this browser."
+: "このブラウザは動画撮影に対応していません。"
+);
+
+return;
+}
+
+const mimeType =
+getCameraVideoMimeType();
+
+if (!mimeType) {
+
+alert(
+currentLanguage === "en"
+? "WebM recording is not supported by this browser."
+: "このブラウザはWebM形式の動画撮影に対応していません。"
+);
+
+return;
+}
+
+try {
+
+videoCaptureRenderer.setSize(
+VIDEO_CAPTURE_SIZE,
+VIDEO_CAPTURE_SIZE,
+false
+);
+
+videoCaptureStream =
+videoCaptureCanvas.captureStream(
+VIDEO_CAPTURE_FPS
+);
+
+cameraVideoChunks = [];
+
+cameraMediaRecorder =
+new MediaRecorder(
+videoCaptureStream,
+{
+mimeType,
+videoBitsPerSecond: 8000000
+}
+);
+
+cameraMediaRecorder.addEventListener(
+"dataavailable",
+(event) => {
+
+if (
+event.data &&
+event.data.size > 0
+) {
+
+cameraVideoChunks.push(
+event.data
+);
+}
+}
+);
+
+cameraMediaRecorder.addEventListener(
+"stop",
+() => {
+
+const completedChunks =
+cameraVideoChunks.slice();
+
+const completedMimeType =
+cameraMediaRecorder?.mimeType ||
+mimeType;
+
+if (cameraVideoStream) {
+
+cameraVideoStream
+.getTracks()
+.forEach(
+(track) => {
+
+track.stop();
+}
+);
+}
+
+cameraMediaRecorder =
+null;
+
+cameraVideoStream =
+null;
+
+cameraVideoChunks = [];
+
+downloadCameraVideo(
+completedChunks,
+completedMimeType
+);
+},
+{
+once: true
+}
+);
+
+cameraMediaRecorder.addEventListener(
+"error",
+() => {
+
+stopCameraVideo();
+
+alert(
+currentLanguage === "en"
+? "An error occurred while recording the video."
+: "動画撮影中にエラーが発生しました。"
+);
+},
+{
+once: true
+}
+);
+
+cameraVideoRecording =
+true;
+
+cameraVideoStartedAt =
+performance.now();
+
+cameraRecordingTime.hidden =
+false;
+
+cameraRecordingTime.textContent =
+"00:00";
+
+cameraShutterButton.classList.add(
+"is-recording"
+);
+
+cameraMediaRecorder.start(
+100
+);
+
+cameraVideoTimerId =
+window.setInterval(
+updateCameraRecordingTime,
+100
+);
+
+cameraVideoStopTimerId =
+window.setTimeout(
+() => {
+
+stopCameraVideo();
+},
+VIDEO_CAPTURE_MAX_DURATION
+);
+
+} catch (error) {
+
+cameraVideoRecording =
+false;
+
+if (cameraVideoStream) {
+
+cameraVideoStream
+.getTracks()
+.forEach(
+(track) => {
+
+track.stop();
+}
+);
+}
+
+cameraMediaRecorder =
+null;
+
+cameraVideoStream =
+null;
+
+cameraVideoChunks = [];
+
+resetCameraVideoUi();
+
+alert(
+currentLanguage === "en"
+? "Could not start video recording."
+: "動画撮影を開始できませんでした。"
+);
+}
+}
+
+
+function stopCameraVideo() {
+
+if (!cameraVideoRecording) {
+return;
+}
+
+cameraVideoRecording =
+false;
+
+if (cameraVideoTimerId !== null) {
+
+window.clearInterval(
+cameraVideoTimerId
+);
+
+cameraVideoTimerId =
+null;
+}
+
+if (cameraVideoStopTimerId !== null) {
+
+window.clearTimeout(
+cameraVideoStopTimerId
+);
+
+cameraVideoStopTimerId =
+null;
+}
+
+updateCameraRecordingTime();
+
+resetCameraVideoUi();
+
+if (
+cameraMediaRecorder &&
+cameraMediaRecorder.state !== "inactive"
+) {
+
+cameraMediaRecorder.stop();
+}
+}
+
+
 cameraShutterButton.addEventListener(
 "click",
 () => {
@@ -10091,6 +10606,14 @@ cameraShutterButton.addEventListener(
 if (cameraCaptureMode === "photo") {
 
 takeCameraPhoto();
+
+} else if (cameraVideoRecording) {
+
+stopCameraVideo();
+
+} else {
+
+startCameraVideo();
 }
 }
 );
@@ -13796,6 +14319,28 @@ renderer.render(
 scene,
 camera
 );
+
+
+if (cameraVideoRecording) {
+
+videoCaptureCamera.position.copy(
+camera.position
+);
+
+videoCaptureCamera.quaternion.copy(
+camera.quaternion
+);
+
+videoCaptureCamera.fov =
+getSquareCaptureFov();
+
+videoCaptureCamera.updateProjectionMatrix();
+
+videoCaptureRenderer.render(
+scene,
+videoCaptureCamera
+);
+}
 }
 
 animate();

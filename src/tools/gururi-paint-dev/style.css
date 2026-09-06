@@ -1454,8 +1454,12 @@ background: #eee;
 }
 
 #viewport {
+position: relative;
+
 width: 100%;
 height: calc(100vh - 48px);
+
+overflow: hidden;
 
 cursor: default;
 }
@@ -1682,6 +1686,102 @@ opacity: 0.86;
 カメラ撮影
 ================================ */
 
+.camera-viewfinder {
+position: absolute;
+inset: 0;
+
+z-index: 170;
+
+pointer-events: none;
+}
+
+.camera-viewfinder[hidden] {
+display: none;
+}
+
+.camera-viewfinder-mask {
+position: absolute;
+
+background: #000;
+}
+
+.camera-viewfinder-mask--top {
+top: 0;
+left: 0;
+
+width: 100%;
+height:
+calc(
+(100% - var(--camera-square-size)) / 2
+);
+}
+
+.camera-viewfinder-mask--right {
+top:
+calc(
+(100% - var(--camera-square-size)) / 2
+);
+right: 0;
+
+width:
+calc(
+(100% - var(--camera-square-size)) / 2
+);
+height:
+var(--camera-square-size);
+}
+
+.camera-viewfinder-mask--bottom {
+right: 0;
+bottom: 0;
+
+width: 100%;
+height:
+calc(
+(100% - var(--camera-square-size)) / 2
+);
+}
+
+.camera-viewfinder-mask--left {
+top:
+calc(
+(100% - var(--camera-square-size)) / 2
+);
+left: 0;
+
+width:
+calc(
+(100% - var(--camera-square-size)) / 2
+);
+height:
+var(--camera-square-size);
+}
+
+.camera-viewfinder-frame {
+position: absolute;
+top: 50%;
+left: 50%;
+
+width:
+var(--camera-square-size);
+height:
+var(--camera-square-size);
+
+outline:
+1px solid rgba(
+255,
+255,
+255,
+0.8
+);
+
+transform:
+translate(
+-50%,
+-50%
+);
+}
+
 .camera-capture-ui {
 position: fixed;
 left: 50%;
@@ -1784,6 +1884,18 @@ height: 100%;
 border-radius: 50%;
 
 background: #fff;
+}
+
+.camera-shutter-button.is-recording span {
+width: 52%;
+height: 52%;
+
+margin:
+24% auto;
+
+border-radius: 5px;
+
+background: #e53935;
 }
 
 
