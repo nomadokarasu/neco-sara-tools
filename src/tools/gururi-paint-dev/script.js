@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.22";
+"1.3.24";
 
 
 const appVersion =
@@ -2597,330 +2597,330 @@ outputWidth
 );
 
 
-  /*
-    レイヤーを復元
-  */
+/*
+レイヤーを復元
+*/
 
-  const loadedLayers = [];
-
-
-  for (
-    let i = 0;
-    i <
-      projectData.layers.length;
-    i++
-  ) {
-
-    const layerData =
-      projectData.layers[i];
+const loadedLayers = [];
 
 
-    if (
-      typeof layerData.image !==
-        "string"
-    ) {
+for (
+let i = 0;
+i <
+projectData.layers.length;
+i++
+) {
 
-      throw new Error(
-        "レイヤー画像が壊れています。"
-      );
-    }
-
-
-    const {
-      canvas,
-      context
-    } =
-      createLayerCanvas();
+const layerData =
+projectData.layers[i];
 
 
-    const image =
-      await loadProjectImage(
-        layerData.image
-      );
+if (
+typeof layerData.image !==
+"string"
+) {
+
+throw new Error(
+"レイヤー画像が壊れています。"
+);
+}
 
 
-    context.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+const {
+canvas,
+context
+} =
+createLayerCanvas();
 
 
-    context.drawImage(
-      image,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+const image =
+await loadProjectImage(
+layerData.image
+);
 
 
-    /*
-      Undo用の基準画像を作る
-    */
-
-    const baseCanvas =
-      document.createElement(
-        "canvas"
-      );
+context.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
 
 
-    baseCanvas.width =
-      canvas.width;
-
-    baseCanvas.height =
-      canvas.height;
-
-
-    const baseContext =
-      baseCanvas.getContext(
-        "2d"
-      );
+context.drawImage(
+image,
+0,
+0,
+canvas.width,
+canvas.height
+);
 
 
-    baseContext
-      .imageSmoothingEnabled =
-        false;
+/*
+Undo用の基準画像を作る
+*/
+
+const baseCanvas =
+document.createElement(
+"canvas"
+);
 
 
-    baseContext.drawImage(
-      canvas,
-      0,
-      0
-    );
+baseCanvas.width =
+canvas.width;
+
+baseCanvas.height =
+canvas.height;
 
 
-    const layerId =
-      Number(
-        layerData.id
-      );
+const baseContext =
+baseCanvas.getContext(
+"2d"
+);
 
 
-    loadedLayers.push({
+baseContext
+.imageSmoothingEnabled =
+false;
 
-      id:
-        Number.isInteger(
-          layerId
-        )
-          ? layerId
-          : i + 1,
 
-      name:
-        typeof layerData.name ===
-          "string" &&
-        layerData.name.trim()
-          ? layerData.name
-          : `レイヤー${i + 1}`,
+baseContext.drawImage(
+canvas,
+0,
+0
+);
 
-      canvas,
 
-      context,
+const layerId =
+Number(
+layerData.id
+);
 
-      baseCanvas,
+
+loadedLayers.push({
+
+id:
+Number.isInteger(
+layerId
+)
+? layerId
+: i + 1,
+
+name:
+typeof layerData.name ===
+"string" &&
+layerData.name.trim()
+? layerData.name
+: `レイヤー${i + 1}`,
+
+canvas,
+
+context,
+
+baseCanvas,
 
 visible:
-        layerData.visible !==
-          false,
+layerData.visible !==
+false,
 
-      opacity:
-        clampProjectNumber(
-          layerData.opacity,
-          0,
-          1,
-          1
-        )
-    });
-  }
-
-
-  /*
-    現在のレイヤー配列を
-    読み込んだものへ置換
-  */
-
-  layers.splice(
-    0,
-    layers.length,
-    ...loadedLayers
-  );
+opacity:
+clampProjectNumber(
+layerData.opacity,
+0,
+1,
+1
+)
+});
+}
 
 
-  /*
-    レイヤーID管理
-  */
+/*
+現在のレイヤー配列を
+読み込んだものへ置換
+*/
 
-  const maxLayerId =
-    Math.max(
-      ...layers.map(
-        (layer) =>
-          layer.id
-      )
-    );
-
-
-  nextLayerId =
-    Math.max(
-      maxLayerId + 1,
-      Number(
-        projectData
-          .layerState
-          ?.nextLayerId
-      ) ||
-        maxLayerId + 1
-    );
+layers.splice(
+0,
+layers.length,
+...loadedLayers
+);
 
 
-  nextLayerNumber =
-    Math.max(
-      layers.length + 1,
-      Number(
-        projectData
-          .layerState
-          ?.nextLayerNumber
-      ) ||
-        layers.length + 1
-    );
+/*
+レイヤーID管理
+*/
+
+const maxLayerId =
+Math.max(
+...layers.map(
+(layer) =>
+layer.id
+)
+);
 
 
-  const savedActiveLayerId =
-    Number(
-      projectData
-        .layerState
-        ?.activeLayerId
-    );
+nextLayerId =
+Math.max(
+maxLayerId + 1,
+Number(
+projectData
+.layerState
+?.nextLayerId
+) ||
+maxLayerId + 1
+);
 
 
-  if (
-    getLayerById(
-      savedActiveLayerId
-    )
-  ) {
-
-    activeLayerId =
-      savedActiveLayerId;
-
-  } else {
-
-    activeLayerId =
-      layers[
-        layers.length - 1
-      ].id;
-  }
+nextLayerNumber =
+Math.max(
+layers.length + 1,
+Number(
+projectData
+.layerState
+?.nextLayerNumber
+) ||
+layers.length + 1
+);
 
 
-  setActiveLayerReference(
-    activeLayerId
-  );
+const savedActiveLayerId =
+Number(
+projectData
+.layerState
+?.activeLayerId
+);
 
 
-  /*
-    ペン設定
-  */
+if (
+getLayerById(
+savedActiveLayerId
+)
+) {
 
-  const loadedPenColor =
-    projectData.tools
-      ?.penColor;
+activeLayerId =
+savedActiveLayerId;
+
+} else {
+
+activeLayerId =
+layers[
+layers.length - 1
+].id;
+}
 
 
-  if (
-    typeof loadedPenColor ===
-      "string" &&
-    /^#[0-9a-fA-F]{6}$/.test(
-      loadedPenColor
-    )
-  ) {
+setActiveLayerReference(
+activeLayerId
+);
+
+
+/*
+ペン設定
+*/
+
+const loadedPenColor =
+projectData.tools
+?.penColor;
+
+
+if (
+typeof loadedPenColor ===
+"string" &&
+/^#[0-9a-fA-F]{6}$/.test(
+loadedPenColor
+)
+) {
 
 setPenColor(
-      loadedPenColor
-    );
-  }
+loadedPenColor
+);
+}
 
 
-  savedPenSize =
-    clampProjectNumber(
-      projectData.tools
-        ?.savedPenSize,
-      1,
-      50,
-      3
-    );
+savedPenSize =
+clampProjectNumber(
+projectData.tools
+?.savedPenSize,
+1,
+50,
+3
+);
 
 
-  savedEraserSize =
-    clampProjectNumber(
-      projectData.tools
-        ?.savedEraserSize,
-      1,
-      50,
-      10
-    );
+savedEraserSize =
+clampProjectNumber(
+projectData.tools
+?.savedEraserSize,
+1,
+50,
+10
+);
 
 
-  penSize =
-    clampProjectNumber(
-      projectData.tools
-        ?.penSize,
-      1,
-      50,
-      savedPenSize
-    );
+penSize =
+clampProjectNumber(
+projectData.tools
+?.penSize,
+1,
+50,
+savedPenSize
+);
 
 
-  penSizeInput.value =
-    penSize;
+penSizeInput.value =
+penSize;
 
-  penSizeValue.value =
-    penSize;
-
-
-  /*
-    最近使用した色
-  */
-
-  if (
-    Array.isArray(
-      projectData.tools
-        ?.recentColors
-    )
-  ) {
-
-    recentColors =
-      projectData.tools
-        .recentColors
-        .filter(
-          (color) =>
-            typeof color ===
-              "string" &&
-            /^#[0-9a-fA-F]{6}$/.test(
-              color
-            )
-        )
-        .map(
-          (color) =>
-            color.toLowerCase()
-        )
-        .slice(
-          0,
-          8
-        );
-
-  } else {
-
-    recentColors = [];
-  }
+penSizeValue.value =
+penSize;
 
 
-  renderRecentColors();
+/*
+最近使用した色
+*/
+
+if (
+Array.isArray(
+projectData.tools
+?.recentColors
+)
+) {
+
+recentColors =
+projectData.tools
+.recentColors
+.filter(
+(color) =>
+typeof color ===
+"string" &&
+/^#[0-9a-fA-F]{6}$/.test(
+color
+)
+)
+.map(
+(color) =>
+color.toLowerCase()
+)
+.slice(
+0,
+8
+);
+
+} else {
+
+recentColors = [];
+}
 
 
-  /*
-    使用ツール
-  */
+renderRecentColors();
 
-  const loadedTool =
-    projectData.tools
-      ?.currentTool;
+
+/*
+使用ツール
+*/
+
+const loadedTool =
+projectData.tools
+?.currentTool;
 
 
 if (
@@ -2935,36 +2935,36 @@ loadedTool
 )
 ) {
 
-    currentTool =
-      loadedTool;
+currentTool =
+loadedTool;
 
-  } else {
+} else {
 
-    currentTool =
-      "pen";
-  }
+currentTool =
+"pen";
+}
 
 
-  penToolButton
-    .classList
-    .toggle(
-      "is-active",
-      currentTool === "pen"
-    );
+penToolButton
+.classList
+.toggle(
+"is-active",
+currentTool === "pen"
+);
 
-  eraserToolButton
-    .classList
-    .toggle(
-      "is-active",
-      currentTool === "eraser"
-    );
+eraserToolButton
+.classList
+.toggle(
+"is-active",
+currentTool === "eraser"
+);
 
-  bucketToolButton
-    .classList
-    .toggle(
-      "is-active",
-      currentTool === "bucket"
-    );
+bucketToolButton
+.classList
+.toggle(
+"is-active",
+currentTool === "bucket"
+);
 
 eyedropperToolButton
 .classList
@@ -3052,222 +3052,222 @@ updateGroundGridSize(
   );
 
 
-  /*
-    カメラ方向
-  */
+/*
+カメラ方向
+*/
 
-  const savedYaw =
-    Number(
-      projectData.view
-        ?.yaw
-    );
+const savedYaw =
+Number(
+projectData.view
+?.yaw
+);
 
-  const savedPitch =
-    Number(
-      projectData.view
-        ?.pitch
-    );
-
-
-  yaw =
-    Number.isFinite(
-      savedYaw
-    )
-      ? savedYaw
-      : 0;
+const savedPitch =
+Number(
+projectData.view
+?.pitch
+);
 
 
-  const pitchLimit =
-    Math.PI / 2 -
-    0.01;
+yaw =
+Number.isFinite(
+savedYaw
+)
+? savedYaw
+: 0;
 
 
-  pitch =
-    Number.isFinite(
-      savedPitch
-    )
-      ? Math.max(
-          -pitchLimit,
-          Math.min(
-            pitchLimit,
-            savedPitch
-          )
-        )
-      : 0;
+const pitchLimit =
+Math.PI / 2 -
+0.01;
 
 
-  /*
-    ズーム
-  */
-
-  camera.fov =
-    clampProjectNumber(
-      projectData.view
-        ?.fov,
-      20,
-      120,
-      85
-    );
-
-
-  camera
-    .updateProjectionMatrix();
+pitch =
+Number.isFinite(
+savedPitch
+)
+? Math.max(
+-pitchLimit,
+Math.min(
+pitchLimit,
+savedPitch
+)
+)
+: 0;
 
 
-  /*
-    補助グリッド
-  */
+/*
+ズーム
+*/
 
-  const guideVisible =
-    projectData.view
-      ?.guideVisible !==
-        false;
-
-
-  groundToggle.checked =
-    guideVisible;
-
-  groundGrid.visible =
-    guideVisible;
-
-  verticalGuides.visible =
-    guideVisible;
-
-  horizontalGuides.visible =
-    guideVisible;
+camera.fov =
+clampProjectNumber(
+projectData.view
+?.fov,
+20,
+120,
+85
+);
 
 
-  /*
-    プレビュー画像の
-    左端位置を復元する。
-
-    古い保存データには
-    この値がないため0を使用する。
-  */
-
-  previewSeamRatio =
-    clampProjectNumber(
-      projectData.view
-        ?.previewSeamRatio,
-      0,
-      1,
-      0
-    );
+camera
+.updateProjectionMatrix();
 
 
-  /*
-    1は0と同じ位置なので
-    0へ統一する
-  */
+/*
+補助グリッド
+*/
 
-  if (
-    previewSeamRatio >= 1
-  ) {
-    previewSeamRatio = 0;
-  }
+const guideVisible =
+projectData.view
+?.guideVisible !==
+false;
 
 
-  previewDragRatio = 0;
+groundToggle.checked =
+guideVisible;
+
+groundGrid.visible =
+guideVisible;
+
+verticalGuides.visible =
+guideVisible;
+
+horizontalGuides.visible =
+guideVisible;
 
 
-  previewSeamHandle
-    .style
-    .left =
-      "0px";
+/*
+プレビュー画像の
+左端位置を復元する。
+
+古い保存データには
+この値がないため0を使用する。
+*/
+
+previewSeamRatio =
+clampProjectNumber(
+projectData.view
+?.previewSeamRatio,
+0,
+1,
+0
+);
 
 
-  /*
-    読み込み前の
-    Undo / Redo履歴は破棄
-  */
+/*
+1は0と同じ位置なので
+0へ統一する
+*/
 
-  strokeHistory.length = 0;
-
-  redoStrokeHistory.length = 0;
-
-  currentStroke = null;
-
-  isDrawing = false;
+if (
+previewSeamRatio >= 1
+) {
+previewSeamRatio = 0;
+}
 
 
-  /*
-    UIと球体へ反映
-  */
-
-  renderLayerPanel();
-
-  updatePaintCanvas();
-
-  updateCameraDirection();
+previewDragRatio = 0;
 
 
-  alert(
-    "データを読み込みました。"
-  );
+previewSeamHandle
+.style
+.left =
+"0px";
+
+
+/*
+読み込み前の
+Undo / Redo履歴は破棄
+*/
+
+strokeHistory.length = 0;
+
+redoStrokeHistory.length = 0;
+
+currentStroke = null;
+
+isDrawing = false;
+
+
+/*
+UIと球体へ反映
+*/
+
+renderLayerPanel();
+
+updatePaintCanvas();
+
+updateCameraDirection();
+
+
+alert(
+"データを読み込みました。"
+);
 }
 
 
 const texture =
-  new THREE.CanvasTexture(paintCanvas);
+new THREE.CanvasTexture(paintCanvas);
 
 texture.colorSpace = THREE.SRGBColorSpace;
 
 
 /* ================================
-   球体
+球体
 ================================ */
 
 /*
-  半径10mの球体。
+半径10mの球体。
 
-  BackSideを指定することで、
-  球体の内側を見ることができます。
+BackSideを指定することで、
+球体の内側を見ることができます。
 */
 
 const geometry =
-  new THREE.SphereGeometry(
-    50,
-    64,
-    32
-  );
+new THREE.SphereGeometry(
+50,
+64,
+32
+);
 
 const material =
-  new THREE.MeshBasicMaterial({
-    map: texture,
-    side: THREE.BackSide
-  });
+new THREE.MeshBasicMaterial({
+map: texture,
+side: THREE.BackSide
+});
 
 const sphere =
-  new THREE.Mesh(
-    geometry,
-    material
-  );
+new THREE.Mesh(
+geometry,
+material
+);
 
 scene.add(sphere);
 
 
 /* ================================
-   ペン／消しゴムカーソル
+ペン／消しゴムカーソル
 ================================ */
 
 const eraserCursorGeometry =
-  new THREE.BufferGeometry();
+new THREE.BufferGeometry();
 
 
 const eraserCursorMaterial =
-  new THREE.LineDashedMaterial({
-    color: 0x222222,
-    dashSize: 0.12,
-    gapSize: 0.08,
-    depthTest: false
-  });
+new THREE.LineDashedMaterial({
+color: 0x222222,
+dashSize: 0.12,
+gapSize: 0.08,
+depthTest: false
+});
 
 
 const eraserCursor =
-  new THREE.LineLoop(
-    eraserCursorGeometry,
-    eraserCursorMaterial
-  );
+new THREE.LineLoop(
+eraserCursorGeometry,
+eraserCursorMaterial
+);
 
 
 eraserCursor.visible = false;
@@ -3275,16 +3275,16 @@ eraserCursor.renderOrder = 20;
 
 
 /*
-  動的に形状を書き換える
-  カーソルなので
-  視錐台カリングを無効化
+動的に形状を書き換える
+カーソルなので
+視錐台カリングを無効化
 */
 
 eraserCursor.frustumCulled = false;
 
 
 scene.add(
-  eraserCursor
+eraserCursor
 );
 
 
