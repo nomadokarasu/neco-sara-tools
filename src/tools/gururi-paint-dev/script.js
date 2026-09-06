@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.41";
+"1.3.42";
 
 
 const appVersion =
@@ -1733,7 +1733,7 @@ const VIDEO_CAPTURE_FPS =
 30;
 
 const VIDEO_CAPTURE_MAX_DURATION =
-5000;
+7000;
 
 const photoCaptureCanvas =
 document.createElement(
