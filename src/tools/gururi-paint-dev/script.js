@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.37";
+"1.3.38";
 
 
 const appVersion =
@@ -144,6 +144,11 @@ document.getElementById(
 const cameraViewfinder =
 document.getElementById(
 "cameraViewfinder"
+);
+
+const cameraCloseButton =
+document.getElementById(
+"cameraCloseButton"
 );
 
 const cameraPhotoModeButton =
@@ -1409,6 +1414,11 @@ t("video");
 cameraShutterButton.setAttribute(
 "aria-label",
 t("capture")
+);
+
+cameraCloseButton.setAttribute(
+"aria-label",
+t("close")
 );
 
 document.querySelector(
@@ -9646,8 +9656,14 @@ helpButton.click();
 ツール切り替え
 ================================ */
 
+const CAMERA_VIEWFINDER_SCALE =
+0.85;
+
 let guideVisibilityBeforeCamera =
 null;
+
+let toolBeforeCamera =
+"pen";
 
 
 function setGuideVisibility(
@@ -9678,7 +9694,8 @@ const squareSize =
 Math.min(
 viewport.clientWidth,
 viewport.clientHeight
-);
+) *
+CAMERA_VIEWFINDER_SCALE;
 
 cameraViewfinder.style.setProperty(
 "--camera-square-size",
@@ -9755,6 +9772,16 @@ return;
 
 const previousTool =
 currentTool;
+
+
+if (
+tool === "camera" &&
+previousTool !== "camera"
+) {
+
+toolBeforeCamera =
+previousTool;
+}
 
 
 if (
@@ -9930,6 +9957,20 @@ selectDrawingTool(
 );
 
 
+cameraCloseButton.addEventListener(
+"pointerdown",
+(event) => {
+
+event.preventDefault();
+event.stopPropagation();
+
+selectDrawingTool(
+toolBeforeCamera
+);
+}
+);
+
+
 let cameraCaptureMode =
 "photo";
 
@@ -10017,19 +10058,18 @@ Math.max(
 camera.aspect
 );
 
-
-if (viewportAspect >= 1) {
-
-return camera.fov;
-}
-
-
 const verticalFov =
 THREE.MathUtils.degToRad(
 camera.fov
 );
 
-const horizontalFov =
+let squareFov =
+verticalFov;
+
+
+if (viewportAspect < 1) {
+
+squareFov =
 2 *
 Math.atan(
 Math.tan(
@@ -10037,9 +10077,20 @@ verticalFov / 2
 ) *
 viewportAspect
 );
+}
+
+
+const scaledSquareFov =
+2 *
+Math.atan(
+Math.tan(
+squareFov / 2
+) *
+CAMERA_VIEWFINDER_SCALE
+);
 
 return THREE.MathUtils.radToDeg(
-horizontalFov
+scaledSquareFov
 );
 }
 
@@ -13398,6 +13449,29 @@ return;
 
 
 /*
+Z + 左ドラッグ
+ズーム
+*/
+
+if (isZPressed) {
+
+isZooming = true;
+
+previousMouseY = event.clientY;
+
+viewport.classList.add(
+"is-zooming"
+);
+
+renderer.domElement.setPointerCapture(
+event.pointerId
+);
+
+return;
+}
+
+
+/*
 Space + 左ドラッグ
 または見回しツール
 → 視点回転
@@ -13416,29 +13490,6 @@ previousMouseY = event.clientY;
 
 viewport.classList.add(
 "is-looking"
-);
-
-renderer.domElement.setPointerCapture(
-event.pointerId
-);
-
-return;
-}
-
-
-/*
-Z + 左ドラッグ
-ズーム
-*/
-
-if (isZPressed) {
-
-isZooming = true;
-
-previousMouseY = event.clientY;
-
-viewport.classList.add(
-"is-zooming"
 );
 
 renderer.domElement.setPointerCapture(

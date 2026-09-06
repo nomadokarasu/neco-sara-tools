@@ -1782,6 +1782,60 @@ translate(
 );
 }
 
+.camera-close-button {
+position: absolute;
+top: 14px;
+right: 14px;
+
+z-index: 1;
+
+display: flex;
+align-items: center;
+justify-content: center;
+
+width: 38px;
+height: 38px;
+
+padding: 0;
+
+border:
+1px solid rgba(
+255,
+255,
+255,
+0.72
+);
+border-radius: 50%;
+
+background:
+rgba(
+0,
+0,
+0,
+0.72
+);
+
+color: #fff;
+
+font: inherit;
+font-size: 25px;
+font-weight: 300;
+line-height: 1;
+
+cursor: pointer;
+pointer-events: auto;
+}
+
+.camera-close-button:hover {
+background:
+rgba(
+45,
+45,
+45,
+0.92
+);
+}
+
 .camera-capture-ui {
 position: fixed;
 left: 50%;
