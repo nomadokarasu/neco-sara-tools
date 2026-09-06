@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.28";
+"1.3.29";
 
 
 const appVersion =
@@ -4961,247 +4961,247 @@ let savedEraserSize = 10;
 
 
 /* ================================
-   ペンサイズ
+ペンサイズ
 ================================ */
 
 penSizeInput.addEventListener(
-  "input",
-  () => {
+"input",
+() => {
 
-    penSize =
-      Number(
-        penSizeInput.value
-      );
+penSize =
+Number(
+penSizeInput.value
+);
 
-    penSizeValue.value =
-      penSize;
+penSizeValue.value =
+penSize;
 
 
-    if (currentTool === "pen") {
+if (currentTool === "pen") {
 
-      savedPenSize =
-        penSize;
+savedPenSize =
+penSize;
 
-    } else if (
-      currentTool === "eraser"
-    ) {
+} else if (
+currentTool === "eraser"
+) {
 
-      savedEraserSize =
-        penSize;
-    }
-  }
+savedEraserSize =
+penSize;
+}
+}
 );
 
 
 penSizeValue.addEventListener(
-  "input",
-  () => {
+"input",
+() => {
 
-    let value =
-      Number(
-        penSizeValue.value
-      );
-
-
-    if (!Number.isFinite(value)) {
-      return;
-    }
+let value =
+Number(
+penSizeValue.value
+);
 
 
-    value =
-      Math.max(
-        1,
-        Math.min(
-          50,
-          value
-        )
-      );
+if (!Number.isFinite(value)) {
+return;
+}
 
 
-    penSize =
-      value;
+value =
+Math.max(
+1,
+Math.min(
+50,
+value
+)
+);
 
-    penSizeInput.value =
-      value;
+
+penSize =
+value;
+
+penSizeInput.value =
+value;
 
 
-    if (currentTool === "pen") {
+if (currentTool === "pen") {
 
-      savedPenSize =
-        penSize;
+savedPenSize =
+penSize;
 
-    } else if (
-      currentTool === "eraser"
-    ) {
+} else if (
+currentTool === "eraser"
+) {
 
-      savedEraserSize =
-        penSize;
-    }
-  }
+savedEraserSize =
+penSize;
+}
+}
 );
 
 
 /*
-  スマートフォンでは
-  Enterで太さを確定して
-  入力欄からフォーカスを外す
+スマートフォンでは
+Enterで太さを確定して
+入力欄からフォーカスを外す
 */
 
 penSizeValue.addEventListener(
-  "keydown",
-  (event) => {
+"keydown",
+(event) => {
 
-    if (
-      !isMobileDevice ||
-      event.key !== "Enter"
-    ) {
-      return;
-    }
-
-
-    event.preventDefault();
+if (
+!isMobileDevice ||
+event.key !== "Enter"
+) {
+return;
+}
 
 
-    let value =
-      Number(
-        penSizeValue.value
-      );
+event.preventDefault();
 
 
-    /*
-      不正な値の場合は
-      現在の太さへ戻す
-    */
-
-    if (!Number.isFinite(value)) {
-
-      penSizeValue.value =
-        penSize;
-
-      penSizeValue.blur();
-
-      return;
-    }
-
-
-    /*
-      1～50の範囲に収めて確定
-    */
-
-    value =
-      Math.max(
-        1,
-        Math.min(
-          50,
-          value
-        )
-      );
-
-
-    penSize =
-      value;
-
-    penSizeInput.value =
-      value;
-
-    penSizeValue.value =
-      value;
-
-
-    if (currentTool === "pen") {
-
-      savedPenSize =
-        penSize;
-
-    } else if (
-      currentTool === "eraser"
-    ) {
-
-      savedEraserSize =
-        penSize;
-    }
-
-
-    /*
-      数字キーボードを閉じる
-    */
-
-    penSizeValue.blur();
-  }
+let value =
+Number(
+penSizeValue.value
 );
 
 
 /*
-  太さ −
+不正な値の場合は
+現在の太さへ戻す
+*/
+
+if (!Number.isFinite(value)) {
+
+penSizeValue.value =
+penSize;
+
+penSizeValue.blur();
+
+return;
+}
+
+
+/*
+1～50の範囲に収めて確定
+*/
+
+value =
+Math.max(
+1,
+Math.min(
+50,
+value
+)
+);
+
+
+penSize =
+value;
+
+penSizeInput.value =
+value;
+
+penSizeValue.value =
+value;
+
+
+if (currentTool === "pen") {
+
+savedPenSize =
+penSize;
+
+} else if (
+currentTool === "eraser"
+) {
+
+savedEraserSize =
+penSize;
+}
+
+
+/*
+数字キーボードを閉じる
+*/
+
+penSizeValue.blur();
+}
+);
+
+
+/*
+太さ −
 */
 
 penSizeMinus.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    penSize =
-      Math.max(
-        1,
-        penSize - 1
-      );
+penSize =
+Math.max(
+1,
+penSize - 1
+);
 
-    penSizeInput.value =
-      penSize;
+penSizeInput.value =
+penSize;
 
-    penSizeValue.value =
-      penSize;
+penSizeValue.value =
+penSize;
 
 
-    if (currentTool === "pen") {
+if (currentTool === "pen") {
 
-      savedPenSize =
-        penSize;
+savedPenSize =
+penSize;
 
-    } else if (
-      currentTool === "eraser"
-    ) {
+} else if (
+currentTool === "eraser"
+) {
 
-      savedEraserSize =
-        penSize;
-    }
-  }
+savedEraserSize =
+penSize;
+}
+}
 );
 
 
 /*
-  太さ ＋
+太さ ＋
 */
 
 penSizePlus.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    penSize =
-      Math.min(
-        50,
-        penSize + 1
-      );
+penSize =
+Math.min(
+50,
+penSize + 1
+);
 
-    penSizeInput.value =
-      penSize;
+penSizeInput.value =
+penSize;
 
-    penSizeValue.value =
-      penSize;
+penSizeValue.value =
+penSize;
 
 
-    if (currentTool === "pen") {
+if (currentTool === "pen") {
 
-      savedPenSize =
-        penSize;
+savedPenSize =
+penSize;
 
-    } else if (
-      currentTool === "eraser"
-    ) {
+} else if (
+currentTool === "eraser"
+) {
 
-      savedEraserSize =
-        penSize;
-    }
-  }
+savedEraserSize =
+penSize;
+}
+}
 );
 
 
