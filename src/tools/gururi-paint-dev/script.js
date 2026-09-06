@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.29";
+"1.3.30";
 
 
 const appVersion =
@@ -5206,7 +5206,7 @@ penSize;
 
 
 /* ================================
-   ペン色
+ペン色
 ================================ */
 
 let recentColors = [];
@@ -5214,153 +5214,153 @@ let recentColors = [];
 
 function renderRecentColors() {
 
-  recentColorsElement.innerHTML = "";
+recentColorsElement.innerHTML = "";
 
 
-  /*
-    スマートフォンでは
-    最近使用した色を表示しない
-  */
+/*
+スマートフォンでは
+最近使用した色を表示しない
+*/
 
-  if (isMobileDevice) {
-    return;
-  }
-
-
-  /*
-    常に4色 × 2段の
-    8マスを表示する
-  */
-
-  for (
-    let i = 0;
-    i < 8;
-    i++
-  ) {
-
-    const color =
-      recentColors[i] || null;
-
-    const button =
-      document.createElement("button");
-
-    button.type =
-      "button";
-
-    button.className =
-      "recent-color-button";
+if (isMobileDevice) {
+return;
+}
 
 
-    if (!color) {
+/*
+常に4色 × 2段の
+8マスを表示する
+*/
 
-      button.classList.add(
-        "is-empty"
-      );
+for (
+let i = 0;
+i < 8;
+i++
+) {
 
-      button.disabled = true;
+const color =
+recentColors[i] || null;
 
-    } else {
+const button =
+document.createElement("button");
 
-      button.style.backgroundColor =
-        color;
+button.type =
+"button";
 
-      button.title =
-        color;
+button.className =
+"recent-color-button";
 
 
-      button.addEventListener(
-        "click",
-        () => {
+if (!color) {
+
+button.classList.add(
+"is-empty"
+);
+
+button.disabled = true;
+
+} else {
+
+button.style.backgroundColor =
+color;
+
+button.title =
+color;
+
+
+button.addEventListener(
+"click",
+() => {
 
 setPenColor(
-            color
-          );
+color
+);
 
-          rememberColor(
-            color
-          );
-        }
-      );
-    }
+rememberColor(
+color
+);
+}
+);
+}
 
 
-    recentColorsElement.appendChild(
-      button
-    );
-  }
+recentColorsElement.appendChild(
+button
+);
+}
 }
 
 
 function rememberColor(color) {
 
-  if (
-    typeof color !== "string" ||
-    !/^#[0-9a-fA-F]{6}$/.test(color)
-  ) {
-    return;
-  }
+if (
+typeof color !== "string" ||
+!/^#[0-9a-fA-F]{6}$/.test(color)
+) {
+return;
+}
 
 
-  const normalizedColor =
-    color.toLowerCase();
+const normalizedColor =
+color.toLowerCase();
 
 
-  recentColors =
-    [
-      normalizedColor,
-      ...recentColors.filter(
-        (item) =>
-          item !== normalizedColor
-      )
-    ].slice(0, 8);
+recentColors =
+[
+normalizedColor,
+...recentColors.filter(
+(item) =>
+item !== normalizedColor
+)
+].slice(0, 8);
 
 
-  renderRecentColors();
+renderRecentColors();
 }
 
 
 penColorInput.addEventListener(
-  "input",
-  () => {
+"input",
+() => {
 
-    setPenColor(
-      penColorInput.value
-    );
-  }
+setPenColor(
+penColorInput.value
+);
+}
 );
 
 
 penColorInput.addEventListener(
-  "change",
-  () => {
+"change",
+() => {
 
-    rememberColor(
-      penColorInput.value
-    );
-  }
+rememberColor(
+penColorInput.value
+);
+}
 );
 
 
 rememberColor(
-  penColor
+penColor
 );
 
 
 /*
-  現在選択しているツール
+現在選択しているツール
 
-  pen
-  eraser
-  bucket
-  eyedropper
+pen
+eraser
+bucket
+eyedropper
 */
 
 let currentTool = "pen";
 
 
 /*
-  ストローク履歴は
-  描画開始時と終了時に記録する
+ストローク履歴は
+描画開始時と終了時に記録する
 */
 
 
@@ -5370,10 +5370,10 @@ let currentTool = "pen";
 
 function updateEraserCursor(event) {
 
-  /*
-    視点回転・ズーム中は
-    カーソルを表示しない
-  */
+/*
+視点回転・ズーム中は
+カーソルを表示しない
+*/
 
 if (
 currentTool === "bucket" ||
@@ -5383,2095 +5383,2095 @@ isLooking ||
 isZooming
 ) {
 
-    eraserCursor.visible = false;
+eraserCursor.visible = false;
 
-    return;
-  }
+return;
+}
 
-  const rect =
-    renderer.domElement
-      .getBoundingClientRect();
-
-
-  /*
-    実際の描画と同じ方法で
-    マウス位置をThree.js座標へ変換
-  */
-
-  pointer.x =
-    (
-      (event.clientX - rect.left) /
-      rect.width
-    ) * 2 - 1;
-
-  pointer.y =
-    -(
-      (
-        event.clientY - rect.top
-      ) /
-      rect.height
-    ) * 2 + 1;
+const rect =
+renderer.domElement
+.getBoundingClientRect();
 
 
-  /*
-    実際の描画と同じRaycast
-  */
+/*
+実際の描画と同じ方法で
+マウス位置をThree.js座標へ変換
+*/
 
-  raycaster.setFromCamera(
-    pointer,
-    camera
-  );
+pointer.x =
+(
+(event.clientX - rect.left) /
+rect.width
+) * 2 - 1;
 
-
-  const intersections =
-    raycaster.intersectObject(
-      sphere,
-      false
-    );
-
-
-  if (intersections.length === 0) {
-
-    eraserCursor.visible = false;
-
-    return;
-  }
+pointer.y =
+-(
+(
+event.clientY - rect.top
+) /
+rect.height
+) * 2 + 1;
 
 
-  const intersection =
-    intersections[0];
+/*
+実際の描画と同じRaycast
+*/
+
+raycaster.setFromCamera(
+pointer,
+camera
+);
 
 
-  /*
-    カーソル直下の色を調べて
-    明るい場所では黒、
-    暗い場所では白にする
-  */
-
-  if (intersection.uv) {
-
-    const sampleX =
-      Math.max(
-        0,
-        Math.min(
-          paintCanvas.width - 1,
-          Math.floor(
-            intersection.uv.x *
-            paintCanvas.width
-          )
-        )
-      );
-
-    const sampleY =
-      Math.max(
-        0,
-        Math.min(
-          paintCanvas.height - 1,
-          Math.floor(
-            (1 - intersection.uv.y) *
-            paintCanvas.height
-          )
-        )
-      );
+const intersections =
+raycaster.intersectObject(
+sphere,
+false
+);
 
 
-    const pixel =
-      paintContext.getImageData(
-        sampleX,
-        sampleY,
-        1,
-        1
-      ).data;
+if (intersections.length === 0) {
+
+eraserCursor.visible = false;
+
+return;
+}
 
 
-    const brightness =
-      pixel[0] * 0.2126 +
-      pixel[1] * 0.7152 +
-      pixel[2] * 0.0722;
+const intersection =
+intersections[0];
 
 
-    if (brightness < 140) {
+/*
+カーソル直下の色を調べて
+明るい場所では黒、
+暗い場所では白にする
+*/
 
-      eraserCursorMaterial.color.setHex(
-        0xffffff
-      );
+if (intersection.uv) {
 
-    } else {
+const sampleX =
+Math.max(
+0,
+Math.min(
+paintCanvas.width - 1,
+Math.floor(
+intersection.uv.x *
+paintCanvas.width
+)
+)
+);
 
-      eraserCursorMaterial.color.setHex(
-        0x222222
-      );
-    }
-  }
-
-
-  const centerDirection =
-    intersection.point
-      .clone()
-      .normalize();
-
-
-  /*
-    球面上で円を作るための
-    直交する2方向
-  */
-
-  let tangentX =
-    new THREE.Vector3(
-      0,
-      1,
-      0
-    );
-
-
-  if (
-    Math.abs(
-      centerDirection.dot(
-        tangentX
-      )
-    ) > 0.95
-  ) {
-
-    tangentX.set(
-      1,
-      0,
-      0
-    );
-  }
+const sampleY =
+Math.max(
+0,
+Math.min(
+paintCanvas.height - 1,
+Math.floor(
+(1 - intersection.uv.y) *
+paintCanvas.height
+)
+)
+);
 
 
-  tangentX
-    .cross(
-      centerDirection
-    )
-    .normalize();
+const pixel =
+paintContext.getImageData(
+sampleX,
+sampleY,
+1,
+1
+).data;
 
 
-  const tangentY =
-    centerDirection
-      .clone()
-      .cross(
-        tangentX
-      )
-      .normalize();
+const brightness =
+pixel[0] * 0.2126 +
+pixel[1] * 0.7152 +
+pixel[2] * 0.0722;
 
 
-  /*
-    消しゴム直径penSize pxの
-    半径を球面角度へ変換
-  */
+if (brightness < 140) {
 
-  const angularRadius =
-    (
-      penSize /
-      drawCanvas.width
-    ) *
-    Math.PI;
+eraserCursorMaterial.color.setHex(
+0xffffff
+);
 
+} else {
 
-  /*
-    球体より少し内側に表示
-  */
-
-  const cursorRadius = 49.8;
-
-  const points = [];
-
-  const segments = 64;
+eraserCursorMaterial.color.setHex(
+0x222222
+);
+}
+}
 
 
-  for (
-    let i = 0;
-    i < segments;
-    i++
-  ) {
-
-    const angle =
-      (
-        i /
-        segments
-      ) *
-      Math.PI *
-      2;
+const centerDirection =
+intersection.point
+.clone()
+.normalize();
 
 
-    const direction =
-      centerDirection
-        .clone()
-        .multiplyScalar(
-          Math.cos(
-            angularRadius
-          )
-        )
-        .add(
-          tangentX
-            .clone()
-            .multiplyScalar(
-              Math.sin(
-                angularRadius
-              ) *
-              Math.cos(angle)
-            )
-        )
-        .add(
-          tangentY
-            .clone()
-            .multiplyScalar(
-              Math.sin(
-                angularRadius
-              ) *
-              Math.sin(angle)
-            )
-        )
-        .normalize();
+/*
+球面上で円を作るための
+直交する2方向
+*/
+
+let tangentX =
+new THREE.Vector3(
+0,
+1,
+0
+);
 
 
-    points.push(
-      direction.multiplyScalar(
-        cursorRadius
-      )
-    );
-  }
+if (
+Math.abs(
+centerDirection.dot(
+tangentX
+)
+) > 0.95
+) {
+
+tangentX.set(
+1,
+0,
+0
+);
+}
 
 
-  eraserCursorGeometry
-    .setFromPoints(
-      points
-    );
+tangentX
+.cross(
+centerDirection
+)
+.normalize();
 
-  eraserCursor.computeLineDistances();
 
-  eraserCursor.visible = true;
+const tangentY =
+centerDirection
+.clone()
+.cross(
+tangentX
+)
+.normalize();
+
+
+/*
+消しゴム直径penSize pxの
+半径を球面角度へ変換
+*/
+
+const angularRadius =
+(
+penSize /
+drawCanvas.width
+) *
+Math.PI;
+
+
+/*
+球体より少し内側に表示
+*/
+
+const cursorRadius = 49.8;
+
+const points = [];
+
+const segments = 64;
+
+
+for (
+let i = 0;
+i < segments;
+i++
+) {
+
+const angle =
+(
+i /
+segments
+) *
+Math.PI *
+2;
+
+
+const direction =
+centerDirection
+.clone()
+.multiplyScalar(
+Math.cos(
+angularRadius
+)
+)
+.add(
+tangentX
+.clone()
+.multiplyScalar(
+Math.sin(
+angularRadius
+) *
+Math.cos(angle)
+)
+)
+.add(
+tangentY
+.clone()
+.multiplyScalar(
+Math.sin(
+angularRadius
+) *
+Math.sin(angle)
+)
+)
+.normalize();
+
+
+points.push(
+direction.multiplyScalar(
+cursorRadius
+)
+);
+}
+
+
+eraserCursorGeometry
+.setFromPoints(
+points
+);
+
+eraserCursor.computeLineDistances();
+
+eraserCursor.visible = true;
 }
 
 
 function getPaintPosition(event) {
 
-  const rect =
-    renderer.domElement.getBoundingClientRect();
+const rect =
+renderer.domElement.getBoundingClientRect();
 
 
-  /*
-    マウス位置を
-    Three.jsの座標系
-    -1 ～ +1 に変換
-  */
+/*
+マウス位置を
+Three.jsの座標系
+-1 ～ +1 に変換
+*/
 
-  pointer.x =
-    (
-      (event.clientX - rect.left) /
-      rect.width
-    ) * 2 - 1;
+pointer.x =
+(
+(event.clientX - rect.left) /
+rect.width
+) * 2 - 1;
 
-  pointer.y =
-    -(
-      (
-        event.clientY - rect.top
-      ) /
-      rect.height
-    ) * 2 + 1;
-
-
-  /*
-    カメラからRayを飛ばす
-  */
-
-  raycaster.setFromCamera(
-    pointer,
-    camera
-  );
+pointer.y =
+-(
+(
+event.clientY - rect.top
+) /
+rect.height
+) * 2 + 1;
 
 
-  /*
-    球体との交点を調べる
-  */
+/*
+カメラからRayを飛ばす
+*/
 
-  const intersections =
-    raycaster.intersectObject(
-      sphere,
-      false
-    );
-
-
-  if (intersections.length === 0) {
-    return null;
-  }
+raycaster.setFromCamera(
+pointer,
+camera
+);
 
 
-  const intersection =
-    intersections[0];
+/*
+球体との交点を調べる
+*/
 
-  if (!intersection.uv) {
-    return null;
-  }
-
-
-  /*
-    UV座標
-       ↓
-    Canvas座標
-  */
-
-  const u =
-    intersection.uv.x;
-
-  const v =
-    intersection.uv.y;
-
-  /*
-    UV座標を
-    編集用Canvasの座標へ変換
-  */
-
-  const x =
-    u * drawCanvas.width;
-
-  const y =
-    (1 - v) *
-    drawCanvas.height;
+const intersections =
+raycaster.intersectObject(
+sphere,
+false
+);
 
 
-  return {
-    x,
-    y
-  };
+if (intersections.length === 0) {
+return null;
+}
+
+
+const intersection =
+intersections[0];
+
+if (!intersection.uv) {
+return null;
+}
+
+
+/*
+UV座標
+↓
+Canvas座標
+*/
+
+const u =
+intersection.uv.x;
+
+const v =
+intersection.uv.y;
+
+/*
+UV座標を
+編集用Canvasの座標へ変換
+*/
+
+const x =
+u * drawCanvas.width;
+
+const y =
+(1 - v) *
+drawCanvas.height;
+
+
+return {
+x,
+y
+};
 }
 
 /* ================================
-   スポイト
+スポイト
 ================================ */
 
 function pickColorAt(
-  x,
-  y
+x,
+y
 ) {
 
-  /*
-    背景と表示中の全レイヤーを
-    最新状態で合成してから色を取得する
-  */
+/*
+背景と表示中の全レイヤーを
+最新状態で合成してから色を取得する
+*/
 
-  updatePaintCanvas();
-
-
-  const sampleX =
-    Math.max(
-      0,
-      Math.min(
-        paintCanvas.width - 1,
-        Math.floor(x)
-      )
-    );
-
-  const sampleY =
-    Math.max(
-      0,
-      Math.min(
-        paintCanvas.height - 1,
-        Math.floor(y)
-      )
-    );
+updatePaintCanvas();
 
 
-  const pixel =
-    paintContext.getImageData(
-      sampleX,
-      sampleY,
-      1,
-      1
-    ).data;
+const sampleX =
+Math.max(
+0,
+Math.min(
+paintCanvas.width - 1,
+Math.floor(x)
+)
+);
+
+const sampleY =
+Math.max(
+0,
+Math.min(
+paintCanvas.height - 1,
+Math.floor(y)
+)
+);
 
 
-  const toHex =
-    (value) =>
-      value
-        .toString(16)
-        .padStart(2, "0");
+const pixel =
+paintContext.getImageData(
+sampleX,
+sampleY,
+1,
+1
+).data;
 
 
-  const color =
-    `#${toHex(pixel[0])}${toHex(pixel[1])}${toHex(pixel[2])}`;
+const toHex =
+(value) =>
+value
+.toString(16)
+.padStart(2, "0");
+
+
+const color =
+`#${toHex(pixel[0])}${toHex(pixel[1])}${toHex(pixel[2])}`;
 
 
 setPenColor(
-      color
-    );
+color
+);
 
 
-  rememberColor(
-    color
-  );
+rememberColor(
+color
+);
 }
 
 
 /* ================================
-   バケツ塗り
+バケツ塗り
 ================================ */
 
 function hexToRgba(hex) {
 
-  const value =
-    hex.replace("#", "");
+const value =
+hex.replace("#", "");
 
-  return [
-    parseInt(value.slice(0, 2), 16),
-    parseInt(value.slice(2, 4), 16),
-    parseInt(value.slice(4, 6), 16),
-    255
-  ];
+return [
+parseInt(value.slice(0, 2), 16),
+parseInt(value.slice(2, 4), 16),
+parseInt(value.slice(4, 6), 16),
+255
+];
 }
 
 
 function floodFill(
-  x,
-  y,
-  fillColor,
-  layerId,
-  historyAction = null
+x,
+y,
+fillColor,
+layerId,
+historyAction = null
 ) {
 
-  const layer =
-    getLayerById(layerId);
+const layer =
+getLayerById(layerId);
 
-  if (!layer) {
-    return false;
-  }
+if (!layer) {
+return false;
+}
 
 
-  const fillCanvas =
-    layer.canvas;
+const fillCanvas =
+layer.canvas;
 
-  const fillContext =
-    layer.context;
+const fillContext =
+layer.context;
 
 
-  const width =
-    fillCanvas.width;
+const width =
+fillCanvas.width;
 
-  const height =
-    fillCanvas.height;
+const height =
+fillCanvas.height;
 
 
-  const startX =
-    Math.max(
-      0,
-      Math.min(
-        width - 1,
-        Math.floor(x)
-      )
-    );
+const startX =
+Math.max(
+0,
+Math.min(
+width - 1,
+Math.floor(x)
+)
+);
 
-  const startY =
-    Math.max(
-      0,
-      Math.min(
-        height - 1,
-        Math.floor(y)
-      )
-    );
-
-
-  /*
-    バケツの境界判定用Canvas。
-
-    表示中の全レイヤーを合成し、
-    選択中レイヤーだけではなく
-    レイヤーを横断して塗る範囲を決める。
-  */
-
-  const referenceCanvas =
-    document.createElement("canvas");
-
-  referenceCanvas.width =
-    width;
-
-  referenceCanvas.height =
-    height;
-
-
-  const referenceContext =
-    referenceCanvas.getContext("2d");
-
-  referenceContext.imageSmoothingEnabled =
-    false;
-
-
-  for (const referenceLayer of layers) {
-
-    if (!referenceLayer.visible) {
-      continue;
-    }
-
-referenceContext.globalAlpha =
-      typeof referenceLayer.opacity ===
-        "number"
-        ? referenceLayer.opacity
-        : 1;
-
-
-    referenceContext.drawImage(
-      referenceLayer.canvas,
-      0,
-      0
-    );
-
-
-    referenceContext.globalAlpha =
-      1;
-  }
-
-
-  const referenceImageData =
-    referenceContext.getImageData(
-      0,
-      0,
-      width,
-      height
-    );
-
-  const referenceData =
-    referenceImageData.data;
-
-
-  /*
-    実際に色を書き込むのは
-    選択中のレイヤーだけ
-  */
-
-  const fillImageData =
-    fillContext.getImageData(
-      0,
-      0,
-      width,
-      height
-    );
-
-  const fillData =
-    fillImageData.data;
-
-
-  const startOffset =
-    (
-      startY * width +
-      startX
-    ) * 4;
-
-
-  const targetR =
-    referenceData[startOffset];
-
-  const targetG =
-    referenceData[startOffset + 1];
-
-  const targetB =
-    referenceData[startOffset + 2];
-
-  const targetA =
-    referenceData[startOffset + 3];
-
-
-  const [
-    fillR,
-    fillG,
-    fillB,
-    fillA
-  ] =
-    hexToRgba(fillColor);
-
-
-  function isTarget(offset) {
-
-    /*
-      透明部分はRGB値に関係なく
-      同じ領域として扱う。
-
-      アンチエイリアスによる
-      薄い半透明ピクセルも
-      塗り領域として扱う。
-    */
-
-    if (targetA <= 64) {
-
-      return (
-        referenceData[offset + 3] <= 64
-      );
-    }
-
-
-    return (
-      referenceData[offset] === targetR &&
-      referenceData[offset + 1] === targetG &&
-      referenceData[offset + 2] === targetB &&
-      referenceData[offset + 3] === targetA
-    );
-  }
-
-
-  const queue =
-    new Int32Array(
-      width * height
-    );
-
-  const visited =
-    new Uint8Array(
-      width * height
-    );
-
-  let head = 0;
-  let tail = 0;
-  let changed = false;
-
-
-  function paintAndQueue(
-    pixelX,
-    pixelY
-  ) {
-
-    const pixelIndex =
-      pixelY * width +
-      pixelX;
-
-
-    if (visited[pixelIndex]) {
-      return;
-    }
-
-
-    const offset =
-      pixelIndex * 4;
-
-
-    if (!isTarget(offset)) {
-      return;
-    }
-
-
-    visited[pixelIndex] = 1;
-
-
-    if (
-      fillData[offset] !== fillR ||
-      fillData[offset + 1] !== fillG ||
-      fillData[offset + 2] !== fillB ||
-      fillData[offset + 3] !== fillA
-    ) {
-
-      changed = true;
-    }
-
-
-    fillData[offset] =
-      fillR;
-
-    fillData[offset + 1] =
-      fillG;
-
-    fillData[offset + 2] =
-      fillB;
-
-    fillData[offset + 3] =
-      fillA;
-
-
-    queue[tail] =
-      pixelIndex;
-
-    tail++;
-  }
-
-
-  paintAndQueue(
-    startX,
-    startY
-  );
-
-
-  while (head < tail) {
-
-    const pixelIndex =
-      queue[head];
-
-    head++;
-
-
-    const pixelX =
-      pixelIndex % width;
-
-    const pixelY =
-      Math.floor(
-        pixelIndex / width
-      );
-
-
-    /*
-      360°画像なので
-      左右端をつなげる
-    */
-
-    const leftX =
-      pixelX === 0
-        ? width - 1
-        : pixelX - 1;
-
-    const rightX =
-      pixelX === width - 1
-        ? 0
-        : pixelX + 1;
-
-
-    paintAndQueue(
-      leftX,
-      pixelY
-    );
-
-    paintAndQueue(
-      rightX,
-      pixelY
-    );
-
-
-    if (pixelY > 0) {
-
-      paintAndQueue(
-        pixelX,
-        pixelY - 1
-      );
-    }
-
-
-    if (pixelY < height - 1) {
-
-      paintAndQueue(
-        pixelX,
-        pixelY + 1
-      );
-    }
-  }
+const startY =
+Math.max(
+0,
+Math.min(
+height - 1,
+Math.floor(y)
+)
+);
 
 
 /*
-    塗り残し防止。
+バケツの境界判定用Canvas。
 
-    flood fillで確定した領域から
-    境界方向へ1pxだけ塗りを広げる。
+表示中の全レイヤーを合成し、
+選択中レイヤーだけではなく
+レイヤーを横断して塗る範囲を決める。
+*/
 
-    このピクセルは次の探索には使わないため、
-    線を越えて反対側まで
-    塗りが漏れることはない。
-  */
+const referenceCanvas =
+document.createElement("canvas");
 
-  const edgePainted =
-    new Uint8Array(
-      width * height
-    );
+referenceCanvas.width =
+width;
 
-
-  function paintUnderEdge(
-    pixelIndex
-  ) {
-
-    /*
-      本来の塗り領域は
-      すでに処理済み
-    */
-
-    if (
-      visited[pixelIndex] ||
-      edgePainted[pixelIndex]
-    ) {
-      return;
-    }
+referenceCanvas.height =
+height;
 
 
-    const offset =
-      pixelIndex * 4;
+const referenceContext =
+referenceCanvas.getContext("2d");
+
+referenceContext.imageSmoothingEnabled =
+false;
 
 
-    /*
-      透明部分には広げない。
+for (const referenceLayer of layers) {
 
-      アンチエイリアスされた線など、
-      境界として認識されたピクセルだけを
-      対象にする。
-    */
+if (!referenceLayer.visible) {
+continue;
+}
 
-    if (
-      referenceData[
-        offset + 3
-      ] <= 64
-    ) {
-      return;
-    }
+referenceContext.globalAlpha =
+typeof referenceLayer.opacity ===
+"number"
+? referenceLayer.opacity
+: 1;
 
 
-    edgePainted[pixelIndex] =
-      1;
+referenceContext.drawImage(
+referenceLayer.canvas,
+0,
+0
+);
 
 
-    /*
-      このレイヤーにすでに線がある場合は、
-      線を消さず、その「下」に
-      塗り色がある状態を計算する。
-    */
-
-    const existingAlpha =
-      fillData[
-        offset + 3
-      ] / 255;
+referenceContext.globalAlpha =
+1;
+}
 
 
-    const backgroundRatio =
-      1 - existingAlpha;
+const referenceImageData =
+referenceContext.getImageData(
+0,
+0,
+width,
+height
+);
+
+const referenceData =
+referenceImageData.data;
 
 
-    const nextR =
-      Math.round(
-        fillData[offset] *
-          existingAlpha +
-        fillR *
-          backgroundRatio
-      );
+/*
+実際に色を書き込むのは
+選択中のレイヤーだけ
+*/
+
+const fillImageData =
+fillContext.getImageData(
+0,
+0,
+width,
+height
+);
+
+const fillData =
+fillImageData.data;
 
 
-    const nextG =
-      Math.round(
-        fillData[offset + 1] *
-          existingAlpha +
-        fillG *
-          backgroundRatio
-      );
+const startOffset =
+(
+startY * width +
+startX
+) * 4;
 
 
-    const nextB =
-      Math.round(
-        fillData[offset + 2] *
-          existingAlpha +
-        fillB *
-          backgroundRatio
-      );
+const targetR =
+referenceData[startOffset];
+
+const targetG =
+referenceData[startOffset + 1];
+
+const targetB =
+referenceData[startOffset + 2];
+
+const targetA =
+referenceData[startOffset + 3];
 
 
-    if (
-      fillData[offset] !== nextR ||
-      fillData[offset + 1] !==
-        nextG ||
-      fillData[offset + 2] !==
-        nextB ||
-      fillData[offset + 3] !==
-        255
-    ) {
-
-      changed = true;
-    }
+const [
+fillR,
+fillG,
+fillB,
+fillA
+] =
+hexToRgba(fillColor);
 
 
-    fillData[offset] =
-      nextR;
+function isTarget(offset) {
 
-    fillData[offset + 1] =
-      nextG;
+/*
+透明部分はRGB値に関係なく
+同じ領域として扱う。
 
-    fillData[offset + 2] =
-      nextB;
+アンチエイリアスによる
+薄い半透明ピクセルも
+塗り領域として扱う。
+*/
 
-    fillData[offset + 3] =
-      255;
-  }
+if (targetA <= 64) {
 
-
-  /*
-    flood fillで塗ったすべてのピクセルを
-    基準として、その周囲8方向を調べる。
-
-    斜め線の角にも塗り残しが
-    出ないよう8方向にしている。
-  */
-
-  for (
-    let i = 0;
-    i < tail;
-    i++
-  ) {
-
-    const pixelIndex =
-      queue[i];
+return (
+referenceData[offset + 3] <= 64
+);
+}
 
 
-    const pixelX =
-      pixelIndex % width;
+return (
+referenceData[offset] === targetR &&
+referenceData[offset + 1] === targetG &&
+referenceData[offset + 2] === targetB &&
+referenceData[offset + 3] === targetA
+);
+}
 
 
-    const pixelY =
-      Math.floor(
-        pixelIndex / width
-      );
+const queue =
+new Int32Array(
+width * height
+);
+
+const visited =
+new Uint8Array(
+width * height
+);
+
+let head = 0;
+let tail = 0;
+let changed = false;
 
 
-    for (
-      let offsetY = -1;
-      offsetY <= 1;
-      offsetY++
-    ) {
+function paintAndQueue(
+pixelX,
+pixelY
+) {
 
-      const nextY =
-        pixelY + offsetY;
-
-
-      if (
-        nextY < 0 ||
-        nextY >= height
-      ) {
-        continue;
-      }
+const pixelIndex =
+pixelY * width +
+pixelX;
 
 
-      for (
-        let offsetX = -1;
-        offsetX <= 1;
-        offsetX++
-      ) {
-
-        if (
-          offsetX === 0 &&
-          offsetY === 0
-        ) {
-          continue;
-        }
+if (visited[pixelIndex]) {
+return;
+}
 
 
-        /*
-          360°画像なので
-          左右端はつなげる
-        */
-
-        let nextX =
-          pixelX + offsetX;
+const offset =
+pixelIndex * 4;
 
 
-        if (nextX < 0) {
-
-          nextX =
-            width - 1;
-
-        } else if (
-          nextX >= width
-        ) {
-
-          nextX = 0;
-        }
+if (!isTarget(offset)) {
+return;
+}
 
 
-        const nextIndex =
-          nextY * width +
-          nextX;
+visited[pixelIndex] = 1;
 
 
-        paintUnderEdge(
-          nextIndex
-        );
-      }
-    }
-  }
+if (
+fillData[offset] !== fillR ||
+fillData[offset + 1] !== fillG ||
+fillData[offset + 2] !== fillB ||
+fillData[offset + 3] !== fillA
+) {
+
+changed = true;
+}
+
+
+fillData[offset] =
+fillR;
+
+fillData[offset + 1] =
+fillG;
+
+fillData[offset + 2] =
+fillB;
+
+fillData[offset + 3] =
+fillA;
+
+
+queue[tail] =
+pixelIndex;
+
+tail++;
+}
+
+
+paintAndQueue(
+startX,
+startY
+);
+
+
+while (head < tail) {
+
+const pixelIndex =
+queue[head];
+
+head++;
+
+
+const pixelX =
+pixelIndex % width;
+
+const pixelY =
+Math.floor(
+pixelIndex / width
+);
+
+
+/*
+360°画像なので
+左右端をつなげる
+*/
+
+const leftX =
+pixelX === 0
+? width - 1
+: pixelX - 1;
+
+const rightX =
+pixelX === width - 1
+? 0
+: pixelX + 1;
+
+
+paintAndQueue(
+leftX,
+pixelY
+);
+
+paintAndQueue(
+rightX,
+pixelY
+);
+
+
+if (pixelY > 0) {
+
+paintAndQueue(
+pixelX,
+pixelY - 1
+);
+}
+
+
+if (pixelY < height - 1) {
+
+paintAndQueue(
+pixelX,
+pixelY + 1
+);
+}
+}
+
+
+/*
+塗り残し防止。
+
+flood fillで確定した領域から
+境界方向へ1pxだけ塗りを広げる。
+
+このピクセルは次の探索には使わないため、
+線を越えて反対側まで
+塗りが漏れることはない。
+*/
+
+const edgePainted =
+new Uint8Array(
+width * height
+);
+
+
+function paintUnderEdge(
+pixelIndex
+) {
+
+/*
+本来の塗り領域は
+すでに処理済み
+*/
+
+if (
+visited[pixelIndex] ||
+edgePainted[pixelIndex]
+) {
+return;
+}
+
+
+const offset =
+pixelIndex * 4;
+
+
+/*
+透明部分には広げない。
+
+アンチエイリアスされた線など、
+境界として認識されたピクセルだけを
+対象にする。
+*/
+
+if (
+referenceData[
+offset + 3
+] <= 64
+) {
+return;
+}
+
+
+edgePainted[pixelIndex] =
+1;
+
+
+/*
+このレイヤーにすでに線がある場合は、
+線を消さず、その「下」に
+塗り色がある状態を計算する。
+*/
+
+const existingAlpha =
+fillData[
+offset + 3
+] / 255;
+
+
+const backgroundRatio =
+1 - existingAlpha;
+
+
+const nextR =
+Math.round(
+fillData[offset] *
+existingAlpha +
+fillR *
+backgroundRatio
+);
+
+
+const nextG =
+Math.round(
+fillData[offset + 1] *
+existingAlpha +
+fillG *
+backgroundRatio
+);
+
+
+const nextB =
+Math.round(
+fillData[offset + 2] *
+existingAlpha +
+fillB *
+backgroundRatio
+);
+
+
+if (
+fillData[offset] !== nextR ||
+fillData[offset + 1] !==
+nextG ||
+fillData[offset + 2] !==
+nextB ||
+fillData[offset + 3] !==
+255
+) {
+
+changed = true;
+}
+
+
+fillData[offset] =
+nextR;
+
+fillData[offset + 1] =
+nextG;
+
+fillData[offset + 2] =
+nextB;
+
+fillData[offset + 3] =
+255;
+}
+
+
+/*
+flood fillで塗ったすべてのピクセルを
+基準として、その周囲8方向を調べる。
+
+斜め線の角にも塗り残しが
+出ないよう8方向にしている。
+*/
+
+for (
+let i = 0;
+i < tail;
+i++
+) {
+
+const pixelIndex =
+queue[i];
+
+
+const pixelX =
+pixelIndex % width;
+
+
+const pixelY =
+Math.floor(
+pixelIndex / width
+);
+
+
+for (
+let offsetY = -1;
+offsetY <= 1;
+offsetY++
+) {
+
+const nextY =
+pixelY + offsetY;
+
+
+if (
+nextY < 0 ||
+nextY >= height
+) {
+continue;
+}
+
+
+for (
+let offsetX = -1;
+offsetX <= 1;
+offsetX++
+) {
+
+if (
+offsetX === 0 &&
+offsetY === 0
+) {
+continue;
+}
+
+
+/*
+360°画像なので
+左右端はつなげる
+*/
+
+let nextX =
+pixelX + offsetX;
+
+
+if (nextX < 0) {
+
+nextX =
+width - 1;
+
+} else if (
+nextX >= width
+) {
+
+nextX = 0;
+}
+
+
+const nextIndex =
+nextY * width +
+nextX;
+
+
+paintUnderEdge(
+nextIndex
+);
+}
+}
+}
 
 
 if (!changed) {
-    return false;
-  }
+return false;
+}
 
 
-  /*
-    差分Undo用。
+/*
+差分Undo用。
 
-    flood fillで実際に変更対象となった
-    ピクセル（visited と edgePainted）から
-    変更範囲を求め、
-    putImageDataする前のキャンバス状態を
-    タイル単位で保存する。
-  */
+flood fillで実際に変更対象となった
+ピクセル（visited と edgePainted）から
+変更範囲を求め、
+putImageDataする前のキャンバス状態を
+タイル単位で保存する。
+*/
 
-  if (
-    historyAction &&
-    historyAction.tileDiffs instanceof Map
-  ) {
+if (
+historyAction &&
+historyAction.tileDiffs instanceof Map
+) {
 
-    let minChangedX = width;
-    let minChangedY = height;
+let minChangedX = width;
+let minChangedY = height;
 
-    let maxChangedX = -1;
-    let maxChangedY = -1;
-
-
-    for (
-      let i = 0;
-      i < visited.length;
-      i++
-    ) {
-
-      if (
-        !visited[i] &&
-        !edgePainted[i]
-      ) {
-        continue;
-      }
+let maxChangedX = -1;
+let maxChangedY = -1;
 
 
-      const x =
-        i % width;
+for (
+let i = 0;
+i < visited.length;
+i++
+) {
 
-      const y =
-        Math.floor(i / width);
-
-
-      if (x < minChangedX) {
-        minChangedX = x;
-      }
-
-      if (y < minChangedY) {
-        minChangedY = y;
-      }
-
-      if (x > maxChangedX) {
-        maxChangedX = x;
-      }
-
-      if (y > maxChangedY) {
-        maxChangedY = y;
-      }
-    }
+if (
+!visited[i] &&
+!edgePainted[i]
+) {
+continue;
+}
 
 
-    if (
-      maxChangedX >= 0 &&
-      maxChangedY >= 0
-    ) {
+const x =
+i % width;
 
-      captureStrokeTiles(
-        historyAction,
-        minChangedX,
-        minChangedY,
-        maxChangedX,
-        maxChangedY
-      );
-    }
-  }
+const y =
+Math.floor(i / width);
 
 
-  fillContext.putImageData(
-    fillImageData,
-    0,
-    0
-  );
+if (x < minChangedX) {
+minChangedX = x;
+}
+
+if (y < minChangedY) {
+minChangedY = y;
+}
+
+if (x > maxChangedX) {
+maxChangedX = x;
+}
+
+if (y > maxChangedY) {
+maxChangedY = y;
+}
+}
 
 
-  return true;
+if (
+maxChangedX >= 0 &&
+maxChangedY >= 0
+) {
+
+captureStrokeTiles(
+historyAction,
+minChangedX,
+minChangedY,
+maxChangedX,
+maxChangedY
+);
+}
+}
+
+
+fillContext.putImageData(
+fillImageData,
+0,
+0
+);
+
+
+return true;
 }
 
 /* ================================
-   出力サイズ
+出力サイズ
 ================================ */
 
 canvasSizeSelect.addEventListener(
-  "change",
-  () => {
+"change",
+() => {
 
-    outputWidth =
-      Number(
-        canvasSizeSelect.value
-      );
+outputWidth =
+Number(
+canvasSizeSelect.value
+);
 
-    outputHeight =
-      outputWidth / 2;
-  }
+outputHeight =
+outputWidth / 2;
+}
 );
 
 
 /* ================================
-   目線の高さ
+目線の高さ
 ================================ */
 
 eyeHeightInput.addEventListener(
-  "input",
-  () => {
+"input",
+() => {
 
-    const eyeHeight =
-      Number(
-        eyeHeightInput.value
-      );
+const eyeHeight =
+Number(
+eyeHeightInput.value
+);
 
 camera.position.y =
-      eyeHeight;
+eyeHeight;
 
-    updateGroundGridSize(
-      eyeHeight
-    );
+updateGroundGridSize(
+eyeHeight
+);
 
-    updateHorizontalGuideHeight(
-      eyeHeight
-    );
+updateHorizontalGuideHeight(
+eyeHeight
+);
 
-    eyeHeightValue.value =
-      eyeHeight.toFixed(1);
-  }
+eyeHeightValue.value =
+eyeHeight.toFixed(1);
+}
 );
 
 
 eyeHeightValue.addEventListener(
-  "input",
-  () => {
+"input",
+() => {
 
-    let eyeHeight =
-      Number(
-        eyeHeightValue.value
-      );
-
-
-    if (!Number.isFinite(eyeHeight)) {
-      return;
-    }
+let eyeHeight =
+Number(
+eyeHeightValue.value
+);
 
 
-    eyeHeight =
-      Math.max(
-        0.5,
-        Math.min(
-          30,
-          eyeHeight
-        )
-      );
+if (!Number.isFinite(eyeHeight)) {
+return;
+}
+
+
+eyeHeight =
+Math.max(
+0.5,
+Math.min(
+30,
+eyeHeight
+)
+);
 
 
 camera.position.y =
-      eyeHeight;
+eyeHeight;
 
-    updateGroundGridSize(
-      eyeHeight
-    );
+updateGroundGridSize(
+eyeHeight
+);
 
-    updateHorizontalGuideHeight(
-      eyeHeight
-    );
+updateHorizontalGuideHeight(
+eyeHeight
+);
 
-    eyeHeightInput.value =
-      eyeHeight;
-  }
+eyeHeightInput.value =
+eyeHeight;
+}
 );
 
 /*
-  目線 −
+目線 −
 */
 
 eyeHeightMinus.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    let eyeHeight =
-      Number(
-        eyeHeightInput.value
-      );
+let eyeHeight =
+Number(
+eyeHeightInput.value
+);
 
-    eyeHeight =
-      Math.max(
-        0.5,
-        eyeHeight - 0.1
-      );
+eyeHeight =
+Math.max(
+0.5,
+eyeHeight - 0.1
+);
 
-    eyeHeight =
-      Number(
-        eyeHeight.toFixed(1)
-      );
+eyeHeight =
+Number(
+eyeHeight.toFixed(1)
+);
 
 camera.position.y =
-      eyeHeight;
+eyeHeight;
 
-    updateGroundGridSize(
-      eyeHeight
-    );
+updateGroundGridSize(
+eyeHeight
+);
 
-    updateHorizontalGuideHeight(
-      eyeHeight
-    );
+updateHorizontalGuideHeight(
+eyeHeight
+);
 
-    eyeHeightInput.value =
-      eyeHeight;
+eyeHeightInput.value =
+eyeHeight;
 
-    eyeHeightValue.value =
-      eyeHeight.toFixed(1);
-  }
+eyeHeightValue.value =
+eyeHeight.toFixed(1);
+}
 );
 
 
 /*
-  目線 ＋
+目線 ＋
 */
 
 eyeHeightPlus.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    let eyeHeight =
-      Number(
-        eyeHeightInput.value
-      );
+let eyeHeight =
+Number(
+eyeHeightInput.value
+);
 
-    eyeHeight =
-      Math.min(
-        30,
-        eyeHeight + 0.1
-      );
+eyeHeight =
+Math.min(
+30,
+eyeHeight + 0.1
+);
 
-    eyeHeight =
-      Number(
-        eyeHeight.toFixed(1)
-      );
+eyeHeight =
+Number(
+eyeHeight.toFixed(1)
+);
 
 camera.position.y =
-      eyeHeight;
+eyeHeight;
 
-    updateGroundGridSize(
-      eyeHeight
-    );
+updateGroundGridSize(
+eyeHeight
+);
 
-    updateHorizontalGuideHeight(
-      eyeHeight
-    );
+updateHorizontalGuideHeight(
+eyeHeight
+);
 
-    eyeHeightInput.value =
-      eyeHeight;
+eyeHeightInput.value =
+eyeHeight;
 
-    eyeHeightValue.value =
-      eyeHeight.toFixed(1);
-  }
+eyeHeightValue.value =
+eyeHeight.toFixed(1);
+}
 );
 
 /* ================================
-   ガイド表示
+ガイド表示
 ================================ */
 
 groundToggle.addEventListener(
-  "change",
-  () => {
+"change",
+() => {
 
-    groundGrid.visible =
-      groundToggle.checked;
+groundGrid.visible =
+groundToggle.checked;
 
-    verticalGuides.visible =
-      groundToggle.checked;
+verticalGuides.visible =
+groundToggle.checked;
 
-    horizontalGuides.visible =
-      groundToggle.checked;
-  }
+horizontalGuides.visible =
+groundToggle.checked;
+}
 );
 
 
 
 /* ================================
-   パネル移動
+パネル移動
 ================================ */
 
 function makePanelDraggable(
-  panel
+panel
 ) {
 
-  if (!panel) {
-    return;
-  }
+if (!panel) {
+return;
+}
 
 
-  let isDraggingPanel = false;
+let isDraggingPanel = false;
 
-  let startPointerX = 0;
-  let startPointerY = 0;
+let startPointerX = 0;
+let startPointerY = 0;
 
-  let startPanelLeft = 0;
-  let startPanelTop = 0;
+let startPanelLeft = 0;
+let startPanelTop = 0;
 
 
 panel.addEventListener(
-    "pointerdown",
-    (event) => {
+"pointerdown",
+(event) => {
 
-      /*
-        スマートフォンでは
-        パネルを下部固定にするため
-        ドラッグ移動を無効にする
-      */
-
-      if (
-        window.matchMedia(
-          "(max-width: 700px)"
-        ).matches
-      ) {
-        return;
-      }
-
-
-      /*
-        左クリック以外では
-        移動を開始しない
-      */
-
-      if (event.button !== 0) {
-        return;
-      }
-
-
-      /*
-        ボタンや入力欄などを
-        操作しているときは
-        パネルを移動しない
-      */
+/*
+スマートフォンでは
+パネルを下部固定にするため
+ドラッグ移動を無効にする
+*/
 
 if (
-        event.target.closest(
-          [
-            "button",
-            "input",
-            "select",
-            "textarea",
-            "label",
-            "a",
-            ".pen-color-control",
-            ".recent-colors"
-          ].join(",")
-        )
-      ) {
-
-        return;
-      }
-
-
-      const rect =
-        panel.getBoundingClientRect();
-
-
-      isDraggingPanel = true;
-
-      startPointerX =
-        event.clientX;
-
-      startPointerY =
-        event.clientY;
-
-      startPanelLeft =
-        rect.left;
-
-      startPanelTop =
-        rect.top;
-
-
-      /*
-        右基準で配置されている
-        レイヤーパネルも、
-        ドラッグ開始時に
-        左上基準へ切り替える
-      */
-
-      panel.style.left =
-        `${rect.left}px`;
-
-      panel.style.top =
-        `${rect.top}px`;
-
-      panel.style.right =
-        "auto";
-
-      panel.style.bottom =
-        "auto";
-
-
-      panel.classList.add(
-        "is-dragging"
-      );
-
-
-      document.body.style.userSelect =
-        "none";
-
-
-      event.preventDefault();
-    }
-  );
-
-
-  window.addEventListener(
-    "pointermove",
-    (event) => {
-
-      if (!isDraggingPanel) {
-        return;
-      }
-
-
-      const deltaX =
-        event.clientX -
-        startPointerX;
-
-      const deltaY =
-        event.clientY -
-        startPointerY;
-
-
-      /*
-        画面外へ完全に
-        出てしまわないよう制限
-      */
-
-      const maxLeft =
-        Math.max(
-          0,
-          window.innerWidth -
-          panel.offsetWidth
-        );
-
-
-      /*
-        上部ツールバー48pxを
-        避けるため52pxから下にする
-      */
-
-      const minTop = 52;
-
-      const maxTop =
-        Math.max(
-          minTop,
-          window.innerHeight -
-          panel.offsetHeight
-        );
-
-
-      const nextLeft =
-        Math.max(
-          0,
-          Math.min(
-            maxLeft,
-            startPanelLeft +
-            deltaX
-          )
-        );
-
-
-      const nextTop =
-        Math.max(
-          minTop,
-          Math.min(
-            maxTop,
-            startPanelTop +
-            deltaY
-          )
-        );
-
-
-      panel.style.left =
-        `${nextLeft}px`;
-
-      panel.style.top =
-        `${nextTop}px`;
-    }
-  );
-
-
-  function stopPanelDrag() {
-
-    if (!isDraggingPanel) {
-      return;
-    }
-
-
-    isDraggingPanel = false;
-
-
-    panel.classList.remove(
-      "is-dragging"
-    );
-
-
-    document.body.style.userSelect =
-      "";
-  }
-
-
-  window.addEventListener(
-    "pointerup",
-    stopPanelDrag
-  );
-
-
-  window.addEventListener(
-    "pointercancel",
-    stopPanelDrag
-  );
+window.matchMedia(
+"(max-width: 700px)"
+).matches
+) {
+return;
 }
 
 
 /*
-  左：ツールパネル
+左クリック以外では
+移動を開始しない
 */
 
-makePanelDraggable(
-  document.querySelector(
-    ".drawing-tools"
-  )
+if (event.button !== 0) {
+return;
+}
+
+
+/*
+ボタンや入力欄などを
+操作しているときは
+パネルを移動しない
+*/
+
+if (
+event.target.closest(
+[
+"button",
+"input",
+"select",
+"textarea",
+"label",
+"a",
+".pen-color-control",
+".recent-colors"
+].join(",")
+)
+) {
+
+return;
+}
+
+
+const rect =
+panel.getBoundingClientRect();
+
+
+isDraggingPanel = true;
+
+startPointerX =
+event.clientX;
+
+startPointerY =
+event.clientY;
+
+startPanelLeft =
+rect.left;
+
+startPanelTop =
+rect.top;
+
+
+/*
+右基準で配置されている
+レイヤーパネルも、
+ドラッグ開始時に
+左上基準へ切り替える
+*/
+
+panel.style.left =
+`${rect.left}px`;
+
+panel.style.top =
+`${rect.top}px`;
+
+panel.style.right =
+"auto";
+
+panel.style.bottom =
+"auto";
+
+
+panel.classList.add(
+"is-dragging"
+);
+
+
+document.body.style.userSelect =
+"none";
+
+
+event.preventDefault();
+}
+);
+
+
+window.addEventListener(
+"pointermove",
+(event) => {
+
+if (!isDraggingPanel) {
+return;
+}
+
+
+const deltaX =
+event.clientX -
+startPointerX;
+
+const deltaY =
+event.clientY -
+startPointerY;
+
+
+/*
+画面外へ完全に
+出てしまわないよう制限
+*/
+
+const maxLeft =
+Math.max(
+0,
+window.innerWidth -
+panel.offsetWidth
 );
 
 
 /*
-  右：レイヤーパネル
+上部ツールバー48pxを
+避けるため52pxから下にする
+*/
+
+const minTop = 52;
+
+const maxTop =
+Math.max(
+minTop,
+window.innerHeight -
+panel.offsetHeight
+);
+
+
+const nextLeft =
+Math.max(
+0,
+Math.min(
+maxLeft,
+startPanelLeft +
+deltaX
+)
+);
+
+
+const nextTop =
+Math.max(
+minTop,
+Math.min(
+maxTop,
+startPanelTop +
+deltaY
+)
+);
+
+
+panel.style.left =
+`${nextLeft}px`;
+
+panel.style.top =
+`${nextTop}px`;
+}
+);
+
+
+function stopPanelDrag() {
+
+if (!isDraggingPanel) {
+return;
+}
+
+
+isDraggingPanel = false;
+
+
+panel.classList.remove(
+"is-dragging"
+);
+
+
+document.body.style.userSelect =
+"";
+}
+
+
+window.addEventListener(
+"pointerup",
+stopPanelDrag
+);
+
+
+window.addEventListener(
+"pointercancel",
+stopPanelDrag
+);
+}
+
+
+/*
+左：ツールパネル
 */
 
 makePanelDraggable(
-  document.querySelector(
-    ".layer-panel"
-  )
+document.querySelector(
+".drawing-tools"
+)
+);
+
+
+/*
+右：レイヤーパネル
+*/
+
+makePanelDraggable(
+document.querySelector(
+".layer-panel"
+)
 );
 
 
 /* ================================
-   スマートフォン用
-   下部パネル切り替え
+スマートフォン用
+下部パネル切り替え
 ================================ */
 
 const mobileBottomTabButtons =
-  document.querySelectorAll(
-    ".mobile-bottom-tab"
-  );
+document.querySelectorAll(
+".mobile-bottom-tab"
+);
 
 const drawingToolsPanel =
-  document.querySelector(
-    ".drawing-tools"
-  );
+document.querySelector(
+".drawing-tools"
+);
 
 const layerPanel =
-  document.querySelector(
-    ".layer-panel"
-  );
+document.querySelector(
+".layer-panel"
+);
 
 const settingsPanel =
-  document.querySelector(
-    ".toolbar__tools"
-  );
+document.querySelector(
+".toolbar__tools"
+);
 
 
 function updateMobileViewportSize() {
 
-  /*
-    PCでは通常サイズへ戻す
-  */
+/*
+PCでは通常サイズへ戻す
+*/
 
-  if (
-    !window.matchMedia(
-      "(max-width: 700px)"
-    ).matches
-  ) {
+if (
+!window.matchMedia(
+"(max-width: 700px)"
+).matches
+) {
 
-    viewport.style.height = "";
+viewport.style.height = "";
 
-  } else {
+} else {
 
-    /*
-      現在開いている
-      下部パネルを取得
-    */
+/*
+現在開いている
+下部パネルを取得
+*/
 
-    const openPanel =
-      document.querySelector(
-        ".drawing-tools.is-mobile-open, " +
-        ".layer-panel.is-mobile-open, " +
-        ".toolbar__tools.is-mobile-open"
-      );
-
-
-    const panelHeight =
-      openPanel
-        ? openPanel
-            .getBoundingClientRect()
-            .height
-        : 0;
+const openPanel =
+document.querySelector(
+".drawing-tools.is-mobile-open, " +
+".layer-panel.is-mobile-open, " +
+".toolbar__tools.is-mobile-open"
+);
 
 
-    /*
-      44px = 上部ヘッダー
-      52px = 下部タブ
-
-      下部パネルも差し引いて、
-      実際に見える部分だけを
-      描画エリアにする
-    */
-
-    viewport.style.height =
-      `calc(
-        100dvh -
-        44px -
-        52px -
-        ${panelHeight}px -
-        env(safe-area-inset-bottom)
-      )`;
-  }
+const panelHeight =
+openPanel
+? openPanel
+.getBoundingClientRect()
+.height
+: 0;
 
 
-  /*
-    Three.js側も
-    新しい描画領域サイズへ合わせる
-  */
+/*
+44px = 上部ヘッダー
+52px = 下部タブ
 
-  camera.aspect =
-    viewport.clientWidth /
-    viewport.clientHeight;
+下部パネルも差し引いて、
+実際に見える部分だけを
+描画エリアにする
+*/
+
+viewport.style.height =
+`calc(
+100dvh -
+44px -
+52px -
+${panelHeight}px -
+env(safe-area-inset-bottom)
+)`;
+}
 
 
-  camera.updateProjectionMatrix();
+/*
+Three.js側も
+新しい描画領域サイズへ合わせる
+*/
+
+camera.aspect =
+viewport.clientWidth /
+viewport.clientHeight;
 
 
-  renderer.setSize(
-    viewport.clientWidth,
-    viewport.clientHeight
-  );
+camera.updateProjectionMatrix();
+
+
+renderer.setSize(
+viewport.clientWidth,
+viewport.clientHeight
+);
 }
 
 
 function setMobilePanel(
-  panelName
+panelName
 ) {
 
-  /*
-    描画タブから離れる場合は
-    カラーホイールを閉じる
-  */
+/*
+描画タブから離れる場合は
+カラーホイールを閉じる
+*/
 
-  if (panelName !== "draw") {
+if (panelName !== "draw") {
 
-    closeMobileColorPicker();
-  }
-
-
-  drawingToolsPanel
-    ?.classList
-    .toggle(
-      "is-mobile-open",
-      panelName === "draw"
-    );
-
-
-  layerPanel
-    ?.classList
-    .toggle(
-      "is-mobile-open",
-      panelName === "layer"
-    );
-
-
-  settingsPanel
-    ?.classList
-    .toggle(
-      "is-mobile-open",
-      panelName === "settings"
-    );
-
-
-mobileBottomTabButtons.forEach(
-    (button) => {
-
-      button.classList.toggle(
-        "is-active",
-        button.dataset.mobilePanel ===
-          panelName
-      );
-    }
-  );
-
-
-  /*
-    displayが切り替わったあとに
-    パネルの実際の高さを測る
-  */
-
-  requestAnimationFrame(
-    () => {
-
-      updateMobileViewportSize();
-    }
-  );
+closeMobileColorPicker();
 }
 
 
+drawingToolsPanel
+?.classList
+.toggle(
+"is-mobile-open",
+panelName === "draw"
+);
+
+
+layerPanel
+?.classList
+.toggle(
+"is-mobile-open",
+panelName === "layer"
+);
+
+
+settingsPanel
+?.classList
+.toggle(
+"is-mobile-open",
+panelName === "settings"
+);
+
+
 mobileBottomTabButtons.forEach(
-  (button) => {
+(button) => {
 
-    button.addEventListener(
-      "click",
-      () => {
-
-        setMobilePanel(
-          button.dataset.mobilePanel
-        );
-      }
-    );
-  }
+button.classList.toggle(
+"is-active",
+button.dataset.mobilePanel ===
+panelName
+);
+}
 );
 
 
 /*
-  初期状態では
-  描画パネルを表示する
+displayが切り替わったあとに
+パネルの実際の高さを測る
+*/
+
+requestAnimationFrame(
+() => {
+
+updateMobileViewportSize();
+}
+);
+}
+
+
+mobileBottomTabButtons.forEach(
+(button) => {
+
+button.addEventListener(
+"click",
+() => {
+
+setMobilePanel(
+button.dataset.mobilePanel
+);
+}
+);
+}
+);
+
+
+/*
+初期状態では
+描画パネルを表示する
 */
 
 setMobilePanel(
-  "draw"
+"draw"
 );
 
 
 /* ================================
-   レイヤーUI
+レイヤーUI
 ================================ */
 
 function updateLayerActionButtons() {
 
-  const activeIndex =
-    layers.findIndex(
-      (layer) =>
-        layer.id === activeLayerId
-    );
+const activeIndex =
+layers.findIndex(
+(layer) =>
+layer.id === activeLayerId
+);
 
 
-  layerUpButton.disabled =
-    activeIndex < 0 ||
-    activeIndex ===
-      layers.length - 1;
+layerUpButton.disabled =
+activeIndex < 0 ||
+activeIndex ===
+layers.length - 1;
 
-  layerDownButton.disabled =
-    activeIndex <= 0;
+layerDownButton.disabled =
+activeIndex <= 0;
 
-  deleteLayerButton.disabled =
-    layers.length <= 1;
+deleteLayerButton.disabled =
+layers.length <= 1;
 }
 
 
 /* ================================
-   レイヤー
-   ドラッグ並び替え
+レイヤー
+ドラッグ並び替え
 ================================ */
 
 let layerDragState = null;
 
 
 /*
-  ドロップ位置の表示を消す
+ドロップ位置の表示を消す
 */
 
 function clearLayerDropMarkers() {
 
-  for (
-    const item of
-      layerList.querySelectorAll(
-        ".layer-item"
-      )
-  ) {
+for (
+const item of
+layerList.querySelectorAll(
+".layer-item"
+)
+) {
 
-    item.classList.remove(
-      "is-drop-before",
-      "is-drop-after"
-    );
-  }
+item.classList.remove(
+"is-drop-before",
+"is-drop-after"
+);
+}
 }
 
 
 /*
-  ドラッグ中の
-  ドロップ位置を調べる
+ドラッグ中の
+ドロップ位置を調べる
 */
 
 function updateLayerDragTarget(
-  event
+event
 ) {
 
-  if (!layerDragState) {
-    return;
-  }
-
-
-  /*
-    スマートフォンで
-    リスト端までドラッグした場合は
-    少しずつスクロールする
-  */
-
-  const listRect =
-    layerList.getBoundingClientRect();
-
-
-  if (
-    event.clientY <
-    listRect.top + 28
-  ) {
-
-    layerList.scrollTop -= 12;
-
-  } else if (
-    event.clientY >
-    listRect.bottom - 28
-  ) {
-
-    layerList.scrollTop += 12;
-  }
-
-
-  const element =
-    document.elementFromPoint(
-      event.clientX,
-      event.clientY
-    );
-
-
-  const targetItem =
-    element
-      ?.closest(
-        ".layer-item"
-      );
-
-
-  clearLayerDropMarkers();
-
-
-  layerDragState.targetLayerId =
-    null;
-
-
-  if (
-    !targetItem ||
-    targetItem ===
-      layerDragState.sourceItem
-  ) {
-    return;
-  }
-
-
-  const targetLayerId =
-    Number(
-      targetItem.dataset.layerId
-    );
-
-
-  if (
-    !Number.isFinite(
-      targetLayerId
-    )
-  ) {
-    return;
-  }
-
-
-  const rect =
-    targetItem
-      .getBoundingClientRect();
-
-
-  /*
-    対象レイヤーの上半分なら
-    その上へ。
-
-    下半分なら
-    その下へ配置する。
-  */
-
-  const placeAfter =
-    event.clientY >=
-    rect.top +
-      rect.height / 2;
-
-
-  targetItem.classList.add(
-    placeAfter
-      ? "is-drop-after"
-      : "is-drop-before"
-  );
-
-
-  layerDragState.targetLayerId =
-    targetLayerId;
-
-
-  layerDragState.placeAfter =
-    placeAfter;
+if (!layerDragState) {
+return;
 }
 
 
 /*
-  ドラッグ終了
+スマートフォンで
+リスト端までドラッグした場合は
+少しずつスクロールする
+*/
+
+const listRect =
+layerList.getBoundingClientRect();
+
+
+if (
+event.clientY <
+listRect.top + 28
+) {
+
+layerList.scrollTop -= 12;
+
+} else if (
+event.clientY >
+listRect.bottom - 28
+) {
+
+layerList.scrollTop += 12;
+}
+
+
+const element =
+document.elementFromPoint(
+event.clientX,
+event.clientY
+);
+
+
+const targetItem =
+element
+?.closest(
+".layer-item"
+);
+
+
+clearLayerDropMarkers();
+
+
+layerDragState.targetLayerId =
+null;
+
+
+if (
+!targetItem ||
+targetItem ===
+layerDragState.sourceItem
+) {
+return;
+}
+
+
+const targetLayerId =
+Number(
+targetItem.dataset.layerId
+);
+
+
+if (
+!Number.isFinite(
+targetLayerId
+)
+) {
+return;
+}
+
+
+const rect =
+targetItem
+.getBoundingClientRect();
+
+
+/*
+対象レイヤーの上半分なら
+その上へ。
+
+下半分なら
+その下へ配置する。
+*/
+
+const placeAfter =
+event.clientY >=
+rect.top +
+rect.height / 2;
+
+
+targetItem.classList.add(
+placeAfter
+? "is-drop-after"
+: "is-drop-before"
+);
+
+
+layerDragState.targetLayerId =
+targetLayerId;
+
+
+layerDragState.placeAfter =
+placeAfter;
+}
+
+
+/*
+ドラッグ終了
 */
 
 function finishLayerDrag(
-  commit = true
+commit = true
 ) {
 
-  if (!layerDragState) {
-    return;
-  }
+if (!layerDragState) {
+return;
+}
 
 
-  const {
-    layerId,
-    targetLayerId,
-    placeAfter,
-    sourceItem
-  } =
-    layerDragState;
+const {
+layerId,
+targetLayerId,
+placeAfter,
+sourceItem
+} =
+layerDragState;
 
 
-  sourceItem.classList.remove(
-    "is-layer-dragging"
-  );
+sourceItem.classList.remove(
+"is-layer-dragging"
+);
 
 
-  clearLayerDropMarkers();
+clearLayerDropMarkers();
 
 
-  layerDragState = null;
+layerDragState = null;
 
 
-  if (
-    !commit ||
-    targetLayerId === null ||
-    targetLayerId === layerId
-  ) {
-    return;
-  }
+if (
+!commit ||
+targetLayerId === null ||
+targetLayerId === layerId
+) {
+return;
+}
 
 
-  /*
-    UIと同じ
-    上→下の配列を一時的に作る
-  */
+/*
+UIと同じ
+上→下の配列を一時的に作る
+*/
 
-  const visualLayers =
-    [...layers].reverse();
-
-
-  const draggedIndex =
-    visualLayers.findIndex(
-      (layer) =>
-        layer.id === layerId
-    );
+const visualLayers =
+[...layers].reverse();
 
 
-  if (draggedIndex < 0) {
-    return;
-  }
+const draggedIndex =
+visualLayers.findIndex(
+(layer) =>
+layer.id === layerId
+);
 
 
-  const [
-    draggedLayer
-  ] =
-    visualLayers.splice(
-      draggedIndex,
-      1
-    );
+if (draggedIndex < 0) {
+return;
+}
 
 
-  const targetIndex =
-    visualLayers.findIndex(
-      (layer) =>
-        layer.id ===
-          targetLayerId
-    );
+const [
+draggedLayer
+] =
+visualLayers.splice(
+draggedIndex,
+1
+);
 
 
-  if (targetIndex < 0) {
-    return;
-  }
+const targetIndex =
+visualLayers.findIndex(
+(layer) =>
+layer.id ===
+targetLayerId
+);
 
 
-  const insertIndex =
-    targetIndex +
-    (
-      placeAfter
-        ? 1
-        : 0
-    );
+if (targetIndex < 0) {
+return;
+}
 
 
-  visualLayers.splice(
-    insertIndex,
-    0,
-    draggedLayer
-  );
+const insertIndex =
+targetIndex +
+(
+placeAfter
+? 1
+: 0
+);
 
 
-  /*
-    実際のlayers配列は
-    下→上なので再び反転して戻す
-  */
-
-  layers.splice(
-    0,
-    layers.length,
-    ...visualLayers.reverse()
-  );
+visualLayers.splice(
+insertIndex,
+0,
+draggedLayer
+);
 
 
-  requestPaintUpdate();
+/*
+実際のlayers配列は
+下→上なので再び反転して戻す
+*/
 
-  renderLayerPanel();
+layers.splice(
+0,
+layers.length,
+...visualLayers.reverse()
+);
+
+
+requestPaintUpdate();
+
+renderLayerPanel();
 }
 
 
 function renderLayerPanel() {
 
-  layerList.innerHTML = "";
+layerList.innerHTML = "";
 
-  /*
-    配列は下→上の順なので、
-    UIでは逆順に表示する
-  */
+/*
+配列は下→上の順なので、
+UIでは逆順に表示する
+*/
 
-  for (
-    let i = layers.length - 1;
-    i >= 0;
-    i--
-  ) {
+for (
+let i = layers.length - 1;
+i >= 0;
+i--
+) {
 
-    const layer =
-      layers[i];
+const layer =
+layers[i];
 
-    const item =
-      document.createElement("div");
+const item =
+document.createElement("div");
 
-    item.className =
-      "layer-item";
-
-
-    /*
-      ドラッグ並び替えで
-      対象レイヤーを判別する
-    */
-
-    item.dataset.layerId =
-      String(
-        layer.id
-      );
+item.className =
+"layer-item";
 
 
-    if (
-      layer.id === activeLayerId
-    ) {
+/*
+ドラッグ並び替えで
+対象レイヤーを判別する
+*/
 
-      item.classList.add(
-        "is-active"
-      );
-    }
+item.dataset.layerId =
+String(
+layer.id
+);
 
 
-    const visibilityButton =
-      document.createElement("button");
+if (
+layer.id === activeLayerId
+) {
 
-    visibilityButton.type =
-      "button";
+item.classList.add(
+"is-active"
+);
+}
 
-    visibilityButton.className =
-      "layer-visibility-button";
 
-    visibilityButton.textContent =
-      layer.visible
-        ? "●"
-        : "○";
+const visibilityButton =
+document.createElement("button");
+
+visibilityButton.type =
+"button";
+
+visibilityButton.className =
+"layer-visibility-button";
+
+visibilityButton.textContent =
+layer.visible
+? "●"
+: "○";
 
 visibilityButton.title =
 layer.visible
@@ -7479,43 +7479,43 @@ layer.visible
 : t("showLayer");
 
 
-    visibilityButton.addEventListener(
-      "click",
-      (event) => {
+visibilityButton.addEventListener(
+"click",
+(event) => {
 
-        event.stopPropagation();
+event.stopPropagation();
 
-        layer.visible =
-          !layer.visible;
+layer.visible =
+!layer.visible;
 
-        requestPaintUpdate();
+requestPaintUpdate();
 
-        renderLayerPanel();
-      }
-    );
-
-
-    /*
-      レイヤー並び替え用
-      ドラッグハンドル
-    */
-
-    const dragHandle =
-      document.createElement(
-        "button"
-      );
+renderLayerPanel();
+}
+);
 
 
-    dragHandle.type =
-      "button";
+/*
+レイヤー並び替え用
+ドラッグハンドル
+*/
+
+const dragHandle =
+document.createElement(
+"button"
+);
 
 
-    dragHandle.className =
-      "layer-drag-handle";
+dragHandle.type =
+"button";
 
 
-    dragHandle.textContent =
-      "≡";
+dragHandle.className =
+"layer-drag-handle";
+
+
+dragHandle.textContent =
+"≡";
 
 
 dragHandle.title =
@@ -7528,176 +7528,176 @@ t("dragReorderAria")
 );
 
 
-    dragHandle.addEventListener(
-      "pointerdown",
-      (event) => {
+dragHandle.addEventListener(
+"pointerdown",
+(event) => {
 
-        /*
-          PCでは左クリックだけ
-        */
+/*
+PCでは左クリックだけ
+*/
 
-        if (
-          event.pointerType ===
-            "mouse" &&
-          event.button !== 0
-        ) {
-          return;
-        }
-
-
-        layerDragState = {
-          layerId:
-            layer.id,
-
-          sourceItem:
-            item,
-
-          targetLayerId:
-            null,
-
-          placeAfter:
-            false
-        };
+if (
+event.pointerType ===
+"mouse" &&
+event.button !== 0
+) {
+return;
+}
 
 
-        item.classList.add(
-          "is-layer-dragging"
-        );
+layerDragState = {
+layerId:
+layer.id,
+
+sourceItem:
+item,
+
+targetLayerId:
+null,
+
+placeAfter:
+false
+};
 
 
-        dragHandle
-          .setPointerCapture(
-            event.pointerId
-          );
+item.classList.add(
+"is-layer-dragging"
+);
 
 
-        event.preventDefault();
-
-        event.stopPropagation();
-      }
-    );
-
-
-    dragHandle.addEventListener(
-      "pointermove",
-      (event) => {
-
-        if (!layerDragState) {
-          return;
-        }
+dragHandle
+.setPointerCapture(
+event.pointerId
+);
 
 
-        updateLayerDragTarget(
-          event
-        );
+event.preventDefault();
+
+event.stopPropagation();
+}
+);
 
 
-        event.preventDefault();
+dragHandle.addEventListener(
+"pointermove",
+(event) => {
 
-        event.stopPropagation();
-      }
-    );
-
-
-    dragHandle.addEventListener(
-      "pointerup",
-      (event) => {
-
-        if (!layerDragState) {
-          return;
-        }
+if (!layerDragState) {
+return;
+}
 
 
-        if (
-          dragHandle
-            .hasPointerCapture(
-              event.pointerId
-            )
-        ) {
-
-          dragHandle
-            .releasePointerCapture(
-              event.pointerId
-            );
-        }
+updateLayerDragTarget(
+event
+);
 
 
-        finishLayerDrag(
-          true
-        );
+event.preventDefault();
+
+event.stopPropagation();
+}
+);
 
 
-        event.preventDefault();
+dragHandle.addEventListener(
+"pointerup",
+(event) => {
 
-        event.stopPropagation();
-      }
-    );
-
-
-    dragHandle.addEventListener(
-      "pointercancel",
-      (event) => {
-
-        if (
-          dragHandle
-            .hasPointerCapture(
-              event.pointerId
-            )
-        ) {
-
-          dragHandle
-            .releasePointerCapture(
-              event.pointerId
-            );
-        }
+if (!layerDragState) {
+return;
+}
 
 
-        finishLayerDrag(
-          false
-        );
-      }
-    );
+if (
+dragHandle
+.hasPointerCapture(
+event.pointerId
+)
+) {
+
+dragHandle
+.releasePointerCapture(
+event.pointerId
+);
+}
+
+
+finishLayerDrag(
+true
+);
+
+
+event.preventDefault();
+
+event.stopPropagation();
+}
+);
+
+
+dragHandle.addEventListener(
+"pointercancel",
+(event) => {
+
+if (
+dragHandle
+.hasPointerCapture(
+event.pointerId
+)
+) {
+
+dragHandle
+.releasePointerCapture(
+event.pointerId
+);
+}
+
+
+finishLayerDrag(
+false
+);
+}
+);
 
 
 /*
-      レイヤー名。
+レイヤー名。
 
-      PC：
-      ダブルクリックで編集。
+PC：
+ダブルクリックで編集。
 
-      スマートフォン：
-      長押しで編集。
-    */
+スマートフォン：
+長押しで編集。
+*/
 
-    const nameInput =
-      document.createElement("input");
-
-
-    nameInput.type =
-      "text";
+const nameInput =
+document.createElement("input");
 
 
-    nameInput.className =
-      "layer-name-input";
+nameInput.type =
+"text";
 
 
-    nameInput.value =
-      layer.name;
+nameInput.className =
+"layer-name-input";
 
 
-    nameInput.maxLength =
-      80;
+nameInput.value =
+layer.name;
 
 
-    /*
-      最初は編集不可。
+nameInput.maxLength =
+80;
 
-      1回クリック／タップでは
-      レイヤー選択だけを行う。
-    */
 
-    nameInput.readOnly =
-      true;
+/*
+最初は編集不可。
+
+1回クリック／タップでは
+レイヤー選択だけを行う。
+*/
+
+nameInput.readOnly =
+true;
 
 
 nameInput.title =
@@ -7706,545 +7706,545 @@ isMobileDevice
 : t("editLayerNameDesktop");
 
 
-    /*
-      レイヤー名編集を開始する
-    */
-
-    function startLayerNameEditing() {
-
-      /*
-        readonly状態のinputには
-        すでにフォーカスが当たっている
-        場合がある。
-
-        スマートフォンでキーボードを
-        確実に開き直すため、
-        一度フォーカスを外す。
-      */
-
-      nameInput.blur();
-
-
-      /*
-        編集可能にする
-      */
-
-      nameInput.readOnly =
-        false;
-
-
-      /*
-        pointerup / dblclick の
-        ユーザー操作中に
-        すぐフォーカスし直す。
-
-        遅延処理にはしない。
-      */
-
-      nameInput.focus({
-        preventScroll: true
-      });
-
-
-      /*
-        名前全体を選択する
-      */
-
-      nameInput.setSelectionRange(
-        0,
-        nameInput.value.length
-      );
-    }
-
-
-    /*
-      クリック／タップされた
-      レイヤーを選択する
-    */
-
-    nameInput.addEventListener(
-      "focus",
-      () => {
-
-        if (
-          layer.id !== activeLayerId
-        ) {
-
-          setActiveLayerReference(
-            layer.id
-          );
-
-
-          for (
-            const otherItem of
-            layerList.querySelectorAll(
-              ".layer-item"
-            )
-          ) {
-
-            otherItem.classList.remove(
-              "is-active"
-            );
-          }
-
-
-          item.classList.add(
-            "is-active"
-          );
-
-
-          updateLayerActionButtons();
-        }
-      }
-    );
-
-
-    /*
-      PC：
-      ダブルクリックで編集開始
-    */
-
-    nameInput.addEventListener(
-      "dblclick",
-      (event) => {
-
-        if (isMobileDevice) {
-          return;
-        }
-
-
-        event.preventDefault();
-
-        event.stopPropagation();
-
-
-        startLayerNameEditing();
-      }
-    );
-
-
-    /*
-      ================================
-      スマートフォン：
-      長押しで編集開始
-      ================================
-    */
-
-    let layerNameLongPressTimer =
-      null;
-
-
-    let layerNameLongPressReady =
-      false;
-
-
-    let layerNamePressStartX =
-      0;
-
-
-    let layerNamePressStartY =
-      0;
-
-
-    function cancelLayerNameLongPress() {
-
-      if (
-        layerNameLongPressTimer !==
-        null
-      ) {
-
-        clearTimeout(
-          layerNameLongPressTimer
-        );
-
-
-        layerNameLongPressTimer =
-          null;
-      }
-    }
-
-
-    nameInput.addEventListener(
-      "pointerdown",
-      (event) => {
-
-        if (
-          !isMobileDevice ||
-          !nameInput.readOnly
-        ) {
-          return;
-        }
-
-
-        layerNamePressStartX =
-          event.clientX;
-
-
-        layerNamePressStartY =
-          event.clientY;
-
-
-        layerNameLongPressReady =
-          false;
-
-
-        cancelLayerNameLongPress();
-
-
-        /*
-          約0.55秒で
-          長押しと判定する
-        */
-
-        layerNameLongPressTimer =
-          setTimeout(
-            () => {
-
-              layerNameLongPressReady =
-                true;
-
-
-              layerNameLongPressTimer =
-                null;
-            },
-            550
-          );
-      }
-    );
-
-
-    /*
-      指が大きく動いたら
-      スクロール操作とみなし、
-      長押しをキャンセルする
-    */
-
-    nameInput.addEventListener(
-      "pointermove",
-      (event) => {
-
-        if (
-          !isMobileDevice ||
-          layerNameLongPressTimer ===
-            null
-        ) {
-          return;
-        }
-
-
-        const distance =
-          Math.hypot(
-            event.clientX -
-              layerNamePressStartX,
-
-            event.clientY -
-              layerNamePressStartY
-          );
-
-
-        if (distance > 10) {
-
-          cancelLayerNameLongPress();
-
-          layerNameLongPressReady =
-            false;
-        }
-      }
-    );
-
-
-    /*
-      長押し後に指を離したら
-      編集状態へ切り替える
-    */
-
-    nameInput.addEventListener(
-      "pointerup",
-      (event) => {
-
-        if (!isMobileDevice) {
-          return;
-        }
-
-
-        cancelLayerNameLongPress();
-
-
-        if (
-          !layerNameLongPressReady
-        ) {
-          return;
-        }
-
-
-        layerNameLongPressReady =
-          false;
-
-
-        /*
-          キーボード表示のため、
-          preventDefaultは行わない。
-
-          このpointerupイベント中に
-          編集状態へ切り替える。
-        */
-
-        startLayerNameEditing();
-
-
-        event.stopPropagation();
-      }
-    );
-
-
-    nameInput.addEventListener(
-      "pointercancel",
-      () => {
-
-        cancelLayerNameLongPress();
-
-        layerNameLongPressReady =
-          false;
-      }
-    );
-
-
-    /*
-      名前を確定
-    */
-
-    nameInput.addEventListener(
-      "change",
-      () => {
-
-        const newName =
-          nameInput.value.trim();
-
-
-        if (newName) {
-
-          layer.name =
-            newName;
-
-
-          nameInput.value =
-            layer.name;
-
-        } else {
-
-          nameInput.value =
-            layer.name;
-        }
-      }
-    );
-
-
-    /*
-      Enterで確定
-    */
-
-    nameInput.addEventListener(
-      "keydown",
-      (event) => {
-
-        if (
-          event.key === "Enter" &&
-          !event.isComposing
-        ) {
-
-          nameInput.blur();
-        }
-
-
-        /*
-          Escなら変更前へ戻す
-        */
-
-        if (
-          event.key === "Escape"
-        ) {
-
-          nameInput.value =
-            layer.name;
-
-
-          nameInput.blur();
-        }
-      }
-    );
-
-
-    /*
-      編集終了後は
-      再び読み取り専用へ戻す
-    */
-
-    nameInput.addEventListener(
-      "blur",
-      () => {
-
-        nameInput.readOnly =
-          true;
-      }
-    );
+/*
+レイヤー名編集を開始する
+*/
+
+function startLayerNameEditing() {
+
+/*
+readonly状態のinputには
+すでにフォーカスが当たっている
+場合がある。
+
+スマートフォンでキーボードを
+確実に開き直すため、
+一度フォーカスを外す。
+*/
+
+nameInput.blur();
 
 
 /*
-      不透明度
-    */
+編集可能にする
+*/
 
-    const opacityControl =
-      document.createElement("div");
-
-    opacityControl.className =
-      "layer-opacity-control";
+nameInput.readOnly =
+false;
 
 
-    const opacityHeader =
-      document.createElement("div");
+/*
+pointerup / dblclick の
+ユーザー操作中に
+すぐフォーカスし直す。
 
-    opacityHeader.className =
-      "layer-opacity-header";
+遅延処理にはしない。
+*/
+
+nameInput.focus({
+preventScroll: true
+});
 
 
-    const opacityLabel =
-      document.createElement("span");
+/*
+名前全体を選択する
+*/
+
+nameInput.setSelectionRange(
+0,
+nameInput.value.length
+);
+}
+
+
+/*
+クリック／タップされた
+レイヤーを選択する
+*/
+
+nameInput.addEventListener(
+"focus",
+() => {
+
+if (
+layer.id !== activeLayerId
+) {
+
+setActiveLayerReference(
+layer.id
+);
+
+
+for (
+const otherItem of
+layerList.querySelectorAll(
+".layer-item"
+)
+) {
+
+otherItem.classList.remove(
+"is-active"
+);
+}
+
+
+item.classList.add(
+"is-active"
+);
+
+
+updateLayerActionButtons();
+}
+}
+);
+
+
+/*
+PC：
+ダブルクリックで編集開始
+*/
+
+nameInput.addEventListener(
+"dblclick",
+(event) => {
+
+if (isMobileDevice) {
+return;
+}
+
+
+event.preventDefault();
+
+event.stopPropagation();
+
+
+startLayerNameEditing();
+}
+);
+
+
+/*
+================================
+スマートフォン：
+長押しで編集開始
+================================
+*/
+
+let layerNameLongPressTimer =
+null;
+
+
+let layerNameLongPressReady =
+false;
+
+
+let layerNamePressStartX =
+0;
+
+
+let layerNamePressStartY =
+0;
+
+
+function cancelLayerNameLongPress() {
+
+if (
+layerNameLongPressTimer !==
+null
+) {
+
+clearTimeout(
+layerNameLongPressTimer
+);
+
+
+layerNameLongPressTimer =
+null;
+}
+}
+
+
+nameInput.addEventListener(
+"pointerdown",
+(event) => {
+
+if (
+!isMobileDevice ||
+!nameInput.readOnly
+) {
+return;
+}
+
+
+layerNamePressStartX =
+event.clientX;
+
+
+layerNamePressStartY =
+event.clientY;
+
+
+layerNameLongPressReady =
+false;
+
+
+cancelLayerNameLongPress();
+
+
+/*
+約0.55秒で
+長押しと判定する
+*/
+
+layerNameLongPressTimer =
+setTimeout(
+() => {
+
+layerNameLongPressReady =
+true;
+
+
+layerNameLongPressTimer =
+null;
+},
+550
+);
+}
+);
+
+
+/*
+指が大きく動いたら
+スクロール操作とみなし、
+長押しをキャンセルする
+*/
+
+nameInput.addEventListener(
+"pointermove",
+(event) => {
+
+if (
+!isMobileDevice ||
+layerNameLongPressTimer ===
+null
+) {
+return;
+}
+
+
+const distance =
+Math.hypot(
+event.clientX -
+layerNamePressStartX,
+
+event.clientY -
+layerNamePressStartY
+);
+
+
+if (distance > 10) {
+
+cancelLayerNameLongPress();
+
+layerNameLongPressReady =
+false;
+}
+}
+);
+
+
+/*
+長押し後に指を離したら
+編集状態へ切り替える
+*/
+
+nameInput.addEventListener(
+"pointerup",
+(event) => {
+
+if (!isMobileDevice) {
+return;
+}
+
+
+cancelLayerNameLongPress();
+
+
+if (
+!layerNameLongPressReady
+) {
+return;
+}
+
+
+layerNameLongPressReady =
+false;
+
+
+/*
+キーボード表示のため、
+preventDefaultは行わない。
+
+このpointerupイベント中に
+編集状態へ切り替える。
+*/
+
+startLayerNameEditing();
+
+
+event.stopPropagation();
+}
+);
+
+
+nameInput.addEventListener(
+"pointercancel",
+() => {
+
+cancelLayerNameLongPress();
+
+layerNameLongPressReady =
+false;
+}
+);
+
+
+/*
+名前を確定
+*/
+
+nameInput.addEventListener(
+"change",
+() => {
+
+const newName =
+nameInput.value.trim();
+
+
+if (newName) {
+
+layer.name =
+newName;
+
+
+nameInput.value =
+layer.name;
+
+} else {
+
+nameInput.value =
+layer.name;
+}
+}
+);
+
+
+/*
+Enterで確定
+*/
+
+nameInput.addEventListener(
+"keydown",
+(event) => {
+
+if (
+event.key === "Enter" &&
+!event.isComposing
+) {
+
+nameInput.blur();
+}
+
+
+/*
+Escなら変更前へ戻す
+*/
+
+if (
+event.key === "Escape"
+) {
+
+nameInput.value =
+layer.name;
+
+
+nameInput.blur();
+}
+}
+);
+
+
+/*
+編集終了後は
+再び読み取り専用へ戻す
+*/
+
+nameInput.addEventListener(
+"blur",
+() => {
+
+nameInput.readOnly =
+true;
+}
+);
+
+
+/*
+不透明度
+*/
+
+const opacityControl =
+document.createElement("div");
+
+opacityControl.className =
+"layer-opacity-control";
+
+
+const opacityHeader =
+document.createElement("div");
+
+opacityHeader.className =
+"layer-opacity-header";
+
+
+const opacityLabel =
+document.createElement("span");
 
 opacityLabel.textContent =
 t("opacity");
 
 
-    const opacityValue =
-      document.createElement("span");
+const opacityValue =
+document.createElement("span");
 
-    opacityValue.textContent =
-      `${Math.round(
-        (
-          typeof layer.opacity ===
-            "number"
-            ? layer.opacity
-            : 1
-        ) * 100
-      )}%`;
-
-
-    opacityHeader.appendChild(
-      opacityLabel
-    );
-
-    opacityHeader.appendChild(
-      opacityValue
-    );
+opacityValue.textContent =
+`${Math.round(
+(
+typeof layer.opacity ===
+"number"
+? layer.opacity
+: 1
+) * 100
+)}%`;
 
 
-    const opacityInput =
-      document.createElement("input");
+opacityHeader.appendChild(
+opacityLabel
+);
 
-    opacityInput.type =
-      "range";
-
-    opacityInput.min =
-      "0";
-
-    opacityInput.max =
-      "100";
-
-    opacityInput.step =
-      "1";
-
-    opacityInput.value =
-      String(
-        Math.round(
-          (
-            typeof layer.opacity ===
-              "number"
-              ? layer.opacity
-              : 1
-          ) * 100
-        )
-      );
+opacityHeader.appendChild(
+opacityValue
+);
 
 
-    opacityInput.addEventListener(
-      "input",
-      () => {
+const opacityInput =
+document.createElement("input");
 
-        const value =
-          Number(
-            opacityInput.value
-          );
+opacityInput.type =
+"range";
 
+opacityInput.min =
+"0";
 
-        layer.opacity =
-          Math.max(
-            0,
-            Math.min(
-              1,
-              value / 100
-            )
-          );
+opacityInput.max =
+"100";
 
+opacityInput.step =
+"1";
 
-        opacityValue.textContent =
-          `${Math.round(
-            layer.opacity * 100
-          )}%`;
-
-
-        requestPaintUpdate();
-      }
-    );
+opacityInput.value =
+String(
+Math.round(
+(
+typeof layer.opacity ===
+"number"
+? layer.opacity
+: 1
+) * 100
+)
+);
 
 
-    opacityControl.appendChild(
-      opacityHeader
-    );
+opacityInput.addEventListener(
+"input",
+() => {
 
-    opacityControl.appendChild(
-      opacityInput
-    );
-
-
-    item.appendChild(
-      visibilityButton
-    );
+const value =
+Number(
+opacityInput.value
+);
 
 
-    item.appendChild(
-      nameInput
-    );
+layer.opacity =
+Math.max(
+0,
+Math.min(
+1,
+value / 100
+)
+);
 
 
-    item.appendChild(
-      dragHandle
-    );
+opacityValue.textContent =
+`${Math.round(
+layer.opacity * 100
+)}%`;
 
 
-    item.appendChild(
-      opacityControl
-    );
-
-    layerList.appendChild(
-      item
-    );
-  }
+requestPaintUpdate();
+}
+);
 
 
-  updateLayerActionButtons();
+opacityControl.appendChild(
+opacityHeader
+);
+
+opacityControl.appendChild(
+opacityInput
+);
+
+
+item.appendChild(
+visibilityButton
+);
+
+
+item.appendChild(
+nameInput
+);
+
+
+item.appendChild(
+dragHandle
+);
+
+
+item.appendChild(
+opacityControl
+);
+
+layerList.appendChild(
+item
+);
+}
+
+
+updateLayerActionButtons();
 }
 
 
 function addLayer() {
 
-  const previousActiveLayerId =
-    activeLayerId;
+const previousActiveLayerId =
+activeLayerId;
 
 
-  const {
-    canvas,
-    context
-  } =
-    createLayerCanvas();
+const {
+canvas,
+context
+} =
+createLayerCanvas();
 
 
 const layer = {
@@ -8254,188 +8254,188 @@ getDefaultLayerName(
 nextLayerNumber
 ),
 canvas,
-    context,
-    visible: true,
-    opacity: 1
-  };
+context,
+visible: true,
+opacity: 1
+};
 
 
-  nextLayerId++;
-  nextLayerNumber++;
+nextLayerId++;
+nextLayerNumber++;
 
 
-  const index =
-    layers.length;
+const index =
+layers.length;
 
 
-  layers.push(
-    layer
-  );
+layers.push(
+layer
+);
 
 
-  /*
-    レイヤー追加もUndo対象にする
-  */
+/*
+レイヤー追加もUndo対象にする
+*/
 
-  redoStrokeHistory.length = 0;
+redoStrokeHistory.length = 0;
 
-  strokeHistory.push({
-    historyType: "layer-add",
-    layer,
-    index,
-    previousActiveLayerId
-  });
+strokeHistory.push({
+historyType: "layer-add",
+layer,
+index,
+previousActiveLayerId
+});
 
 
-  setActiveLayer(
-    layer.id
-  );
+setActiveLayer(
+layer.id
+);
 
-  requestPaintUpdate();
+requestPaintUpdate();
 }
 
 
 function deleteActiveLayer() {
 
-  if (layers.length <= 1) {
-    return;
-  }
+if (layers.length <= 1) {
+return;
+}
 
 
-  const index =
-    layers.findIndex(
-      (layer) =>
-        layer.id === activeLayerId
-    );
+const index =
+layers.findIndex(
+(layer) =>
+layer.id === activeLayerId
+);
 
-  if (index < 0) {
-    return;
-  }
-
-
-  const deletedLayer =
-    layers[index];
+if (index < 0) {
+return;
+}
 
 
-  layers.splice(
-    index,
-    1
-  );
+const deletedLayer =
+layers[index];
 
 
-  if (
-    currentStroke &&
-    currentStroke.layerId ===
-      deletedLayer.id
-  ) {
-
-    currentStroke = null;
-    isDrawing = false;
-  }
+layers.splice(
+index,
+1
+);
 
 
-  const nextIndex =
-    Math.min(
-      index,
-      layers.length - 1
-    );
+if (
+currentStroke &&
+currentStroke.layerId ===
+deletedLayer.id
+) {
 
-  const nextActiveLayerId =
-    layers[nextIndex].id;
-
-
-  /*
-    レイヤー削除もUndo対象にする。
-    削除したレイヤー本体を履歴へ保持するので、
-    描画内容と名前もそのまま復元できる。
-  */
-
-  redoStrokeHistory.length = 0;
-
-  strokeHistory.push({
-    historyType: "layer-delete",
-    layer: deletedLayer,
-    index,
-    nextActiveLayerId
-  });
+currentStroke = null;
+isDrawing = false;
+}
 
 
-  setActiveLayer(
-    nextActiveLayerId
-  );
+const nextIndex =
+Math.min(
+index,
+layers.length - 1
+);
 
-  requestPaintUpdate();
+const nextActiveLayerId =
+layers[nextIndex].id;
+
+
+/*
+レイヤー削除もUndo対象にする。
+削除したレイヤー本体を履歴へ保持するので、
+描画内容と名前もそのまま復元できる。
+*/
+
+redoStrokeHistory.length = 0;
+
+strokeHistory.push({
+historyType: "layer-delete",
+layer: deletedLayer,
+index,
+nextActiveLayerId
+});
+
+
+setActiveLayer(
+nextActiveLayerId
+);
+
+requestPaintUpdate();
 }
 
 
 function moveActiveLayer(
-  direction
+direction
 ) {
 
-  const index =
-    layers.findIndex(
-      (layer) =>
-        layer.id === activeLayerId
-    );
+const index =
+layers.findIndex(
+(layer) =>
+layer.id === activeLayerId
+);
 
-  if (index < 0) {
-    return;
-  }
-
-
-  const targetIndex =
-    index + direction;
+if (index < 0) {
+return;
+}
 
 
-  if (
-    targetIndex < 0 ||
-    targetIndex >= layers.length
-  ) {
-
-    return;
-  }
+const targetIndex =
+index + direction;
 
 
-  const temp =
-    layers[index];
+if (
+targetIndex < 0 ||
+targetIndex >= layers.length
+) {
 
-  layers[index] =
-    layers[targetIndex];
-
-  layers[targetIndex] =
-    temp;
+return;
+}
 
 
-  requestPaintUpdate();
+const temp =
+layers[index];
 
-  renderLayerPanel();
+layers[index] =
+layers[targetIndex];
+
+layers[targetIndex] =
+temp;
+
+
+requestPaintUpdate();
+
+renderLayerPanel();
 }
 
 
 addLayerButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    addLayer();
-  }
+addLayer();
+}
 );
 
 
 deleteLayerButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    deleteActiveLayer();
-  }
+deleteActiveLayer();
+}
 );
 
 
 layerUpButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    moveActiveLayer(1);
-  }
+moveActiveLayer(1);
+}
 );
 
 
@@ -9326,11 +9326,11 @@ helpButton.click();
 
 
 /* ================================
-   ツール切り替え
+ツール切り替え
 ================================ */
 
 function selectDrawingTool(
-  tool
+tool
 ) {
 
 if (
@@ -9344,24 +9344,24 @@ return;
 }
 
 
-  currentTool = tool;
+currentTool = tool;
 
 
-  /*
-    ペン・消しゴムでは
-    それぞれ保存してある太さを復元する
-  */
+/*
+ペン・消しゴムでは
+それぞれ保存してある太さを復元する
+*/
 
-  if (tool === "pen") {
+if (tool === "pen") {
 
-    penSize =
-      savedPenSize;
+penSize =
+savedPenSize;
 
-  } else if (tool === "eraser") {
+} else if (tool === "eraser") {
 
-    penSize =
-      savedEraserSize;
-  }
+penSize =
+savedEraserSize;
+}
 
 
 if (
@@ -9395,20 +9395,20 @@ renderer.domElement.style.cursor =
 }
 
 
-  penToolButton.classList.toggle(
-    "is-active",
-    tool === "pen"
-  );
+penToolButton.classList.toggle(
+"is-active",
+tool === "pen"
+);
 
-  eraserToolButton.classList.toggle(
-    "is-active",
-    tool === "eraser"
-  );
+eraserToolButton.classList.toggle(
+"is-active",
+tool === "eraser"
+);
 
-  bucketToolButton.classList.toggle(
-    "is-active",
-    tool === "bucket"
-  );
+bucketToolButton.classList.toggle(
+"is-active",
+tool === "bucket"
+);
 
 eyedropperToolButton.classList.toggle(
 "is-active",
@@ -9423,35 +9423,35 @@ tool === "look"
 
 
 penToolButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    selectDrawingTool(
-      "pen"
-    );
-  }
+selectDrawingTool(
+"pen"
+);
+}
 );
 
 
 eraserToolButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    selectDrawingTool(
-      "eraser"
-    );
-  }
+selectDrawingTool(
+"eraser"
+);
+}
 );
 
 
 bucketToolButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    selectDrawingTool(
-      "bucket"
-    );
-  }
+selectDrawingTool(
+"bucket"
+);
+}
 );
 
 
@@ -9481,969 +9481,969 @@ selectDrawingTool(
 
 
 /* ================================
-   ストローク再描画
+ストローク再描画
 ================================ */
 
 function drawStroke(stroke) {
 
-  if (
-    !stroke ||
-    stroke.historyType
-  ) {
-    return;
-  }
+if (
+!stroke ||
+stroke.historyType
+) {
+return;
+}
 
 
-  const layer =
-    getLayerById(
-      stroke.layerId
-    );
+const layer =
+getLayerById(
+stroke.layerId
+);
 
 
-  /*
-    削除中のレイヤーに属する
-    描画履歴は再描画しない
-  */
+/*
+削除中のレイヤーに属する
+描画履歴は再描画しない
+*/
 
-  if (!layer) {
-    return;
-  }
+if (!layer) {
+return;
+}
 
 
-  const targetCanvas =
-    layer.canvas;
+const targetCanvas =
+layer.canvas;
 
-  const targetContext =
-    layer.context;
+const targetContext =
+layer.context;
 
 
-  /*
-    バケツ塗りを再現
-  */
+/*
+バケツ塗りを再現
+*/
 
-  if (stroke.tool === "bucket") {
+if (stroke.tool === "bucket") {
 
-    floodFill(
-      stroke.x,
-      stroke.y,
-      stroke.color,
-      layer.id
-    );
+floodFill(
+stroke.x,
+stroke.y,
+stroke.color,
+layer.id
+);
 
-    return;
-  }
+return;
+}
 
 
-  if (
-    !stroke.points ||
-    stroke.points.length === 0
-  ) {
-    return;
-  }
+if (
+!stroke.points ||
+stroke.points.length === 0
+) {
+return;
+}
 
 
-  /*
-    ペン／消しゴム設定
-  */
+/*
+ペン／消しゴム設定
+*/
 
-  if (stroke.tool === "eraser") {
+if (stroke.tool === "eraser") {
 
-    targetContext.globalCompositeOperation =
-      "destination-out";
+targetContext.globalCompositeOperation =
+"destination-out";
 
-  } else {
+} else {
 
-    targetContext.globalCompositeOperation =
-      "source-over";
-  }
+targetContext.globalCompositeOperation =
+"source-over";
+}
 
 
-  targetContext.strokeStyle =
-    stroke.color;
+targetContext.strokeStyle =
+stroke.color;
 
-  targetContext.fillStyle =
-    stroke.color;
+targetContext.fillStyle =
+stroke.color;
 
-  targetContext.lineWidth =
-    stroke.size;
+targetContext.lineWidth =
+stroke.size;
 
-  targetContext.lineCap =
-    "round";
+targetContext.lineCap =
+"round";
 
-  targetContext.lineJoin =
-    "round";
+targetContext.lineJoin =
+"round";
 
 
-  /*
-    最初の一点
-  */
+/*
+最初の一点
+*/
 
-  const firstPoint =
-    stroke.points[0];
+const firstPoint =
+stroke.points[0];
 
-  targetContext.beginPath();
+targetContext.beginPath();
 
-  targetContext.arc(
-    firstPoint.x,
-    firstPoint.y,
-    (
-      stroke.size *
-      drawScale
-    ) / 2,
-    0,
-    Math.PI * 2
-  );
+targetContext.arc(
+firstPoint.x,
+firstPoint.y,
+(
+stroke.size *
+drawScale
+) / 2,
+0,
+Math.PI * 2
+);
 
-  targetContext.fill();
+targetContext.fill();
 
 
-  /*
-    1点しかない場合は終了
-  */
+/*
+1点しかない場合は終了
+*/
 
-  if (stroke.points.length === 1) {
-    return;
-  }
+if (stroke.points.length === 1) {
+return;
+}
 
 
-  /*
-    曲線を再描画
-  */
+/*
+曲線を再描画
+*/
 
-  let previousX =
-    firstPoint.x;
+let previousX =
+firstPoint.x;
 
-  let previousY =
-    firstPoint.y;
+let previousY =
+firstPoint.y;
 
-  let previousMidX =
-    firstPoint.x;
+let previousMidX =
+firstPoint.x;
 
-  let previousMidY =
-    firstPoint.y;
+let previousMidY =
+firstPoint.y;
 
 
-  for (
-    let i = 1;
-    i < stroke.points.length;
-    i++
-  ) {
+for (
+let i = 1;
+i < stroke.points.length;
+i++
+) {
 
-    const point =
-      stroke.points[i];
+const point =
+stroke.points[i];
 
-    let adjustedX =
-      point.x;
+let adjustedX =
+point.x;
 
-    const deltaX =
-      adjustedX - previousX;
+const deltaX =
+adjustedX - previousX;
 
 
-    /*
-      360°の継ぎ目を補正
-    */
+/*
+360°の継ぎ目を補正
+*/
 
-    if (
-      deltaX <
-      -targetCanvas.width / 2
-    ) {
+if (
+deltaX <
+-targetCanvas.width / 2
+) {
 
-      adjustedX +=
-        targetCanvas.width;
+adjustedX +=
+targetCanvas.width;
 
-    } else if (
-      deltaX >
-      targetCanvas.width / 2
-    ) {
+} else if (
+deltaX >
+targetCanvas.width / 2
+) {
 
-      adjustedX -=
-        targetCanvas.width;
-    }
+adjustedX -=
+targetCanvas.width;
+}
 
 
-    const midX =
-      (
-        previousX +
-        adjustedX
-      ) / 2;
+const midX =
+(
+previousX +
+adjustedX
+) / 2;
 
-    const midY =
-      (
-        previousY +
-        point.y
-      ) / 2;
+const midY =
+(
+previousY +
+point.y
+) / 2;
 
 
-    /*
-      通常位置
-    */
+/*
+通常位置
+*/
 
-    targetContext.beginPath();
+targetContext.beginPath();
 
-    targetContext.moveTo(
-      previousMidX,
-      previousMidY
-    );
+targetContext.moveTo(
+previousMidX,
+previousMidY
+);
 
-    targetContext.quadraticCurveTo(
-      previousX,
-      previousY,
-      midX,
-      midY
-    );
+targetContext.quadraticCurveTo(
+previousX,
+previousY,
+midX,
+midY
+);
 
-    targetContext.stroke();
+targetContext.stroke();
 
 
-    /*
-      左側コピー
-    */
+/*
+左側コピー
+*/
 
-    targetContext.beginPath();
+targetContext.beginPath();
 
-    targetContext.moveTo(
-      previousMidX -
-        targetCanvas.width,
-      previousMidY
-    );
+targetContext.moveTo(
+previousMidX -
+targetCanvas.width,
+previousMidY
+);
 
-    targetContext.quadraticCurveTo(
-      previousX -
-        targetCanvas.width,
-      previousY,
-      midX -
-        targetCanvas.width,
-      midY
-    );
+targetContext.quadraticCurveTo(
+previousX -
+targetCanvas.width,
+previousY,
+midX -
+targetCanvas.width,
+midY
+);
 
-    targetContext.stroke();
+targetContext.stroke();
 
 
-    /*
-      右側コピー
-    */
+/*
+右側コピー
+*/
 
-    targetContext.beginPath();
+targetContext.beginPath();
 
-    targetContext.moveTo(
-      previousMidX +
-        targetCanvas.width,
-      previousMidY
-    );
+targetContext.moveTo(
+previousMidX +
+targetCanvas.width,
+previousMidY
+);
 
-    targetContext.quadraticCurveTo(
-      previousX +
-        targetCanvas.width,
-      previousY,
-      midX +
-        targetCanvas.width,
-      midY
-    );
+targetContext.quadraticCurveTo(
+previousX +
+targetCanvas.width,
+previousY,
+midX +
+targetCanvas.width,
+midY
+);
 
-    targetContext.stroke();
+targetContext.stroke();
 
 
-    previousMidX =
-      midX;
+previousMidX =
+midX;
 
-    previousMidY =
-      midY;
+previousMidY =
+midY;
 
-    previousX =
-      adjustedX;
+previousX =
+adjustedX;
 
-    previousY =
-      point.y;
+previousY =
+point.y;
 
 
-    /*
-      座標をCanvas範囲へ戻す
-    */
+/*
+座標をCanvas範囲へ戻す
+*/
 
-    if (previousX < 0) {
+if (previousX < 0) {
 
-      previousX +=
-        targetCanvas.width;
+previousX +=
+targetCanvas.width;
 
-      previousMidX +=
-        targetCanvas.width;
+previousMidX +=
+targetCanvas.width;
 
-    } else if (
-      previousX >=
-      targetCanvas.width
-    ) {
+} else if (
+previousX >=
+targetCanvas.width
+) {
 
-      previousX -=
-        targetCanvas.width;
+previousX -=
+targetCanvas.width;
 
-      previousMidX -=
-        targetCanvas.width;
-    }
-  }
+previousMidX -=
+targetCanvas.width;
+}
+}
 }
 
 
 /* ================================
-   描画レイヤーを再構築
+描画レイヤーを再構築
 ================================ */
 
 function rebuildDrawing() {
 
-  /*
-    すべての描画レイヤーを空にする
-  */
+/*
+すべての描画レイヤーを空にする
+*/
 
-  for (const layer of layers) {
+for (const layer of layers) {
 
-    layer.context.clearRect(
-      0,
-      0,
-      layer.canvas.width,
-      layer.canvas.height
-    );
-
-
-    /*
-      読み込み時の基準画像があれば、
-      まずそれを復元する
-    */
-
-    if (layer.baseCanvas) {
-
-      layer.context.drawImage(
-        layer.baseCanvas,
-        0,
-        0
-      );
-    }
-  }
+layer.context.clearRect(
+0,
+0,
+layer.canvas.width,
+layer.canvas.height
+);
 
 
-  /*
-    読み込み後に行った操作だけを
-    最初から順番に再描画する
-  */
+/*
+読み込み時の基準画像があれば、
+まずそれを復元する
+*/
 
-  for (
-    const stroke of strokeHistory
-  ) {
+if (layer.baseCanvas) {
 
-    drawStroke(stroke);
-  }
+layer.context.drawImage(
+layer.baseCanvas,
+0,
+0
+);
+}
+}
 
 
-  /*
-    球体へ反映
-  */
+/*
+読み込み後に行った操作だけを
+最初から順番に再描画する
+*/
 
-  updatePaintCanvas();
+for (
+const stroke of strokeHistory
+) {
+
+drawStroke(stroke);
+}
+
+
+/*
+球体へ反映
+*/
+
+updatePaintCanvas();
 }
 
 
 /* ================================
-   Undo
+Undo
 ================================ */
 
 function undo() {
 
-  if (strokeHistory.length === 0) {
-    return;
-  }
+if (strokeHistory.length === 0) {
+return;
+}
 
 
-  const action =
-    strokeHistory.pop();
+const action =
+strokeHistory.pop();
 
 
 redoStrokeHistory.push(
-    action
-  );
+action
+);
 
 
-  /*
-    新方式で記録された
-    ペン／消しゴムの場合は、
-    全履歴を再描画せず
-    変更タイルだけを戻す
-  */
+/*
+新方式で記録された
+ペン／消しゴムの場合は、
+全履歴を再描画せず
+変更タイルだけを戻す
+*/
 
-  if (
-    action.tileDiffs instanceof Map &&
-    action.tileDiffs.size > 0
-  ) {
+if (
+action.tileDiffs instanceof Map &&
+action.tileDiffs.size > 0
+) {
 
-    swapStrokeTiles(
-      action
-    );
+swapStrokeTiles(
+action
+);
 
-    requestPaintUpdate();
+requestPaintUpdate();
 
-    return;
-  }
-
-
-  /*
-    レイヤー追加を取り消す
-  */
-
-  if (
-    action.historyType ===
-      "layer-add"
-  ) {
-
-    const index =
-      layers.findIndex(
-        (layer) =>
-          layer.id ===
-            action.layer.id
-      );
+return;
+}
 
 
-    if (index >= 0) {
+/*
+レイヤー追加を取り消す
+*/
 
-      layers.splice(
-        index,
-        1
-      );
-    }
+if (
+action.historyType ===
+"layer-add"
+) {
 
-
-    let restoreLayerId =
-      action.previousActiveLayerId;
-
-
-    if (
-      !getLayerById(
-        restoreLayerId
-      )
-    ) {
-
-      restoreLayerId =
-        layers.length > 0
-          ? layers[
-              layers.length - 1
-            ].id
-          : null;
-    }
+const index =
+layers.findIndex(
+(layer) =>
+layer.id ===
+action.layer.id
+);
 
 
-    if (restoreLayerId !== null) {
+if (index >= 0) {
 
-      setActiveLayer(
-        restoreLayerId
-      );
-    }
-
-
-    requestPaintUpdate();
-
-    return;
-  }
+layers.splice(
+index,
+1
+);
+}
 
 
-  /*
-    レイヤー削除を取り消す
-  */
-
-  if (
-    action.historyType ===
-      "layer-delete"
-  ) {
-
-    const index =
-      Math.max(
-        0,
-        Math.min(
-          action.index,
-          layers.length
-        )
-      );
+let restoreLayerId =
+action.previousActiveLayerId;
 
 
-    if (
-      !getLayerById(
-        action.layer.id
-      )
-    ) {
+if (
+!getLayerById(
+restoreLayerId
+)
+) {
 
-      layers.splice(
-        index,
-        0,
-        action.layer
-      );
-    }
-
-
-    setActiveLayer(
-      action.layer.id
-    );
-
-    requestPaintUpdate();
-
-    return;
-  }
+restoreLayerId =
+layers.length > 0
+? layers[
+layers.length - 1
+].id
+: null;
+}
 
 
-  /*
-    描画操作を取り消す
-  */
+if (restoreLayerId !== null) {
 
-  rebuildDrawing();
+setActiveLayer(
+restoreLayerId
+);
+}
+
+
+requestPaintUpdate();
+
+return;
+}
+
+
+/*
+レイヤー削除を取り消す
+*/
+
+if (
+action.historyType ===
+"layer-delete"
+) {
+
+const index =
+Math.max(
+0,
+Math.min(
+action.index,
+layers.length
+)
+);
+
+
+if (
+!getLayerById(
+action.layer.id
+)
+) {
+
+layers.splice(
+index,
+0,
+action.layer
+);
+}
+
+
+setActiveLayer(
+action.layer.id
+);
+
+requestPaintUpdate();
+
+return;
+}
+
+
+/*
+描画操作を取り消す
+*/
+
+rebuildDrawing();
 }
 
 
 /* ================================
-   Redo
+Redo
 ================================ */
 
 function redo() {
 
-  if (
-    redoStrokeHistory.length === 0
-  ) {
-    return;
-  }
+if (
+redoStrokeHistory.length === 0
+) {
+return;
+}
 
 
 const action =
-    redoStrokeHistory.pop();
+redoStrokeHistory.pop();
 
 
-  /*
-    新方式のペン／消しゴムは
-    タイルをもう一度交換するだけで
-    Redoできる
-  */
+/*
+新方式のペン／消しゴムは
+タイルをもう一度交換するだけで
+Redoできる
+*/
 
-  if (
-    action.tileDiffs instanceof Map &&
-    action.tileDiffs.size > 0
-  ) {
+if (
+action.tileDiffs instanceof Map &&
+action.tileDiffs.size > 0
+) {
 
-    swapStrokeTiles(
-      action
-    );
-
-
-    strokeHistory.push(
-      action
-    );
+swapStrokeTiles(
+action
+);
 
 
-    requestPaintUpdate();
-
-    return;
-  }
-
-
-  /*
-    レイヤー追加をやり直す
-  */
-
-  if (
-    action.historyType ===
-      "layer-add"
-  ) {
-
-    const index =
-      Math.max(
-        0,
-        Math.min(
-          action.index,
-          layers.length
-        )
-      );
+strokeHistory.push(
+action
+);
 
 
-    if (
-      !getLayerById(
-        action.layer.id
-      )
-    ) {
+requestPaintUpdate();
 
-      layers.splice(
-        index,
-        0,
-        action.layer
-      );
-    }
+return;
+}
 
 
-    strokeHistory.push(
-      action
-    );
+/*
+レイヤー追加をやり直す
+*/
+
+if (
+action.historyType ===
+"layer-add"
+) {
+
+const index =
+Math.max(
+0,
+Math.min(
+action.index,
+layers.length
+)
+);
 
 
-    setActiveLayer(
-      action.layer.id
-    );
+if (
+!getLayerById(
+action.layer.id
+)
+) {
 
-    requestPaintUpdate();
-
-    return;
-  }
-
-
-  /*
-    レイヤー削除をやり直す
-  */
-
-  if (
-    action.historyType ===
-      "layer-delete"
-  ) {
-
-    const index =
-      layers.findIndex(
-        (layer) =>
-          layer.id ===
-            action.layer.id
-      );
+layers.splice(
+index,
+0,
+action.layer
+);
+}
 
 
-    if (index >= 0) {
-
-      layers.splice(
-        index,
-        1
-      );
-    }
+strokeHistory.push(
+action
+);
 
 
-    strokeHistory.push(
-      action
-    );
+setActiveLayer(
+action.layer.id
+);
+
+requestPaintUpdate();
+
+return;
+}
 
 
-    let nextActiveLayerId =
-      action.nextActiveLayerId;
+/*
+レイヤー削除をやり直す
+*/
+
+if (
+action.historyType ===
+"layer-delete"
+) {
+
+const index =
+layers.findIndex(
+(layer) =>
+layer.id ===
+action.layer.id
+);
 
 
-    if (
-      !getLayerById(
-        nextActiveLayerId
-      )
-    ) {
+if (index >= 0) {
 
-      const fallbackIndex =
-        Math.min(
-          action.index,
-          layers.length - 1
-        );
-
-      nextActiveLayerId =
-        layers[fallbackIndex].id;
-    }
+layers.splice(
+index,
+1
+);
+}
 
 
-    setActiveLayer(
-      nextActiveLayerId
-    );
-
-    requestPaintUpdate();
-
-    return;
-  }
+strokeHistory.push(
+action
+);
 
 
-  /*
-    描画操作をやり直す
-  */
+let nextActiveLayerId =
+action.nextActiveLayerId;
 
-  strokeHistory.push(
-    action
-  );
 
-  rebuildDrawing();
+if (
+!getLayerById(
+nextActiveLayerId
+)
+) {
+
+const fallbackIndex =
+Math.min(
+action.index,
+layers.length - 1
+);
+
+nextActiveLayerId =
+layers[fallbackIndex].id;
+}
+
+
+setActiveLayer(
+nextActiveLayerId
+);
+
+requestPaintUpdate();
+
+return;
+}
+
+
+/*
+描画操作をやり直す
+*/
+
+strokeHistory.push(
+action
+);
+
+rebuildDrawing();
 }
 
 
 /* ================================
-   プレビュー左端ハンドル
+プレビュー左端ハンドル
 ================================ */
 
 let isPreviewSeamDragging =
-  false;
+false;
 
 
 /*
-  今回のドラッグで
-  選択している位置
+今回のドラッグで
+選択している位置
 */
 
 let previewDragRatio = 0;
 
 
 /*
-  ポインター位置に
-  ▼を移動する
+ポインター位置に
+▼を移動する
 */
 
 function updatePreviewSeamHandle(
-  event
+event
 ) {
 
-  const rect =
-    previewCanvas
-      .getBoundingClientRect();
+const rect =
+previewCanvas
+.getBoundingClientRect();
 
 
-  if (
-    rect.width <= 0
-  ) {
-    return;
-  }
-
-
-  /*
-    Canvas左端を0として
-    ポインター位置を取得
-  */
-
-  let x =
-    event.clientX -
-    rect.left;
-
-
-  /*
-    画像の範囲内に制限
-  */
-
-  x =
-    Math.max(
-      0,
-      Math.min(
-        rect.width,
-        x
-      )
-    );
-
-
-  previewDragRatio =
-    x /
-    rect.width;
-
-
-  previewSeamHandle
-    .style
-    .left =
-      `${x}px`;
+if (
+rect.width <= 0
+) {
+return;
 }
 
 
 /*
-  ▼をつかむ
+Canvas左端を0として
+ポインター位置を取得
+*/
+
+let x =
+event.clientX -
+rect.left;
+
+
+/*
+画像の範囲内に制限
+*/
+
+x =
+Math.max(
+0,
+Math.min(
+rect.width,
+x
+)
+);
+
+
+previewDragRatio =
+x /
+rect.width;
+
+
+previewSeamHandle
+.style
+.left =
+`${x}px`;
+}
+
+
+/*
+▼をつかむ
 */
 
 previewSeamHandle.addEventListener(
-  "pointerdown",
-  (event) => {
+"pointerdown",
+(event) => {
 
-    if (
-      event.pointerType ===
-        "mouse" &&
-      event.button !== 0
-    ) {
-      return;
-    }
-
-
-    isPreviewSeamDragging =
-      true;
+if (
+event.pointerType ===
+"mouse" &&
+event.button !== 0
+) {
+return;
+}
 
 
-    previewDragRatio = 0;
+isPreviewSeamDragging =
+true;
 
 
-    previewSeamHandle
-      .setPointerCapture(
-        event.pointerId
-      );
+previewDragRatio = 0;
 
 
-    updatePreviewSeamHandle(
-      event
-    );
+previewSeamHandle
+.setPointerCapture(
+event.pointerId
+);
 
 
-    event.preventDefault();
+updatePreviewSeamHandle(
+event
+);
 
-    event.stopPropagation();
-  }
+
+event.preventDefault();
+
+event.stopPropagation();
+}
 );
 
 
 /*
-  ▼を横方向へ移動
+▼を横方向へ移動
 */
 
 previewSeamHandle.addEventListener(
-  "pointermove",
-  (event) => {
+"pointermove",
+(event) => {
 
-    if (
-      !isPreviewSeamDragging
-    ) {
-      return;
-    }
-
-
-    updatePreviewSeamHandle(
-      event
-    );
+if (
+!isPreviewSeamDragging
+) {
+return;
+}
 
 
-    event.preventDefault();
+updatePreviewSeamHandle(
+event
+);
 
-    event.stopPropagation();
-  }
+
+event.preventDefault();
+
+event.stopPropagation();
+}
 );
 
 
 /*
-  ▼を離した位置を
-  新しい画像左端にする
+▼を離した位置を
+新しい画像左端にする
 */
 
 function finishPreviewSeamDrag(
-  event
+event
 ) {
 
-  if (
-    !isPreviewSeamDragging
-  ) {
-    return;
-  }
+if (
+!isPreviewSeamDragging
+) {
+return;
+}
 
 
-  isPreviewSeamDragging =
-    false;
+isPreviewSeamDragging =
+false;
 
 
-  if (
-    previewSeamHandle
-      .hasPointerCapture(
-        event.pointerId
-      )
-  ) {
+if (
+previewSeamHandle
+.hasPointerCapture(
+event.pointerId
+)
+) {
 
-    previewSeamHandle
-      .releasePointerCapture(
-        event.pointerId
-      );
-  }
-
-
-  /*
-    現在の左端位置へ
-    今回選択した位置を加える
-  */
-
-  previewSeamRatio =
-    (
-      previewSeamRatio +
-      previewDragRatio
-    ) % 1;
+previewSeamHandle
+.releasePointerCapture(
+event.pointerId
+);
+}
 
 
-  /*
-    新しい左端で
-    プレビューを書き直す
-  */
+/*
+現在の左端位置へ
+今回選択した位置を加える
+*/
 
-  updatePreview();
-
-
-  /*
-    ▼自身は再び
-    新しい画像の左端へ戻す
-  */
-
-  previewDragRatio = 0;
+previewSeamRatio =
+(
+previewSeamRatio +
+previewDragRatio
+) % 1;
 
 
-  previewSeamHandle
-    .style
-    .left =
-      "0px";
+/*
+新しい左端で
+プレビューを書き直す
+*/
+
+updatePreview();
 
 
-  event.preventDefault();
+/*
+▼自身は再び
+新しい画像の左端へ戻す
+*/
 
-  event.stopPropagation();
+previewDragRatio = 0;
+
+
+previewSeamHandle
+.style
+.left =
+"0px";
+
+
+event.preventDefault();
+
+event.stopPropagation();
 }
 
 
 previewSeamHandle.addEventListener(
-  "pointerup",
-  finishPreviewSeamDrag
+"pointerup",
+finishPreviewSeamDrag
 );
 
 
 previewSeamHandle.addEventListener(
-  "pointercancel",
-  (event) => {
+"pointercancel",
+(event) => {
 
-    isPreviewSeamDragging =
-      false;
-
-
-    previewDragRatio = 0;
+isPreviewSeamDragging =
+false;
 
 
-    previewSeamHandle
-      .style
-      .left =
-        "0px";
+previewDragRatio = 0;
 
 
-    if (
-      previewSeamHandle
-        .hasPointerCapture(
-          event.pointerId
-        )
-    ) {
+previewSeamHandle
+.style
+.left =
+"0px";
 
-      previewSeamHandle
-        .releasePointerCapture(
-          event.pointerId
-        );
-    }
-  }
+
+if (
+previewSeamHandle
+.hasPointerCapture(
+event.pointerId
+)
+) {
+
+previewSeamHandle
+.releasePointerCapture(
+event.pointerId
+);
+}
+}
 );
 
 
 /* ================================
-   プレビューUI
+プレビューUI
 ================================ */
 
 previewButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    /*
-      念のため最新の描画内容を
-      表示用Canvasへ反映
-    */
+/*
+念のため最新の描画内容を
+表示用Canvasへ反映
+*/
 
-    updatePaintCanvas();
-
-
-    /*
-      プレビューを作成
-    */
-
-    updatePreview();
+updatePaintCanvas();
 
 
-    /*
-      オーバーレイを表示
-    */
+/*
+プレビューを作成
+*/
 
-    previewOverlay.classList.add(
-      "is-open"
-    );
-  }
+updatePreview();
+
+
+/*
+オーバーレイを表示
+*/
+
+previewOverlay.classList.add(
+"is-open"
+);
+}
 );
 
 
@@ -10694,62 +10694,62 @@ downloadProject();
 
 
 projectLoadButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    projectLoadInput.click();
-  }
+projectLoadInput.click();
+}
 );
 
 
 projectLoadInput.addEventListener(
-  "change",
-  async () => {
+"change",
+async () => {
 
-    const file =
-      projectLoadInput
-        .files?.[0];
-
-
-    if (!file) {
-      return;
-    }
+const file =
+projectLoadInput
+.files?.[0];
 
 
-    try {
-
-      await loadProject(
-        file
-      );
-
-    } catch (error) {
-
-      console.error(
-        error
-      );
+if (!file) {
+return;
+}
 
 
-      alert(
-        "データを読み込めませんでした。\n" +
-        "ぐるりペイントで保存したデータか確認してください。"
-      );
+try {
 
-    } finally {
+await loadProject(
+file
+);
 
-      /*
-        同じファイルをもう一度
-        選択できるようにする
-      */
+} catch (error) {
 
-      projectLoadInput.value =
-        "";
-    }
-  }
+console.error(
+error
+);
+
+
+alert(
+"データを読み込めませんでした。\n" +
+"ぐるりペイントで保存したデータか確認してください。"
+);
+
+} finally {
+
+/*
+同じファイルをもう一度
+選択できるようにする
+*/
+
+projectLoadInput.value =
+"";
+}
+}
 );
 
 
 /* ================================
-   PNG保存
+PNG保存
 ================================ */
 
 downloadButton.addEventListener(
@@ -10761,24 +10761,24 @@ previewButton.click();
 );
 
 /* ================================
-   Undo / Redo ボタン
+Undo / Redo ボタン
 ================================ */
 
 undoButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    undo();
-  }
+undo();
+}
 );
 
 
 redoButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    redo();
-  }
+redo();
+}
 );
 
 
@@ -11112,39 +11112,39 @@ shortcutKeys[tool] === key
 
 
 window.addEventListener(
-  "keydown",
-  (event) => {
+"keydown",
+(event) => {
 
-    /*
-      入力欄を操作している間は
-      描画用キーボードショートカットを
-      実行しない。
+/*
+入力欄を操作している間は
+描画用キーボードショートカットを
+実行しない。
 
-      レイヤー名はreadOnly時なら
-      通常のショートカットを使用できる。
-    */
+レイヤー名はreadOnly時なら
+通常のショートカットを使用できる。
+*/
 
-    const target =
-      event.target;
-
-
-    const isEditableInput =
-      target instanceof HTMLInputElement &&
-      (
-        !target.classList.contains(
-          "layer-name-input"
-        ) ||
-        !target.readOnly
-      );
+const target =
+event.target;
 
 
-    const isOtherEditableElement =
-      target instanceof HTMLTextAreaElement ||
-      target instanceof HTMLSelectElement ||
-      (
-        target instanceof HTMLElement &&
-        target.isContentEditable
-      );
+const isEditableInput =
+target instanceof HTMLInputElement &&
+(
+!target.classList.contains(
+"layer-name-input"
+) ||
+!target.readOnly
+);
+
+
+const isOtherEditableElement =
+target instanceof HTMLTextAreaElement ||
+target instanceof HTMLSelectElement ||
+(
+target instanceof HTMLElement &&
+target.isContentEditable
+);
 
 
 if (
@@ -11173,20 +11173,20 @@ return;
 /*
 Undo / Redo
 
-      Ctrl：
-      Windows / Linux
+Ctrl：
+Windows / Linux
 
-      Meta：
-      macOSのCommand
+Meta：
+macOSのCommand
 
-      event.keyを使用することで、
-      QWERTY / AZERTYなどの
-      キーボード配列にも対応する。
-    */
+event.keyを使用することで、
+QWERTY / AZERTYなどの
+キーボード配列にも対応する。
+*/
 
-    const shortcutModifierPressed =
-      event.ctrlKey ||
-      event.metaKey;
+const shortcutModifierPressed =
+event.ctrlKey ||
+event.metaKey;
 
 const shortcutKey =
 getShortcutKey(
@@ -11194,49 +11194,49 @@ event
 );
 
 
-    /*
-      Ctrl / Command + Z
-      Undo
-    */
+/*
+Ctrl / Command + Z
+Undo
+*/
 
-    if (
-      shortcutModifierPressed &&
-      !event.shiftKey &&
-      shortcutKey === "z"
-    ) {
+if (
+shortcutModifierPressed &&
+!event.shiftKey &&
+shortcutKey === "z"
+) {
 
-      event.preventDefault();
+event.preventDefault();
 
-      undo();
+undo();
 
-      return;
-    }
+return;
+}
 
 
-    /*
-      Ctrl + Y
-      または
-      Ctrl / Command + Shift + Z
-      Redo
-    */
+/*
+Ctrl + Y
+または
+Ctrl / Command + Shift + Z
+Redo
+*/
 
-    if (
-      shortcutModifierPressed &&
-      (
-        shortcutKey === "y" ||
-        (
-          event.shiftKey &&
-          shortcutKey === "z"
-        )
-      )
-    ) {
+if (
+shortcutModifierPressed &&
+(
+shortcutKey === "y" ||
+(
+event.shiftKey &&
+shortcutKey === "z"
+)
+)
+) {
 
-      event.preventDefault();
+event.preventDefault();
 
-      redo();
+redo();
 
-      return;
-    }
+return;
+}
 
 
 /*
@@ -11267,9 +11267,9 @@ return;
 }
 
 
-    /*
-      Space
-    */
+/*
+Space
+*/
 
 if (
 shortcutKey ===
@@ -11283,13 +11283,13 @@ event.preventDefault();
 
 
 /*
-  Z
+Z
 
-  event.codeではなく
-  event.keyを使用することで、
-  QWERTY / AZERTYなどの
-  キーボード配列に関係なく、
-  実際に入力された「Z」で判定する。
+event.codeではなく
+event.keyを使用することで、
+QWERTY / AZERTYなどの
+キーボード配列に関係なく、
+実際に入力された「Z」で判定する。
 */
 
 if (
@@ -11302,17 +11302,17 @@ isZPressed = true;
 event.preventDefault();
 }
 
-  }
+}
 );
 
 
 window.addEventListener(
-  "keyup",
-  (event) => {
+"keyup",
+(event) => {
 
-    /*
-      Spaceを離した
-    */
+/*
+Spaceを離した
+*/
 
 if (
 getShortcutKey(
@@ -11331,7 +11331,7 @@ viewport.classList.remove(
 
 
 /*
-  Zを離した
+Zを離した
 */
 
 if (
@@ -11349,19 +11349,19 @@ viewport.classList.remove(
 );
 }
 
-  }
+}
 );
 
 /* ================================
-   スマートフォン
-   タッチ操作
+スマートフォン
+タッチ操作
 ================================ */
 
 const activeTouchPointers =
-  new Map();
+new Map();
 
 let touchNavigationActive =
-  false;
+false;
 
 let previousTouchCenterX = 0;
 let previousTouchCenterY = 0;
@@ -11370,354 +11370,354 @@ let previousTouchDistance = 0;
 
 
 /*
-  バケツ／スポイトは
-  pointerdownでは実行せず、
-  1本指のタップだと確定した
-  pointerup時に実行する
+バケツ／スポイトは
+pointerdownでは実行せず、
+1本指のタップだと確定した
+pointerup時に実行する
 */
 
 let pendingTouchTap = null;
 
 
 /*
-  現在のタッチ位置を保存
+現在のタッチ位置を保存
 */
 
 function updateTouchPointer(
-  event
+event
 ) {
 
-  activeTouchPointers.set(
-    event.pointerId,
-    {
-      x: event.clientX,
-      y: event.clientY
-    }
-  );
+activeTouchPointers.set(
+event.pointerId,
+{
+x: event.clientX,
+y: event.clientY
+}
+);
 }
 
 
 /*
-  2本指の中心位置と
-  指同士の距離を取得
+2本指の中心位置と
+指同士の距離を取得
 */
 
 function getTouchGestureState() {
 
-  const touches =
-    Array.from(
-      activeTouchPointers.values()
-    );
+const touches =
+Array.from(
+activeTouchPointers.values()
+);
 
 
-  if (touches.length < 2) {
-    return null;
-  }
+if (touches.length < 2) {
+return null;
+}
 
 
-  const first =
-    touches[0];
+const first =
+touches[0];
 
-  const second =
-    touches[1];
-
-
-  const centerX =
-    (
-      first.x +
-      second.x
-    ) / 2;
+const second =
+touches[1];
 
 
-  const centerY =
-    (
-      first.y +
-      second.y
-    ) / 2;
+const centerX =
+(
+first.x +
+second.x
+) / 2;
 
 
-  const distance =
-    Math.hypot(
-      second.x - first.x,
-      second.y - first.y
-    );
+const centerY =
+(
+first.y +
+second.y
+) / 2;
 
 
-  return {
-    centerX,
-    centerY,
-    distance
-  };
+const distance =
+Math.hypot(
+second.x - first.x,
+second.y - first.y
+);
+
+
+return {
+centerX,
+centerY,
+distance
+};
 }
 
 
 /*
-  1本目の指で描き始めたあと、
-  2本目の指が置かれた場合は
-  その描画を取り消す
+1本目の指で描き始めたあと、
+2本目の指が置かれた場合は
+その描画を取り消す
 */
 
 function cancelCurrentTouchStroke() {
 
-  if (!isDrawing) {
-    return;
-  }
-
-
-  /*
-    描きかけのストロークが
-    変更したタイルだけを
-    描画前状態へ戻す
-  */
-
-  if (currentStroke) {
-
-    swapStrokeTiles(
-      currentStroke
-    );
-  }
-
-
-  isDrawing = false;
-
-  currentStroke = null;
-
-  previousPaintX = null;
-  previousPaintY = null;
-
-  previousMidX = null;
-  previousMidY = null;
-
-
-  requestPaintUpdate();
+if (!isDrawing) {
+return;
 }
 
 
 /*
-  2本指操作開始
+描きかけのストロークが
+変更したタイルだけを
+描画前状態へ戻す
+*/
+
+if (currentStroke) {
+
+swapStrokeTiles(
+currentStroke
+);
+}
+
+
+isDrawing = false;
+
+currentStroke = null;
+
+previousPaintX = null;
+previousPaintY = null;
+
+previousMidX = null;
+previousMidY = null;
+
+
+requestPaintUpdate();
+}
+
+
+/*
+2本指操作開始
 */
 
 function startTouchNavigation() {
 
-  cancelCurrentTouchStroke();
+cancelCurrentTouchStroke();
 
-  pendingTouchTap = null;
-
-
-  const gesture =
-    getTouchGestureState();
+pendingTouchTap = null;
 
 
-  if (!gesture) {
-    return;
-  }
+const gesture =
+getTouchGestureState();
 
 
-  touchNavigationActive =
-    true;
+if (!gesture) {
+return;
+}
 
 
-  previousTouchCenterX =
-    gesture.centerX;
-
-  previousTouchCenterY =
-    gesture.centerY;
-
-  previousTouchDistance =
-    gesture.distance;
+touchNavigationActive =
+true;
 
 
-  eraserCursor.visible =
-    false;
+previousTouchCenterX =
+gesture.centerX;
+
+previousTouchCenterY =
+gesture.centerY;
+
+previousTouchDistance =
+gesture.distance;
+
+
+eraserCursor.visible =
+false;
 }
 
 
 /*
-  Pointer Captureを解除
+Pointer Captureを解除
 */
 
 function releaseTouchPointer(
-  event
+event
 ) {
 
-  if (
-    renderer.domElement
-      .hasPointerCapture(
-        event.pointerId
-      )
-  ) {
+if (
+renderer.domElement
+.hasPointerCapture(
+event.pointerId
+)
+) {
 
-    renderer.domElement
-      .releasePointerCapture(
-        event.pointerId
-      );
-  }
+renderer.domElement
+.releasePointerCapture(
+event.pointerId
+);
+}
 }
 
 
 /*
-  タッチ開始
+タッチ開始
 
-  trueを返した場合は
-  通常のpointerdown処理を
-  ここで終了する
+trueを返した場合は
+通常のpointerdown処理を
+ここで終了する
 */
 
 function handleTouchPointerDown(
-  event
+event
 ) {
 
-  if (
-    event.pointerType !== "touch"
-  ) {
-    return false;
-  }
+if (
+event.pointerType !== "touch"
+) {
+return false;
+}
 
 
-  event.preventDefault();
+event.preventDefault();
 
-  updateTouchPointer(
-    event
-  );
-
-
-  renderer.domElement
-    .setPointerCapture(
-      event.pointerId
-    );
+updateTouchPointer(
+event
+);
 
 
-  /*
-    2本以上になったら
-    視点操作へ切り替える
-  */
-
-  if (
-    activeTouchPointers.size >= 2
-  ) {
-
-    startTouchNavigation();
-
-    return true;
-  }
+renderer.domElement
+.setPointerCapture(
+event.pointerId
+);
 
 
-  /*
-    バケツ／スポイトは
-    2本目の指が来ないことを
-    確認してから実行する
-  */
+/*
+2本以上になったら
+視点操作へ切り替える
+*/
 
-  if (
-    currentTool === "bucket" ||
-    currentTool === "eyedropper"
-  ) {
+if (
+activeTouchPointers.size >= 2
+) {
 
-    pendingTouchTap = {
+startTouchNavigation();
 
-      pointerId:
-        event.pointerId,
-
-      startX:
-        event.clientX,
-
-      startY:
-        event.clientY,
-
-      moved:
-        false,
-
-      tool:
-        currentTool,
-
-      color:
-        penColor,
-
-      layerId:
-        activeLayerId
-    };
-
-
-    return true;
-  }
-
-
-  /*
-    ペン／消しゴムは
-    既存のpointerdown処理を使う
-  */
-
-  return false;
+return true;
 }
 
 
 /*
-  タッチ移動
+バケツ／スポイトは
+2本目の指が来ないことを
+確認してから実行する
+*/
+
+if (
+currentTool === "bucket" ||
+currentTool === "eyedropper"
+) {
+
+pendingTouchTap = {
+
+pointerId:
+event.pointerId,
+
+startX:
+event.clientX,
+
+startY:
+event.clientY,
+
+moved:
+false,
+
+tool:
+currentTool,
+
+color:
+penColor,
+
+layerId:
+activeLayerId
+};
+
+
+return true;
+}
+
+
+/*
+ペン／消しゴムは
+既存のpointerdown処理を使う
+*/
+
+return false;
+}
+
+
+/*
+タッチ移動
 */
 
 function handleTouchPointerMove(
-  event
+event
 ) {
 
-  if (
-    event.pointerType !== "touch"
-  ) {
-    return false;
-  }
+if (
+event.pointerType !== "touch"
+) {
+return false;
+}
 
 
-  if (
-    !activeTouchPointers.has(
-      event.pointerId
-    )
-  ) {
-    return false;
-  }
+if (
+!activeTouchPointers.has(
+event.pointerId
+)
+) {
+return false;
+}
 
 
-  event.preventDefault();
+event.preventDefault();
 
-  updateTouchPointer(
-    event
-  );
-
-
-  /*
-    2本指なら
-    見回し＋ピンチズーム
-  */
-
-  if (
-    activeTouchPointers.size >= 2
-  ) {
-
-    if (!touchNavigationActive) {
-
-      startTouchNavigation();
-    }
+updateTouchPointer(
+event
+);
 
 
-    const gesture =
-      getTouchGestureState();
+/*
+2本指なら
+見回し＋ピンチズーム
+*/
+
+if (
+activeTouchPointers.size >= 2
+) {
+
+if (!touchNavigationActive) {
+
+startTouchNavigation();
+}
 
 
-    if (!gesture) {
-      return true;
-    }
+const gesture =
+getTouchGestureState();
 
 
-    /*
-      2本指ドラッグ
-      → 視点回転
-    */
+if (!gesture) {
+return true;
+}
 
-    const deltaX =
-      gesture.centerX -
-      previousTouchCenterX;
 
-    const deltaY =
-      gesture.centerY -
-      previousTouchCenterY;
+/*
+2本指ドラッグ
+→ 視点回転
+*/
+
+const deltaX =
+gesture.centerX -
+previousTouchCenterX;
+
+const deltaY =
+gesture.centerY -
+previousTouchCenterY;
 
 
 const lookSensitivity =
@@ -11741,393 +11741,393 @@ lookSensitivity *
 verticalLookDirectionMultiplier;
 
 
-    const limit =
-      Math.PI / 2 -
-      0.01;
+const limit =
+Math.PI / 2 -
+0.01;
 
 
-    pitch =
-      Math.max(
-        -limit,
-        Math.min(
-          limit,
-          pitch
-        )
-      );
+pitch =
+Math.max(
+-limit,
+Math.min(
+limit,
+pitch
+)
+);
 
 
-    /*
-      ピンチ
-      指を広げる → ズームイン
-      指を狭める → ズームアウト
-    */
+/*
+ピンチ
+指を広げる → ズームイン
+指を狭める → ズームアウト
+*/
 
-    const distanceDelta =
-      gesture.distance -
-      previousTouchDistance;
-
-
-    const pinchSensitivity =
-      0.12;
+const distanceDelta =
+gesture.distance -
+previousTouchDistance;
 
 
-    camera.fov -=
-      distanceDelta *
-      pinchSensitivity;
+const pinchSensitivity =
+0.12;
 
 
-    camera.fov =
-      Math.max(
-        20,
-        Math.min(
-          120,
-          camera.fov
-        )
-      );
+camera.fov -=
+distanceDelta *
+pinchSensitivity;
 
 
-    camera.updateProjectionMatrix();
+camera.fov =
+Math.max(
+20,
+Math.min(
+120,
+camera.fov
+)
+);
 
 
-    previousTouchCenterX =
-      gesture.centerX;
-
-    previousTouchCenterY =
-      gesture.centerY;
-
-    previousTouchDistance =
-      gesture.distance;
+camera.updateProjectionMatrix();
 
 
-    return true;
-  }
+previousTouchCenterX =
+gesture.centerX;
+
+previousTouchCenterY =
+gesture.centerY;
+
+previousTouchDistance =
+gesture.distance;
 
 
-  /*
-    一度2本指操作になったら、
-    片方を離しても残った1本では
-    描画を開始しない
-  */
-
-  if (touchNavigationActive) {
-    return true;
-  }
-
-
-  /*
-    バケツ／スポイトの
-    タップ判定。
-
-    10px以上動いた場合は
-    タップとはみなさない。
-  */
-
-  if (
-    pendingTouchTap &&
-    pendingTouchTap.pointerId ===
-      event.pointerId
-  ) {
-
-    const movedDistance =
-      Math.hypot(
-        event.clientX -
-          pendingTouchTap.startX,
-
-        event.clientY -
-          pendingTouchTap.startY
-      );
-
-
-    if (movedDistance > 10) {
-
-      pendingTouchTap.moved =
-        true;
-    }
-
-
-    return true;
-  }
-
-
-  /*
-    ペン／消しゴムは
-    既存のpointermove処理を使う
-  */
-
-  return false;
+return true;
 }
 
 
 /*
-  タッチ終了
+一度2本指操作になったら、
+片方を離しても残った1本では
+描画を開始しない
+*/
+
+if (touchNavigationActive) {
+return true;
+}
+
+
+/*
+バケツ／スポイトの
+タップ判定。
+
+10px以上動いた場合は
+タップとはみなさない。
+*/
+
+if (
+pendingTouchTap &&
+pendingTouchTap.pointerId ===
+event.pointerId
+) {
+
+const movedDistance =
+Math.hypot(
+event.clientX -
+pendingTouchTap.startX,
+
+event.clientY -
+pendingTouchTap.startY
+);
+
+
+if (movedDistance > 10) {
+
+pendingTouchTap.moved =
+true;
+}
+
+
+return true;
+}
+
+
+/*
+ペン／消しゴムは
+既存のpointermove処理を使う
+*/
+
+return false;
+}
+
+
+/*
+タッチ終了
 */
 
 function handleTouchPointerEnd(
-  event,
-  canceled = false
+event,
+canceled = false
 ) {
 
-  if (
-    event.pointerType !== "touch"
-  ) {
-    return false;
-  }
+if (
+event.pointerType !== "touch"
+) {
+return false;
+}
 
 
-  event.preventDefault();
+event.preventDefault();
 
 
-  /*
-    2本指操作中
-  */
+/*
+2本指操作中
+*/
 
-  if (touchNavigationActive) {
+if (touchNavigationActive) {
 
-    activeTouchPointers.delete(
-      event.pointerId
-    );
+activeTouchPointers.delete(
+event.pointerId
+);
 
 
-    if (
-      activeTouchPointers.size >= 2
-    ) {
+if (
+activeTouchPointers.size >= 2
+) {
 
-      const gesture =
-        getTouchGestureState();
+const gesture =
+getTouchGestureState();
 
 
-      if (gesture) {
+if (gesture) {
 
-        previousTouchCenterX =
-          gesture.centerX;
+previousTouchCenterX =
+gesture.centerX;
 
-        previousTouchCenterY =
-          gesture.centerY;
+previousTouchCenterY =
+gesture.centerY;
 
-        previousTouchDistance =
-          gesture.distance;
-      }
-    }
+previousTouchDistance =
+gesture.distance;
+}
+}
 
 
-    /*
-      指がすべて離れるまでは
-      描画へ戻さない
-    */
+/*
+指がすべて離れるまでは
+描画へ戻さない
+*/
 
-    if (
-      activeTouchPointers.size === 0
-    ) {
+if (
+activeTouchPointers.size === 0
+) {
 
-      touchNavigationActive =
-        false;
-    }
+touchNavigationActive =
+false;
+}
 
 
-    releaseTouchPointer(
-      event
-    );
+releaseTouchPointer(
+event
+);
 
 
-    return true;
-  }
+return true;
+}
 
 
-  /*
-    バケツ／スポイトの
-    タップを確定
-  */
+/*
+バケツ／スポイトの
+タップを確定
+*/
 
-  if (
-    pendingTouchTap &&
-    pendingTouchTap.pointerId ===
-      event.pointerId
-  ) {
+if (
+pendingTouchTap &&
+pendingTouchTap.pointerId ===
+event.pointerId
+) {
 
-    const tap =
-      pendingTouchTap;
+const tap =
+pendingTouchTap;
 
 
-    pendingTouchTap = null;
+pendingTouchTap = null;
 
 
-    activeTouchPointers.delete(
-      event.pointerId
-    );
+activeTouchPointers.delete(
+event.pointerId
+);
 
 
-    releaseTouchPointer(
-      event
-    );
+releaseTouchPointer(
+event
+);
 
 
-    if (
-      canceled ||
-      tap.moved
-    ) {
-      return true;
-    }
+if (
+canceled ||
+tap.moved
+) {
+return true;
+}
 
 
-    const position =
-      getPaintPosition(
-        event
-      );
+const position =
+getPaintPosition(
+event
+);
 
 
-    if (!position) {
-      return true;
-    }
+if (!position) {
+return true;
+}
 
 
-    /*
-      スポイト
-    */
+/*
+スポイト
+*/
 
-    if (
-      tap.tool === "eyedropper"
-    ) {
+if (
+tap.tool === "eyedropper"
+) {
 
-      pickColorAt(
-        position.x,
-        position.y
-      );
+pickColorAt(
+position.x,
+position.y
+);
 
 
-      return true;
-    }
+return true;
+}
 
 
-    /*
-      バケツ
-    */
+/*
+バケツ
+*/
 
-    if (
-      tap.tool === "bucket"
-    ) {
+if (
+tap.tool === "bucket"
+) {
 
-      const bucketAction = {
-        tool: "bucket",
-        layerId: tap.layerId,
-        color: tap.color,
-        x: position.x,
-        y: position.y,
+const bucketAction = {
+tool: "bucket",
+layerId: tap.layerId,
+color: tap.color,
+x: position.x,
+y: position.y,
 
-        /*
-          差分Undo用
-        */
-        tileDiffs:
-          new Map()
-      };
+/*
+差分Undo用
+*/
+tileDiffs:
+new Map()
+};
 
 
-      const changed =
-        floodFill(
-          position.x,
-          position.y,
-          tap.color,
-          tap.layerId,
-          bucketAction
-        );
+const changed =
+floodFill(
+position.x,
+position.y,
+tap.color,
+tap.layerId,
+bucketAction
+);
 
-      if (!changed) {
-        return true;
-      }
+if (!changed) {
+return true;
+}
 
 
-      redoStrokeHistory.length =
-        0;
+redoStrokeHistory.length =
+0;
 
 
-      strokeHistory.push(
-        bucketAction
-      );
+strokeHistory.push(
+bucketAction
+);
 
 
-      rememberColor(
-        tap.color
-      );
+rememberColor(
+tap.color
+);
 
 
-      requestPaintUpdate();
+requestPaintUpdate();
 
 
-      return true;
-    }
+return true;
+}
 
 
-    return true;
-  }
+return true;
+}
 
 
-  /*
-    通常の1本指描画
-  */
+/*
+通常の1本指描画
+*/
 
-  activeTouchPointers.delete(
-    event.pointerId
-  );
+activeTouchPointers.delete(
+event.pointerId
+);
 
 
-  /*
-    OSなどによるキャンセル時は
-    描画中の線を破棄する
-  */
+/*
+OSなどによるキャンセル時は
+描画中の線を破棄する
+*/
 
-  if (canceled) {
+if (canceled) {
 
-    cancelCurrentTouchStroke();
+cancelCurrentTouchStroke();
 
-    releaseTouchPointer(
-      event
-    );
+releaseTouchPointer(
+event
+);
 
-    return true;
-  }
+return true;
+}
 
 
-  /*
-    通常のpointerup処理へ渡し、
-    ストロークを確定する
-  */
+/*
+通常のpointerup処理へ渡し、
+ストロークを確定する
+*/
 
-  return false;
+return false;
 }
 
 
 renderer.domElement.addEventListener(
-  "pointerleave",
-  () => {
+"pointerleave",
+() => {
 
-    eraserCursor.visible =
-      false;
-  }
+eraserCursor.visible =
+false;
+}
 );
 
 
 /* マウスを押す */
 
 renderer.domElement.addEventListener(
-  "pointerdown",
-  (event) => {
+"pointerdown",
+(event) => {
 
 if (event.button !== 0) {
-      return;
-    }
+return;
+}
 
 
-    /*
-      スマートフォンの
-      タッチ開始処理
-    */
+/*
+スマートフォンの
+タッチ開始処理
+*/
 
-    if (
-      handleTouchPointerDown(
-        event
-      )
-    ) {
-      return;
-    }
+if (
+handleTouchPointerDown(
+event
+)
+) {
+return;
+}
 
 
 /*
@@ -12158,303 +12158,303 @@ return;
 }
 
 
-    /*
-      Z + 左ドラッグ
-      ズーム
-    */
+/*
+Z + 左ドラッグ
+ズーム
+*/
 
-    if (isZPressed) {
+if (isZPressed) {
 
-      isZooming = true;
+isZooming = true;
 
-      previousMouseY = event.clientY;
+previousMouseY = event.clientY;
 
-      viewport.classList.add(
-        "is-zooming"
-      );
+viewport.classList.add(
+"is-zooming"
+);
 
-      renderer.domElement.setPointerCapture(
-        event.pointerId
-      );
+renderer.domElement.setPointerCapture(
+event.pointerId
+);
 
-      return;
-    }
-
-
-    /*
-      SpaceもZも押していない
-      → ペン描画
-    */
-
-    const position =
-      getPaintPosition(event);
-
-    if (!position) {
-      return;
-    }
-
-
-    /*
-      スポイト
-    */
-
-    if (currentTool === "eyedropper") {
-
-      pickColorAt(
-        position.x,
-        position.y
-      );
-
-      return;
-    }
-
-
-    /*
-      バケツ塗り
-    */
-
-    if (currentTool === "bucket") {
-
-const bucketAction = {
-        tool: "bucket",
-        layerId: activeLayerId,
-        color: penColor,
-        x: position.x,
-        y: position.y,
-
-        /*
-          差分Undo用
-        */
-        tileDiffs:
-          new Map()
-      };
-
-
-      const changed =
-        floodFill(
-          position.x,
-          position.y,
-          penColor,
-          activeLayerId,
-          bucketAction
-        );
-
-
-      if (!changed) {
-        return;
-      }
-
-
-      redoStrokeHistory.length = 0;
-
-
-strokeHistory.push(
-        bucketAction
-      );
-
-
-      rememberColor(
-        penColor
-      );
-
-
-      requestPaintUpdate();
-
-      return;
-    }
-
-
-    /*
-      ペンで実際に使った色を
-      最近使用した色へ記録
-    */
-
-    if (currentTool === "pen") {
-
-      rememberColor(
-        penColor
-      );
-    }
-
-
-    /*
-      新しいストロークを開始
-    */
-
-currentStroke = {
-      tool: currentTool,
-      layerId: activeLayerId,
-      color: penColor,
-      size: penSize,
-
-      /*
-        高速Undo用。
-        このストロークが変更する
-        タイルの描画前状態を保存する。
-      */
-
-      tileDiffs:
-        new Map(),
-
-      points: [
-        {
-          x: position.x,
-          y: position.y
-        }
-      ]
-    };
-
-
-    /*
-      新しく描画を始めたので
-      Redo履歴を破棄
-    */
-
-    redoStrokeHistory.length = 0;
-
-
-    /*
-      描画開始
-    */
-
-    isDrawing = true;
-
-    previousPaintX =
-      position.x;
-
-    previousPaintY =
-      position.y;
-
-    previousMidX =
-      position.x;
-
-    previousMidY =
-      position.y;
+return;
+}
 
 
 /*
-      クリックした最初の一点を描く
-    */
+SpaceもZも押していない
+→ ペン描画
+*/
 
-    const initialHistoryPadding =
-      (
-        penSize *
-        drawScale
-      ) / 2 + 2;
+const position =
+getPaintPosition(event);
 
-
-    captureStrokeTiles(
-      currentStroke,
-
-      position.x -
-        initialHistoryPadding,
-
-      position.y -
-        initialHistoryPadding,
-
-      position.x +
-        initialHistoryPadding,
-
-      position.y +
-        initialHistoryPadding
-    );
+if (!position) {
+return;
+}
 
 
-    if (currentTool === "eraser") {
+/*
+スポイト
+*/
 
-      drawContext.globalCompositeOperation =
-        "destination-out";
+if (currentTool === "eyedropper") {
 
-    } else {
+pickColorAt(
+position.x,
+position.y
+);
 
-      drawContext.globalCompositeOperation =
-        "source-over";
-    }
-
-
-    drawContext.fillStyle =
-      penColor;
-
-    drawContext.beginPath();
-
-    drawContext.arc(
-      position.x,
-      position.y,
-      (
-        penSize *
-        drawScale
-      ) / 2,
-      0,
-      Math.PI * 2
-    );
-
-    drawContext.fill();
+return;
+}
 
 
-    /*
-      球体表示の更新を予約
-    */
+/*
+バケツ塗り
+*/
 
-    requestPaintUpdate();
+if (currentTool === "bucket") {
 
-    renderer.domElement.setPointerCapture(
-      event.pointerId
-    );
+const bucketAction = {
+tool: "bucket",
+layerId: activeLayerId,
+color: penColor,
+x: position.x,
+y: position.y,
 
-  }
+/*
+差分Undo用
+*/
+tileDiffs:
+new Map()
+};
+
+
+const changed =
+floodFill(
+position.x,
+position.y,
+penColor,
+activeLayerId,
+bucketAction
+);
+
+
+if (!changed) {
+return;
+}
+
+
+redoStrokeHistory.length = 0;
+
+
+strokeHistory.push(
+bucketAction
+);
+
+
+rememberColor(
+penColor
+);
+
+
+requestPaintUpdate();
+
+return;
+}
+
+
+/*
+ペンで実際に使った色を
+最近使用した色へ記録
+*/
+
+if (currentTool === "pen") {
+
+rememberColor(
+penColor
+);
+}
+
+
+/*
+新しいストロークを開始
+*/
+
+currentStroke = {
+tool: currentTool,
+layerId: activeLayerId,
+color: penColor,
+size: penSize,
+
+/*
+高速Undo用。
+このストロークが変更する
+タイルの描画前状態を保存する。
+*/
+
+tileDiffs:
+new Map(),
+
+points: [
+{
+x: position.x,
+y: position.y
+}
+]
+};
+
+
+/*
+新しく描画を始めたので
+Redo履歴を破棄
+*/
+
+redoStrokeHistory.length = 0;
+
+
+/*
+描画開始
+*/
+
+isDrawing = true;
+
+previousPaintX =
+position.x;
+
+previousPaintY =
+position.y;
+
+previousMidX =
+position.x;
+
+previousMidY =
+position.y;
+
+
+/*
+クリックした最初の一点を描く
+*/
+
+const initialHistoryPadding =
+(
+penSize *
+drawScale
+) / 2 + 2;
+
+
+captureStrokeTiles(
+currentStroke,
+
+position.x -
+initialHistoryPadding,
+
+position.y -
+initialHistoryPadding,
+
+position.x +
+initialHistoryPadding,
+
+position.y +
+initialHistoryPadding
+);
+
+
+if (currentTool === "eraser") {
+
+drawContext.globalCompositeOperation =
+"destination-out";
+
+} else {
+
+drawContext.globalCompositeOperation =
+"source-over";
+}
+
+
+drawContext.fillStyle =
+penColor;
+
+drawContext.beginPath();
+
+drawContext.arc(
+position.x,
+position.y,
+(
+penSize *
+drawScale
+) / 2,
+0,
+Math.PI * 2
+);
+
+drawContext.fill();
+
+
+/*
+球体表示の更新を予約
+*/
+
+requestPaintUpdate();
+
+renderer.domElement.setPointerCapture(
+event.pointerId
+);
+
+}
 );
 
 
 /* マウスを動かす */
 
 renderer.domElement.addEventListener(
-  "pointermove",
-  (event) => {
+"pointermove",
+(event) => {
 
-    /*
-      スマートフォンの
-      タッチ移動処理
-    */
+/*
+スマートフォンの
+タッチ移動処理
+*/
 
-    if (
-      handleTouchPointerMove(
-        event
-      )
-    ) {
-      return;
-    }
-
-
-    /*
-      ペン／消しゴムカーソルは
-      マウス使用時だけ表示する
-    */
-
-    if (
-      event.pointerType !== "touch"
-    ) {
-
-      updateEraserCursor(
-        event
-      );
-    }
+if (
+handleTouchPointerMove(
+event
+)
+) {
+return;
+}
 
 
-    /*
-      視点回転
-    */
+/*
+ペン／消しゴムカーソルは
+マウス使用時だけ表示する
+*/
+
+if (
+event.pointerType !== "touch"
+) {
+
+updateEraserCursor(
+event
+);
+}
 
 
-    if (isLooking) {
+/*
+視点回転
+*/
 
-      const deltaX =
-        event.clientX - previousMouseX;
 
-      const deltaY =
-        event.clientY - previousMouseY;
+if (isLooking) {
 
-      previousMouseX = event.clientX;
-      previousMouseY = event.clientY;
+const deltaX =
+event.clientX - previousMouseX;
+
+const deltaY =
+event.clientY - previousMouseY;
+
+previousMouseX = event.clientX;
+previousMouseY = event.clientY;
 
 const sensitivity = 0.003;
 
@@ -12474,478 +12474,478 @@ deltaY *
 sensitivity *
 verticalLookDirectionMultiplier;
 
-      const limit =
-        Math.PI / 2 - 0.01;
+const limit =
+Math.PI / 2 - 0.01;
 
-      pitch =
-        Math.max(
-          -limit,
-          Math.min(limit, pitch)
-        );
+pitch =
+Math.max(
+-limit,
+Math.min(limit, pitch)
+);
 
-      return;
-    }
-
-
-    /*
-      ズーム
-    */
-
-    if (isZooming) {
-
-      const deltaY =
-        event.clientY - previousMouseY;
-
-      previousMouseY =
-        event.clientY;
+return;
+}
 
 
-      /*
-        上へドラッグ
-        deltaY がマイナス
-        → FOVを小さくする
-        → ズームイン
+/*
+ズーム
+*/
 
-        下へドラッグ
-        deltaY がプラス
-        → FOVを大きくする
-        → ズームアウト
-      */
+if (isZooming) {
 
-      const zoomSensitivity = 0.15;
+const deltaY =
+event.clientY - previousMouseY;
 
-      camera.fov +=
-        deltaY * zoomSensitivity;
+previousMouseY =
+event.clientY;
 
 
-      /*
-        ズーム可能範囲
-      */
+/*
+上へドラッグ
+deltaY がマイナス
+→ FOVを小さくする
+→ ズームイン
 
-      camera.fov =
-        Math.max(
-          20,
-          Math.min(
-            120,
-            camera.fov
-          )
-        );
+下へドラッグ
+deltaY がプラス
+→ FOVを大きくする
+→ ズームアウト
+*/
 
+const zoomSensitivity = 0.15;
 
-      /*
-        FOVを変更したので
-        Projection Matrixを更新
-      */
-
-      camera.updateProjectionMatrix();
-
-      return;
-    }
+camera.fov +=
+deltaY * zoomSensitivity;
 
 
-    /*
-      ペン描画
-    */
+/*
+ズーム可能範囲
+*/
 
-       if (isDrawing) {
-
-      const position =
-        getPaintPosition(event);
-
-      if (!position) {
-        return;
-      }
-
-
-      /*
-        現在の座標を
-        ストローク履歴へ追加
-      */
-
-      if (currentStroke) {
-
-        currentStroke.points.push({
-          x: position.x,
-          y: position.y
-        });
-      }
+camera.fov =
+Math.max(
+20,
+Math.min(
+120,
+camera.fov
+)
+);
 
 
-      /*
-        選択中ツールに応じて
-        描画方法を変更
-      */
+/*
+FOVを変更したので
+Projection Matrixを更新
+*/
 
-      if (currentTool === "eraser") {
+camera.updateProjectionMatrix();
 
-        /*
-          既存ピクセルを透明化
-        */
-
-        drawContext.globalCompositeOperation =
-          "destination-out";
-
-      } else {
-
-        /*
-          通常描画
-        */
-
-        drawContext.globalCompositeOperation =
-          "source-over";
-      }
+return;
+}
 
 
-      drawContext.strokeStyle =
-        penColor;
+/*
+ペン描画
+*/
 
-      drawContext.lineWidth =
-        penSize * drawScale;
+if (isDrawing) {
 
-      drawContext.lineCap =
-        "round";
+const position =
+getPaintPosition(event);
 
-      drawContext.lineJoin =
-        "round";
-
-
-      /*
-        360°画像の左右端を
-        連続した座標として扱う
-      */
-
-      let adjustedX =
-        position.x;
-
-      const deltaX =
-        adjustedX - previousPaintX;
+if (!position) {
+return;
+}
 
 
-      /*
-        右端 → 左端
-      */
+/*
+現在の座標を
+ストローク履歴へ追加
+*/
 
-      if (
-        deltaX <
-        -paintCanvas.width / 2
-      ) {
-        adjustedX +=
-          paintCanvas.width;
-      }
+if (currentStroke) {
 
-
-      /*
-        左端 → 右端
-      */
-
-      else if (
-        deltaX >
-        paintCanvas.width / 2
-      ) {
-        adjustedX -=
-          paintCanvas.width;
-      }
+currentStroke.points.push({
+x: position.x,
+y: position.y
+});
+}
 
 
-      /*
-        中間点
-      */
+/*
+選択中ツールに応じて
+描画方法を変更
+*/
 
-      const midX =
-        (
-          previousPaintX +
-          adjustedX
-        ) / 2;
+if (currentTool === "eraser") {
+
+/*
+既存ピクセルを透明化
+*/
+
+drawContext.globalCompositeOperation =
+"destination-out";
+
+} else {
+
+/*
+通常描画
+*/
+
+drawContext.globalCompositeOperation =
+"source-over";
+}
+
+
+drawContext.strokeStyle =
+penColor;
+
+drawContext.lineWidth =
+penSize * drawScale;
+
+drawContext.lineCap =
+"round";
+
+drawContext.lineJoin =
+"round";
+
+
+/*
+360°画像の左右端を
+連続した座標として扱う
+*/
+
+let adjustedX =
+position.x;
+
+const deltaX =
+adjustedX - previousPaintX;
+
+
+/*
+右端 → 左端
+*/
+
+if (
+deltaX <
+-paintCanvas.width / 2
+) {
+adjustedX +=
+paintCanvas.width;
+}
+
+
+/*
+左端 → 右端
+*/
+
+else if (
+deltaX >
+paintCanvas.width / 2
+) {
+adjustedX -=
+paintCanvas.width;
+}
+
+
+/*
+中間点
+*/
+
+const midX =
+(
+previousPaintX +
+adjustedX
+) / 2;
 
 const midY =
-        (
-          previousPaintY +
-          position.y
-        ) / 2;
+(
+previousPaintY +
+position.y
+) / 2;
 
 
-      /*
-        この曲線が触れる範囲を
-        描画前に保存する。
+/*
+この曲線が触れる範囲を
+描画前に保存する。
 
-        quadraticCurveは
-        始点・制御点・終点の
-        範囲内に収まるため、
-        この3点から範囲を求める。
-      */
+quadraticCurveは
+始点・制御点・終点の
+範囲内に収まるため、
+この3点から範囲を求める。
+*/
 
-      const historyPadding =
-        (
-          penSize *
-          drawScale
-        ) / 2 + 2;
-
-
-      captureStrokeTiles(
-        currentStroke,
-
-        Math.min(
-          previousMidX,
-          previousPaintX,
-          midX
-        ) -
-          historyPadding,
-
-        Math.min(
-          previousMidY,
-          previousPaintY,
-          midY
-        ) -
-          historyPadding,
-
-        Math.max(
-          previousMidX,
-          previousPaintX,
-          midX
-        ) +
-          historyPadding,
-
-        Math.max(
-          previousMidY,
-          previousPaintY,
-          midY
-        ) +
-          historyPadding
-      );
+const historyPadding =
+(
+penSize *
+drawScale
+) / 2 + 2;
 
 
-      /*
-        通常位置に描画
-      */
+captureStrokeTiles(
+currentStroke,
 
-      drawContext.beginPath();
+Math.min(
+previousMidX,
+previousPaintX,
+midX
+) -
+historyPadding,
 
-      drawContext.moveTo(
-        previousMidX,
-        previousMidY
-      );
+Math.min(
+previousMidY,
+previousPaintY,
+midY
+) -
+historyPadding,
 
-      drawContext.quadraticCurveTo(
-        previousPaintX,
-        previousPaintY,
-        midX,
-        midY
-      );
+Math.max(
+previousMidX,
+previousPaintX,
+midX
+) +
+historyPadding,
 
-      drawContext.stroke();
-
-
-      /*
-        左側にも同じ線を描く
-      */
-
-      drawContext.beginPath();
-
-      drawContext.moveTo(
-        previousMidX -
-          paintCanvas.width,
-        previousMidY
-      );
-
-      drawContext.quadraticCurveTo(
-        previousPaintX -
-          paintCanvas.width,
-        previousPaintY,
-        midX -
-          paintCanvas.width,
-        midY
-      );
-
-      drawContext.stroke();
+Math.max(
+previousMidY,
+previousPaintY,
+midY
+) +
+historyPadding
+);
 
 
-      /*
-        右側にも同じ線を描く
-      */
+/*
+通常位置に描画
+*/
 
-      drawContext.beginPath();
+drawContext.beginPath();
 
-      drawContext.moveTo(
-        previousMidX +
-          paintCanvas.width,
-        previousMidY
-      );
+drawContext.moveTo(
+previousMidX,
+previousMidY
+);
 
-      drawContext.quadraticCurveTo(
-        previousPaintX +
-          paintCanvas.width,
-        previousPaintY,
-        midX +
-          paintCanvas.width,
-        midY
-      );
+drawContext.quadraticCurveTo(
+previousPaintX,
+previousPaintY,
+midX,
+midY
+);
 
-      drawContext.stroke();
-
-      /*
-        次回用の座標を保存
-      */
-
-      previousMidX =
-        midX;
-
-      previousMidY =
-        midY;
-
-      previousPaintX =
-        adjustedX;
-
-      previousPaintY =
-        position.y;
+drawContext.stroke();
 
 
-      /*
-        Canvas範囲外へ出た座標を
-        0～widthへ戻す
-      */
+/*
+左側にも同じ線を描く
+*/
 
-      if (
-        previousPaintX < 0
-      ) {
+drawContext.beginPath();
 
-        previousPaintX +=
-          paintCanvas.width;
+drawContext.moveTo(
+previousMidX -
+paintCanvas.width,
+previousMidY
+);
 
-        previousMidX +=
-          paintCanvas.width;
-      }
+drawContext.quadraticCurveTo(
+previousPaintX -
+paintCanvas.width,
+previousPaintY,
+midX -
+paintCanvas.width,
+midY
+);
 
-      else if (
-        previousPaintX >=
-        paintCanvas.width
-      ) {
-
-        previousPaintX -=
-          paintCanvas.width;
-
-        previousMidX -=
-          paintCanvas.width;
-      }
+drawContext.stroke();
 
 
-      /*
-        球体表示の更新を予約する
+/*
+右側にも同じ線を描く
+*/
 
-        実際の更新は
-        次の描画フレームで行う
-      */
+drawContext.beginPath();
 
-      requestPaintUpdate();
+drawContext.moveTo(
+previousMidX +
+paintCanvas.width,
+previousMidY
+);
 
-      return;
-    }
+drawContext.quadraticCurveTo(
+previousPaintX +
+paintCanvas.width,
+previousPaintY,
+midX +
+paintCanvas.width,
+midY
+);
 
-  }
+drawContext.stroke();
+
+/*
+次回用の座標を保存
+*/
+
+previousMidX =
+midX;
+
+previousMidY =
+midY;
+
+previousPaintX =
+adjustedX;
+
+previousPaintY =
+position.y;
+
+
+/*
+Canvas範囲外へ出た座標を
+0～widthへ戻す
+*/
+
+if (
+previousPaintX < 0
+) {
+
+previousPaintX +=
+paintCanvas.width;
+
+previousMidX +=
+paintCanvas.width;
+}
+
+else if (
+previousPaintX >=
+paintCanvas.width
+) {
+
+previousPaintX -=
+paintCanvas.width;
+
+previousMidX -=
+paintCanvas.width;
+}
+
+
+/*
+球体表示の更新を予約する
+
+実際の更新は
+次の描画フレームで行う
+*/
+
+requestPaintUpdate();
+
+return;
+}
+
+}
 );
 
 /* マウスを離す */
 
 renderer.domElement.addEventListener(
-  "pointerup",
-  (event) => {
+"pointerup",
+(event) => {
 
-    /*
-      スマートフォンの
-      タッチ終了処理
-    */
+/*
+スマートフォンの
+タッチ終了処理
+*/
 
-    if (
-      handleTouchPointerEnd(
-        event
-      )
-    ) {
-      return;
-    }
-
-
-    isLooking = false;
-    isZooming = false;
+if (
+handleTouchPointerEnd(
+event
+)
+) {
+return;
+}
 
 
-    /*
-      描画中だった場合は
-      ストロークを履歴へ登録
-    */
-
-    if (
-      isDrawing &&
-      currentStroke
-    ) {
-
-      strokeHistory.push(
-        currentStroke
-      );
-
-      currentStroke = null;
-    }
+isLooking = false;
+isZooming = false;
 
 
-    isDrawing = false;
+/*
+描画中だった場合は
+ストロークを履歴へ登録
+*/
 
-    previousPaintX = null;
-    previousPaintY = null;
+if (
+isDrawing &&
+currentStroke
+) {
 
-    previousMidX = null;
-    previousMidY = null;
+strokeHistory.push(
+currentStroke
+);
 
-    viewport.classList.remove(
-      "is-looking"
-    );
-
-    viewport.classList.remove(
-      "is-zooming"
-    );
-
-
-    /*
-      Pointer Captureを先に解除する
-    */
-
-    if (
-      renderer.domElement.hasPointerCapture(
-        event.pointerId
-      )
-    ) {
-
-      renderer.domElement.releasePointerCapture(
-        event.pointerId
-      );
-    }
+currentStroke = null;
+}
 
 
-    /*
-      Capture解除に伴うpointerleave等が
-      終わった次のフレームで
-      カーソルを復帰させる
-    */
+isDrawing = false;
 
-    const cursorEvent = {
-      clientX: event.clientX,
-      clientY: event.clientY
-    };
+previousPaintX = null;
+previousPaintY = null;
 
-    requestAnimationFrame(
-      () => {
+previousMidX = null;
+previousMidY = null;
 
-        updateEraserCursor(
-          cursorEvent
-        );
-      }
-    );
+viewport.classList.remove(
+"is-looking"
+);
 
-  }
+viewport.classList.remove(
+"is-zooming"
 );
 
 
 /*
-  スマートフォンで、
-  OSやブラウザによって
-  タッチが中断された場合
+Pointer Captureを先に解除する
+*/
+
+if (
+renderer.domElement.hasPointerCapture(
+event.pointerId
+)
+) {
+
+renderer.domElement.releasePointerCapture(
+event.pointerId
+);
+}
+
+
+/*
+Capture解除に伴うpointerleave等が
+終わった次のフレームで
+カーソルを復帰させる
+*/
+
+const cursorEvent = {
+clientX: event.clientX,
+clientY: event.clientY
+};
+
+requestAnimationFrame(
+() => {
+
+updateEraserCursor(
+cursorEvent
+);
+}
+);
+
+}
+);
+
+
+/*
+スマートフォンで、
+OSやブラウザによって
+タッチが中断された場合
 */
 
 renderer.domElement.addEventListener(
@@ -12968,89 +12968,89 @@ true
 
 
 /* ================================
-   カメラ方向更新
+カメラ方向更新
 ================================ */
 
 function updateCameraDirection() {
 
-  const direction =
-    new THREE.Vector3();
+const direction =
+new THREE.Vector3();
 
-  direction.x =
-    Math.sin(yaw) *
-    Math.cos(pitch);
+direction.x =
+Math.sin(yaw) *
+Math.cos(pitch);
 
-  direction.y =
-    Math.sin(pitch);
+direction.y =
+Math.sin(pitch);
 
-  direction.z =
-    -Math.cos(yaw) *
-    Math.cos(pitch);
+direction.z =
+-Math.cos(yaw) *
+Math.cos(pitch);
 
-  const target =
-    camera.position
-      .clone()
-      .add(direction);
+const target =
+camera.position
+.clone()
+.add(direction);
 
-  camera.lookAt(target);
+camera.lookAt(target);
 }
 
 
 /* ================================
-   リサイズ
+リサイズ
 ================================ */
 
 window.addEventListener(
-  "resize",
-  () => {
+"resize",
+() => {
 
-    updateMobileViewportSize();
-  }
+updateMobileViewportSize();
+}
 );
 
 
 /* ================================
-   描画ループ
+描画ループ
 ================================ */
 
 function animate() {
 
-  requestAnimationFrame(animate);
+requestAnimationFrame(animate);
 
 
-  /*
-    描画内容に変更があった場合だけ
-    360°テクスチャを更新する
-  */
+/*
+描画内容に変更があった場合だけ
+360°テクスチャを更新する
+*/
 
 const now =
-    performance.now();
+performance.now();
 
 
-  if (
-    paintUpdateRequested &&
-    (
-      paintUpdateInterval === 0 ||
-      now - lastPaintUpdateTime >=
-        paintUpdateInterval
-    )
-  ) {
+if (
+paintUpdateRequested &&
+(
+paintUpdateInterval === 0 ||
+now - lastPaintUpdateTime >=
+paintUpdateInterval
+)
+) {
 
-    updatePaintCanvas();
+updatePaintCanvas();
 
-    paintUpdateRequested = false;
+paintUpdateRequested = false;
 
-    lastPaintUpdateTime =
-      now;
-  }
+lastPaintUpdateTime =
+now;
+}
 
 
-  updateCameraDirection();
+updateCameraDirection();
 
-  renderer.render(
-    scene,
-    camera
-  );
+renderer.render(
+scene,
+camera
+);
 }
 
 animate();
