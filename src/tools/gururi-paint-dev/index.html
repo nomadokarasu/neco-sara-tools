@@ -455,6 +455,34 @@ d="M8 10V9a1.5 1.5 0 0 0-3 0v5c0 4 2.8 7 7 7h1c4.4 0 7-2.8 7-7v-2.5a1.5 1.5 0 0 
 
 </button>
 
+
+<button
+id="addToolButton"
+class="tool-button drawing-tool-button drawing-tool-button--add"
+type="button"
+title="ツールを追加"
+aria-label="ツールを追加"
+>
+
+<svg
+class="drawing-tool-icon"
+viewBox="0 0 24 24"
+aria-hidden="true"
+>
+<path
+d="M12 5v14"
+></path>
+<path
+d="M5 12h14"
+></path>
+</svg>
+
+<span class="drawing-tool-label">
+追加
+</span>
+
+</button>
+
 </div>
 
 
@@ -806,6 +834,71 @@ rel="noopener noreferrer"
 >
 開発について読む・応援する
 </a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =============================
+ツールを追加
+============================== -->
+
+<div
+id="toolLibraryPanel"
+class="welcome-overlay tool-library-overlay"
+role="dialog"
+aria-modal="true"
+aria-labelledby="toolLibraryPanelTitle"
+>
+
+<div class="welcome-panel tool-library-panel">
+
+<div class="welcome-panel__header">
+
+<strong id="toolLibraryPanelTitle">
+ツールを追加
+</strong>
+
+<button
+id="toolLibraryCloseButton"
+class="welcome-close-button"
+type="button"
+aria-label="閉じる"
+>
+×
+</button>
+
+</div>
+
+
+<div class="welcome-panel__content">
+
+<div class="tool-library-item">
+
+<div class="tool-library-item__text">
+
+<strong id="cameraToolTitle">
+カメラ
+</strong>
+
+<p id="cameraToolDescription">
+現在見えている360°空間を通常の画像として撮影します。
+</p>
+
+</div>
+
+<button
+id="cameraToolAddButton"
+class="tool-button tool-library-add-button"
+type="button"
+>
+追加
+</button>
 
 </div>
 

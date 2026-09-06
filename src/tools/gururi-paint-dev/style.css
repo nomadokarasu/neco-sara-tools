@@ -1679,6 +1679,62 @@ opacity: 0.86;
 
 
 /* ================================
+ツールを追加
+================================ */
+
+.tool-library-panel {
+width: 440px;
+}
+
+
+.tool-library-item {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 20px;
+
+padding: 14px;
+
+border:
+1px solid #555;
+border-radius: 6px;
+
+background: #2b2b2b;
+}
+
+
+.tool-library-item__text {
+min-width: 0;
+}
+
+
+.tool-library-item__text strong {
+display: block;
+
+margin-bottom: 6px;
+
+font-size: 15px;
+}
+
+
+.tool-library-item__text p {
+margin: 0;
+
+font-size: 13px;
+line-height: 1.6;
+color: #ccc;
+}
+
+
+.tool-library-add-button {
+flex-shrink: 0;
+
+min-width: 72px;
+min-height: 36px;
+}
+
+
+/* ================================
 ショートカット設定
 ================================ */
 

@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.30";
+"1.3.31";
 
 
 const appVersion =
@@ -102,6 +102,34 @@ document.getElementById("eyedropperTool");
 
 const lookToolButton =
 document.getElementById("lookTool");
+
+const addToolButton =
+document.getElementById("addToolButton");
+
+const toolLibraryPanel =
+document.getElementById(
+"toolLibraryPanel"
+);
+
+const toolLibraryCloseButton =
+document.getElementById(
+"toolLibraryCloseButton"
+);
+
+const cameraToolTitle =
+document.getElementById(
+"cameraToolTitle"
+);
+
+const cameraToolDescription =
+document.getElementById(
+"cameraToolDescription"
+);
+
+const cameraToolAddButton =
+document.getElementById(
+"cameraToolAddButton"
+);
 
 const layerList =
 document.getElementById("layerList");
@@ -544,6 +572,18 @@ eyedropper:
 lookTool:
 "手のひら",
 
+addTool:
+"ツールを追加",
+
+add:
+"追加",
+
+camera:
+"カメラ",
+
+cameraDescription:
+"現在見えている360°空間を通常の画像として撮影します。",
+
 brushSize:
 "太さ",
 
@@ -781,6 +821,18 @@ eyedropper:
 
 lookTool:
 "Hand",
+
+addTool:
+"Add tools",
+
+add:
+"Add",
+
+camera:
+"Camera",
+
+cameraDescription:
+"Capture the current view of the 360° space as a standard image.",
 
 brushSize:
 "Size",
@@ -1171,6 +1223,40 @@ lookToolButton.querySelector(
 ".drawing-tool-label"
 ).textContent =
 t("lookTool");
+
+
+addToolButton.title =
+t("addTool");
+
+addToolButton.setAttribute(
+"aria-label",
+t("addTool")
+);
+
+addToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("add");
+
+
+setElementText(
+"#toolLibraryPanelTitle",
+t("addTool")
+);
+
+toolLibraryCloseButton.setAttribute(
+"aria-label",
+t("close")
+);
+
+cameraToolTitle.textContent =
+t("camera");
+
+cameraToolDescription.textContent =
+t("cameraDescription");
+
+cameraToolAddButton.textContent =
+t("add");
 
 
 setElementText(
@@ -9476,6 +9562,69 @@ event.stopPropagation();
 selectDrawingTool(
 "look"
 );
+}
+);
+
+
+function openToolLibrary() {
+
+toolLibraryPanel.classList.add(
+"is-open"
+);
+}
+
+
+function closeToolLibrary() {
+
+toolLibraryPanel.classList.remove(
+"is-open"
+);
+}
+
+
+addToolButton.addEventListener(
+"click",
+() => {
+
+openToolLibrary();
+}
+);
+
+
+toolLibraryCloseButton.addEventListener(
+"click",
+() => {
+
+closeToolLibrary();
+}
+);
+
+
+toolLibraryPanel.addEventListener(
+"click",
+(event) => {
+
+if (event.target === toolLibraryPanel) {
+
+closeToolLibrary();
+}
+}
+);
+
+
+document.addEventListener(
+"keydown",
+(event) => {
+
+if (
+event.key === "Escape" &&
+toolLibraryPanel.classList.contains(
+"is-open"
+)
+) {
+
+closeToolLibrary();
+}
 }
 );
 
