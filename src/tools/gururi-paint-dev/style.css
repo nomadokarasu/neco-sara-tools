@@ -1782,6 +1782,36 @@ translate(
 );
 }
 
+.camera-viewfinder.is-flashing .camera-viewfinder-frame {
+animation:
+camera-shutter-flash
+250ms ease-out;
+}
+
+@keyframes camera-shutter-flash {
+
+0% {
+background:
+rgba(
+255,
+255,
+255,
+0.95
+);
+}
+
+100% {
+background:
+rgba(
+255,
+255,
+255,
+0
+);
+}
+
+}
+
 .camera-close-button {
 position: absolute;
 top: 14px;

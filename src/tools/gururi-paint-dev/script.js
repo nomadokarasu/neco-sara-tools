@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.38";
+"1.3.40";
 
 
 const appVersion =
@@ -10134,6 +10134,16 @@ cameraCaptureMode !== "photo"
 return;
 }
 
+cameraViewfinder.classList.remove(
+"is-flashing"
+);
+
+void cameraViewfinder.offsetWidth;
+
+cameraViewfinder.classList.add(
+"is-flashing"
+);
+
 
 /*
 最新の描画内容を
@@ -10446,7 +10456,7 @@ VIDEO_CAPTURE_SIZE,
 false
 );
 
-videoCaptureStream =
+cameraVideoStream =
 videoCaptureCanvas.captureStream(
 VIDEO_CAPTURE_FPS
 );
@@ -10455,7 +10465,7 @@ cameraVideoChunks = [];
 
 cameraMediaRecorder =
 new MediaRecorder(
-videoCaptureStream,
+cameraVideoStream,
 {
 mimeType,
 videoBitsPerSecond: 8000000
