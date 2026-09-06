@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.25";
+"1.3.26";
 
 
 const appVersion =
@@ -1779,13 +1779,13 @@ texture.needsUpdate = true;
 }
 
 /* ================================
-   長方形プレビュー
+長方形プレビュー
 ================================ */
 
 
 /*
-  左右反転済みの画像を
-  一時保存するCanvas
+左右反転済みの画像を
+一時保存するCanvas
 */
 
 const previewSourceCanvas =
@@ -1972,7 +1972,7 @@ height
 }
 
 /* ================================
-   PNG書き出し
+PNG書き出し
 ================================ */
 
 function downloadPNG() {
@@ -2199,7 +2199,7 @@ link.click();
 
 
 /* ================================
-   プロジェクト保存
+プロジェクト保存
 ================================ */
 
 function downloadProject() {
@@ -3014,42 +3014,42 @@ renderer
 }
 
 
-  eraserCursor.visible =
-    false;
+eraserCursor.visible =
+false;
 
 
-  /*
-    目線
-  */
+/*
+目線
+*/
 
-  const eyeHeight =
-    clampProjectNumber(
-      projectData.view
-        ?.eyeHeight,
-      0.5,
-      30,
-      1.5
-    );
-
-
-  camera.position.y =
-    eyeHeight;
+const eyeHeight =
+clampProjectNumber(
+projectData.view
+?.eyeHeight,
+0.5,
+30,
+1.5
+);
 
 
-  eyeHeightInput.value =
-    eyeHeight;
+camera.position.y =
+eyeHeight;
 
-  eyeHeightValue.value =
-    eyeHeight.toFixed(1);
+
+eyeHeightInput.value =
+eyeHeight;
+
+eyeHeightValue.value =
+eyeHeight.toFixed(1);
 
 
 updateGroundGridSize(
-    eyeHeight
-  );
+eyeHeight
+);
 
-  updateHorizontalGuideHeight(
-    eyeHeight
-  );
+updateHorizontalGuideHeight(
+eyeHeight
+);
 
 
 /*
@@ -3320,111 +3320,111 @@ guideGridPlaneSize
 
 
 const groundGridMaterial =
-  new THREE.ShaderMaterial({
+new THREE.ShaderMaterial({
 
-    uniforms: {
+uniforms: {
 
-      gridSize: {
-        value: 1.0
-      }
-    },
+gridSize: {
+value: 1.0
+}
+},
 
-    transparent: true,
+transparent: true,
 
-    depthTest: false,
+depthTest: false,
 
-    depthWrite: false,
+depthWrite: false,
 
-    side: THREE.DoubleSide,
+side: THREE.DoubleSide,
 
-    vertexShader: `
-      varying vec3 vWorldPosition;
-
-      void main() {
-
-        vec4 worldPosition =
-          modelMatrix *
-          vec4(
-            position,
-            1.0
-          );
-
-        vWorldPosition =
-          worldPosition.xyz;
-
-        gl_Position =
-          projectionMatrix *
-          viewMatrix *
-          worldPosition;
-      }
-    `,
-
-    fragmentShader: `
+vertexShader: `
 varying vec3 vWorldPosition;
 
-      uniform float gridSize;
+void main() {
 
-      void main() {
+vec4 worldPosition =
+modelMatrix *
+vec4(
+position,
+1.0
+);
 
-        /*
-          gridSizeで世界座標を割ることで
-          グリッドの1マスの大きさを変更する
-        */
+vWorldPosition =
+worldPosition.xyz;
 
-        vec2 gridPosition =
-          vWorldPosition.xz /
-          gridSize;
+gl_Position =
+projectionMatrix *
+viewMatrix *
+worldPosition;
+}
+`,
 
+fragmentShader: `
+varying vec3 vWorldPosition;
 
-        /*
-          線を画面上で
-          なめらかに表示する
-        */
+uniform float gridSize;
 
-        vec2 gridDistance =
-          abs(
-            fract(
-              gridPosition -
-              0.5
-            ) -
-            0.5
-          ) /
-          fwidth(
-            gridPosition
-          );
+void main() {
 
+/*
+gridSizeで世界座標を割ることで
+グリッドの1マスの大きさを変更する
+*/
 
-        float line =
-          1.0 -
-          min(
-            min(
-              gridDistance.x,
-              gridDistance.y
-            ),
-            1.0
-          );
+vec2 gridPosition =
+vWorldPosition.xz /
+gridSize;
 
 
-        /*
-          青いグリッド
-        */
+/*
+線を画面上で
+なめらかに表示する
+*/
 
-        vec3 gridColor =
-          vec3(
-            0.25,
-            0.55,
-            1.0
-          );
+vec2 gridDistance =
+abs(
+fract(
+gridPosition -
+0.5
+) -
+0.5
+) /
+fwidth(
+gridPosition
+);
 
 
-        gl_FragColor =
-          vec4(
-            gridColor,
-            line * 0.35
-          );
-      }
-    `
-  });
+float line =
+1.0 -
+min(
+min(
+gridDistance.x,
+gridDistance.y
+),
+1.0
+);
+
+
+/*
+青いグリッド
+*/
+
+vec3 gridColor =
+vec3(
+0.25,
+0.55,
+1.0
+);
+
+
+gl_FragColor =
+vec4(
+gridColor,
+line * 0.35
+);
+}
+`
+});
 
 
 const groundGrid =
@@ -3466,22 +3466,22 @@ groundGrid
 
 
 /*
-  高さ20mグリッド専用Material
+高さ20mグリッド専用Material
 */
 
 const horizontalGridMaterial =
-  groundGridMaterial.clone();
+groundGridMaterial.clone();
 
 
 /*
-  地面より粗いマス目にする
-  1マス = 10m
+地面より粗いマス目にする
+1マス = 10m
 */
 
 horizontalGridMaterial
-  .uniforms
-  .gridSize
-  .value = 10;
+.uniforms
+.gridSize
+.value = 10;
 
 
 /* ================================
