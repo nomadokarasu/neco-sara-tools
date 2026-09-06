@@ -1,25 +1,25 @@
 * {
-  box-sizing: border-box;
+box-sizing: border-box;
 }
 
 html,
 body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
+width: 100%;
+height: 100%;
+margin: 0;
 }
 
 body {
-  overflow: hidden;
+overflow: hidden;
 
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+font-family:
+-apple-system,
+BlinkMacSystemFont,
+"Segoe UI",
+sans-serif;
 
-  background: #222;
-  color: #fff;
+background: #222;
+color: #fff;
 }
 
 .toolbar {
@@ -39,13 +39,13 @@ overflow: visible;
 }
 
 /*
-  ツールバー内では
-  テキストを改行しない
+ツールバー内では
+テキストを改行しない
 */
 
 .toolbar,
 .toolbar * {
-  white-space: nowrap;
+white-space: nowrap;
 }
 
 .toolbar__brand {
@@ -212,40 +212,40 @@ display: none;
 }
 
 .tool-button {
-  padding: 5px 10px;
+padding: 5px 10px;
 
-  border: 1px solid #666;
-  border-radius: 4px;
+border: 1px solid #666;
+border-radius: 4px;
 
-  background: #444;
-  color: #ddd;
+background: #444;
+color: #ddd;
 
-  font: inherit;
-  font-size: 13px;
+font: inherit;
+font-size: 13px;
 
-  cursor: pointer;
+cursor: pointer;
 }
 
 .tool-button:hover {
-  background: #555;
+background: #555;
 }
 
 .tool-button.is-active {
-  background: #ddd;
-  color: #222;
+background: #ddd;
+color: #222;
 
-  border-color: #ddd;
+border-color: #ddd;
 }
 
 .pen-size-control {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+display: flex;
+align-items: center;
+gap: 6px;
 
-  margin-left: 8px;
+margin-left: 8px;
 
-  font-size: 13px;
-  color: #ddd;
+font-size: 13px;
+color: #ddd;
 }
 
 .tool-button,
@@ -256,517 +256,517 @@ display: none;
 .canvas-size-control,
 .eye-height-control,
 .toolbar__info {
-  flex-shrink: 0;
+flex-shrink: 0;
 }
 
 .pen-size-control input {
-  width: 100px;
+width: 100px;
 }
 
 #penSizeValue {
-  min-width: 24px;
-  text-align: right;
+min-width: 24px;
+text-align: right;
 }
 
 
 .pen-color-control {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
+display: flex;
+flex-direction: column;
+align-items: stretch;
+gap: 8px;
 
-  margin-left: 8px;
+margin-left: 8px;
 
-  font-size: 13px;
-  color: #ddd;
+font-size: 13px;
+color: #ddd;
 }
 
 
 .pen-color-label {
-  font-size: 13px;
-  color: #ddd;
+font-size: 13px;
+color: #ddd;
 }
 
 
 /*
-  現在のペン色
+現在のペン色
 */
 
 .current-pen-color-swatch {
-  box-sizing: border-box;
+box-sizing: border-box;
 
-  width:
-    calc(
-      100% + 8px
-    );
+width:
+calc(
+100% + 8px
+);
 
-  height: 28px;
+height: 28px;
 
-  margin-top: 2px;
-  margin-left: -8px;
+margin-top: 2px;
+margin-left: -8px;
 
-  background: #000;
+background: #000;
 
-  border: 1px solid #777;
-  border-radius: 3px;
+border: 1px solid #777;
+border-radius: 3px;
 }
 
 
 /*
-  現在色との間を少し空ける
+現在色との間を少し空ける
 */
 
 #colorPickerWheel {
-  margin-top: 10px;
+margin-top: 10px;
 }
 
 
 /*
-  カラーピッカー全体
+カラーピッカー全体
 */
 
 #colorPickerWheel {
-  position: relative;
+position: relative;
 
-  width: 150px;
-  height: 150px;
+width: 150px;
+height: 150px;
 
-  margin:
-    10px auto 0;
+margin:
+10px auto 0;
 }
 
 
 /*
-  外側の色相環
+外側の色相環
 */
 
 #colorWheelLayer {
-  position: absolute;
+position: absolute;
 
-  inset: 0;
+inset: 0;
 
-  z-index: 1;
+z-index: 1;
 
-  width: 150px;
-  height: 150px;
+width: 150px;
+height: 150px;
 
-  border-radius: 50%;
+border-radius: 50%;
 
-  touch-action: none;
+touch-action: none;
 }
 
 
 /*
-  色相そのものは
-  疑似要素で描画する。
+色相そのものは
+疑似要素で描画する。
 
-  conic-gradientなので、
-  色が円周方向へ正しく並ぶ。
+conic-gradientなので、
+色が円周方向へ正しく並ぶ。
 */
 
 #colorWheelLayer::before {
-  content: "";
+content: "";
 
-  position: absolute;
+position: absolute;
 
-  inset: 0;
+inset: 0;
 
-  border-radius: 50%;
+border-radius: 50%;
 
-  background:
-    conic-gradient(
-      hsl(0 100% 50%) 0deg,
-      hsl(60 100% 50%) 60deg,
-      hsl(120 100% 50%) 120deg,
-      hsl(180 100% 50%) 180deg,
-      hsl(240 100% 50%) 240deg,
-      hsl(300 100% 50%) 300deg,
-      hsl(360 100% 50%) 360deg
-    );
+background:
+conic-gradient(
+hsl(0 100% 50%) 0deg,
+hsl(60 100% 50%) 60deg,
+hsl(120 100% 50%) 120deg,
+hsl(180 100% 50%) 180deg,
+hsl(240 100% 50%) 240deg,
+hsl(300 100% 50%) 300deg,
+hsl(360 100% 50%) 360deg
+);
 
-  -webkit-mask:
-    radial-gradient(
-      farthest-side,
-      transparent
-        calc(100% - 24px),
-      #000
-        calc(100% - 23px)
-    );
+-webkit-mask:
+radial-gradient(
+farthest-side,
+transparent
+calc(100% - 24px),
+#000
+calc(100% - 23px)
+);
 
-  mask:
-    radial-gradient(
-      farthest-side,
-      transparent
-        calc(100% - 24px),
-      #000
-        calc(100% - 23px)
-    );
+mask:
+radial-gradient(
+farthest-side,
+transparent
+calc(100% - 24px),
+#000
+calc(100% - 23px)
+);
 
-  pointer-events: none;
+pointer-events: none;
 }
 
 
 /*
-  色相選択ハンドル
+色相選択ハンドル
 */
 
 #colorHueHandle {
-  position: absolute;
+position: absolute;
 
-  z-index: 4;
+z-index: 4;
 
-  width: 16px;
-  height: 16px;
+width: 16px;
+height: 16px;
 
-  transform:
-    translate(
-      -50%,
-      -50%
-    );
+transform:
+translate(
+-50%,
+-50%
+);
 
-  border:
-    3px solid #fff;
+border:
+3px solid #fff;
 
-  border-radius: 50%;
+border-radius: 50%;
 
-  background: transparent;
+background: transparent;
 
-  box-shadow:
-    0 0 0 1px #444;
+box-shadow:
+0 0 0 1px #444;
 
-  pointer-events: none;
+pointer-events: none;
 }
 
 
 /*
-  リング中央。
+リング中央。
 
-  リングのクリックを
-  完全に遮断する。
+リングのクリックを
+完全に遮断する。
 */
 
 #colorWheelHole {
-  position: absolute;
+position: absolute;
 
-  top: 50%;
-  left: 50%;
+top: 50%;
+left: 50%;
 
-  z-index: 2;
+z-index: 2;
 
-  width: 102px;
-  height: 102px;
+width: 102px;
+height: 102px;
 
-  transform:
-    translate(
-      -50%,
-      -50%
-    );
+transform:
+translate(
+-50%,
+-50%
+);
 
-  border-radius: 50%;
+border-radius: 50%;
 
-  background: #333;
+background: #333;
 
-  pointer-events: auto;
+pointer-events: auto;
 }
 
 
 /*
-  中央の彩度・明度Box。
+中央の彩度・明度Box。
 
-  top / left + マイナスマージンで
-  回転前の中心を正確に
-  円の中心へ合わせる。
+top / left + マイナスマージンで
+回転前の中心を正確に
+円の中心へ合わせる。
 
-  translateとrotateは併用しない。
+translateとrotateは併用しない。
 */
 
 #colorBoxLayer {
-  position: absolute;
+position: absolute;
 
-  top: 50%;
-  left: 50%;
+top: 50%;
+left: 50%;
 
-  z-index: 3;
+z-index: 3;
 
-  width: 64px;
-  height: 64px;
+width: 64px;
+height: 64px;
 
-  margin-top: -32px;
-  margin-left: -32px;
+margin-top: -32px;
+margin-left: -32px;
 
-  transform:
-    rotate(45deg);
+transform:
+rotate(45deg);
 
-  transform-origin:
-    center center;
+transform-origin:
+center center;
 
-  cursor: default;
+cursor: default;
 
-  touch-action: none;
+touch-action: none;
 }
 
 
 /*
-  iro.js内部には
-  ポインター処理をさせない。
+iro.js内部には
+ポインター処理をさせない。
 
-  クリック座標は
-  独自処理で補正する。
+クリック座標は
+独自処理で補正する。
 */
 
 #colorBoxLayer
-  .IroColorPicker,
+.IroColorPicker,
 #colorBoxLayer
-  svg {
+svg {
 
-  pointer-events: none;
+pointer-events: none;
 }
 
 
 /*
-  iro.js自身には
-  Boxのポインター操作をさせない。
+iro.js自身には
+Boxのポインター操作をさせない。
 
-  45°回転後の座標計算は
-  この後JavaScript側で行う。
+45°回転後の座標計算は
+この後JavaScript側で行う。
 */
 
 #colorBoxLayer
-  .IroColorPicker,
+.IroColorPicker,
 #colorBoxLayer
-  svg {
+svg {
 
-  pointer-events: none;
+pointer-events: none;
 }
 
 
 /*
-  iro.js側が作る要素の
-  余白をなくす
+iro.js側が作る要素の
+余白をなくす
 */
 
 #colorWheelLayer
-  > .IroColorPicker,
+> .IroColorPicker,
 #colorBoxLayer
-  > .IroColorPicker {
+> .IroColorPicker {
 
-  margin: 0 !important;
+margin: 0 !important;
 }
 
 
 /*
-  中央Boxの色面を
-  ひし形に切り抜く。
+中央Boxの色面を
+ひし形に切り抜く。
 
-  iro.jsの操作座標自体は
-  回転させないので、
-  CSS transformで45度回転するより
-  操作のずれが起きにくい。
+iro.jsの操作座標自体は
+回転させないので、
+CSS transformで45度回転するより
+操作のずれが起きにくい。
 */
 
 
 
 
 .pen-color-control input {
-  display: none;
+display: none;
 }
 
 
 .recent-colors {
-  display: grid;
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-  gap: 5px;
+display: grid;
+grid-template-columns:
+repeat(4, minmax(0, 1fr));
+gap: 5px;
 
-  width: 100%;
+width: 100%;
 
-  margin-top: 12px;
+margin-top: 12px;
 }
 
 
 .recent-color-button {
-  width: 100%;
-  height: 24px;
+width: 100%;
+height: 24px;
 
-  padding: 0;
+padding: 0;
 
-  border: 1px solid #777;
-  border-radius: 3px;
+border: 1px solid #777;
+border-radius: 3px;
 
-  cursor: pointer;
+cursor: pointer;
 }
 
 
 .recent-color-button:hover:not(:disabled) {
-  border-color: #fff;
+border-color: #fff;
 }
 
 
 .recent-color-button.is-empty {
-  background:
-    linear-gradient(
-      135deg,
-      #3b3b3b 25%,
-      #444 25%,
-      #444 50%,
-      #3b3b3b 50%,
-      #3b3b3b 75%,
-      #444 75%
-    );
-  background-size: 8px 8px;
+background:
+linear-gradient(
+135deg,
+#3b3b3b 25%,
+#444 25%,
+#444 50%,
+#3b3b3b 50%,
+#3b3b3b 75%,
+#444 75%
+);
+background-size: 8px 8px;
 
-  opacity: 0.45;
-  cursor: default;
+opacity: 0.45;
+cursor: default;
 }
 
 
 .history-controls {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+display: flex;
+align-items: center;
+gap: 4px;
 
-  margin-left: 8px;
+margin-left: 8px;
 }
 
 
 .history-controls .tool-button {
-  width: 32px;
-  padding-left: 0;
-  padding-right: 0;
+width: 32px;
+padding-left: 0;
+padding-right: 0;
 
-  font-size: 18px;
-  line-height: 1;
+font-size: 18px;
+line-height: 1;
 }
 
 .canvas-size-control {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+display: flex;
+align-items: center;
+gap: 6px;
 
-  margin-left: 8px;
+margin-left: 8px;
 
-  font-size: 13px;
-  color: #ddd;
+font-size: 13px;
+color: #ddd;
 }
 
 
 .canvas-size-control select {
-  padding: 4px 6px;
+padding: 4px 6px;
 
-  border: 1px solid #666;
-  border-radius: 4px;
+border: 1px solid #666;
+border-radius: 4px;
 
-  background: #444;
-  color: #ddd;
+background: #444;
+color: #ddd;
 
-  font: inherit;
-  font-size: 13px;
+font: inherit;
+font-size: 13px;
 
-  cursor: pointer;
+cursor: pointer;
 }
 
 .guide-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+display: flex;
+align-items: center;
+gap: 5px;
 
-  flex-shrink: 0;
+flex-shrink: 0;
 
-  font-size: 13px;
-  color: #ddd;
+font-size: 13px;
+color: #ddd;
 
-  cursor: pointer;
+cursor: pointer;
 }
 
 
 .guide-toggle input {
-  margin: 0;
+margin: 0;
 
-  cursor: pointer;
+cursor: pointer;
 }
 
 .eye-height-control {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+display: flex;
+align-items: center;
+gap: 6px;
 
-  margin-left: 8px;
+margin-left: 8px;
 
-  font-size: 13px;
-  color: #ddd;
+font-size: 13px;
+color: #ddd;
 }
 
 
 .eye-height-control input[type="range"] {
-  width: 90px;
+width: 90px;
 }
 
 
 .eye-height-step-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+display: flex;
+align-items: center;
+justify-content: center;
 
-  width: 24px;
-  height: 24px;
+width: 24px;
+height: 24px;
 
-  flex-shrink: 0;
+flex-shrink: 0;
 
-  padding: 0;
+padding: 0;
 
-  border: 1px solid #666;
-  border-radius: 3px;
+border: 1px solid #666;
+border-radius: 3px;
 
-  background: #444;
-  color: #eee;
+background: #444;
+color: #eee;
 
-  font: inherit;
-  font-size: 16px;
-  line-height: 1;
+font: inherit;
+font-size: 16px;
+line-height: 1;
 
-  cursor: pointer;
+cursor: pointer;
 }
 
 
 .eye-height-step-button:hover {
-  background: #555;
+background: #555;
 }
 
 
 #eyeHeightValue {
-  min-width: 38px;
-  text-align: right;
+min-width: 38px;
+text-align: right;
 }
 
 .toolbar__info {
-  font-size: 13px;
-  color: #ccc;
+font-size: 13px;
+color: #ccc;
 }
 
 /* ================================
-   描画ツールパネル
+描画ツールパネル
 ================================ */
 
 .drawing-tools {
-  position: fixed;
+position: fixed;
 
-  top: 60px;
-  left: 16px;
+top: 60px;
+left: 16px;
 
-  z-index: 100;
+z-index: 100;
 
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+display: flex;
+flex-direction: column;
+gap: 8px;
 
-  width: 160px;
+width: 160px;
 
-  padding: 10px;
+padding: 10px;
 
-  background: #333;
+background: #333;
 
-  border: 1px solid #555;
-  border-radius: 6px;
+border: 1px solid #555;
+border-radius: 6px;
 }
 
 
@@ -818,514 +818,514 @@ pointer-events: none;
 
 
 .drawing-tools__separator {
-  width: 100%;
-  height: 1px;
+width: 100%;
+height: 1px;
 
-  margin: 2px 0;
+margin: 2px 0;
 
-  background: #555;
+background: #555;
 }
 
 
 .drawing-tools .pen-color-control {
-  margin-left: 0;
+margin-left: 0;
 }
 
 
 .drawing-tools .recent-colors {
-  margin-left: 0;
+margin-left: 0;
 }
 
 
 .drawing-tools .pen-size-control {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
+display: flex;
+flex-direction: column;
+gap: 7px;
 
-  width: 100%;
+width: 100%;
 }
 
 
 .pen-size-label {
-  font-size: 13px;
-  color: #ddd;
+font-size: 13px;
+color: #ddd;
 }
 
 
 .pen-size-slider {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) 24px;
-  align-items: center;
-  gap: 6px;
+display: grid;
+grid-template-columns: 24px minmax(0, 1fr) 24px;
+align-items: center;
+gap: 6px;
 
-  width: 100%;
+width: 100%;
 }
 
 
 .pen-size-slider input[type="range"] {
-  width: 100%;
-  min-width: 0;
-  margin: 0;
+width: 100%;
+min-width: 0;
+margin: 0;
 }
 
 
 .size-step-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+display: flex;
+align-items: center;
+justify-content: center;
 
-  width: 24px;
-  height: 24px;
+width: 24px;
+height: 24px;
 
-  padding: 0;
+padding: 0;
 
-  border: 1px solid #666;
-  border-radius: 3px;
+border: 1px solid #666;
+border-radius: 3px;
 
-  background: #444;
-  color: #eee;
+background: #444;
+color: #eee;
 
-  font: inherit;
-  font-size: 16px;
-  line-height: 1;
+font: inherit;
+font-size: 16px;
+line-height: 1;
 
-  cursor: pointer;
+cursor: pointer;
 }
 
 
 .size-step-button:hover {
-  background: #555;
+background: #555;
 }
 
 
 .drawing-tools .pen-size-control .number-input {
-  display: block;
+display: block;
 
-  width: 52px;
-  height: 26px;
+width: 52px;
+height: 26px;
 
-  margin: 0 auto;
+margin: 0 auto;
 
-  padding: 3px 6px;
+padding: 3px 6px;
 
-  border: 1px solid #666;
-  border-radius: 3px;
+border: 1px solid #666;
+border-radius: 3px;
 
-  background: #222;
-  color: #eee;
+background: #222;
+color: #eee;
 
-  font: inherit;
-  text-align: center;
+font: inherit;
+text-align: center;
 }
 
 
 
 
 .number-input {
-  box-sizing: border-box;
+box-sizing: border-box;
 
-  width: 42px;
-  min-width: 0;
+width: 42px;
+min-width: 0;
 
-  padding: 3px 4px;
+padding: 3px 4px;
 
-  border: 1px solid #666;
-  border-radius: 3px;
+border: 1px solid #666;
+border-radius: 3px;
 
-  background: #222;
-  color: #eee;
+background: #222;
+color: #eee;
 
-  font: inherit;
-  text-align: right;
+font: inherit;
+text-align: right;
 }
 
 .number-input::-webkit-inner-spin-button,
 .number-input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+-webkit-appearance: none;
+margin: 0;
 }
 
 
 .number-input {
-  appearance: textfield;
-  -moz-appearance: textfield;
+appearance: textfield;
+-moz-appearance: textfield;
 }
 
 .drawing-tools .pen-color-control {
-  justify-content: space-between;
+justify-content: space-between;
 }
 
 
 .drawing-tools .history-controls {
-  width: 100%;
-  margin-left: 0;
+width: 100%;
+margin-left: 0;
 }
 
 
 .drawing-tools .history-controls .tool-button {
-  flex: 1;
+flex: 1;
 }
 
 /* ================================
-   パネル移動
+パネル移動
 ================================ */
 
 .drawing-tools,
 .layer-panel {
-  cursor: grab;
+cursor: grab;
 }
 
 
 .drawing-tools.is-dragging,
 .layer-panel.is-dragging {
-  cursor: grabbing;
+cursor: grabbing;
 }
 
 
 /*
-  パネル内の操作部品では
-  通常のカーソルを使用する
+パネル内の操作部品では
+通常のカーソルを使用する
 */
 
 .drawing-tools button,
 .layer-panel button {
-  cursor: pointer;
+cursor: pointer;
 }
 
 
 .drawing-tools input,
 .layer-panel input {
-  cursor: auto;
+cursor: auto;
 }
 
 
 /*
-  カラーホイール上では
-  通常のカーソルを使用する
+カラーホイール上では
+通常のカーソルを使用する
 */
 
 .pen-color-control,
 .pen-color-control * {
-  cursor: default;
+cursor: default;
 }
 
 
 /* ================================
-   レイヤーパネル
+レイヤーパネル
 ================================ */
 
 .layer-panel {
-  position: fixed;
+position: fixed;
 
-  top: 60px;
-  right: 16px;
+top: 60px;
+right: 16px;
 
-  z-index: 100;
+z-index: 100;
 
-  width: 220px;
+width: 220px;
 
-  padding: 10px;
+padding: 10px;
 
-  background: #333;
+background: #333;
 
-  border: 1px solid #555;
-  border-radius: 6px;
+border: 1px solid #555;
+border-radius: 6px;
 }
 
 
 .layer-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+display: flex;
+align-items: center;
+justify-content: space-between;
 
-  margin-bottom: 8px;
+margin-bottom: 8px;
 
-  font-size: 13px;
-  color: #eee;
+font-size: 13px;
+color: #eee;
 }
 
 
 .layer-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+display: flex;
+flex-direction: column;
+gap: 4px;
 
-  max-height: 260px;
+max-height: 260px;
 
-  overflow-y: auto;
+overflow-y: auto;
 }
 
 
 .layer-item {
-  display: grid;
+display: grid;
 
-  grid-template-columns:
-    30px
-    minmax(0, 1fr)
-    32px;
+grid-template-columns:
+30px
+minmax(0, 1fr)
+32px;
 
-  gap: 4px;
+gap: 4px;
 
-  padding: 3px;
+padding: 3px;
 
-  border: 1px solid #555;
-  border-radius: 4px;
+border: 1px solid #555;
+border-radius: 4px;
 
-  background: #2a2a2a;
+background: #2a2a2a;
 }
 
 
 .layer-item.is-active {
-  border-color: #ddd;
-  background: #444;
+border-color: #ddd;
+background: #444;
 }
 
 
 .layer-visibility-button,
 .layer-name-input,
 .layer-action-button {
-  border: 1px solid #666;
-  border-radius: 3px;
+border: 1px solid #666;
+border-radius: 3px;
 
-  background: #444;
-  color: #eee;
+background: #444;
+color: #eee;
 
-  font: inherit;
-  font-size: 13px;
+font: inherit;
+font-size: 13px;
 
-  cursor: pointer;
+cursor: pointer;
 }
 
 
 .layer-visibility-button {
-  width: 30px;
-  min-width: 30px;
+width: 30px;
+min-width: 30px;
 
-  padding: 4px 0;
+padding: 4px 0;
 }
 
 
 /*
-  レイヤー並び替えハンドル
+レイヤー並び替えハンドル
 */
 
 .layer-drag-handle {
-  width: 32px;
-  min-width: 32px;
+width: 32px;
+min-width: 32px;
 
-  padding: 0;
+padding: 0;
 
-  border: 1px solid transparent;
-  border-radius: 3px;
+border: 1px solid transparent;
+border-radius: 3px;
 
-  background: transparent;
-  color: #aaa;
+background: transparent;
+color: #aaa;
 
-  font: inherit;
-  font-size: 18px;
-  line-height: 1;
+font: inherit;
+font-size: 18px;
+line-height: 1;
 
-  cursor: grab;
+cursor: grab;
 
-  touch-action: none;
+touch-action: none;
 
-  user-select: none;
-  -webkit-user-select: none;
+user-select: none;
+-webkit-user-select: none;
 }
 
 
 .layer-drag-handle:hover {
-  background: #555;
-  color: #fff;
+background: #555;
+color: #fff;
 }
 
 
 .layer-drag-handle:active {
-  cursor: grabbing;
+cursor: grabbing;
 }
 
 
 /*
-  ドラッグ中のレイヤー
+ドラッグ中のレイヤー
 */
 
 .layer-item.is-layer-dragging {
-  opacity: 0.45;
+opacity: 0.45;
 }
 
 
 /*
-  挿入位置
+挿入位置
 */
 
 .layer-item.is-drop-before {
-  box-shadow:
-    inset 0 3px 0 #ddd;
+box-shadow:
+inset 0 3px 0 #ddd;
 }
 
 
 .layer-item.is-drop-after {
-  box-shadow:
-    inset 0 -3px 0 #ddd;
+box-shadow:
+inset 0 -3px 0 #ddd;
 }
 
 
 .layer-name-input {
-  min-width: 0;
-  width: 100%;
+min-width: 0;
+width: 100%;
 
-  padding: 4px 6px;
+padding: 4px 6px;
 
-  border: 1px solid transparent;
+border: 1px solid transparent;
 
-  outline: none;
+outline: none;
 
-  text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+text-align: left;
+text-overflow: ellipsis;
+white-space: nowrap;
 }
 
 
 /*
-  通常時：
-  選択はできるが編集はしない
+通常時：
+選択はできるが編集はしない
 */
 
 .layer-name-input[readonly] {
-  cursor: default;
+cursor: default;
 
-  /*
-    長押しをブラウザ標準の
-    テキスト選択として扱わせない
-  */
+/*
+長押しをブラウザ標準の
+テキスト選択として扱わせない
+*/
 
-  user-select: none;
-  -webkit-user-select: none;
+user-select: none;
+-webkit-user-select: none;
 
-  -webkit-touch-callout: none;
+-webkit-touch-callout: none;
 }
 
 
 .layer-name-input:not([readonly]) {
-  cursor: text;
+cursor: text;
 
-  /*
-    編集状態になった後は
-    通常どおり文字を選択できる
-  */
+/*
+編集状態になった後は
+通常どおり文字を選択できる
+*/
 
-  user-select: text;
-  -webkit-user-select: text;
+user-select: text;
+-webkit-user-select: text;
 }
 
 
 /*
-  編集中だけ
-  入力欄らしい表示にする
+編集中だけ
+入力欄らしい表示にする
 */
 
 
 .layer-name-input:not([readonly]):focus {
-  border-color: #aaa;
-  background: #222;
+border-color: #aaa;
+background: #222;
 }
 
 
 /* ================================
-   レイヤー不透明度
+レイヤー不透明度
 ================================ */
 
 .layer-opacity-control {
-  grid-column: 2 / 3;
+grid-column: 2 / 3;
 
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+display: flex;
+flex-direction: column;
+gap: 3px;
 
-  padding: 2px 4px 4px;
+padding: 2px 4px 4px;
 }
 
 
 .layer-opacity-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+display: flex;
+align-items: center;
+justify-content: space-between;
 
-  font-size: 11px;
-  color: #bbb;
+font-size: 11px;
+color: #bbb;
 }
 
 
 .layer-opacity-control input[type="range"] {
-  width: 100%;
-  min-width: 0;
-  margin: 0;
+width: 100%;
+min-width: 0;
+margin: 0;
 }
 
 
 .layer-panel__actions {
-  display: grid;
-  grid-template-columns: 36px 36px minmax(0, 1fr);
-  gap: 5px;
+display: grid;
+grid-template-columns: 36px 36px minmax(0, 1fr);
+gap: 5px;
 
-  margin-top: 8px;
+margin-top: 8px;
 }
 
 
 .layer-action-button {
-  padding: 4px 6px;
+padding: 4px 6px;
 }
 
 
 .layer-action-button:hover:not(:disabled),
 .layer-visibility-button:hover,
 .layer-name-input:hover {
-  background: #555;
+background: #555;
 }
 
 
 .layer-action-button:disabled {
-  opacity: 0.35;
-  cursor: default;
+opacity: 0.35;
+cursor: default;
 }
 
 
 /* ================================
-   360°プレビュー
+360°プレビュー
 ================================ */
 
 .preview-overlay {
-  position: fixed;
+position: fixed;
 
-  inset: 0;
+inset: 0;
 
-  display: none;
-  align-items: center;
-  justify-content: center;
+display: none;
+align-items: center;
+justify-content: center;
 
-  padding: 30px;
+padding: 30px;
 
-  background: rgba(0, 0, 0, 0.85);
+background: rgba(0, 0, 0, 0.85);
 
-  z-index: 1000;
+z-index: 1000;
 }
 
 
 .preview-overlay.is-open {
-  display: flex;
+display: flex;
 }
 
 
 .preview-panel {
-  width: 100%;
-  max-width: 1200px;
+width: 100%;
+max-width: 1200px;
 
-  background: #222;
+background: #222;
 
-  border: 1px solid #555;
-  border-radius: 6px;
+border: 1px solid #555;
+border-radius: 6px;
 
-  overflow: hidden;
+overflow: hidden;
 }
 
 
@@ -1359,129 +1359,129 @@ margin-left: 0;
 
 
 .preview-canvas-area {
-  width: 100%;
+width: 100%;
 
-  padding:
-    28px
-    12px
-    12px;
+padding:
+28px
+12px
+12px;
 
-  background: #111;
+background: #111;
 
-  overflow: auto;
+overflow: auto;
 }
 
 
 /*
-  Canvasと▼を
-  同じ座標系にする
+Canvasと▼を
+同じ座標系にする
 */
 
 .preview-canvas-wrap {
-  position: relative;
+position: relative;
 
-  width: 100%;
+width: 100%;
 }
 
 
 /*
-  360°画像の
-  左端指定ハンドル
+360°画像の
+左端指定ハンドル
 */
 
 .preview-seam-handle {
-  position: absolute;
+position: absolute;
 
-  top: 0;
-  left: 0;
+top: 0;
+left: 0;
 
-  z-index: 5;
+z-index: 5;
 
-  width: 24px;
-  height: 24px;
+width: 24px;
+height: 24px;
 
-  padding: 0;
+padding: 0;
 
-  transform:
-    translate(
-      -50%,
-      -85%
-    );
+transform:
+translate(
+-50%,
+-85%
+);
 
-  border: 0;
+border: 0;
 
-  background: transparent;
-  color: #fff;
+background: transparent;
+color: #fff;
 
-  font: inherit;
-  font-size: 18px;
-  line-height: 1;
+font: inherit;
+font-size: 18px;
+line-height: 1;
 
-  cursor: ew-resize;
+cursor: ew-resize;
 
-  touch-action: none;
+touch-action: none;
 
-  user-select: none;
-  -webkit-user-select: none;
+user-select: none;
+-webkit-user-select: none;
 
-  text-shadow:
-    0 1px 3px
-    rgba(
-      0,
-      0,
-      0,
-      0.9
-    );
+text-shadow:
+0 1px 3px
+rgba(
+0,
+0,
+0,
+0.9
+);
 }
 
 
 .preview-seam-handle:active {
-  cursor: grabbing;
+cursor: grabbing;
 }
 
 
 #previewCanvas {
-  display: block;
+display: block;
 
-  width: 100%;
-  height: auto;
+width: 100%;
+height: auto;
 
-  aspect-ratio: 2 / 1;
+aspect-ratio: 2 / 1;
 
-  image-rendering: pixelated;
+image-rendering: pixelated;
 
-  background: #eee;
+background: #eee;
 }
 
 #viewport {
-  width: 100%;
-  height: calc(100vh - 48px);
+width: 100%;
+height: calc(100vh - 48px);
 
-  cursor: default;
+cursor: default;
 }
 
 
 /*
-  360°描画領域では
-  スマートフォン標準の
-  スクロールやピンチ操作を無効化する
+360°描画領域では
+スマートフォン標準の
+スクロールやピンチ操作を無効化する
 */
 
 #viewport canvas {
-  touch-action: none;
+touch-action: none;
 }
 
 
 #viewport.is-looking {
-  cursor: grabbing;
+cursor: grabbing;
 }
 
 #viewport.is-zooming {
-  cursor: ns-resize;
+cursor: ns-resize;
 }
 
 canvas {
-  display: block;
+display: block;
 }
 
 
@@ -1888,200 +1888,200 @@ margin-left: auto;
 
 
 /* ================================
-   スマートフォン用 下部UI
+スマートフォン用 下部UI
 ================================ */
 
 .mobile-bottom-tabs {
-  display: none;
+display: none;
 }
 
 
 /*
-  スマートフォン専用UIは
-  PCでは表示しない
+スマートフォン専用UIは
+PCでは表示しない
 */
 
 .mobile-color-swatch,
 .mobile-color-backdrop {
-  display: none;
+display: none;
 }
 
 
 @media (max-width: 700px) {
 
-  /*
-    上部はタイトルと
-    ヘルプだけにする
-  */
+/*
+上部はタイトルと
+ヘルプだけにする
+*/
 
-  .toolbar {
-    height: 44px;
+.toolbar {
+height: 44px;
 
-    padding: 0 10px;
+padding: 0 10px;
 
-    overflow: visible;
-  }
-
-
-  .toolbar__title {
-    font-size: 14px;
-  }
+overflow: visible;
+}
 
 
-  #languageButton {
-    margin-left: auto;
-  }
+.toolbar__title {
+font-size: 14px;
+}
 
 
-  .toolbar__mobile-help {
-    display: block;
-  }
+#languageButton {
+margin-left: auto;
+}
 
 
-  /*
-    360°表示領域
-  */
+.toolbar__mobile-help {
+display: block;
+}
+
+
+/*
+360°表示領域
+*/
 
 #viewport {
-    /*
-      実際の高さはJavaScriptで
-      下部パネルの高さを測って設定する
-    */
+/*
+実際の高さはJavaScriptで
+下部パネルの高さを測って設定する
+*/
 
-    height:
-      calc(
-        100dvh -
-        44px -
-        52px -
-        env(
-          safe-area-inset-bottom
-        )
-      );
-  }
-
-
-  /*
-    下部タブ
-  */
-
-  .mobile-bottom-tabs {
-    position: fixed;
-
-    left: 0;
-    right: 0;
-    bottom: 0;
-
-    z-index: 300;
-
-    display: flex;
-
-    height:
-      calc(
-        52px +
-        env(
-          safe-area-inset-bottom
-        )
-      );
-
-    padding-bottom:
-      env(
-        safe-area-inset-bottom
-      );
-
-    background: #2a2a2a;
-
-    border-top:
-      1px solid #555;
-  }
+height:
+calc(
+100dvh -
+44px -
+52px -
+env(
+safe-area-inset-bottom
+)
+);
+}
 
 
-  .mobile-bottom-tab {
-    flex: 1;
+/*
+下部タブ
+*/
 
-    min-width: 0;
+.mobile-bottom-tabs {
+position: fixed;
 
-    padding: 0 6px;
+left: 0;
+right: 0;
+bottom: 0;
 
-    border: 0;
-    border-right:
-      1px solid #444;
+z-index: 300;
 
-    background: #2a2a2a;
-    color: #bbb;
+display: flex;
 
-    font: inherit;
-    font-size: 13px;
+height:
+calc(
+52px +
+env(
+safe-area-inset-bottom
+)
+);
 
-    cursor: pointer;
-  }
+padding-bottom:
+env(
+safe-area-inset-bottom
+);
 
+background: #2a2a2a;
 
-  .mobile-bottom-tab:last-child {
-    border-right: 0;
-  }
-
-
-  .mobile-bottom-tab.is-active {
-    background: #ddd;
-    color: #222;
-
-    font-weight: 600;
-  }
-
-
-  /*
-    3つの下部パネル共通
-  */
-
-  .drawing-tools,
-  .layer-panel,
-  .toolbar__tools {
-
-    position: fixed !important;
-
-    left: 0 !important;
-    right: 0 !important;
-
-    top: auto !important;
-
-    bottom:
-      calc(
-        52px +
-        env(
-          safe-area-inset-bottom
-        )
-      ) !important;
-
-    z-index: 250;
-
-    width: auto !important;
-
-    margin: 0;
-
-    border-radius: 0;
-
-    cursor: default;
-  }
+border-top:
+1px solid #555;
+}
 
 
-  /*
-    ========================
-    描画
-    ========================
-  */
+.mobile-bottom-tab {
+flex: 1;
 
-  .drawing-tools {
-    display: none !important;
+min-width: 0;
 
-    padding: 8px 10px;
+padding: 0 6px;
 
-    overflow: visible;
+border: 0;
+border-right:
+1px solid #444;
 
-    background: #333;
+background: #2a2a2a;
+color: #bbb;
 
-    border:
-      1px solid #555;
-  }
+font: inherit;
+font-size: 13px;
+
+cursor: pointer;
+}
+
+
+.mobile-bottom-tab:last-child {
+border-right: 0;
+}
+
+
+.mobile-bottom-tab.is-active {
+background: #ddd;
+color: #222;
+
+font-weight: 600;
+}
+
+
+/*
+3つの下部パネル共通
+*/
+
+.drawing-tools,
+.layer-panel,
+.toolbar__tools {
+
+position: fixed !important;
+
+left: 0 !important;
+right: 0 !important;
+
+top: auto !important;
+
+bottom:
+calc(
+52px +
+env(
+safe-area-inset-bottom
+)
+) !important;
+
+z-index: 250;
+
+width: auto !important;
+
+margin: 0;
+
+border-radius: 0;
+
+cursor: default;
+}
+
+
+/*
+========================
+描画
+========================
+*/
+
+.drawing-tools {
+display: none !important;
+
+padding: 8px 10px;
+
+overflow: visible;
+
+background: #333;
+
+border:
+1px solid #555;
+}
 
 
 /*
@@ -2105,608 +2105,608 @@ gap: 8px;
 }
 
 
-  .drawing-tools .drawing-tool-button {
-    min-height: 48px;
+.drawing-tools .drawing-tool-button {
+min-height: 48px;
 
-    padding:
-      5px 2px;
-  }
-
-
-  .drawing-tools .drawing-tool-icon {
-    width: 20px;
-    height: 20px;
-  }
+padding:
+5px 2px;
+}
 
 
-  .drawing-tools .drawing-tool-label {
-    font-size: 10px;
-  }
+.drawing-tools .drawing-tool-icon {
+width: 20px;
+height: 20px;
+}
 
 
-  /*
-    スマホでは区切り線不要
-  */
-
-  .drawing-tools__separator {
-    display: none;
-  }
-
-
-  /*
-    最近使った色は
-    スマホでは使用しない
-  */
-
-  .drawing-tools
-    .recent-colors {
-
-    display: none !important;
-  }
-
-
-  /*
-    ========================
-    太さ
-    ========================
-
-    描画エリアの右側へ
-    固定表示する
-  */
-
-  .drawing-tools
-    .pen-size-control {
-
-    position: fixed !important;
-
-    top: 50% !important;
-    right: 10px !important;
-    bottom: auto !important;
-    left: auto !important;
-
-    z-index: 20;
-
-    display: flex;
-
-    flex-direction: column;
-    align-items: center;
-
-    gap: 8px;
-
-    width: 46px !important;
-
-    margin: 0 !important;
-    padding: 8px 5px;
-
-    transform:
-      translateY(-50%);
-
-    background:
-      rgba(
-        42,
-        42,
-        42,
-        0.82
-      );
-
-    border:
-      1px solid #555;
-
-    border-radius: 8px;
-  }
-
-
-  /*
-    「太さ」の文字は
-    スマホでは非表示
-  */
-
-  .drawing-tools
-    .pen-size-label {
-
-    display: none;
-  }
+.drawing-tools .drawing-tool-label {
+font-size: 10px;
+}
 
 
 /*
-    スマホでは
-    ＋ / −ボタンを表示する
-  */
+スマホでは区切り線不要
+*/
 
-  .drawing-tools
-    #penSizeMinus,
-  .drawing-tools
-    #penSizePlus {
-
-    display: flex;
-
-    width: 32px;
-    height: 32px;
-
-    flex-shrink: 0;
-
-    align-items: center;
-    justify-content: center;
-
-    margin: 0;
-
-    font-size: 18px;
-  }
-
-
-  /*
-    ＋をバーの上、
-    −をバーの下へ配置する
-  */
-
-  .drawing-tools
-    #penSizePlus {
-
-    order: 1;
-  }
-
-
-  .drawing-tools
-    .pen-size-slider
-    input[type="range"] {
-
-    order: 2;
-  }
-
-
-  .drawing-tools
-    #penSizeMinus {
-
-    order: 3;
-  }
+.drawing-tools__separator {
+display: none;
+}
 
 
 /*
-    数値入力は
-    太さUIの最上部へ表示する
-  */
-
-  .drawing-tools
-    #penSizeValue {
-
-    display: block;
-
-    order: 1;
-
-    width: 42px;
-    height: 30px;
-
-    margin: 0;
-
-    padding: 3px 4px;
-
-    text-align: center;
-  }
-
-
-  /*
-    横向きスライダー用の
-    グリッドを解除
-  */
+最近使った色は
+スマホでは使用しない
+*/
 
 .drawing-tools
-    .pen-size-slider {
+.recent-colors {
 
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-    justify-content: center;
-
-    gap: 6px;
-
-    order: 2;
-
-    width: 32px;
-    height: auto;
-  }
+display: none !important;
+}
 
 
-  /*
-    スライダーを縦向きにする
-  */
+/*
+========================
+太さ
+========================
 
-  .drawing-tools
-    .pen-size-slider
-    input[type="range"] {
+描画エリアの右側へ
+固定表示する
+*/
 
-    width: 32px;
-    height: 150px;
+.drawing-tools
+.pen-size-control {
 
-    min-width: 0;
+position: fixed !important;
 
-    margin: 0;
+top: 50% !important;
+right: 10px !important;
+bottom: auto !important;
+left: auto !important;
 
-    writing-mode:
-      vertical-lr;
+z-index: 20;
 
-    direction: rtl;
-  }
+display: flex;
+
+flex-direction: column;
+align-items: center;
+
+gap: 8px;
+
+width: 46px !important;
+
+margin: 0 !important;
+padding: 8px 5px;
+
+transform:
+translateY(-50%);
+
+background:
+rgba(
+42,
+42,
+42,
+0.82
+);
+
+border:
+1px solid #555;
+
+border-radius: 8px;
+}
 
 
-  /*
-    ========================
-    現在色
-    ========================
-  */
+/*
+「太さ」の文字は
+スマホでは非表示
+*/
+
+.drawing-tools
+.pen-size-label {
+
+display: none;
+}
+
+
+/*
+スマホでは
+＋ / −ボタンを表示する
+*/
+
+.drawing-tools
+#penSizeMinus,
+.drawing-tools
+#penSizePlus {
+
+display: flex;
+
+width: 32px;
+height: 32px;
+
+flex-shrink: 0;
+
+align-items: center;
+justify-content: center;
+
+margin: 0;
+
+font-size: 18px;
+}
+
+
+/*
+＋をバーの上、
+−をバーの下へ配置する
+*/
+
+.drawing-tools
+#penSizePlus {
+
+order: 1;
+}
+
+
+.drawing-tools
+.pen-size-slider
+input[type="range"] {
+
+order: 2;
+}
+
+
+.drawing-tools
+#penSizeMinus {
+
+order: 3;
+}
+
+
+/*
+数値入力は
+太さUIの最上部へ表示する
+*/
+
+.drawing-tools
+#penSizeValue {
+
+display: block;
+
+order: 1;
+
+width: 42px;
+height: 30px;
+
+margin: 0;
+
+padding: 3px 4px;
+
+text-align: center;
+}
+
+
+/*
+横向きスライダー用の
+グリッドを解除
+*/
+
+.drawing-tools
+.pen-size-slider {
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+justify-content: center;
+
+gap: 6px;
+
+order: 2;
+
+width: 32px;
+height: auto;
+}
+
+
+/*
+スライダーを縦向きにする
+*/
+
+.drawing-tools
+.pen-size-slider
+input[type="range"] {
+
+width: 32px;
+height: 150px;
+
+min-width: 0;
+
+margin: 0;
+
+writing-mode:
+vertical-lr;
+
+direction: rtl;
+}
+
+
+/*
+========================
+現在色
+========================
+*/
 
 .mobile-color-swatch {
-    display: block;
+display: block;
 
-    order: 3;
+order: 3;
 
-    width: 36px;
-    height: 36px;
+width: 36px;
+height: 36px;
 
-    flex-shrink: 0;
+flex-shrink: 0;
 
-    padding: 0;
+padding: 0;
 
-    background: #000;
+background: #000;
 
-    border:
-      2px solid #ddd;
+border:
+2px solid #ddd;
 
-    border-radius: 4px;
+border-radius: 4px;
 
-    cursor: pointer;
-  }
+cursor: pointer;
+}
 /*
-    PC用の現在色表示は
-    スマホでは表示しない
-  */
+PC用の現在色表示は
+スマホでは表示しない
+*/
 
-  .current-pen-color-swatch {
-    display: none;
-  }
-
-
-
-  /*
-    ========================
-    カラーホイール
-    ========================
-
-    通常時は隠しておく
-  */
-
-  
-
-  .drawing-tools
-    .pen-color-control {
-
-    display: none !important;
-
-    position: fixed !important;
-
-    top: 50% !important;
-    left: 50% !important;
-    right: auto !important;
-    bottom: auto !important;
-
-    z-index: 30;
-
-    width: 190px !important;
-
-    margin: 0 !important;
-    padding: 16px;
-
-    transform:
-      translate(
-        -50%,
-        -50%
-      );
-
-    background: #333;
-
-    border:
-      1px solid #666;
-
-    border-radius: 10px;
-
-    box-shadow:
-      0 6px 24px
-      rgba(
-        0,
-        0,
-        0,
-        0.4
-      );
-  }
+.current-pen-color-swatch {
+display: none;
+}
 
 
-  /*
-    色ボタンを押したときだけ
-    表示する
-  */
 
-  .drawing-tools
-    .pen-color-control
-    .pen-color-label {
+/*
+========================
+カラーホイール
+========================
 
-    text-align: center;
-  }
+通常時は隠しておく
+*/
+
 
 
 .drawing-tools
-    .pen-color-control
-    #colorPickerWheel {
+.pen-color-control {
 
-    width: 150px;
-    height: 150px;
+display: none !important;
 
-    margin:
-      0 auto;
-  }
+position: fixed !important;
 
+top: 50% !important;
+left: 50% !important;
+right: auto !important;
+bottom: auto !important;
 
-  .drawing-tools
-    .pen-color-control
-    input {
+z-index: 30;
 
-    display: none;
-  }
+width: 190px !important;
 
-  .drawing-tools
-    .pen-color-control.is-mobile-color-open {
+margin: 0 !important;
+padding: 16px;
 
-    display: flex !important;
+transform:
+translate(
+-50%,
+-50%
+);
 
-    flex-direction: column;
-  }
+background: #333;
 
+border:
+1px solid #666;
 
-  /*
-    カラーホイールを開いたときの
-    背景
-  */
+border-radius: 10px;
 
-  .mobile-color-backdrop {
-    display: none;
+box-shadow:
+0 6px 24px
+rgba(
+0,
+0,
+0,
+0.4
+);
+}
 
-    position: fixed;
 
-    inset: 0;
+/*
+色ボタンを押したときだけ
+表示する
+*/
 
-    z-index: 10;
+.drawing-tools
+.pen-color-control
+.pen-color-label {
 
-    background:
-      rgba(
-        0,
-        0,
-        0,
-        0.3
-      );
-  }
+text-align: center;
+}
 
 
-  .mobile-color-backdrop.is-open {
-    display: block;
-  }
+.drawing-tools
+.pen-color-control
+#colorPickerWheel {
 
+width: 150px;
+height: 150px;
 
-  /*
-    ========================
-    レイヤー
-    ========================
-  */
+margin:
+0 auto;
+}
 
-  .layer-panel {
-    display: none !important;
 
-    max-height: 280px;
+.drawing-tools
+.pen-color-control
+input {
 
-    padding: 10px;
+display: none;
+}
 
-    overflow: hidden;
+.drawing-tools
+.pen-color-control.is-mobile-color-open {
 
-    background: #333;
+display: flex !important;
 
-    border:
-      1px solid #555;
-  }
+flex-direction: column;
+}
 
 
-  .layer-panel.is-mobile-open {
-    display: block !important;
-  }
+/*
+カラーホイールを開いたときの
+背景
+*/
 
+.mobile-color-backdrop {
+display: none;
 
-  .layer-list {
-    max-height: 190px;
-  }
+position: fixed;
 
+inset: 0;
 
-  /*
-    ========================
-    設定
-    ========================
-  */
+z-index: 10;
 
-  .toolbar__tools {
-    display: none;
+background:
+rgba(
+0,
+0,
+0,
+0.3
+);
+}
 
-    flex-wrap: wrap;
-    align-items: center;
 
-    gap: 8px;
+.mobile-color-backdrop.is-open {
+display: block;
+}
 
-    max-height: 280px;
 
-    padding: 10px;
+/*
+========================
+レイヤー
+========================
+*/
 
-    overflow-y: auto;
+.layer-panel {
+display: none !important;
 
-    background: #333;
+max-height: 280px;
 
-    border-top:
-      1px solid #555;
-  }
+padding: 10px;
 
+overflow: hidden;
 
-  .toolbar__tools.is-mobile-open {
-    display: flex;
-  }
+background: #333;
 
+border:
+1px solid #555;
+}
 
-  .toolbar__tools
-  .app-menu__trigger {
-    display: none;
-  }
 
+.layer-panel.is-mobile-open {
+display: block !important;
+}
 
-  .toolbar__tools
-  .app-menu {
-    display: contents;
-  }
 
+.layer-list {
+max-height: 190px;
+}
 
-  .toolbar__tools
-  .app-menu__panel {
-    position: static;
 
-    display: contents;
+/*
+========================
+設定
+========================
+*/
 
-    min-width: 0;
+.toolbar__tools {
+display: none;
 
-    padding: 0;
+flex-wrap: wrap;
+align-items: center;
 
-    background: transparent;
+gap: 8px;
 
-    border: 0;
-    border-radius: 0;
+max-height: 280px;
 
-    box-shadow: none;
-  }
+padding: 10px;
 
+overflow-y: auto;
 
-  .toolbar__tools
-  .app-menu--edit,
-  .toolbar__tools
-  .app-menu--help {
-    display: none;
-  }
+background: #333;
 
+border-top:
+1px solid #555;
+}
 
-  .toolbar__tools
-    .canvas-size-control {
 
-    width: 100%;
+.toolbar__tools.is-mobile-open {
+display: flex;
+}
 
-    margin-left: 0;
 
-    justify-content:
-      space-between;
-  }
+.toolbar__tools
+.app-menu__trigger {
+display: none;
+}
 
 
-  .toolbar__tools
-    .eye-height-control {
+.toolbar__tools
+.app-menu {
+display: contents;
+}
 
-    width: 100%;
 
-    margin-left: 0;
-  }
+.toolbar__tools
+.app-menu__panel {
+position: static;
 
+display: contents;
 
-  .toolbar__tools
-    .eye-height-control
-    input[type="range"] {
+min-width: 0;
 
-    flex: 1;
+padding: 0;
 
-    min-width: 60px;
-  }
+background: transparent;
 
+border: 0;
+border-radius: 0;
 
-  .toolbar__tools
-    .guide-toggle {
+box-shadow: none;
+}
 
-    width: 100%;
 
-    min-height: 32px;
-  }
+.toolbar__tools
+.app-menu--edit,
+.toolbar__tools
+.app-menu--help {
+display: none;
+}
 
 
-  .toolbar__tools
-    > .tool-button {
+.toolbar__tools
+.canvas-size-control {
 
-    flex:
-      1 1
-      calc(
-        50% - 4px
-      );
+width: 100%;
 
-    min-height: 40px;
-  }
+margin-left: 0;
 
+justify-content:
+space-between;
+}
 
-  /*
-    はじめに
-  */
 
-  .welcome-overlay {
-    top: 44px;
-    right: 0;
-    bottom:
-      calc(
-        52px +
-        env(
-          safe-area-inset-bottom
-        )
-      );
-    left: 0;
+.toolbar__tools
+.eye-height-control {
 
-    padding: 10px;
-  }
+width: 100%;
 
+margin-left: 0;
+}
 
-  .welcome-panel {
-    max-height: 100%;
-  }
 
+.toolbar__tools
+.eye-height-control
+input[type="range"] {
 
-  .welcome-panel__header {
-    gap: 6px;
-  }
+flex: 1;
 
+min-width: 60px;
+}
 
-  .welcome-panel__header-actions {
-    gap: 5px;
-  }
 
+.toolbar__tools
+.guide-toggle {
 
-  .welcome-language-button {
-    padding: 4px 6px;
+width: 100%;
 
-    font-size: 10px;
-  }
+min-height: 32px;
+}
 
 
-  .welcome-panel__content {
-    padding: 10px;
-  }
+.toolbar__tools
+> .tool-button {
 
+flex:
+1 1
+calc(
+50% - 4px
+);
 
-  .welcome-links {
-    flex-direction: column;
+min-height: 40px;
+}
 
-    padding-top: 10px;
-  }
 
+/*
+はじめに
+*/
 
-  /*
-    プレビュー
-  */
+.welcome-overlay {
+top: 44px;
+right: 0;
+bottom:
+calc(
+52px +
+env(
+safe-area-inset-bottom
+)
+);
+left: 0;
 
-  .preview-overlay {
-    padding: 10px;
-  }
+padding: 10px;
+}
+
+
+.welcome-panel {
+max-height: 100%;
+}
+
+
+.welcome-panel__header {
+gap: 6px;
+}
+
+
+.welcome-panel__header-actions {
+gap: 5px;
+}
+
+
+.welcome-language-button {
+padding: 4px 6px;
+
+font-size: 10px;
+}
+
+
+.welcome-panel__content {
+padding: 10px;
+}
+
+
+.welcome-links {
+flex-direction: column;
+
+padding-top: 10px;
+}
+
+
+/*
+プレビュー
+*/
+
+.preview-overlay {
+padding: 10px;
+}
 
 }
