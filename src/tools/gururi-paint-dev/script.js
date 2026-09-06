@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.34";
+"1.3.35";
 
 
 const appVersion =
@@ -9688,10 +9688,7 @@ leaveCameraMode();
 currentTool = tool;
 
 
-if (
-previousTool !== "camera" &&
-tool === "camera"
-) {
+if (tool === "camera") {
 
 enterCameraMode();
 }
@@ -9839,8 +9836,11 @@ selectDrawingTool(
 
 
 cameraToolButton.addEventListener(
-"click",
-() => {
+"pointerdown",
+(event) => {
+
+event.preventDefault();
+event.stopPropagation();
 
 selectDrawingTool(
 "camera"
