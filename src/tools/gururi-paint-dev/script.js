@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.26";
+"1.3.27";
 
 
 const appVersion =
@@ -3716,7 +3716,7 @@ horizontalGuides
 );
 
 /* ================================
-   視点回転
+視点回転
 ================================ */
 
 let isSpacePressed = false;
@@ -3992,80 +3992,80 @@ height
 }
 
 
-  const spanX =
-    Math.max(
-      0,
-      maxX - minX
-    );
+const spanX =
+Math.max(
+0,
+maxX - minX
+);
 
 
-  /*
-    Canvas一周以上なら
-    横方向すべてを保存
-  */
+/*
+Canvas一周以上なら
+横方向すべてを保存
+*/
 
-  if (
-    spanX >= canvas.width
-  ) {
+if (
+spanX >= canvas.width
+) {
 
-    captureXRange(
-      0,
-      canvas.width - 1
-    );
+captureXRange(
+0,
+canvas.width - 1
+);
 
-    return;
-  }
-
-
-  /*
-    左右端をまたぐ場合にも
-    正しくタイルを保存する
-  */
-
-  const wrappedStart =
-    wrapHistoryX(
-      minX,
-      canvas.width
-    );
-
-  const wrappedEnd =
-    wrappedStart +
-    spanX;
-
-
-  if (
-    wrappedEnd <
-    canvas.width
-  ) {
-
-    captureXRange(
-      wrappedStart,
-      wrappedEnd
-    );
-
-  } else {
-
-    captureXRange(
-      wrappedStart,
-      canvas.width - 1
-    );
-
-    captureXRange(
-      0,
-      wrappedEnd -
-        canvas.width
-    );
-  }
+return;
 }
 
 
 /*
-  Undo / Redo時には、
-  保存してあるタイルと
-  現在のタイルを交換する。
+左右端をまたぐ場合にも
+正しくタイルを保存する
+*/
 
-  同じ処理をもう一度行えば
-  Redoになる。
+const wrappedStart =
+wrapHistoryX(
+minX,
+canvas.width
+);
+
+const wrappedEnd =
+wrappedStart +
+spanX;
+
+
+if (
+wrappedEnd <
+canvas.width
+) {
+
+captureXRange(
+wrappedStart,
+wrappedEnd
+);
+
+} else {
+
+captureXRange(
+wrappedStart,
+canvas.width - 1
+);
+
+captureXRange(
+0,
+wrappedEnd -
+canvas.width
+);
+}
+}
+
+
+/*
+Undo / Redo時には、
+保存してあるタイルと
+現在のタイルを交換する。
+
+同じ処理をもう一度行えば
+Redoになる。
 */
 
 function swapStrokeTiles(
@@ -4213,54 +4213,54 @@ currentHue
 }
 
 /*
-  外側の色相環は
-  iro.jsではなくCSSで表示する。
+外側の色相環は
+iro.jsではなくCSSで表示する。
 
-  JavaScriptでは
-  選択ハンドルだけを管理する。
+JavaScriptでは
+選択ハンドルだけを管理する。
 */
 
 const colorHueHandle =
-  document.getElementById(
-    "colorHueHandle"
-  );
+document.getElementById(
+"colorHueHandle"
+);
 
 
 let currentHue = 0;
 /*
-  中央の
-  彩度・明度ボックス
+中央の
+彩度・明度ボックス
 */
 
 const colorBoxPicker =
-  new iro.ColorPicker(
-    colorBoxLayer,
-    {
-      width: 64,
+new iro.ColorPicker(
+colorBoxLayer,
+{
+width: 64,
 
-      color: {
-        h: 0,
-        s: 0,
-        v: 0
-      },
+color: {
+h: 0,
+s: 0,
+v: 0
+},
 
-      borderWidth: 1,
-      borderColor: "#777",
+borderWidth: 1,
+borderColor: "#777",
 
-      padding: 0,
+padding: 0,
 
-      layout: [
-        {
-          component:
-            iro.ui.Box,
+layout: [
+{
+component:
+iro.ui.Box,
 
-          options: {
-            boxHeight: 64
-          }
-        }
-      ]
-    }
-  );
+options: {
+boxHeight: 64
+}
+}
+]
+}
+);
 
 /* ================================
 色相環
@@ -4512,53 +4512,53 @@ event.stopPropagation();
 
 
 function finishHuePointer(
-  event
+event
 ) {
 
-  if (!isHueDragging) {
-    return;
-  }
+if (!isHueDragging) {
+return;
+}
 
 
-  isHueDragging =
-    false;
+isHueDragging =
+false;
 
 
-  if (
-    colorWheelLayer
-      .hasPointerCapture(
-        event.pointerId
-      )
-  ) {
+if (
+colorWheelLayer
+.hasPointerCapture(
+event.pointerId
+)
+) {
 
-    colorWheelLayer
-      .releasePointerCapture(
-        event.pointerId
-      );
-  }
+colorWheelLayer
+.releasePointerCapture(
+event.pointerId
+);
+}
 
 
-  event.stopPropagation();
+event.stopPropagation();
 }
 
 
 colorWheelLayer.addEventListener(
-  "pointerup",
-  finishHuePointer
+"pointerup",
+finishHuePointer
 );
 
 
 colorWheelLayer.addEventListener(
-  "pointercancel",
-  finishHuePointer
+"pointercancel",
+finishHuePointer
 );
 
 
 /*
-  ================================
-  外側リング
-  色相変更
-  ================================
+================================
+外側リング
+色相変更
+================================
 */
 
 
