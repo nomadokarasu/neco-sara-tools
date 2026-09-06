@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.32";
+"1.3.34";
 
 
 const appVersion =
@@ -134,6 +134,31 @@ document.getElementById(
 const cameraToolButton =
 document.getElementById(
 "cameraTool"
+);
+
+const cameraCaptureUi =
+document.getElementById(
+"cameraCaptureUi"
+);
+
+const cameraPhotoModeButton =
+document.getElementById(
+"cameraPhotoModeButton"
+);
+
+const cameraVideoModeButton =
+document.getElementById(
+"cameraVideoModeButton"
+);
+
+const cameraShutterButton =
+document.getElementById(
+"cameraShutterButton"
+);
+
+const cameraRecordingTime =
+document.getElementById(
+"cameraRecordingTime"
 );
 
 
@@ -660,6 +685,18 @@ camera:
 cameraDescription:
 "現在見えている360°空間を通常の画像として撮影します。",
 
+captureFormat:
+"撮影形式",
+
+photo:
+"写真",
+
+video:
+"動画",
+
+capture:
+"撮影",
+
 brushSize:
 "太さ",
 
@@ -912,6 +949,18 @@ camera:
 
 cameraDescription:
 "Capture the current view of the 360° space as a standard image.",
+
+captureFormat:
+"Capture format",
+
+photo:
+"Photo",
+
+video:
+"Video",
+
+capture:
+"Capture",
 
 brushSize:
 "Size",
@@ -1346,6 +1395,25 @@ t("camera");
 updateToolPalette();
 
 
+cameraPhotoModeButton.textContent =
+t("photo");
+
+cameraVideoModeButton.textContent =
+t("video");
+
+cameraShutterButton.setAttribute(
+"aria-label",
+t("capture")
+);
+
+document.querySelector(
+".camera-mode-switch"
+)?.setAttribute(
+"aria-label",
+t("captureFormat")
+);
+
+
 setElementText(
 ".pen-size-label",
 t("brushSize")
@@ -1634,6 +1702,33 @@ viewport.clientHeight
 );
 
 viewport.appendChild(renderer.domElement);
+
+
+/* ================================
+撮影用Renderer
+================================ */
+
+const PHOTO_CAPTURE_SIZE =
+1080;
+
+const photoCaptureCanvas =
+document.createElement(
+"canvas"
+);
+
+const photoCaptureRenderer =
+new THREE.WebGLRenderer({
+canvas: photoCaptureCanvas,
+antialias: true,
+preserveDrawingBuffer: true
+});
+
+photoCaptureRenderer.setPixelRatio(
+1
+);
+
+photoCaptureRenderer.outputColorSpace =
+renderer.outputColorSpace;
 
 
 /* ================================
@@ -9541,6 +9636,9 @@ true;
 
 eraserCursor.visible =
 false;
+
+cameraCaptureUi.hidden =
+false;
 }
 
 
@@ -9559,6 +9657,9 @@ null;
 
 groundToggle.disabled =
 false;
+
+cameraCaptureUi.hidden =
+true;
 }
 
 
@@ -9744,6 +9845,253 @@ cameraToolButton.addEventListener(
 selectDrawingTool(
 "camera"
 );
+}
+);
+
+
+let cameraCaptureMode =
+"photo";
+
+
+function setCameraCaptureMode(
+mode
+) {
+
+if (
+mode !== "photo" &&
+mode !== "video"
+) {
+return;
+}
+
+cameraCaptureMode =
+mode;
+
+cameraPhotoModeButton.classList.toggle(
+"is-active",
+mode === "photo"
+);
+
+cameraPhotoModeButton.setAttribute(
+"aria-pressed",
+mode === "photo"
+? "true"
+: "false"
+);
+
+cameraVideoModeButton.classList.toggle(
+"is-active",
+mode === "video"
+);
+
+cameraVideoModeButton.setAttribute(
+"aria-pressed",
+mode === "video"
+? "true"
+: "false"
+);
+}
+
+
+cameraPhotoModeButton.addEventListener(
+"click",
+() => {
+
+setCameraCaptureMode(
+"photo"
+);
+}
+);
+
+
+cameraVideoModeButton.addEventListener(
+"click",
+() => {
+
+setCameraCaptureMode(
+"video"
+);
+}
+);
+
+
+/*
+現在の画面中央と一致する
+正方形用の垂直画角を求める
+*/
+
+function getSquareCaptureFov() {
+
+const viewportAspect =
+Math.max(
+0.0001,
+camera.aspect
+);
+
+
+if (viewportAspect >= 1) {
+
+return camera.fov;
+}
+
+
+const verticalFov =
+THREE.MathUtils.degToRad(
+camera.fov
+);
+
+const horizontalFov =
+2 *
+Math.atan(
+Math.tan(
+verticalFov / 2
+) *
+viewportAspect
+);
+
+return THREE.MathUtils.radToDeg(
+horizontalFov
+);
+}
+
+
+/*
+撮影ファイル名
+*/
+
+function getPhotoCaptureFilename() {
+
+const now =
+new Date();
+
+const pad =
+(value) =>
+String(value).padStart(
+2,
+"0"
+);
+
+return (
+"gururi-photo-" +
+now.getFullYear() +
+pad(now.getMonth() + 1) +
+pad(now.getDate()) +
+"-" +
+pad(now.getHours()) +
+pad(now.getMinutes()) +
+pad(now.getSeconds()) +
+".png"
+);
+}
+
+
+function takeCameraPhoto() {
+
+if (
+currentTool !== "camera" ||
+cameraCaptureMode !== "photo"
+) {
+return;
+}
+
+
+/*
+最新の描画内容を
+360°テクスチャへ反映する
+*/
+
+updatePaintCanvas();
+
+texture.needsUpdate =
+true;
+
+
+/*
+現在のカメラを複製して
+中央正方形の画角へ調整する
+*/
+
+const captureCamera =
+camera.clone();
+
+captureCamera.aspect =
+1;
+
+captureCamera.fov =
+getSquareCaptureFov();
+
+captureCamera.updateProjectionMatrix();
+
+
+photoCaptureRenderer.setSize(
+PHOTO_CAPTURE_SIZE,
+PHOTO_CAPTURE_SIZE,
+false
+);
+
+photoCaptureRenderer.render(
+scene,
+captureCamera
+);
+
+
+photoCaptureCanvas.toBlob(
+(blob) => {
+
+if (!blob) {
+
+alert(
+currentLanguage === "en"
+? "Could not create the image."
+: "画像を作成できませんでした。"
+);
+
+return;
+}
+
+
+const downloadUrl =
+URL.createObjectURL(
+blob
+);
+
+const link =
+document.createElement(
+"a"
+);
+
+link.href =
+downloadUrl;
+
+link.download =
+getPhotoCaptureFilename();
+
+link.click();
+
+
+window.setTimeout(
+() => {
+
+URL.revokeObjectURL(
+downloadUrl
+);
+},
+1000
+);
+},
+"image/png"
+);
+}
+
+
+cameraShutterButton.addEventListener(
+"click",
+() => {
+
+if (cameraCaptureMode === "photo") {
+
+takeCameraPhoto();
+}
 }
 );
 

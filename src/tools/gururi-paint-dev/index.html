@@ -671,6 +671,67 @@ aria-hidden="true"
 
 
 <!-- =============================
+カメラ撮影
+============================== -->
+
+<div
+id="cameraCaptureUi"
+class="camera-capture-ui"
+hidden
+>
+
+<div
+class="camera-mode-switch"
+role="group"
+aria-label="撮影形式"
+>
+
+<button
+id="cameraPhotoModeButton"
+class="camera-mode-button is-active"
+type="button"
+aria-pressed="true"
+>
+写真
+</button>
+
+<button
+id="cameraVideoModeButton"
+class="camera-mode-button"
+type="button"
+aria-pressed="false"
+>
+動画
+</button>
+
+</div>
+
+
+<button
+id="cameraShutterButton"
+class="camera-shutter-button"
+type="button"
+aria-label="撮影"
+>
+
+<span aria-hidden="true"></span>
+
+</button>
+
+
+<div
+id="cameraRecordingTime"
+class="camera-recording-time"
+aria-live="polite"
+hidden
+>
+00:00
+</div>
+
+</div>
+
+
+<!-- =============================
 レイヤー
 ============================== -->
 
