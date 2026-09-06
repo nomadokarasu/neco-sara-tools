@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.31";
+"1.3.32";
 
 
 const appVersion =
@@ -9502,22 +9502,98 @@ helpButton.click();
 ツール切り替え
 ================================ */
 
+let guideVisibilityBeforeCamera =
+null;
+
+
+function setGuideVisibility(
+visible
+) {
+
+groundToggle.checked =
+visible;
+
+groundGrid.visible =
+visible;
+
+verticalGuides.visible =
+visible;
+
+horizontalGuides.visible =
+visible;
+}
+
+
+function enterCameraMode() {
+
+if (guideVisibilityBeforeCamera === null) {
+
+guideVisibilityBeforeCamera =
+groundToggle.checked;
+}
+
+setGuideVisibility(
+false
+);
+
+groundToggle.disabled =
+true;
+
+eraserCursor.visible =
+false;
+}
+
+
+function leaveCameraMode() {
+
+if (guideVisibilityBeforeCamera === null) {
+return;
+}
+
+setGuideVisibility(
+guideVisibilityBeforeCamera
+);
+
+guideVisibilityBeforeCamera =
+null;
+
+groundToggle.disabled =
+false;
+}
+
+
 function selectDrawingTool(
 tool
 ) {
 
-if (
-tool !== "pen" &&
-tool !== "eraser" &&
-tool !== "bucket" &&
-tool !== "eyedropper" &&
-tool !== "look"
-) {
+if (!TOOL_REGISTRY[tool]) {
 return;
 }
 
 
+const previousTool =
+currentTool;
+
+
+if (
+previousTool === "camera" &&
+tool !== "camera"
+) {
+
+leaveCameraMode();
+}
+
+
 currentTool = tool;
+
+
+if (
+previousTool !== "camera" &&
+tool === "camera"
+) {
+
+enterCameraMode();
+}
 
 
 /*
@@ -9555,7 +9631,10 @@ renderer.domElement.style.cursor =
 
 eraserCursor.visible = false;
 
-if (tool === "look") {
+if (
+tool === "look" ||
+tool === "camera"
+) {
 
 renderer.domElement.style.cursor =
 "grab";
@@ -9591,6 +9670,11 @@ tool === "eyedropper"
 lookToolButton.classList.toggle(
 "is-active",
 tool === "look"
+);
+
+cameraToolButton.classList.toggle(
+"is-active",
+tool === "camera"
 );
 }
 
@@ -9648,6 +9732,17 @@ event.stopPropagation();
 
 selectDrawingTool(
 "look"
+);
+}
+);
+
+
+cameraToolButton.addEventListener(
+"click",
+() => {
+
+selectDrawingTool(
+"camera"
 );
 }
 );
@@ -12439,7 +12534,8 @@ Space + 左ドラッグ
 
 if (
 isSpacePressed ||
-currentTool === "look"
+currentTool === "look" ||
+currentTool === "camera"
 ) {
 
 isLooking = true;
