@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.60";
+"1.3.61";
 
 
 const appVersion =
@@ -159,6 +159,21 @@ document.getElementById(
 const cameraVideoModeButton =
 document.getElementById(
 "cameraVideoModeButton"
+);
+
+const cameraVideoAspectSwitch =
+document.getElementById(
+"cameraVideoAspectSwitch"
+);
+
+const cameraVideoSquareButton =
+document.getElementById(
+"cameraVideoSquareButton"
+);
+
+const cameraVideoVerticalButton =
+document.getElementById(
+"cameraVideoVerticalButton"
 );
 
 const cameraShutterButton =
@@ -1760,8 +1775,42 @@ const PHOTO_CAPTURE_SIZE =
 const VIDEO_CAPTURE_SIZE =
 720;
 
+const VIDEO_CAPTURE_VERTICAL_HEIGHT =
+1280;
+
 const VIDEO_CAPTURE_FPS =
 30;
+
+const CAMERA_VIDEO_ASPECT_STORAGE_KEY =
+"gururi-paint-dev-video-aspect";
+
+let cameraVideoAspect =
+"vertical";
+
+
+try {
+
+const savedCameraVideoAspect =
+localStorage.getItem(
+CAMERA_VIDEO_ASPECT_STORAGE_KEY
+);
+
+if (
+savedCameraVideoAspect === "square" ||
+savedCameraVideoAspect === "vertical"
+) {
+
+cameraVideoAspect =
+savedCameraVideoAspect;
+}
+
+} catch (error) {
+
+/*
+保存できない環境では
+9:16を初期値として使用する
+*/
+}
 
 const VIDEO_CAPTURE_MAX_DURATION =
 7000;
@@ -9722,22 +9771,87 @@ visible;
 }
 
 
+function getCameraVideoAspectRatio() {
+
+return cameraVideoAspect ===
+"vertical"
+? 9 / 16
+: 1;
+}
+
+
+function getCameraCaptureAspectRatio() {
+
+if (
+cameraVideoModeButton.classList.contains(
+"is-active"
+)
+) {
+
+return getCameraVideoAspectRatio();
+}
+
+return 1;
+}
+
+
+function getCameraCaptureFrameSize(
+captureAspect
+) {
+
+const availableWidth =
+viewport.clientWidth *
+CAMERA_VIEWFINDER_SCALE;
+
+const availableHeight =
+viewport.clientHeight *
+CAMERA_VIEWFINDER_SCALE;
+
+let width =
+availableWidth;
+
+let height =
+width /
+captureAspect;
+
+
+if (height > availableHeight) {
+
+height =
+availableHeight;
+
+width =
+height *
+captureAspect;
+}
+
+
+return {
+width,
+height
+};
+}
+
+
 function updateCameraViewfinder() {
 
 if (!cameraViewfinder) {
 return;
 }
 
-const squareSize =
-Math.min(
-viewport.clientWidth,
-viewport.clientHeight
-) *
-CAMERA_VIEWFINDER_SCALE;
+const frameSize =
+getCameraCaptureFrameSize(
+getCameraCaptureAspectRatio()
+);
 
 cameraViewfinder.style.setProperty(
-"--camera-square-size",
-`${squareSize}px`
+"--camera-frame-width",
+`${frameSize.width}px`
+);
+
+cameraViewfinder.style.setProperty(
+"--camera-frame-height",
+`${frameSize.height}px`
 );
 }
 
@@ -10079,6 +10193,83 @@ mode === "video"
 ? "true"
 : "false"
 );
+
+cameraVideoAspectSwitch.hidden =
+mode !== "video";
+
+updateCameraViewfinder();
+}
+
+
+function setCameraVideoAspect(
+aspect,
+save = true
+) {
+
+if (
+aspect !== "square" &&
+aspect !== "vertical"
+) {
+return;
+}
+
+
+if (cameraVideoRecording) {
+
+stopCameraVideo();
+}
+
+
+cameraVideoAspect =
+aspect;
+
+
+cameraVideoSquareButton.classList.toggle(
+"is-active",
+aspect === "square"
+);
+
+cameraVideoSquareButton.setAttribute(
+"aria-pressed",
+aspect === "square"
+? "true"
+: "false"
+);
+
+
+cameraVideoVerticalButton.classList.toggle(
+"is-active",
+aspect === "vertical"
+);
+
+cameraVideoVerticalButton.setAttribute(
+"aria-pressed",
+aspect === "vertical"
+? "true"
+: "false"
+);
+
+
+if (save) {
+
+try {
+
+localStorage.setItem(
+CAMERA_VIDEO_ASPECT_STORAGE_KEY,
+cameraVideoAspect
+);
+
+} catch (error) {
+
+/*
+保存できない環境でも
+現在の選択はそのまま使用する
+*/
+}
+}
+
+
+updateCameraViewfinder();
 }
 
 
@@ -10104,17 +10295,53 @@ setCameraCaptureMode(
 );
 
 
+cameraVideoSquareButton.addEventListener(
+"click",
+() => {
+
+setCameraVideoAspect(
+"square"
+);
+}
+);
+
+
+cameraVideoVerticalButton.addEventListener(
+"click",
+() => {
+
+setCameraVideoAspect(
+"vertical"
+);
+}
+);
+
+
+setCameraVideoAspect(
+cameraVideoAspect,
+false
+);
+
+
 /*
-現在の画面中央と一致する
-正方形用の垂直画角を求める
+現在のファインダーと一致する
+撮影用の垂直画角を求める
 */
 
-function getSquareCaptureFov() {
+function getCameraCaptureFov(
+captureAspect
+) {
 
-const viewportAspect =
+const frameSize =
+getCameraCaptureFrameSize(
+captureAspect
+);
+
+const heightRatio =
+frameSize.height /
 Math.max(
-0.0001,
-camera.aspect
+1,
+viewport.clientHeight
 );
 
 const verticalFov =
@@ -10122,35 +10349,51 @@ THREE.MathUtils.degToRad(
 camera.fov
 );
 
-let squareFov =
-verticalFov;
-
-
-if (viewportAspect < 1) {
-
-squareFov =
+const captureVerticalFov =
 2 *
 Math.atan(
 Math.tan(
 verticalFov / 2
 ) *
-viewportAspect
+heightRatio
+);
+
+return THREE.MathUtils.radToDeg(
+captureVerticalFov
 );
 }
 
 
-const scaledSquareFov =
-2 *
-Math.atan(
-Math.tan(
-squareFov / 2
-) *
-CAMERA_VIEWFINDER_SCALE
-);
+function getSquareCaptureFov() {
 
-return THREE.MathUtils.radToDeg(
-scaledSquareFov
+return getCameraCaptureFov(
+1
 );
+}
+
+
+function getCameraVideoDimensions() {
+
+if (
+cameraVideoAspect === "vertical"
+) {
+
+return {
+width:
+VIDEO_CAPTURE_SIZE,
+
+height:
+VIDEO_CAPTURE_VERTICAL_HEIGHT
+};
+}
+
+return {
+width:
+VIDEO_CAPTURE_SIZE,
+
+height:
+VIDEO_CAPTURE_SIZE
+};
 }
 
 
@@ -10531,9 +10774,12 @@ return;
 
 try {
 
+const videoDimensions =
+getCameraVideoDimensions();
+
 videoCaptureRenderer.setSize(
-VIDEO_CAPTURE_SIZE,
-VIDEO_CAPTURE_SIZE,
+videoDimensions.width,
+videoDimensions.height,
 false
 );
 
@@ -15261,8 +15507,16 @@ videoCaptureCamera.quaternion.copy(
 camera.quaternion
 );
 
+const videoAspect =
+getCameraVideoAspectRatio();
+
+videoCaptureCamera.aspect =
+videoAspect;
+
 videoCaptureCamera.fov =
-getSquareCaptureFov();
+getCameraCaptureFov(
+videoAspect
+);
 
 videoCaptureCamera.updateProjectionMatrix();
 

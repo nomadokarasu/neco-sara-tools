@@ -1767,23 +1767,23 @@ left: 0;
 width: 100%;
 height:
 calc(
-(100% - var(--camera-square-size)) / 2
+(100% - var(--camera-frame-height)) / 2
 );
 }
 
 .camera-viewfinder-mask--right {
 top:
 calc(
-(100% - var(--camera-square-size)) / 2
+(100% - var(--camera-frame-height)) / 2
 );
 right: 0;
 
 width:
 calc(
-(100% - var(--camera-square-size)) / 2
+(100% - var(--camera-frame-width)) / 2
 );
 height:
-var(--camera-square-size);
+var(--camera-frame-height);
 }
 
 .camera-viewfinder-mask--bottom {
@@ -1793,23 +1793,23 @@ bottom: 0;
 width: 100%;
 height:
 calc(
-(100% - var(--camera-square-size)) / 2
+(100% - var(--camera-frame-height)) / 2
 );
 }
 
 .camera-viewfinder-mask--left {
 top:
 calc(
-(100% - var(--camera-square-size)) / 2
+(100% - var(--camera-frame-height)) / 2
 );
 left: 0;
 
 width:
 calc(
-(100% - var(--camera-square-size)) / 2
+(100% - var(--camera-frame-width)) / 2
 );
 height:
-var(--camera-square-size);
+var(--camera-frame-height);
 }
 
 .camera-viewfinder-frame {
@@ -1818,9 +1818,9 @@ top: 50%;
 left: 50%;
 
 width:
-var(--camera-square-size);
+var(--camera-frame-width);
 height:
-var(--camera-square-size);
+var(--camera-frame-height);
 
 outline:
 1px solid rgba(
@@ -1986,6 +1986,54 @@ cursor: pointer;
 
 
 .camera-mode-button.is-active {
+background: #eee;
+color: #222;
+}
+
+
+.camera-video-aspect-switch {
+display: flex;
+
+padding: 3px;
+
+border:
+1px solid #666;
+border-radius: 6px;
+
+background:
+rgba(
+34,
+34,
+34,
+0.88
+);
+
+pointer-events: auto;
+}
+
+.camera-video-aspect-switch[hidden] {
+display: none;
+}
+
+.camera-aspect-button {
+min-width: 48px;
+min-height: 28px;
+
+padding: 4px 9px;
+
+border: 0;
+border-radius: 4px;
+
+background: transparent;
+color: #ccc;
+
+font: inherit;
+font-size: 12px;
+
+cursor: pointer;
+}
+
+.camera-aspect-button.is-active {
 background: #eee;
 color: #222;
 }
