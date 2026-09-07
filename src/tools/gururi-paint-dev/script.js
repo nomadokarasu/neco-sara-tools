@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.61";
+"1.3.62";
 
 
 const appVersion =
@@ -10317,12 +10317,6 @@ setCameraVideoAspect(
 );
 
 
-setCameraVideoAspect(
-cameraVideoAspect,
-false
-);
-
-
 /*
 現在のファインダーと一致する
 撮影用の垂直画角を求める
@@ -10547,6 +10541,13 @@ let cameraVideoChunks =
 
 let cameraVideoRecording =
 false;
+
+
+setCameraVideoAspect(
+cameraVideoAspect,
+false
+);
+
 
 let cameraVideoStartedAt =
 0;
