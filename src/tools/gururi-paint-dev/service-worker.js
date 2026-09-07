@@ -2,7 +2,7 @@ const CACHE_PREFIX =
 "gururi-paint-dev-";
 
 const CACHE_VERSION =
-"1.3.73";
+"1.3.74";
 
 const CACHE_NAME =
 `${CACHE_PREFIX}${CACHE_VERSION}`;
@@ -10,8 +10,10 @@ const CACHE_NAME =
 const STATIC_RESOURCES = [
 "./",
 "./index.html",
-"./style.css?v=1.3.73",
-"./script.js?v=1.3.73",
+"./style.css?v=1.3.74",
+"./script.js?v=1.3.74",
+"./images/welcome-ja.png",
+"./images/welcome-en.png",
 "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
 "https://cdn.jsdelivr.net/npm/@jaames/iro@5/dist/iro.es.js"
 ];
@@ -147,20 +149,31 @@ request
 
 if (response.ok) {
 
+const responseForCache =
+response.clone();
+
 caches.open(
 CACHE_NAME
 ).then(
 (cache) => {
 
-cache.put(
+return cache.put(
 request,
-response.clone()
+responseForCache
 );
+}
+).catch(
+() => {
 }
 );
 }
 
 return response;
+}
+).catch(
+() => {
+
+return Response.error();
 }
 );
 }

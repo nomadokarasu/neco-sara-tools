@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.73";
+"1.3.74";
 
 
 const appVersion =
@@ -15759,7 +15759,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.73",
+"./service-worker.js?v=1.3.74",
 {
 updateViaCache: "none"
 }
