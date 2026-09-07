@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.56";
+"1.3.57";
 
 
 const appVersion =
@@ -461,14 +461,14 @@ document.getElementById(
 );
 
 
-const desktopUndoMenuButton =
+const drawingModeMenuButton =
 document.getElementById(
-"desktopUndoMenuButton"
+"drawingModeMenuButton"
 );
 
-const desktopRedoMenuButton =
+const cameraModeMenuButton =
 document.getElementById(
-"desktopRedoMenuButton"
+"cameraModeMenuButton"
 );
 
 const desktopHelpMenuButton =
@@ -1198,8 +1198,10 @@ t("fileMenu")
 );
 
 setElementText(
-'[data-app-menu="edit"]',
-t("editMenu")
+'[data-app-menu="mode"]',
+currentLanguage === "en"
+? "Mode"
+: "モード"
 );
 
 setElementText(
@@ -1231,11 +1233,15 @@ t("redo")
 );
 
 
-desktopUndoMenuButton.textContent =
-t("undo");
+drawingModeMenuButton.textContent =
+currentLanguage === "en"
+? "Draw"
+: "描画";
 
-desktopRedoMenuButton.textContent =
-t("redo");
+cameraModeMenuButton.textContent =
+currentLanguage === "en"
+? "Capture"
+: "撮影";
 
 
 setElementText(
@@ -9640,20 +9646,27 @@ closeAllAppMenus();
 );
 
 
-desktopUndoMenuButton.addEventListener(
+drawingModeMenuButton.addEventListener(
 "click",
 () => {
 
-undoButton.click();
+if (currentTool === "camera") {
+
+selectDrawingTool(
+toolBeforeCamera
+);
+}
 }
 );
 
 
-desktopRedoMenuButton.addEventListener(
+cameraModeMenuButton.addEventListener(
 "click",
 () => {
 
-redoButton.click();
+selectDrawingTool(
+"camera"
+);
 }
 );
 
@@ -9896,6 +9909,30 @@ tool === "look"
 cameraToolButton.classList.toggle(
 "is-active",
 tool === "camera"
+);
+
+drawingModeMenuButton.classList.toggle(
+"is-active",
+tool !== "camera"
+);
+
+drawingModeMenuButton.setAttribute(
+"aria-pressed",
+tool !== "camera"
+? "true"
+: "false"
+);
+
+cameraModeMenuButton.classList.toggle(
+"is-active",
+tool === "camera"
+);
+
+cameraModeMenuButton.setAttribute(
+"aria-pressed",
+tool === "camera"
+? "true"
+: "false"
 );
 }
 
@@ -10800,6 +10837,10 @@ Object.values(
 TOOL_REGISTRY
 ).forEach(
 (tool) => {
+
+if (tool.id === "camera") {
+return;
+}
 
 const isAdded =
 addedPaletteToolIds.includes(

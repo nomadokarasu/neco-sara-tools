@@ -112,32 +112,34 @@ PNG保存(2：1画像)
 </div>
 
 
-<div class="app-menu app-menu--edit">
+<div class="app-menu app-menu--mode">
 
 <button
 class="app-menu__trigger"
 type="button"
-data-app-menu="edit"
+data-app-menu="mode"
 >
-編集
+モード
 </button>
 
 <div class="app-menu__panel">
 
 <button
-id="desktopUndoMenuButton"
-class="tool-button app-menu__item"
+id="drawingModeMenuButton"
+class="tool-button app-menu__item is-active"
 type="button"
+aria-pressed="true"
 >
-元に戻す
+描画
 </button>
 
 <button
-id="desktopRedoMenuButton"
+id="cameraModeMenuButton"
 class="tool-button app-menu__item"
 type="button"
+aria-pressed="false"
 >
-やり直す
+撮影
 </button>
 
 </div>
@@ -454,7 +456,6 @@ class="tool-button drawing-tool-button"
 type="button"
 title="手のひら"
 aria-label="手のひら"
-hidden
 >
 
 <svg
@@ -489,6 +490,7 @@ class="tool-button drawing-tool-button"
 type="button"
 title="カメラ"
 aria-label="カメラ"
+hidden
 >
 
 <svg
