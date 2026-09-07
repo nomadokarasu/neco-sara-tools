@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.48";
+"1.3.50";
 
 
 const appVersion =
@@ -1388,7 +1388,9 @@ t("addTool")
 
 setElementText(
 "#toolLibraryPanelTitle",
-t("addTool")
+currentLanguage === "en"
+? "Tools"
+: "ツール一覧"
 );
 
 toolLibraryCloseButton.setAttribute(

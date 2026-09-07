@@ -2111,7 +2111,8 @@ height: 26px;
 font-size: 12px;
 }
 
-.tool-library-toggle-button[aria-pressed="true"] .drawing-tool-label {
+.tool-library-toggle-button[aria-pressed="true"] .drawing-tool-label,
+.tool-library-toggle-button[aria-pressed="true"] .drawing-tool-icon {
 color: gray;
 }
 
