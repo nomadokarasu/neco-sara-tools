@@ -1933,6 +1933,230 @@ rgba(
 );
 }
 
+.camera-joystick {
+position: absolute;
+left: 18px;
+bottom: 18px;
+
+z-index: 2;
+
+width: 112px;
+height: 112px;
+
+border:
+2px solid rgba(
+255,
+255,
+255,
+0.72
+);
+border-radius: 50%;
+
+background:
+rgba(
+0,
+0,
+0,
+0.42
+);
+
+box-shadow:
+inset 0 0 18px
+rgba(
+255,
+255,
+255,
+0.08
+);
+
+pointer-events: auto;
+touch-action: none;
+user-select: none;
+-webkit-user-select: none;
+}
+
+.camera-joystick::before,
+.camera-joystick::after {
+content: "";
+
+position: absolute;
+top: 50%;
+left: 50%;
+
+background:
+rgba(
+255,
+255,
+255,
+0.2
+);
+
+transform:
+translate(
+-50%,
+-50%
+);
+}
+
+.camera-joystick::before {
+width: 1px;
+height: 76%;
+}
+
+.camera-joystick::after {
+width: 76%;
+height: 1px;
+}
+
+.camera-joystick-knob {
+position: absolute;
+top: 50%;
+left: 50%;
+
+z-index: 1;
+
+width: 46px;
+height: 46px;
+
+border:
+2px solid rgba(
+255,
+255,
+255,
+0.9
+);
+border-radius: 50%;
+
+background:
+rgba(
+255,
+255,
+255,
+0.34
+);
+
+transform:
+translate(
+-50%,
+-50%
+);
+
+transition:
+transform 100ms ease-out;
+
+pointer-events: none;
+}
+
+.camera-joystick.is-active
+.camera-joystick-knob {
+transition: none;
+}
+
+.camera-zoom-control {
+position: absolute;
+top: 50%;
+right: 18px;
+
+z-index: 2;
+
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 7px;
+
+padding: 9px 7px;
+
+border:
+1px solid rgba(
+255,
+255,
+255,
+0.65
+);
+border-radius: 999px;
+
+background:
+rgba(
+0,
+0,
+0,
+0.55
+);
+
+color: #fff;
+
+font-size: 18px;
+line-height: 1;
+
+transform:
+translateY(
+-50%
+);
+
+pointer-events: auto;
+touch-action: none;
+user-select: none;
+-webkit-user-select: none;
+}
+
+.camera-zoom-range-frame {
+position: relative;
+
+display: block;
+
+width: 28px;
+height: 140px;
+}
+
+.camera-zoom-range {
+position: absolute;
+top: 50%;
+left: 50%;
+
+width: 140px;
+height: 28px;
+
+margin: 0;
+
+transform:
+translate(
+-50%,
+-50%
+)
+rotate(
+90deg
+);
+
+touch-action: none;
+}
+
+@media (max-width: 700px) {
+
+.camera-joystick {
+left: 12px;
+bottom:
+calc(
+12px +
+env(
+safe-area-inset-bottom
+)
+);
+}
+
+.camera-zoom-control {
+right: 12px;
+}
+
+.camera-zoom-range-frame {
+height: 120px;
+}
+
+.camera-zoom-range {
+width: 120px;
+}
+
+}
+
 .camera-capture-ui {
 position: fixed;
 left: 50%;

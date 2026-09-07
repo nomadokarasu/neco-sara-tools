@@ -320,6 +320,41 @@ aria-label="閉じる"
 ×
 </button>
 
+<div
+id="cameraJoystick"
+class="camera-joystick"
+aria-label="カメラ方向"
+>
+<div
+id="cameraJoystickKnob"
+class="camera-joystick-knob"
+aria-hidden="true"
+></div>
+</div>
+
+<label
+class="camera-zoom-control"
+aria-label="ズーム"
+>
+<span aria-hidden="true">＋</span>
+
+<span class="camera-zoom-range-frame">
+<input
+id="cameraZoomRange"
+class="camera-zoom-range"
+type="range"
+min="20"
+max="120"
+step="0.1"
+value="85"
+aria-label="ズーム"
+aria-orientation="vertical"
+>
+</span>
+
+<span aria-hidden="true">−</span>
+</label>
+
 </div>
 
 </main>

@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.65";
+"1.3.66";
 
 
 const appVersion =
@@ -184,6 +184,21 @@ document.getElementById(
 const cameraRecordingTime =
 document.getElementById(
 "cameraRecordingTime"
+);
+
+const cameraJoystick =
+document.getElementById(
+"cameraJoystick"
+);
+
+const cameraJoystickKnob =
+document.getElementById(
+"cameraJoystickKnob"
+);
+
+const cameraZoomRange =
+document.getElementById(
+"cameraZoomRange"
 );
 
 
@@ -4171,6 +4186,381 @@ let previousMouseY = 0;
 
 let yaw = 0;
 let pitch = 0;
+
+
+/* ================================
+撮影用スティック・ズーム
+================================ */
+
+const CAMERA_JOYSTICK_DEAD_ZONE =
+0.14;
+
+const CAMERA_JOYSTICK_MAX_YAW_SPEED =
+THREE.MathUtils.degToRad(
+40
+);
+
+const CAMERA_JOYSTICK_MAX_PITCH_SPEED =
+THREE.MathUtils.degToRad(
+30
+);
+
+let cameraJoystickPointerId =
+null;
+
+let cameraJoystickInputX = 0;
+let cameraJoystickInputY = 0;
+
+let cameraJoystickYawVelocity = 0;
+let cameraJoystickPitchVelocity = 0;
+
+let cameraJoystickLastFrameTime =
+null;
+
+
+function resetCameraJoystick() {
+
+cameraJoystickInputX = 0;
+cameraJoystickInputY = 0;
+
+cameraJoystick.classList.remove(
+"is-active"
+);
+
+cameraJoystickKnob.style.transform =
+"translate(-50%, -50%)";
+}
+
+
+function updateCameraJoystickPointer(
+event
+) {
+
+const rect =
+cameraJoystick.getBoundingClientRect();
+
+const knobRadius =
+cameraJoystickKnob.offsetWidth / 2;
+
+const maxDistance =
+Math.max(
+1,
+Math.min(
+rect.width,
+rect.height
+) / 2 -
+knobRadius -
+5
+);
+
+let offsetX =
+event.clientX -
+(
+rect.left +
+rect.width / 2
+);
+
+let offsetY =
+event.clientY -
+(
+rect.top +
+rect.height / 2
+);
+
+const distance =
+Math.hypot(
+offsetX,
+offsetY
+);
+
+if (distance > maxDistance) {
+
+const scale =
+maxDistance / distance;
+
+offsetX *= scale;
+offsetY *= scale;
+}
+
+cameraJoystickKnob.style.transform =
+`translate(-50%, -50%) translate(${offsetX}px, ${offsetY}px)`;
+
+const normalizedDistance =
+Math.min(
+1,
+distance / maxDistance
+);
+
+if (
+normalizedDistance <=
+CAMERA_JOYSTICK_DEAD_ZONE
+) {
+
+cameraJoystickInputX = 0;
+cameraJoystickInputY = 0;
+
+return;
+}
+
+const strength =
+(
+normalizedDistance -
+CAMERA_JOYSTICK_DEAD_ZONE
+) /
+(
+1 -
+CAMERA_JOYSTICK_DEAD_ZONE
+);
+
+const effectiveDistance =
+Math.hypot(
+offsetX,
+offsetY
+);
+
+cameraJoystickInputX =
+offsetX /
+effectiveDistance *
+strength;
+
+cameraJoystickInputY =
+offsetY /
+effectiveDistance *
+strength;
+}
+
+
+function finishCameraJoystick(
+event
+) {
+
+if (
+event.pointerId !==
+cameraJoystickPointerId
+) {
+return;
+}
+
+cameraJoystickPointerId =
+null;
+
+resetCameraJoystick();
+
+if (
+cameraJoystick.hasPointerCapture(
+event.pointerId
+)
+) {
+
+cameraJoystick.releasePointerCapture(
+event.pointerId
+);
+}
+}
+
+
+cameraJoystick.addEventListener(
+"pointerdown",
+(event) => {
+
+if (
+currentTool !== "camera" ||
+cameraJoystickPointerId !== null ||
+(
+event.pointerType === "mouse" &&
+event.button !== 0
+)
+) {
+return;
+}
+
+event.preventDefault();
+event.stopPropagation();
+
+cameraJoystickPointerId =
+event.pointerId;
+
+cameraJoystick.classList.add(
+"is-active"
+);
+
+cameraJoystick.setPointerCapture(
+event.pointerId
+);
+
+updateCameraJoystickPointer(
+event
+);
+}
+);
+
+
+cameraJoystick.addEventListener(
+"pointermove",
+(event) => {
+
+if (
+event.pointerId !==
+cameraJoystickPointerId
+) {
+return;
+}
+
+event.preventDefault();
+event.stopPropagation();
+
+updateCameraJoystickPointer(
+event
+);
+}
+);
+
+
+cameraJoystick.addEventListener(
+"pointerup",
+finishCameraJoystick
+);
+
+cameraJoystick.addEventListener(
+"pointercancel",
+finishCameraJoystick
+);
+
+cameraJoystick.addEventListener(
+"lostpointercapture",
+finishCameraJoystick
+);
+
+
+cameraZoomRange.addEventListener(
+"input",
+() => {
+
+camera.fov =
+Math.max(
+20,
+Math.min(
+120,
+Number(
+cameraZoomRange.value
+)
+)
+);
+
+camera.updateProjectionMatrix();
+}
+);
+
+
+cameraZoomRange.addEventListener(
+"pointerdown",
+(event) => {
+
+event.stopPropagation();
+}
+);
+
+
+function updateCameraJoystickMotion(
+now
+) {
+
+if (
+cameraJoystickLastFrameTime ===
+null
+) {
+
+cameraJoystickLastFrameTime =
+now;
+
+return;
+}
+
+const deltaTime =
+Math.min(
+0.05,
+Math.max(
+0,
+(
+now -
+cameraJoystickLastFrameTime
+) / 1000
+)
+);
+
+cameraJoystickLastFrameTime =
+now;
+
+
+if (currentTool !== "camera") {
+
+cameraJoystickPointerId =
+null;
+
+cameraJoystickYawVelocity = 0;
+cameraJoystickPitchVelocity = 0;
+
+resetCameraJoystick();
+
+return;
+}
+
+const targetYawVelocity =
+cameraJoystickInputX *
+CAMERA_JOYSTICK_MAX_YAW_SPEED;
+
+const targetPitchVelocity =
+-cameraJoystickInputY *
+CAMERA_JOYSTICK_MAX_PITCH_SPEED;
+
+const response =
+cameraJoystickPointerId === null
+? 18
+: 10;
+
+const easing =
+1 -
+Math.exp(
+-response *
+deltaTime
+);
+
+cameraJoystickYawVelocity +=
+(
+targetYawVelocity -
+cameraJoystickYawVelocity
+) *
+easing;
+
+cameraJoystickPitchVelocity +=
+(
+targetPitchVelocity -
+cameraJoystickPitchVelocity
+) *
+easing;
+
+yaw +=
+cameraJoystickYawVelocity *
+deltaTime;
+
+pitch +=
+cameraJoystickPitchVelocity *
+deltaTime;
+
+const pitchLimit =
+Math.PI / 2 -
+0.01;
+
+pitch =
+Math.max(
+-pitchLimit,
+Math.min(
+pitchLimit,
+pitch
+)
+);
+}
+
 
 /* ================================
 ペン描画
@@ -15562,6 +15952,15 @@ lastPaintUpdateTime =
 now;
 }
 
+
+updateCameraJoystickMotion(
+now
+);
+
+cameraZoomRange.value =
+String(
+camera.fov
+);
 
 updateCameraDirection();
 
