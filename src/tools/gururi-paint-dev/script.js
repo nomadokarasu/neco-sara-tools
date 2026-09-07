@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.57";
+"1.3.58";
 
 
 const appVersion =
@@ -119,6 +119,11 @@ document.getElementById(
 const toolLibraryCloseButton =
 document.getElementById(
 "toolLibraryCloseButton"
+);
+
+const toolPaletteResetButton =
+document.getElementById(
+"toolPaletteResetButton"
 );
 
 const toolLibraryList =
@@ -1408,6 +1413,11 @@ toolLibraryCloseButton.setAttribute(
 "aria-label",
 t("close")
 );
+
+toolPaletteResetButton.textContent =
+currentLanguage === "en"
+? "Reset settings"
+: "設定をリセット";
 
 cameraToolButton.title =
 t("camera");
@@ -11582,6 +11592,20 @@ suppressPaletteToolClick =
 false;
 },
 true
+);
+
+
+toolPaletteResetButton.addEventListener(
+"click",
+() => {
+
+addedPaletteToolIds = [
+...DEFAULT_PALETTE_TOOL_IDS
+];
+
+saveToolPalette();
+updateToolPalette();
+}
 );
 
 

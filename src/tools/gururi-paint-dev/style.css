@@ -2109,6 +2109,15 @@ bottom: 150px;
 width: 440px;
 }
 
+.tool-library-reset-button {
+min-height: 32px;
+
+padding: 4px 9px;
+
+font-size: 12px;
+white-space: nowrap;
+}
+
 .tool-library-list {
 display: grid;
 grid-template-columns:
