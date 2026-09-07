@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.50";
+"1.3.51";
 
 
 const appVersion =
@@ -102,6 +102,11 @@ document.getElementById("eyedropperTool");
 
 const lookToolButton =
 document.getElementById("lookTool");
+
+const drawingToolButtons =
+document.querySelector(
+".drawing-tool-buttons"
+);
 
 const addToolButton =
 document.getElementById("addToolButton");
@@ -10862,6 +10867,38 @@ button
 }
 
 
+function applyToolPaletteOrder() {
+
+const allToolIds = [
+...addedPaletteToolIds,
+...Object.keys(
+TOOL_REGISTRY
+).filter(
+(toolId) =>
+!addedPaletteToolIds.includes(
+toolId
+)
+)
+];
+
+
+allToolIds.forEach(
+(toolId) => {
+
+drawingToolButtons.insertBefore(
+TOOL_REGISTRY[toolId].button,
+addToolButton
+);
+}
+);
+
+
+drawingToolButtons.appendChild(
+addToolButton
+);
+}
+
+
 function updateToolPalette() {
 
 Object.values(
@@ -10876,6 +10913,7 @@ tool.id
 }
 );
 
+applyToolPaletteOrder();
 renderToolLibrary();
 }
 
@@ -10904,6 +10942,325 @@ addToolButton.addEventListener(
 
 openToolLibrary();
 }
+);
+
+
+let draggedPaletteToolId =
+null;
+
+let draggedPalettePointerId =
+null;
+
+let paletteDragStartX =
+0;
+
+let paletteDragStartY =
+0;
+
+let paletteDragMoved =
+false;
+
+let suppressPaletteToolClick =
+false;
+
+
+function getPaletteToolIdFromButton(
+button
+) {
+
+const tool =
+Object.values(
+TOOL_REGISTRY
+).find(
+(toolItem) =>
+toolItem.button === button
+);
+
+return tool?.id || null;
+}
+
+
+function finishPaletteToolDrag(
+event
+) {
+
+if (
+draggedPalettePointerId === null ||
+(
+event &&
+event.pointerId !==
+draggedPalettePointerId
+)
+) {
+return;
+}
+
+
+if (
+drawingToolButtons.hasPointerCapture(
+draggedPalettePointerId
+)
+) {
+
+drawingToolButtons.releasePointerCapture(
+draggedPalettePointerId
+);
+}
+
+
+if (
+draggedPaletteToolId &&
+TOOL_REGISTRY[draggedPaletteToolId]
+) {
+
+TOOL_REGISTRY[
+draggedPaletteToolId
+].button.classList.remove(
+"is-palette-dragging"
+);
+}
+
+
+if (paletteDragMoved) {
+
+saveToolPalette();
+
+suppressPaletteToolClick =
+true;
+}
+
+
+draggedPaletteToolId =
+null;
+
+draggedPalettePointerId =
+null;
+
+paletteDragMoved =
+false;
+}
+
+
+drawingToolButtons.addEventListener(
+"pointerdown",
+(event) => {
+
+if (
+event.pointerType === "mouse" &&
+event.button !== 0
+) {
+return;
+}
+
+
+const button =
+event.target.closest(
+".drawing-tool-button"
+);
+
+
+if (
+!button ||
+button === addToolButton ||
+button.hidden
+) {
+return;
+}
+
+
+const toolId =
+getPaletteToolIdFromButton(
+button
+);
+
+
+if (!toolId) {
+return;
+}
+
+
+draggedPaletteToolId =
+toolId;
+
+draggedPalettePointerId =
+event.pointerId;
+
+paletteDragStartX =
+event.clientX;
+
+paletteDragStartY =
+event.clientY;
+
+paletteDragMoved =
+false;
+
+
+drawingToolButtons.setPointerCapture(
+event.pointerId
+);
+},
+true
+);
+
+
+drawingToolButtons.addEventListener(
+"pointermove",
+(event) => {
+
+if (
+draggedPalettePointerId === null ||
+event.pointerId !==
+draggedPalettePointerId
+) {
+return;
+}
+
+
+const movedDistance =
+Math.hypot(
+event.clientX -
+paletteDragStartX,
+event.clientY -
+paletteDragStartY
+);
+
+
+if (
+!paletteDragMoved &&
+movedDistance < 8
+) {
+return;
+}
+
+
+if (!paletteDragMoved) {
+
+paletteDragMoved =
+true;
+
+TOOL_REGISTRY[
+draggedPaletteToolId
+].button.classList.add(
+"is-palette-dragging"
+);
+}
+
+
+event.preventDefault();
+
+
+const pointedElement =
+document.elementFromPoint(
+event.clientX,
+event.clientY
+);
+
+const targetButton =
+pointedElement?.closest(
+".drawing-tool-button"
+);
+
+
+if (
+!targetButton ||
+targetButton === addToolButton ||
+targetButton.hidden
+) {
+return;
+}
+
+
+const targetToolId =
+getPaletteToolIdFromButton(
+targetButton
+);
+
+
+if (
+!targetToolId ||
+targetToolId ===
+draggedPaletteToolId
+) {
+return;
+}
+
+
+const targetRect =
+targetButton.getBoundingClientRect();
+
+const insertAfter =
+event.clientY >
+targetRect.top +
+targetRect.height / 2 ||
+(
+event.clientY >= targetRect.top &&
+event.clientY <= targetRect.bottom &&
+event.clientX >
+targetRect.left +
+targetRect.width / 2
+);
+
+
+const nextToolIds =
+addedPaletteToolIds.filter(
+(toolId) =>
+toolId !== draggedPaletteToolId
+);
+
+const targetIndex =
+nextToolIds.indexOf(
+targetToolId
+);
+
+
+if (targetIndex < 0) {
+return;
+}
+
+
+nextToolIds.splice(
+insertAfter
+? targetIndex + 1
+: targetIndex,
+0,
+draggedPaletteToolId
+);
+
+
+addedPaletteToolIds =
+nextToolIds;
+
+applyToolPaletteOrder();
+}
+);
+
+
+drawingToolButtons.addEventListener(
+"pointerup",
+finishPaletteToolDrag
+);
+
+drawingToolButtons.addEventListener(
+"pointercancel",
+finishPaletteToolDrag
+);
+
+
+drawingToolButtons.addEventListener(
+"click",
+(event) => {
+
+if (!suppressPaletteToolClick) {
+return;
+}
+
+event.preventDefault();
+event.stopImmediatePropagation();
+
+suppressPaletteToolClick =
+false;
+},
+true
 );
 
 
