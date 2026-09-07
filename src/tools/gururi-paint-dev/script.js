@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.55";
+"1.3.56";
 
 
 const appVersion =
@@ -11457,6 +11457,25 @@ return;
 }
 
 
+const draggedOriginalIndex =
+addedPaletteToolIds.indexOf(
+draggedPaletteToolId
+);
+
+const targetOriginalIndex =
+addedPaletteToolIds.indexOf(
+targetToolId
+);
+
+
+if (
+draggedOriginalIndex < 0 ||
+targetOriginalIndex < 0
+) {
+return;
+}
+
+
 const nextToolIds =
 addedPaletteToolIds.filter(
 (toolId) =>
@@ -11474,8 +11493,15 @@ return;
 }
 
 
+const insertionIndex =
+draggedOriginalIndex <
+targetOriginalIndex
+? targetIndex + 1
+: targetIndex;
+
+
 nextToolIds.splice(
-targetIndex,
+insertionIndex,
 0,
 draggedPaletteToolId
 );
