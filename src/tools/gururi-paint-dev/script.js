@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.46";
+"1.3.47";
 
 
 const appVersion =
@@ -10825,7 +10825,7 @@ button.classList.add(
 
 button.classList.toggle(
 "is-selected",
-isAdded
+!isAdded
 );
 
 button.dataset.toolLibraryAction =
