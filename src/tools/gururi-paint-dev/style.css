@@ -1975,37 +1975,99 @@ user-select: none;
 -webkit-user-select: none;
 }
 
-.camera-joystick::before,
-.camera-joystick::after {
-content: "";
+.camera-joystick[hidden] {
+display: none;
+}
 
+.camera-joystick-direction {
 position: absolute;
-top: 50%;
+
+z-index: 1;
+
+width: 0;
+height: 0;
+
+pointer-events: none;
+}
+
+.camera-joystick-direction--up {
+top: 12px;
 left: 50%;
 
-background:
+border-right: 5px solid transparent;
+border-bottom: 8px solid
 rgba(
 255,
 255,
 255,
-0.2
+0.72
 );
+border-left: 5px solid transparent;
 
 transform:
-translate(
--50%,
+translateX(
 -50%
 );
 }
 
-.camera-joystick::before {
-width: 1px;
-height: 76%;
+.camera-joystick-direction--right {
+top: 50%;
+right: 12px;
+
+border-top: 5px solid transparent;
+border-bottom: 5px solid transparent;
+border-left: 8px solid
+rgba(
+255,
+255,
+255,
+0.72
+);
+
+transform:
+translateY(
+-50%
+);
 }
 
-.camera-joystick::after {
-width: 76%;
-height: 1px;
+.camera-joystick-direction--down {
+bottom: 12px;
+left: 50%;
+
+border-top: 8px solid
+rgba(
+255,
+255,
+255,
+0.72
+);
+border-right: 5px solid transparent;
+border-left: 5px solid transparent;
+
+transform:
+translateX(
+-50%
+);
+}
+
+.camera-joystick-direction--left {
+top: 50%;
+left: 12px;
+
+border-top: 5px solid transparent;
+border-right: 8px solid
+rgba(
+255,
+255,
+255,
+0.72
+);
+border-bottom: 5px solid transparent;
+
+transform:
+translateY(
+-50%
+);
 }
 
 .camera-joystick-knob {
@@ -2050,6 +2112,54 @@ pointer-events: none;
 .camera-joystick.is-active
 .camera-joystick-knob {
 transition: none;
+}
+
+.camera-viewfinder.is-counting-down::after {
+content:
+attr(
+data-video-countdown
+);
+
+position: absolute;
+top: 50%;
+left: 50%;
+
+z-index: 3;
+
+color: #fff;
+
+font-size: 72px;
+font-weight: 700;
+line-height: 1;
+
+text-shadow:
+0 2px 12px
+rgba(
+0,
+0,
+0,
+0.8
+);
+
+transform:
+translate(
+-50%,
+-50%
+);
+
+pointer-events: none;
+}
+
+.camera-capture-ui.is-counting-down
+.camera-mode-switch,
+.camera-capture-ui.is-counting-down
+.camera-video-aspect-switch {
+opacity: 0.45;
+pointer-events: none;
+}
+
+.camera-shutter-button.is-counting-down span {
+background: #ccc;
 }
 
 .camera-zoom-control {

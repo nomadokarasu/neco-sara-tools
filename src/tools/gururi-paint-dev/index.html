@@ -324,7 +324,13 @@ aria-label="閉じる"
 id="cameraJoystick"
 class="camera-joystick"
 aria-label="カメラ方向"
+hidden
 >
+<span class="camera-joystick-direction camera-joystick-direction--up" aria-hidden="true"></span>
+<span class="camera-joystick-direction camera-joystick-direction--right" aria-hidden="true"></span>
+<span class="camera-joystick-direction camera-joystick-direction--down" aria-hidden="true"></span>
+<span class="camera-joystick-direction camera-joystick-direction--left" aria-hidden="true"></span>
+
 <div
 id="cameraJoystickKnob"
 class="camera-joystick-knob"
@@ -332,28 +338,15 @@ aria-hidden="true"
 ></div>
 </div>
 
-<label
-class="camera-zoom-control"
-aria-label="ズーム"
->
-<span aria-hidden="true">＋</span>
-
-<span class="camera-zoom-range-frame">
 <input
 id="cameraZoomRange"
-class="camera-zoom-range"
 type="range"
 min="20"
 max="120"
 step="0.1"
 value="85"
-aria-label="ズーム"
-aria-orientation="vertical"
+hidden
 >
-</span>
-
-<span aria-hidden="true">−</span>
-</label>
 
 </div>
 

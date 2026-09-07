@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.66";
+"1.3.67";
 
 
 const appVersion =
@@ -10329,7 +10329,11 @@ false;
 
 function leaveCameraMode() {
 
-if (cameraVideoRecording) {
+if (
+cameraVideoRecording ||
+cameraVideoCountdownTimerId !==
+null
+) {
 
 stopCameraVideo();
 }
@@ -10991,6 +10995,9 @@ let cameraVideoChunks =
 let cameraVideoRecording =
 false;
 
+let cameraVideoCountdownTimerId =
+null;
+
 
 setCameraVideoAspect(
 cameraVideoAspect,
@@ -11105,7 +11112,51 @@ remainingRatio
 }
 
 
+function clearCameraVideoCountdown(
+hideJoystick = true
+) {
+
+if (
+cameraVideoCountdownTimerId !==
+null
+) {
+
+window.clearInterval(
+cameraVideoCountdownTimerId
+);
+
+cameraVideoCountdownTimerId =
+null;
+}
+
+cameraViewfinder.classList.remove(
+"is-counting-down"
+);
+
+cameraCaptureUi.classList.remove(
+"is-counting-down"
+);
+
+cameraShutterButton.classList.remove(
+"is-counting-down"
+);
+
+delete cameraViewfinder.dataset
+.videoCountdown;
+
+if (hideJoystick) {
+
+cameraJoystick.hidden =
+true;
+
+resetCameraJoystick();
+}
+}
+
+
 function resetCameraVideoUi() {
+
+clearCameraVideoCountdown();
 
 cameraShutterButton.classList.remove(
 "is-recording"
@@ -11177,6 +11228,92 @@ window.setTimeout(
 URL.revokeObjectURL(
 downloadUrl
 );
+},
+1000
+);
+}
+
+
+function startCameraVideoCountdown() {
+
+if (
+currentTool !== "camera" ||
+cameraCaptureMode !== "video" ||
+cameraVideoRecording ||
+cameraVideoCountdownTimerId !== null
+) {
+return;
+}
+
+if (
+typeof MediaRecorder === "undefined" ||
+typeof videoCaptureCanvas.captureStream !==
+"function"
+) {
+
+alert(
+currentLanguage === "en"
+? "Video recording is not supported by this browser."
+: "このブラウザは動画撮影に対応していません。"
+);
+
+return;
+}
+
+if (!getCameraVideoMimeType()) {
+
+alert(
+currentLanguage === "en"
+? "WebM recording is not supported by this browser."
+: "このブラウザはWebM形式の動画撮影に対応していません。"
+);
+
+return;
+}
+
+let countdownValue = 3;
+
+cameraJoystick.hidden =
+false;
+
+cameraViewfinder.dataset.videoCountdown =
+String(
+countdownValue
+);
+
+cameraViewfinder.classList.add(
+"is-counting-down"
+);
+
+cameraCaptureUi.classList.add(
+"is-counting-down"
+);
+
+cameraShutterButton.classList.add(
+"is-counting-down"
+);
+
+cameraVideoCountdownTimerId =
+window.setInterval(
+() => {
+
+countdownValue -= 1;
+
+if (countdownValue > 0) {
+
+cameraViewfinder.dataset.videoCountdown =
+String(
+countdownValue
+);
+
+return;
+}
+
+clearCameraVideoCountdown(
+false
+);
+
+startCameraVideo();
 },
 1000
 );
@@ -11405,6 +11542,16 @@ currentLanguage === "en"
 
 function stopCameraVideo() {
 
+if (
+cameraVideoCountdownTimerId !==
+null
+) {
+
+resetCameraVideoUi();
+
+return;
+}
+
 if (!cameraVideoRecording) {
 return;
 }
@@ -11454,13 +11601,20 @@ if (cameraCaptureMode === "photo") {
 
 takeCameraPhoto();
 
+} else if (
+cameraVideoCountdownTimerId !==
+null
+) {
+
+stopCameraVideo();
+
 } else if (cameraVideoRecording) {
 
 stopCameraVideo();
 
 } else {
 
-startCameraVideo();
+startCameraVideoCountdown();
 }
 }
 );
@@ -14609,6 +14763,24 @@ getTouchGestureState();
 
 
 if (!gesture) {
+return true;
+}
+
+
+if (
+cameraJoystickPointerId !==
+null
+) {
+
+previousTouchCenterX =
+gesture.centerX;
+
+previousTouchCenterY =
+gesture.centerY;
+
+previousTouchDistance =
+gesture.distance;
+
 return true;
 }
 
