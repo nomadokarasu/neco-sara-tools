@@ -798,6 +798,57 @@ padding: 7px 4px;
 display: none;
 }
 
+.drawing-tools .drawing-tool-button {
+touch-action: none;
+}
+
+.drawing-tools .drawing-tool-button.is-palette-placeholder {
+border:
+2px dashed #2684ff;
+
+background:
+rgba(
+38,
+132,
+255,
+0.12
+);
+
+box-shadow:
+inset 0 0 0 1px
+rgba(
+38,
+132,
+255,
+0.28
+);
+}
+
+.drawing-tools
+.drawing-tool-button.is-palette-placeholder
+.drawing-tool-icon,
+.drawing-tools
+.drawing-tool-button.is-palette-placeholder
+.drawing-tool-label {
+opacity: 0;
+}
+
+.palette-drag-ghost {
+position: fixed;
+
+z-index: 2000;
+
+margin: 0;
+
+opacity: 0.72;
+
+transform:
+scale(0.96);
+
+pointer-events: none;
+cursor: grabbing;
+}
+
 
 .drawing-tool-icon {
 width: 22px;

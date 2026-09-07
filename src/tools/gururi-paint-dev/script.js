@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.51";
+"1.3.52";
 
 
 const appVersion =
@@ -10945,10 +10945,16 @@ openToolLibrary();
 );
 
 
+const PALETTE_LONG_PRESS_DURATION =
+500;
+
 let draggedPaletteToolId =
 null;
 
 let draggedPalettePointerId =
+null;
+
+let draggedPalettePointerType =
 null;
 
 let paletteDragStartX =
@@ -10957,8 +10963,20 @@ let paletteDragStartX =
 let paletteDragStartY =
 0;
 
-let paletteDragMoved =
+let paletteDragOffsetX =
+0;
+
+let paletteDragOffsetY =
+0;
+
+let paletteDragActive =
 false;
+
+let paletteLongPressTimerId =
+null;
+
+let paletteDragGhost =
+null;
 
 let suppressPaletteToolClick =
 false;
@@ -10980,6 +10998,97 @@ return tool?.id || null;
 }
 
 
+function movePaletteDragGhost(
+clientX,
+clientY
+) {
+
+if (!paletteDragGhost) {
+return;
+}
+
+paletteDragGhost.style.left =
+`${clientX - paletteDragOffsetX}px`;
+
+paletteDragGhost.style.top =
+`${clientY - paletteDragOffsetY}px`;
+}
+
+
+function activatePaletteToolDrag(
+clientX,
+clientY
+) {
+
+if (
+paletteDragActive ||
+!draggedPaletteToolId
+) {
+return;
+}
+
+
+const button =
+TOOL_REGISTRY[
+draggedPaletteToolId
+].button;
+
+const rect =
+button.getBoundingClientRect();
+
+
+paletteDragActive =
+true;
+
+paletteDragOffsetX =
+paletteDragStartX -
+rect.left;
+
+paletteDragOffsetY =
+paletteDragStartY -
+rect.top;
+
+
+button.classList.add(
+"is-palette-placeholder"
+);
+
+
+paletteDragGhost =
+button.cloneNode(
+true
+);
+
+paletteDragGhost.removeAttribute(
+"id"
+);
+
+paletteDragGhost.classList.remove(
+"is-palette-placeholder"
+);
+
+paletteDragGhost.classList.add(
+"palette-drag-ghost"
+);
+
+paletteDragGhost.style.width =
+`${rect.width}px`;
+
+paletteDragGhost.style.height =
+`${rect.height}px`;
+
+document.body.appendChild(
+paletteDragGhost
+);
+
+
+movePaletteDragGhost(
+clientX,
+clientY
+);
+}
+
+
 function finishPaletteToolDrag(
 event
 ) {
@@ -10993,6 +11102,17 @@ draggedPalettePointerId
 )
 ) {
 return;
+}
+
+
+if (paletteLongPressTimerId !== null) {
+
+window.clearTimeout(
+paletteLongPressTimerId
+);
+
+paletteLongPressTimerId =
+null;
 }
 
 
@@ -11016,17 +11136,57 @@ TOOL_REGISTRY[draggedPaletteToolId]
 TOOL_REGISTRY[
 draggedPaletteToolId
 ].button.classList.remove(
-"is-palette-dragging"
+"is-palette-placeholder"
 );
 }
 
 
-if (paletteDragMoved) {
+if (paletteDragGhost) {
+
+paletteDragGhost.remove();
+
+paletteDragGhost =
+null;
+}
+
+
+if (paletteDragActive) {
 
 saveToolPalette();
 
 suppressPaletteToolClick =
 true;
+
+window.setTimeout(
+() => {
+
+suppressPaletteToolClick =
+false;
+},
+400
+);
+
+} else if (
+draggedPalettePointerType === "touch" &&
+event?.type !== "pointercancel" &&
+draggedPaletteToolId
+) {
+
+selectDrawingTool(
+draggedPaletteToolId
+);
+
+suppressPaletteToolClick =
+true;
+
+window.setTimeout(
+() => {
+
+suppressPaletteToolClick =
+false;
+},
+400
+);
 }
 
 
@@ -11036,7 +11196,10 @@ null;
 draggedPalettePointerId =
 null;
 
-paletteDragMoved =
+draggedPalettePointerType =
+null;
+
+paletteDragActive =
 false;
 }
 
@@ -11085,19 +11248,44 @@ toolId;
 draggedPalettePointerId =
 event.pointerId;
 
+draggedPalettePointerType =
+event.pointerType;
+
 paletteDragStartX =
 event.clientX;
 
 paletteDragStartY =
 event.clientY;
 
-paletteDragMoved =
+paletteDragActive =
 false;
 
 
 drawingToolButtons.setPointerCapture(
 event.pointerId
 );
+
+
+if (event.pointerType === "touch") {
+
+event.preventDefault();
+event.stopPropagation();
+
+paletteLongPressTimerId =
+window.setTimeout(
+() => {
+
+paletteLongPressTimerId =
+null;
+
+activatePaletteToolDrag(
+paletteDragStartX,
+paletteDragStartY
+);
+},
+PALETTE_LONG_PRESS_DURATION
+);
+}
 },
 true
 );
@@ -11126,27 +11314,59 @@ paletteDragStartY
 
 
 if (
-!paletteDragMoved &&
-movedDistance < 8
+event.pointerType === "touch" &&
+!paletteDragActive
 ) {
+
+if (
+movedDistance >= 8 &&
+paletteLongPressTimerId !== null
+) {
+
+window.clearTimeout(
+paletteLongPressTimerId
+);
+
+paletteLongPressTimerId =
+null;
+
+finishPaletteToolDrag(
+event
+);
+}
+
 return;
 }
 
 
-if (!paletteDragMoved) {
+if (
+event.pointerType !== "touch" &&
+!paletteDragActive
+) {
 
-paletteDragMoved =
-true;
+if (movedDistance < 8) {
+return;
+}
 
-TOOL_REGISTRY[
-draggedPaletteToolId
-].button.classList.add(
-"is-palette-dragging"
+activatePaletteToolDrag(
+event.clientX,
+event.clientY
 );
 }
 
 
+if (!paletteDragActive) {
+return;
+}
+
+
 event.preventDefault();
+
+
+movePaletteDragGhost(
+event.clientX,
+event.clientY
+);
 
 
 const pointedElement =
