@@ -794,6 +794,10 @@ min-height: 58px;
 padding: 7px 4px;
 }
 
+.drawing-tools .drawing-tool-button[hidden] {
+display: none;
+}
+
 
 .drawing-tool-icon {
 width: 22px;
