@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.53";
+"1.3.54";
 
 
 const appVersion =
@@ -11366,56 +11366,82 @@ event.clientY
 );
 
 
-const pointedElement =
-document.elementFromPoint(
-event.clientX,
-event.clientY
-);
+const dragGhostRect =
+paletteDragGhost.getBoundingClientRect();
+
+let targetToolId =
+null;
+
+let largestOverlapArea =
+0;
+
+
+addedPaletteToolIds.forEach(
+(toolId) => {
+
+if (toolId === draggedPaletteToolId) {
+return;
+}
+
 
 const targetButton =
-pointedElement?.closest(
-".drawing-tool-button"
-);
-
-
-if (
-!targetButton ||
-targetButton === addToolButton ||
-targetButton.hidden
-) {
-return;
-}
-
-
-const targetToolId =
-getPaletteToolIdFromButton(
-targetButton
-);
-
-
-if (
-!targetToolId ||
-targetToolId ===
-draggedPaletteToolId
-) {
-return;
-}
-
+TOOL_REGISTRY[toolId].button;
 
 const targetRect =
 targetButton.getBoundingClientRect();
 
-const insertAfter =
-event.clientY >
-targetRect.top +
-targetRect.height / 2 ||
-(
-event.clientY >= targetRect.top &&
-event.clientY <= targetRect.bottom &&
-event.clientX >
-targetRect.left +
-targetRect.width / 2
+
+const overlapWidth =
+Math.max(
+0,
+Math.min(
+dragGhostRect.right,
+targetRect.right
+) -
+Math.max(
+dragGhostRect.left,
+targetRect.left
+)
 );
+
+
+const overlapHeight =
+Math.max(
+0,
+Math.min(
+dragGhostRect.bottom,
+targetRect.bottom
+) -
+Math.max(
+dragGhostRect.top,
+targetRect.top
+)
+);
+
+
+const overlapArea =
+overlapWidth *
+overlapHeight;
+
+
+if (
+overlapArea >
+largestOverlapArea
+) {
+
+largestOverlapArea =
+overlapArea;
+
+targetToolId =
+toolId;
+}
+}
+);
+
+
+if (!targetToolId) {
+return;
+}
 
 
 const nextToolIds =
@@ -11436,9 +11462,7 @@ return;
 
 
 nextToolIds.splice(
-insertAfter
-? targetIndex + 1
-: targetIndex,
+targetIndex,
 0,
 draggedPaletteToolId
 );
