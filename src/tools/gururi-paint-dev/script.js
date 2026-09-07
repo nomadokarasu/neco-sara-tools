@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.54";
+"1.3.55";
 
 
 const appVersion =
@@ -11369,10 +11369,25 @@ event.clientY
 const dragGhostRect =
 paletteDragGhost.getBoundingClientRect();
 
+const dragCircleCenterX =
+dragGhostRect.left +
+dragGhostRect.width / 2;
+
+const dragCircleCenterY =
+dragGhostRect.top +
+dragGhostRect.height / 2;
+
+const dragCircleRadius =
+Math.min(
+dragGhostRect.width,
+dragGhostRect.height
+) *
+0.35;
+
 let targetToolId =
 null;
 
-let largestOverlapArea =
+let largestCircleOverlap =
 0;
 
 
@@ -11390,47 +11405,45 @@ TOOL_REGISTRY[toolId].button;
 const targetRect =
 targetButton.getBoundingClientRect();
 
+const targetCircleCenterX =
+targetRect.left +
+targetRect.width / 2;
 
-const overlapWidth =
-Math.max(
-0,
+const targetCircleCenterY =
+targetRect.top +
+targetRect.height / 2;
+
+const targetCircleRadius =
 Math.min(
-dragGhostRect.right,
-targetRect.right
-) -
-Math.max(
-dragGhostRect.left,
-targetRect.left
-)
+targetRect.width,
+targetRect.height
+) *
+0.35;
+
+const centerDistance =
+Math.hypot(
+dragCircleCenterX -
+targetCircleCenterX,
+dragCircleCenterY -
+targetCircleCenterY
 );
 
-
-const overlapHeight =
+const circleOverlap =
 Math.max(
 0,
-Math.min(
-dragGhostRect.bottom,
-targetRect.bottom
-) -
-Math.max(
-dragGhostRect.top,
-targetRect.top
-)
+dragCircleRadius +
+targetCircleRadius -
+centerDistance
 );
-
-
-const overlapArea =
-overlapWidth *
-overlapHeight;
 
 
 if (
-overlapArea >
-largestOverlapArea
+circleOverlap >
+largestCircleOverlap
 ) {
 
-largestOverlapArea =
-overlapArea;
+largestCircleOverlap =
+circleOverlap;
 
 targetToolId =
 toolId;
