@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.64";
+"1.3.65";
 
 
 const appVersion =
@@ -1849,7 +1849,7 @@ savedCameraVideoAspect;
 }
 
 const VIDEO_CAPTURE_MAX_DURATION =
-7000;
+12000;
 
 const photoCaptureCanvas =
 document.createElement(
@@ -5820,6 +5820,7 @@ if (
 currentTool === "bucket" ||
 currentTool === "eyedropper" ||
 currentTool === "look" ||
+currentTool === "camera" ||
 isLooking ||
 isZooming
 ) {
