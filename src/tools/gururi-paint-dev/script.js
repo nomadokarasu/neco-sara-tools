@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.42";
+"1.3.43";
 
 
 const appVersion =
@@ -12155,6 +12155,7 @@ eraser: "e",
 bucket: "b",
 eyedropper: "s",
 look: "h",
+camera: "c",
 lookAround: "space",
 zoom: "z"
 };
@@ -12458,7 +12459,8 @@ const drawingTools = [
 "eraser",
 "bucket",
 "eyedropper",
-"look"
+"look",
+"camera"
 ];
 
 return (
@@ -12525,6 +12527,21 @@ shortcutPanel.classList.contains(
 "is-open"
 )
 ) {
+return;
+}
+
+
+if (
+event.key === "Escape" &&
+currentTool === "camera"
+) {
+
+event.preventDefault();
+
+selectDrawingTool(
+toolBeforeCamera
+);
+
 return;
 }
 
