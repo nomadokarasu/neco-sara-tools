@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.52";
+"1.3.53";
 
 
 const appVersion =
@@ -9959,11 +9959,8 @@ selectDrawingTool(
 
 
 cameraToolButton.addEventListener(
-"pointerdown",
-(event) => {
-
-event.preventDefault();
-event.stopPropagation();
+"click",
+() => {
 
 selectDrawingTool(
 "camera"
