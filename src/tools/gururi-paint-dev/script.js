@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.59";
+"1.3.60";
 
 
 const appVersion =
@@ -13442,9 +13442,22 @@ if (shortcutTool) {
 
 event.preventDefault();
 
+
+if (
+shortcutTool === "camera" &&
+currentTool === "camera"
+) {
+
+selectDrawingTool(
+toolBeforeCamera
+);
+
+} else {
+
 selectDrawingTool(
 shortcutTool
 );
+}
 
 return;
 }
