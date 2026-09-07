@@ -15750,4 +15750,31 @@ videoCaptureCamera
 }
 }
 
+if (
+"serviceWorker" in navigator
+) {
+
+window.addEventListener(
+"load",
+() => {
+
+navigator.serviceWorker.register(
+"./service-worker.js?v=1.3.73",
+{
+updateViaCache: "none"
+}
+).catch(
+(error) => {
+
+console.warn(
+"Service Worker registration failed:",
+error
+);
+}
+);
+}
+);
+}
+
+
 animate();
