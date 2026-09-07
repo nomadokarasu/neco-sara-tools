@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.45";
+"1.3.46";
 
 
 const appVersion =
@@ -116,9 +116,9 @@ document.getElementById(
 "toolLibraryCloseButton"
 );
 
-const toolLibraryActionButtons =
-document.querySelectorAll(
-"[data-tool-library-action]"
+const toolLibraryList =
+document.querySelector(
+".tool-library-list"
 );
 
 const cameraToolButton =
@@ -1408,29 +1408,6 @@ cameraToolButton.querySelector(
 ".drawing-tool-label"
 ).textContent =
 t("camera");
-
-
-document.querySelectorAll(
-"[data-tool-library-item]"
-).forEach(
-(item) => {
-
-const toolId =
-item.dataset.toolLibraryItem;
-
-const tool =
-TOOL_REGISTRY[toolId];
-
-if (!tool) {
-return;
-}
-
-item.querySelector(
-"strong"
-).textContent =
-t(tool.labelKey);
-}
-);
 
 
 updateToolPalette();
@@ -10762,81 +10739,9 @@ return true;
 }
 
 
-function updateToolPalette() {
-
-Object.values(
-TOOL_REGISTRY
-).forEach(
-(tool) => {
-
-tool.button.hidden =
-!addedPaletteToolIds.includes(
-tool.id
-);
-}
-);
-
-
-toolLibraryActionButtons.forEach(
-(button) => {
-
-const toolId =
-button.dataset.toolLibraryAction;
-
-const isAdded =
-addedPaletteToolIds.includes(
+function togglePaletteTool(
 toolId
-);
-
-button.textContent =
-isAdded
-? t("delete")
-: t("add");
-
-button.disabled =
-isAdded &&
-addedPaletteToolIds.length <= 1;
-}
-);
-}
-
-
-function openToolLibrary() {
-
-updateToolPalette();
-
-toolLibraryPanel.classList.add(
-"is-open"
-);
-}
-
-
-function closeToolLibrary() {
-
-toolLibraryPanel.classList.remove(
-"is-open"
-);
-}
-
-
-addToolButton.addEventListener(
-"click",
-() => {
-
-openToolLibrary();
-}
-);
-
-
-toolLibraryActionButtons.forEach(
-(button) => {
-
-button.addEventListener(
-"click",
-() => {
-
-const toolId =
-button.dataset.toolLibraryAction;
+) {
 
 if (!TOOL_REGISTRY[toolId]) {
 return;
@@ -10880,7 +10785,122 @@ toolId
 saveToolPalette();
 updateToolPalette();
 }
+
+
+function renderToolLibrary() {
+
+toolLibraryList.replaceChildren();
+
+
+Object.values(
+TOOL_REGISTRY
+).forEach(
+(tool) => {
+
+const isAdded =
+addedPaletteToolIds.includes(
+tool.id
 );
+
+const button =
+tool.button.cloneNode(
+true
+);
+
+button.removeAttribute(
+"id"
+);
+
+button.removeAttribute(
+"hidden"
+);
+
+button.classList.remove(
+"is-active"
+);
+
+button.classList.add(
+"tool-library-toggle-button"
+);
+
+button.classList.toggle(
+"is-selected",
+isAdded
+);
+
+button.dataset.toolLibraryAction =
+tool.id;
+
+button.setAttribute(
+"aria-pressed",
+isAdded
+? "true"
+: "false"
+);
+
+button.disabled =
+isAdded &&
+addedPaletteToolIds.length <= 1;
+
+button.addEventListener(
+"click",
+() => {
+
+togglePaletteTool(
+tool.id
+);
+}
+);
+
+toolLibraryList.appendChild(
+button
+);
+}
+);
+}
+
+
+function updateToolPalette() {
+
+Object.values(
+TOOL_REGISTRY
+).forEach(
+(tool) => {
+
+tool.button.hidden =
+!addedPaletteToolIds.includes(
+tool.id
+);
+}
+);
+
+renderToolLibrary();
+}
+
+
+function openToolLibrary() {
+
+updateToolPalette();
+
+toolLibraryPanel.classList.add(
+"is-open"
+);
+}
+
+
+function closeToolLibrary() {
+
+toolLibraryPanel.classList.remove(
+"is-open"
+);
+}
+
+
+addToolButton.addEventListener(
+"click",
+() => {
+
+openToolLibrary();
 }
 );
 
