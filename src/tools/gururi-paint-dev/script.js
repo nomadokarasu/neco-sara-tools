@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.43";
+"1.3.44";
 
 
 const appVersion =
@@ -116,19 +116,9 @@ document.getElementById(
 "toolLibraryCloseButton"
 );
 
-const cameraToolTitle =
-document.getElementById(
-"cameraToolTitle"
-);
-
-const cameraToolDescription =
-document.getElementById(
-"cameraToolDescription"
-);
-
-const cameraToolAddButton =
-document.getElementById(
-"cameraToolAddButton"
+const toolLibraryActionButtons =
+document.querySelectorAll(
+"[data-tool-library-action]"
 );
 
 const cameraToolButton =
@@ -177,41 +167,57 @@ Object.freeze({
 
 pen: {
 id: "pen",
-builtIn: true
+labelKey: "pen",
+button: penToolButton
 },
 
 eraser: {
 id: "eraser",
-builtIn: true
+labelKey: "eraser",
+button: eraserToolButton
 },
 
 bucket: {
 id: "bucket",
-builtIn: true
+labelKey: "bucket",
+button: bucketToolButton
 },
 
 eyedropper: {
 id: "eyedropper",
-builtIn: true
+labelKey: "eyedropper",
+button: eyedropperToolButton
 },
 
 look: {
 id: "look",
-builtIn: true
+labelKey: "lookTool",
+button: lookToolButton
 },
 
 camera: {
 id: "camera",
-builtIn: false
+labelKey: "camera",
+button: cameraToolButton
 }
 });
 
 
 const TOOL_PALETTE_STORAGE_KEY =
-"gururi-paint-dev-palette-tools";
+"gururi-paint-dev-palette-tools-v2";
+
+const DEFAULT_PALETTE_TOOL_IDS = [
+"pen",
+"eraser",
+"bucket",
+"eyedropper",
+"camera"
+];
 
 
-let addedPaletteToolIds = [];
+let addedPaletteToolIds = [
+...DEFAULT_PALETTE_TOOL_IDS
+];
 
 
 try {
@@ -220,22 +226,30 @@ const savedPaletteToolIds =
 JSON.parse(
 localStorage.getItem(
 TOOL_PALETTE_STORAGE_KEY
-) || "[]"
+) || "null"
 );
 
 if (Array.isArray(savedPaletteToolIds)) {
 
-addedPaletteToolIds =
+const validToolIds =
 savedPaletteToolIds.filter(
-(toolId) =>
+(toolId, index, toolIds) =>
 TOOL_REGISTRY[toolId] &&
-!TOOL_REGISTRY[toolId].builtIn
+toolIds.indexOf(toolId) === index
 );
+
+if (validToolIds.length > 0) {
+
+addedPaletteToolIds =
+validToolIds;
+}
 }
 
 } catch (error) {
 
-addedPaletteToolIds = [];
+addedPaletteToolIds = [
+...DEFAULT_PALETTE_TOOL_IDS
+];
 }
 
 
@@ -1382,12 +1396,6 @@ toolLibraryCloseButton.setAttribute(
 t("close")
 );
 
-cameraToolTitle.textContent =
-t("camera");
-
-cameraToolDescription.textContent =
-t("cameraDescription");
-
 cameraToolButton.title =
 t("camera");
 
@@ -1400,6 +1408,29 @@ cameraToolButton.querySelector(
 ".drawing-tool-label"
 ).textContent =
 t("camera");
+
+
+document.querySelectorAll(
+"[data-tool-library-item]"
+).forEach(
+(item) => {
+
+const toolId =
+item.dataset.toolLibraryItem;
+
+const tool =
+TOOL_REGISTRY[toolId];
+
+if (!tool) {
+return;
+}
+
+item.querySelector(
+"strong"
+).textContent =
+t(tool.labelKey);
+}
+);
 
 
 updateToolPalette();
@@ -10733,21 +10764,40 @@ return true;
 
 function updateToolPalette() {
 
-const cameraIsAdded =
-addedPaletteToolIds.includes(
-"camera"
+Object.values(
+TOOL_REGISTRY
+).forEach(
+(tool) => {
+
+tool.button.hidden =
+!addedPaletteToolIds.includes(
+tool.id
+);
+}
 );
 
-cameraToolButton.hidden =
-!cameraIsAdded;
 
-cameraToolAddButton.disabled =
-cameraIsAdded;
+toolLibraryActionButtons.forEach(
+(button) => {
 
-cameraToolAddButton.textContent =
-cameraIsAdded
-? t("added")
+const toolId =
+button.dataset.toolLibraryAction;
+
+const isAdded =
+addedPaletteToolIds.includes(
+toolId
+);
+
+button.textContent =
+isAdded
+? t("delete")
 : t("add");
+
+button.disabled =
+isAdded &&
+addedPaletteToolIds.length <= 1;
+}
+);
 }
 
 
@@ -10778,25 +10828,59 @@ openToolLibrary();
 );
 
 
-cameraToolAddButton.addEventListener(
+toolLibraryActionButtons.forEach(
+(button) => {
+
+button.addEventListener(
 "click",
 () => {
 
-if (
-addedPaletteToolIds.includes(
-"camera"
-)
-) {
+const toolId =
+button.dataset.toolLibraryAction;
+
+if (!TOOL_REGISTRY[toolId]) {
 return;
 }
 
-addedPaletteToolIds.push(
-"camera"
+
+const isAdded =
+addedPaletteToolIds.includes(
+toolId
 );
+
+
+if (isAdded) {
+
+if (addedPaletteToolIds.length <= 1) {
+return;
+}
+
+addedPaletteToolIds =
+addedPaletteToolIds.filter(
+(addedToolId) =>
+addedToolId !== toolId
+);
+
+
+if (currentTool === toolId) {
+
+selectDrawingTool(
+addedPaletteToolIds[0]
+);
+}
+
+} else {
+
+addedPaletteToolIds.push(
+toolId
+);
+}
+
 
 saveToolPalette();
 updateToolPalette();
-closeToolLibrary();
+}
+);
 }
 );
 
