@@ -1935,8 +1935,19 @@ rgba(
 
 .camera-joystick {
 position: absolute;
-left: 18px;
-bottom: 18px;
+left:
+calc(
+50% +
+var(--camera-frame-width) / 2 +
+18px
+);
+bottom:
+calc(
+(
+100% -
+var(--camera-frame-height)
+) / 2
+);
 
 z-index: 2;
 
@@ -2153,9 +2164,12 @@ pointer-events: none;
 .camera-capture-ui.is-counting-down
 .camera-mode-switch,
 .camera-capture-ui.is-counting-down
+.camera-video-aspect-switch,
+.camera-capture-ui.is-recording
+.camera-mode-switch,
+.camera-capture-ui.is-recording
 .camera-video-aspect-switch {
-opacity: 0.45;
-pointer-events: none;
+display: none;
 }
 
 .camera-shutter-button.is-counting-down span {
@@ -2243,14 +2257,27 @@ touch-action: none;
 @media (max-width: 700px) {
 
 .camera-joystick {
-left: 12px;
+left:
+calc(
+50% +
+48px
+);
+
 bottom:
 calc(
-12px +
+6px +
 env(
 safe-area-inset-bottom
 )
 );
+
+width: 96px;
+height: 96px;
+}
+
+.camera-joystick-knob {
+width: 40px;
+height: 40px;
 }
 
 .camera-zoom-control {
@@ -2495,6 +2522,32 @@ calc(
 env(
 safe-area-inset-bottom
 )
+);
+}
+
+.camera-capture-ui.is-recording
+.camera-recording-time {
+position: absolute;
+left: 50%;
+bottom: 102px;
+
+white-space: nowrap;
+
+transform:
+translateX(
+-50%
+);
+}
+
+.camera-capture-ui.is-recording
+.camera-recording-progress {
+position: absolute;
+left: 50%;
+bottom: 88px;
+
+transform:
+translateX(
+-50%
 );
 }
 

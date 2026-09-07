@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.67";
+"1.3.68";
 
 
 const appVersion =
@@ -10584,7 +10584,7 @@ selectDrawingTool(
 
 
 cameraCloseButton.addEventListener(
-"pointerdown",
+"click",
 (event) => {
 
 event.preventDefault();
@@ -12028,13 +12028,22 @@ null;
 }
 
 
+const draggedPaletteButton =
+draggedPaletteToolId
+? TOOL_REGISTRY[
+draggedPaletteToolId
+]?.button
+: null;
+
+
 if (
-drawingToolButtons.hasPointerCapture(
+draggedPaletteButton &&
+draggedPaletteButton.hasPointerCapture(
 draggedPalettePointerId
 )
 ) {
 
-drawingToolButtons.releasePointerCapture(
+draggedPaletteButton.releasePointerCapture(
 draggedPalettePointerId
 );
 }
@@ -12173,7 +12182,7 @@ paletteDragActive =
 false;
 
 
-drawingToolButtons.setPointerCapture(
+button.setPointerCapture(
 event.pointerId
 );
 
