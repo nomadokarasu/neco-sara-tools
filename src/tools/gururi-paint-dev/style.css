@@ -798,6 +798,18 @@ padding: 7px 4px;
 display: none;
 }
 
+@media (max-width: 700px) {
+
+html:not(.tool-palette-ready) #lookTool {
+display: none;
+}
+
+html:not(.tool-palette-ready) #cameraTool {
+display: flex;
+}
+
+}
+
 .drawing-tools .drawing-tool-button {
 touch-action: none;
 }

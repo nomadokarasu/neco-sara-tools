@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.63";
+"1.3.64";
 
 
 const appVersion =
@@ -228,16 +228,48 @@ button: cameraToolButton
 });
 
 
-const TOOL_PALETTE_STORAGE_KEY =
+function isMobileToolPalette() {
+
+return window.matchMedia(
+"(max-width: 700px)"
+).matches;
+}
+
+
+const DESKTOP_TOOL_PALETTE_STORAGE_KEY =
 "gururi-paint-dev-palette-tools-v3";
 
-const DEFAULT_PALETTE_TOOL_IDS = [
+const MOBILE_TOOL_PALETTE_STORAGE_KEY =
+"gururi-paint-dev-palette-tools-mobile-v1";
+
+
+const TOOL_PALETTE_STORAGE_KEY =
+isMobileToolPalette()
+? MOBILE_TOOL_PALETTE_STORAGE_KEY
+: DESKTOP_TOOL_PALETTE_STORAGE_KEY;
+
+
+const DESKTOP_DEFAULT_PALETTE_TOOL_IDS = [
 "pen",
 "eraser",
 "bucket",
 "eyedropper",
 "look"
 ];
+
+const MOBILE_DEFAULT_PALETTE_TOOL_IDS = [
+"pen",
+"eraser",
+"bucket",
+"eyedropper",
+"camera"
+];
+
+
+const DEFAULT_PALETTE_TOOL_IDS =
+isMobileToolPalette()
+? MOBILE_DEFAULT_PALETTE_TOOL_IDS
+: DESKTOP_DEFAULT_PALETTE_TOOL_IDS;
 
 
 let addedPaletteToolIds = [
@@ -260,7 +292,11 @@ const validToolIds =
 savedPaletteToolIds.filter(
 (toolId, index, toolIds) =>
 TOOL_REGISTRY[toolId] &&
-toolIds.indexOf(toolId) === index
+toolIds.indexOf(toolId) === index &&
+(
+toolId !== "camera" ||
+isMobileToolPalette()
+)
 );
 
 if (validToolIds.length > 0) {
@@ -11117,7 +11153,10 @@ TOOL_REGISTRY
 ).forEach(
 (tool) => {
 
-if (tool.id === "camera") {
+if (
+tool.id === "camera" &&
+!isMobileToolPalette()
+) {
 return;
 }
 
@@ -11223,15 +11262,26 @@ TOOL_REGISTRY
 ).forEach(
 (tool) => {
 
-tool.button.hidden =
-!addedPaletteToolIds.includes(
+const shouldShow =
+addedPaletteToolIds.includes(
 tool.id
+) &&
+(
+tool.id !== "camera" ||
+isMobileToolPalette()
 );
+
+tool.button.hidden =
+!shouldShow;
 }
 );
 
 applyToolPaletteOrder();
 renderToolLibrary();
+
+document.documentElement.classList.add(
+"tool-palette-ready"
+);
 }
 
 
