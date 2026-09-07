@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.58";
+"1.3.59";
 
 
 const appVersion =
@@ -214,14 +214,14 @@ button: cameraToolButton
 
 
 const TOOL_PALETTE_STORAGE_KEY =
-"gururi-paint-dev-palette-tools-v2";
+"gururi-paint-dev-palette-tools-v3";
 
 const DEFAULT_PALETTE_TOOL_IDS = [
 "pen",
 "eraser",
 "bucket",
 "eyedropper",
-"camera"
+"look"
 ];
 
 
