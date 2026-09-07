@@ -122,6 +122,75 @@ $externalUrl = validateUrl($_POST["externalUrl"] ?? "");
 
 $termsAccepted = isset($_POST["termsAccepted"]) && $_POST["termsAccepted"] === "1";
 
+$initialLongitude = is_numeric($_POST["initialLongitude"] ?? null)
+? (float)$_POST["initialLongitude"]
+: 0.0;
+
+$initialLatitude = is_numeric($_POST["initialLatitude"] ?? null)
+? (float)$_POST["initialLatitude"]
+: 0.0;
+
+$initialFov = is_numeric($_POST["initialFov"] ?? null)
+? (float)$_POST["initialFov"]
+: 85.0;
+
+$initialEyeHeight = is_numeric($_POST["initialEyeHeight"] ?? null)
+? (float)$_POST["initialEyeHeight"]
+: 1.5;
+
+if (!is_finite($initialLongitude)) {
+$initialLongitude = 0.0;
+}
+
+if (!is_finite($initialLatitude)) {
+$initialLatitude = 0.0;
+}
+
+if (!is_finite($initialFov)) {
+$initialFov = 85.0;
+}
+
+if (!is_finite($initialEyeHeight)) {
+$initialEyeHeight = 1.5;
+}
+
+$initialLongitude =
+fmod(
+fmod(
+$initialLongitude,
+360.0
+) +
+360.0,
+360.0
+);
+
+$initialLatitude =
+max(
+-85.0,
+min(
+85.0,
+$initialLatitude
+)
+);
+
+$initialFov =
+max(
+30.0,
+min(
+100.0,
+$initialFov
+)
+);
+
+$initialEyeHeight =
+max(
+0.5,
+min(
+30.0,
+$initialEyeHeight
+)
+);
+
 if ($title === "") {
 failResponse("作品名を入力してください。");
 }
@@ -202,6 +271,12 @@ $world = [
 "externalUrl" => $externalUrl,
 "thumbnail" => "./uploads/" . $worldId . "/" . $thumbnailFilename,
 "panorama" => "./uploads/" . $worldId . "/" . $panoramaFilename,
+"initialView" => [
+"longitude" => $initialLongitude,
+"latitude" => $initialLatitude,
+"fov" => $initialFov,
+"eyeHeight" => $initialEyeHeight
+],
 "status" => "published",
 "reportCount" => 0,
 "deleteKey" => $deleteKey,
@@ -275,7 +350,8 @@ echo json_encode([
 "xUrl" => $world["xUrl"],
 "externalUrl" => $world["externalUrl"],
 "thumbnail" => $world["thumbnail"],
-"panorama" => $world["panorama"]
+"panorama" => $world["panorama"],
+"initialView" => $world["initialView"]
 ],
 "deleteKey" => $deleteKey
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

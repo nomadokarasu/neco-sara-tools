@@ -51,8 +51,13 @@ panoramaHelp: "横2：縦1のJPG / PNG / WebP、10MB以下。ぐるりペイン�
 contentCheck: "R18・過度に暴力的な内容ではありません。",
 rightsCheck: "他人の作品・個人情報などを無断で使用していません。",
 terms: "自分が投稿する権利を持つ画像であり、問題がある場合は運営者が非表示・削除できることに同意します。",
-postSubmit: "投稿する",
+postSubmit: "プレビュー",
 posting: "投稿中…",
+postPreviewTitle: "最初に表示される位置を設定してください",
+postPreviewDescription: "ドラッグして向きを、ホイールまたはピンチで表示範囲を調整してください。",
+postPreviewBack: "戻る",
+postPreviewSubmit: "投稿する",
+eyeHeight: "目線",
 postCompleteTitle: "投稿しました！",
 postCompleteText: "この世界の共有URLです。",
 copyUrl: "URLをコピー",
@@ -113,8 +118,13 @@ panoramaHelp: "2:1 landscape JPG / PNG / WebP, up to 10 MB. You can use an image
 contentCheck: "This submission does not contain adult or excessively violent content.",
 rightsCheck: "I am not using other people's works or personal information without permission.",
 terms: "I have the right to upload these images and agree that the operator may hide or delete problematic submissions.",
-postSubmit: "Post",
+postSubmit: "Preview",
 posting: "Posting…",
+postPreviewTitle: "Set the starting view",
+postPreviewDescription: "Drag to change direction. Use the mouse wheel or pinch to adjust the field of view.",
+postPreviewBack: "Back",
+postPreviewSubmit: "Post",
+eyeHeight: "Eye height",
 postCompleteTitle: "Posted!",
 postCompleteText: "Here is the share URL for this world.",
 copyUrl: "Copy URL",
@@ -285,6 +295,41 @@ document.getElementById("postError");
 
 const postSubmitButton =
 document.getElementById("postSubmitButton");
+
+const postPreviewPanel =
+document.getElementById(
+"postPreviewPanel"
+);
+
+const postPreviewPanorama =
+document.getElementById(
+"postPreviewPanorama"
+);
+
+const postPreviewBackButton =
+document.getElementById(
+"postPreviewBackButton"
+);
+
+const postPreviewSubmitButton =
+document.getElementById(
+"postPreviewSubmitButton"
+);
+
+const postPreviewEyeHeight =
+document.getElementById(
+"postPreviewEyeHeight"
+);
+
+const postPreviewTitle =
+document.getElementById(
+"postPreviewTitle"
+);
+
+const postPreviewDescription =
+document.getElementById(
+"postPreviewDescription"
+);
 
 const authorButton =
 document.getElementById("authorButton");
@@ -536,6 +581,27 @@ t("terms");
 postSubmitButton.textContent =
 t("postSubmit");
 
+postPreviewTitle.textContent =
+t("postPreviewTitle");
+
+postPreviewDescription.textContent =
+t("postPreviewDescription");
+
+postPreviewBackButton.textContent =
+t("postPreviewBack");
+
+if (
+!postPreviewSubmitButton.disabled
+) {
+
+postPreviewSubmitButton.textContent =
+t("postPreviewSubmit");
+
+}
+
+postPreviewEyeHeight.textContent =
+`${t("eyeHeight")}：${postPreviewEyeHeightValue.toFixed(1)}${currentLanguage === "ja" ? "m" : " m"}`;
+
 postCompletePanel.querySelector(
 ".modal-title"
 ).textContent =
@@ -687,6 +753,692 @@ currentLanguage === "ja"
 
 }
 
+const postPreviewScene =
+new THREE.Scene();
+
+const postPreviewCamera =
+new THREE.PerspectiveCamera(
+85,
+1,
+0.1,
+1000
+);
+
+const postPreviewRenderer =
+new THREE.WebGLRenderer({
+antialias: true
+});
+
+postPreviewRenderer.setPixelRatio(
+Math.min(
+window.devicePixelRatio,
+2
+)
+);
+
+const postPreviewGeometry =
+new THREE.SphereGeometry(
+500,
+60,
+40
+);
+
+postPreviewGeometry.scale(
+-1,
+1,
+1
+);
+
+const postPreviewMaterial =
+new THREE.MeshBasicMaterial();
+
+const postPreviewSphere =
+new THREE.Mesh(
+postPreviewGeometry,
+postPreviewMaterial
+);
+
+postPreviewScene.add(
+postPreviewSphere
+);
+
+let postPreviewLongitude =
+0;
+
+let postPreviewLatitude =
+0;
+
+let postPreviewTargetLongitude =
+0;
+
+let postPreviewTargetLatitude =
+0;
+
+let postPreviewEyeHeightValue =
+1.5;
+
+let postPreviewDragging =
+false;
+
+let postPreviewStartX =
+0;
+
+let postPreviewStartY =
+0;
+
+let postPreviewStartLongitude =
+0;
+
+let postPreviewStartLatitude =
+0;
+
+const postPreviewPointers =
+new Map();
+
+let postPreviewPinchStartDistance =
+null;
+
+let postPreviewPinchStartFov =
+null;
+
+let pendingPostFormData =
+null;
+
+function resizePostPreview() {
+
+const width =
+Math.max(
+1,
+postPreviewPanorama.clientWidth
+);
+
+const height =
+Math.max(
+1,
+postPreviewPanorama.clientHeight
+);
+
+postPreviewCamera.aspect =
+width /
+height;
+
+postPreviewCamera
+.updateProjectionMatrix();
+
+postPreviewRenderer.setSize(
+width,
+height,
+false
+);
+
+}
+
+
+async function openPostPreview() {
+
+const panoramaFile =
+postPanorama.files?.[0];
+
+if (!panoramaFile) {
+
+return;
+
+}
+
+postPreviewEyeHeightValue =
+await readGururiEyeHeight(
+panoramaFile
+);
+
+postPreviewEyeHeight.textContent =
+currentLanguage === "ja"
+? `目線：${postPreviewEyeHeightValue.toFixed(1)}m`
+: `Eye height: ${postPreviewEyeHeightValue.toFixed(1)} m`;
+
+postPreviewLongitude =
+0;
+
+postPreviewLatitude =
+0;
+
+postPreviewTargetLongitude =
+0;
+
+postPreviewTargetLatitude =
+0;
+
+postPreviewCamera.fov =
+85;
+
+postPreviewCamera.position.set(
+0,
+postPreviewEyeHeightValue * 10,
+0
+);
+
+postPreviewCamera
+.updateProjectionMatrix();
+
+const objectUrl =
+URL.createObjectURL(
+panoramaFile
+);
+
+const textureLoader =
+new THREE.TextureLoader();
+
+textureLoader.load(
+objectUrl,
+(texture) => {
+
+URL.revokeObjectURL(
+objectUrl
+);
+
+texture.colorSpace =
+THREE.SRGBColorSpace;
+
+if (
+postPreviewMaterial.map
+) {
+
+postPreviewMaterial
+.map
+.dispose();
+
+}
+
+postPreviewMaterial.map =
+texture;
+
+postPreviewMaterial.needsUpdate =
+true;
+
+if (
+!postPreviewRenderer
+.domElement
+.parentNode
+) {
+
+postPreviewPanorama
+.appendChild(
+postPreviewRenderer.domElement
+);
+
+}
+
+postPanel.classList.add(
+"hidden"
+);
+
+postPreviewPanel.classList.remove(
+"hidden"
+);
+
+resizePostPreview();
+
+},
+undefined,
+(error) => {
+
+URL.revokeObjectURL(
+objectUrl
+);
+
+console.error(
+error
+);
+
+postError.textContent =
+t("imageUnreadable");
+
+postError.classList.remove(
+"hidden"
+);
+
+}
+);
+
+}
+
+
+function closePostPreview() {
+
+postPreviewPanel.classList.add(
+"hidden"
+);
+
+postPanel.classList.remove(
+"hidden"
+);
+
+postPreviewPointers.clear();
+
+postPreviewDragging =
+false;
+
+postPreviewPinchStartDistance =
+null;
+
+postPreviewPinchStartFov =
+null;
+
+}
+
+async function submitPendingPost() {
+
+if (
+!pendingPostFormData
+) {
+
+return;
+
+}
+
+postPreviewSubmitButton.disabled =
+true;
+
+postPreviewSubmitButton.textContent =
+t("posting");
+
+const normalizedLongitude =
+(
+(
+postPreviewLongitude % 360
+) +
+360
+) %
+360;
+
+pendingPostFormData.set(
+"initialLongitude",
+String(
+normalizedLongitude
+)
+);
+
+pendingPostFormData.set(
+"initialLatitude",
+String(
+postPreviewLatitude
+)
+);
+
+pendingPostFormData.set(
+"initialFov",
+String(
+postPreviewCamera.fov
+)
+);
+
+pendingPostFormData.set(
+"initialEyeHeight",
+String(
+postPreviewEyeHeightValue
+)
+);
+
+try {
+
+const response =
+await fetch(
+"./api/create-world.php",
+{
+method: "POST",
+body: pendingPostFormData
+}
+);
+
+const result =
+await response.json();
+
+if (
+!response.ok ||
+!result.success
+) {
+
+throw new Error(
+result.error ||
+"投稿できませんでした。"
+);
+
+}
+
+pendingPostFormData =
+null;
+
+postForm.reset();
+
+postPreviewPanel.classList.add(
+"hidden"
+);
+
+await loadWorldList();
+
+if (
+result.world &&
+result.world.id
+) {
+
+trackEvent(
+"post_complete",
+{
+world_id:
+result.world.id,
+world_title:
+result.world.title || "",
+world_author:
+result.world.author || "",
+language:
+currentLanguage
+}
+);
+
+openPostCompletePanel(
+result.world.id
+);
+
+}
+
+} catch (error) {
+
+window.alert(
+error.message ||
+(
+currentLanguage === "ja"
+? "投稿できませんでした。"
+: "Could not post this world."
+)
+);
+
+} finally {
+
+postPreviewSubmitButton.disabled =
+false;
+
+postPreviewSubmitButton.textContent =
+t("postPreviewSubmit");
+
+}
+
+}
+
+function getPostPreviewPointerDistance(
+pointA,
+pointB
+) {
+
+return Math.hypot(
+pointA.x -
+pointB.x,
+pointA.y -
+pointB.y
+);
+
+}
+
+
+postPreviewRenderer
+.domElement
+.addEventListener(
+"pointerdown",
+(event) => {
+
+postPreviewRenderer
+.domElement
+.setPointerCapture(
+event.pointerId
+);
+
+postPreviewPointers.set(
+event.pointerId,
+{
+x:
+event.clientX,
+y:
+event.clientY
+}
+);
+
+if (
+postPreviewPointers.size ===
+1
+) {
+
+postPreviewDragging =
+true;
+
+postPreviewStartX =
+event.clientX;
+
+postPreviewStartY =
+event.clientY;
+
+postPreviewStartLongitude =
+postPreviewTargetLongitude;
+
+postPreviewStartLatitude =
+postPreviewTargetLatitude;
+
+}
+
+if (
+postPreviewPointers.size ===
+2
+) {
+
+const points =
+[
+...postPreviewPointers.values()
+];
+
+postPreviewPinchStartDistance =
+getPostPreviewPointerDistance(
+points[0],
+points[1]
+);
+
+postPreviewPinchStartFov =
+postPreviewCamera.fov;
+
+}
+
+}
+);
+
+
+postPreviewRenderer
+.domElement
+.addEventListener(
+"pointermove",
+(event) => {
+
+if (
+!postPreviewPointers.has(
+event.pointerId
+)
+) {
+
+return;
+
+}
+
+postPreviewPointers.set(
+event.pointerId,
+{
+x:
+event.clientX,
+y:
+event.clientY
+}
+);
+
+if (
+postPreviewPointers.size ===
+2
+) {
+
+const points =
+[
+...postPreviewPointers.values()
+];
+
+const distance =
+getPostPreviewPointerDistance(
+points[0],
+points[1]
+);
+
+if (
+postPreviewPinchStartDistance &&
+postPreviewPinchStartFov &&
+distance > 0
+) {
+
+postPreviewCamera.fov =
+Math.max(
+30,
+Math.min(
+100,
+postPreviewPinchStartFov *
+postPreviewPinchStartDistance /
+distance
+)
+);
+
+postPreviewCamera
+.updateProjectionMatrix();
+
+}
+
+return;
+
+}
+
+if (
+!postPreviewDragging
+) {
+
+return;
+
+}
+
+postPreviewTargetLongitude =
+postPreviewStartLongitude +
+(
+postPreviewStartX -
+event.clientX
+) * 0.15;
+
+postPreviewTargetLatitude =
+postPreviewStartLatitude +
+(
+event.clientY -
+postPreviewStartY
+) * 0.15;
+
+postPreviewTargetLatitude =
+Math.max(
+-85,
+Math.min(
+85,
+postPreviewTargetLatitude
+)
+);
+
+}
+);
+
+
+function endPostPreviewPointer(
+event
+) {
+
+postPreviewPointers.delete(
+event.pointerId
+);
+
+if (
+postPreviewPointers.size ===
+0
+) {
+
+postPreviewDragging =
+false;
+
+postPreviewPinchStartDistance =
+null;
+
+postPreviewPinchStartFov =
+null;
+
+}
+
+}
+
+
+postPreviewRenderer
+.domElement
+.addEventListener(
+"pointerup",
+endPostPreviewPointer
+);
+
+postPreviewRenderer
+.domElement
+.addEventListener(
+"pointercancel",
+endPostPreviewPointer
+);
+
+
+postPreviewRenderer
+.domElement
+.addEventListener(
+"wheel",
+(event) => {
+
+event.preventDefault();
+
+postPreviewCamera.fov =
+Math.max(
+30,
+Math.min(
+100,
+postPreviewCamera.fov +
+event.deltaY * 0.03
+)
+);
+
+postPreviewCamera
+.updateProjectionMatrix();
+
+},
+{
+passive: false
+}
+);
+
+
+postPreviewBackButton
+.addEventListener(
+"click",
+() => {
+
+closePostPreview();
+
+}
+);
+
+postPreviewSubmitButton
+.addEventListener(
+"click",
+() => {
+
+submitPendingPost();
+
+}
+);
 
 const scene =
 new THREE.Scene();
@@ -831,22 +1583,94 @@ dy
 
 }
 
-function resetView() {
+function resetView(
+world = null
+) {
+
+const initialView =
+world &&
+world.initialView &&
+typeof world.initialView === "object"
+? world.initialView
+: null;
+
+const savedLongitude =
+Number(
+initialView?.longitude
+);
+
+const savedLatitude =
+Number(
+initialView?.latitude
+);
+
+const savedFov =
+Number(
+initialView?.fov
+);
+
+const savedEyeHeight =
+Number(
+initialView?.eyeHeight
+);
 
 longitude =
-0;
+Number.isFinite(
+savedLongitude
+)
+? savedLongitude
+: 0;
 
 latitude =
-0;
+Number.isFinite(
+savedLatitude
+)
+? Math.max(
+-85,
+Math.min(
+85,
+savedLatitude
+)
+)
+: 0;
 
 targetLongitude =
-0;
+longitude;
 
 targetLatitude =
-0;
+latitude;
 
 camera.fov =
-85;
+Number.isFinite(
+savedFov
+)
+? Math.max(
+30,
+Math.min(
+100,
+savedFov
+)
+)
+: 85;
+
+const eyeHeight =
+Number.isFinite(
+savedEyeHeight
+)
+? Math.max(
+0.5,
+Math.min(
+30,
+savedEyeHeight
+)
+)
+: 1.5;
+
+camera.position.set(
+0,
+eyeHeight * 10,
+0
+);
 
 camera.updateProjectionMatrix();
 
@@ -914,7 +1738,9 @@ texture;
 panorama.material.needsUpdate =
 true;
 
-resetView();
+resetView(
+world
+);
 
 topScreen.classList.add(
 "hidden"
@@ -1653,6 +2479,207 @@ emptyMessage.classList.remove(
 
 }
 
+async function readGururiEyeHeight(
+file
+) {
+
+const fallbackEyeHeight =
+1.5;
+
+if (
+!file ||
+file.type !== "image/png"
+) {
+
+return fallbackEyeHeight;
+
+}
+
+try {
+
+const buffer =
+await file.arrayBuffer();
+
+const bytes =
+new Uint8Array(
+buffer
+);
+
+const pngSignature = [
+137,
+80,
+78,
+71,
+13,
+10,
+26,
+10
+];
+
+if (
+bytes.length <
+pngSignature.length
+) {
+
+return fallbackEyeHeight;
+
+}
+
+for (
+let i = 0;
+i < pngSignature.length;
+i++
+) {
+
+if (
+bytes[i] !==
+pngSignature[i]
+) {
+
+return fallbackEyeHeight;
+
+}
+
+}
+
+let offset =
+8;
+
+const decoder =
+new TextDecoder(
+"latin1"
+);
+
+while (
+offset + 12 <=
+bytes.length
+) {
+
+const view =
+new DataView(
+buffer,
+offset
+);
+
+const dataLength =
+view.getUint32(
+0
+);
+
+const chunkEnd =
+offset +
+12 +
+dataLength;
+
+if (
+chunkEnd >
+bytes.length
+) {
+
+break;
+
+}
+
+const chunkType =
+String.fromCharCode(
+bytes[offset + 4],
+bytes[offset + 5],
+bytes[offset + 6],
+bytes[offset + 7]
+);
+
+if (
+chunkType === "tEXt"
+) {
+
+const chunkData =
+bytes.subarray(
+offset + 8,
+offset + 8 + dataLength
+);
+
+const separatorIndex =
+chunkData.indexOf(
+0
+);
+
+if (
+separatorIndex !== -1
+) {
+
+const keyword =
+decoder.decode(
+chunkData.subarray(
+0,
+separatorIndex
+)
+);
+
+if (
+keyword ===
+"gururiEyeHeight"
+) {
+
+const valueText =
+decoder.decode(
+chunkData.subarray(
+separatorIndex + 1
+)
+);
+
+const value =
+Number(
+valueText
+);
+
+if (
+Number.isFinite(
+value
+)
+) {
+
+return Math.max(
+0.5,
+Math.min(
+30,
+value
+)
+);
+
+}
+
+}
+
+}
+
+}
+
+if (
+chunkType === "IEND"
+) {
+
+break;
+
+}
+
+offset =
+chunkEnd;
+
+}
+
+} catch (error) {
+
+console.warn(
+"PNGの目線情報を読み込めませんでした。",
+error
+);
+
+}
+
+return fallbackEyeHeight;
+
+}
+
 function checkImageRatio(
 input,
 warningElement,
@@ -2044,94 +3071,17 @@ return;
 
 }
 
-const formData =
+pendingPostFormData =
 new FormData(
 postForm
 );
 
-formData.set(
+pendingPostFormData.set(
 "termsAccepted",
 "1"
 );
 
-postSubmitButton.disabled =
-true;
-
-postSubmitButton.textContent =
-"投稿中…";
-
-try {
-
-const response =
-await fetch(
-"./api/create-world.php",
-{
-method: "POST",
-body: formData
-}
-);
-
-const result =
-await response.json();
-
-if (
-!response.ok ||
-!result.success
-) {
-
-throw new Error(
-result.error ||
-"投稿できませんでした。"
-);
-
-}
-
-postForm.reset();
-
-closePostPanel();
-
-await loadWorldList();
-
-if (
-result.world &&
-result.world.id
-) {
-
-trackEvent(
-"post_complete",
-{
-world_id: result.world.id,
-world_title: result.world.title || "",
-world_author: result.world.author || "",
-language: currentLanguage
-}
-);
-
-openPostCompletePanel(
-result.world.id
-);
-
-}
-
-} catch (error) {
-
-postError.textContent =
-error.message ||
-"投稿できませんでした。";
-
-postError.classList.remove(
-"hidden"
-);
-
-} finally {
-
-postSubmitButton.disabled =
-false;
-
-postSubmitButton.textContent =
-"投稿する";
-
-}
+await openPostPreview();
 
 }
 );
@@ -2687,11 +3637,14 @@ longitude
 );
 
 camera.lookAt(
+camera.position.x +
 500 *
 Math.sin(phi) *
 Math.cos(theta),
+camera.position.y +
 500 *
 Math.cos(phi),
+camera.position.z +
 500 *
 Math.sin(phi) *
 Math.sin(theta)
@@ -2702,11 +3655,83 @@ scene,
 camera
 );
 
+if (
+!postPreviewPanel.classList.contains(
+"hidden"
+)
+) {
+
+postPreviewLongitude +=
+(
+postPreviewTargetLongitude -
+postPreviewLongitude
+) * 0.12;
+
+postPreviewLatitude +=
+(
+postPreviewTargetLatitude -
+postPreviewLatitude
+) * 0.12;
+
+const postPreviewPhi =
+THREE.MathUtils.degToRad(
+90 -
+postPreviewLatitude
+);
+
+const postPreviewTheta =
+THREE.MathUtils.degToRad(
+postPreviewLongitude
+);
+
+postPreviewCamera.lookAt(
+500 *
+Math.sin(
+postPreviewPhi
+) *
+Math.cos(
+postPreviewTheta
+),
+postPreviewEyeHeightValue * 10 +
+500 *
+Math.cos(
+postPreviewPhi
+),
+500 *
+Math.sin(
+postPreviewPhi
+) *
+Math.sin(
+postPreviewTheta
+)
+);
+
+postPreviewRenderer.render(
+postPreviewScene,
+postPreviewCamera
+);
+
+}
+
 }
 
 window.addEventListener(
 "resize",
-resizeViewer
+() => {
+
+resizeViewer();
+
+if (
+!postPreviewPanel.classList.contains(
+"hidden"
+)
+) {
+
+resizePostPreview();
+
+}
+
+}
 );
 
 resizeViewer();

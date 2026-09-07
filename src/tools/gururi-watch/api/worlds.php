@@ -54,6 +54,9 @@ return [
 "externalUrl" => $world["externalUrl"] ?? "",
 "thumbnail" => $world["thumbnail"] ?? "",
 "panorama" => $world["panorama"] ?? "",
+"initialView" => is_array($world["initialView"] ?? null)
+? $world["initialView"]
+: null,
 "createdAt" => $world["createdAt"] ?? ""
 ];
 },
