@@ -1044,7 +1044,7 @@ t("posting");
 const normalizedLongitude =
 (
 (
-postPreviewLongitude % 360
+postPreviewTargetLongitude % 360
 ) +
 360
 ) %
@@ -1060,7 +1060,7 @@ normalizedLongitude
 pendingPostFormData.set(
 "initialLatitude",
 String(
-postPreviewLatitude
+postPreviewTargetLatitude
 )
 );
 
