@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.62";
+"1.3.63";
 
 
 const appVersion =
@@ -7370,6 +7370,15 @@ if (
 
 viewport.style.height = "";
 
+} else if (
+document.body.classList.contains(
+"is-camera-mode"
+)
+) {
+
+viewport.style.height =
+"100dvh";
+
 } else {
 
 /*
@@ -9874,6 +9883,13 @@ true;
 eraserCursor.visible =
 false;
 
+closeMobileColorPicker();
+
+document.body.classList.add(
+"is-camera-mode"
+);
+
+updateMobileViewportSize();
 updateCameraViewfinder();
 
 cameraViewfinder.hidden =
@@ -9890,6 +9906,12 @@ if (cameraVideoRecording) {
 
 stopCameraVideo();
 }
+
+document.body.classList.remove(
+"is-camera-mode"
+);
+
+updateMobileViewportSize();
 
 if (guideVisibilityBeforeCamera === null) {
 return;
