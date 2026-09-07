@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.69";
+"1.3.70";
 
 
 const appVersion =
@@ -11273,9 +11273,6 @@ return;
 
 let countdownValue = 3;
 
-cameraJoystick.hidden =
-false;
-
 cameraViewfinder.dataset.videoCountdown =
 String(
 countdownValue
@@ -14776,24 +14773,6 @@ return true;
 }
 
 
-if (
-cameraJoystickPointerId !==
-null
-) {
-
-previousTouchCenterX =
-gesture.centerX;
-
-previousTouchCenterY =
-gesture.centerY;
-
-previousTouchDistance =
-gesture.distance;
-
-return true;
-}
-
-
 /*
 2本指ドラッグ
 → 視点回転
@@ -16133,15 +16112,6 @@ lastPaintUpdateTime =
 now;
 }
 
-
-updateCameraJoystickMotion(
-now
-);
-
-cameraZoomRange.value =
-String(
-camera.fov
-);
 
 updateCameraDirection();
 
