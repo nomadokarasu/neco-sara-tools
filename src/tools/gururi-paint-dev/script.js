@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.78";
+"1.3.79";
 
 
 const appVersion =
@@ -1325,17 +1325,41 @@ t("guideGrid")
 );
 
 
+const isMobileLayout =
+window.matchMedia(
+"(max-width: 700px)"
+).matches;
+
+
 projectSaveButton.textContent =
-t("saveData");
+isMobileLayout
+? (
+currentLanguage === "en"
+? "Save data"
+: "データ保存"
+)
+: t("saveData");
 
 projectLoadButton.textContent =
-t("loadData");
+isMobileLayout
+? (
+currentLanguage === "en"
+? "Import"
+: "インポート"
+)
+: t("loadData");
 
 previewButton.textContent =
 t("preview");
 
 downloadButton.textContent =
-t("savePng");
+isMobileLayout
+? (
+currentLanguage === "en"
+? "Save PNG"
+: "PNG保存"
+)
+: t("savePng");
 
 previewDownloadButton.textContent =
 t("download");
@@ -1347,6 +1371,20 @@ desktopHelpMenuButton.textContent =
 currentLanguage === "en"
 ? "Help"
 : "ヘルプ";
+
+setElementText(
+".mobile-menu-top-link",
+currentLanguage === "en"
+? "Top"
+: "トップ"
+);
+
+setElementText(
+".preview-seam-label",
+currentLanguage === "en"
+? "Seam position (drag left or right)"
+: "つなぎ目位置（左右に移動できます）"
+);
 
 
 const languageSwitchLabel =
@@ -16403,7 +16441,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.78",
+"./service-worker.js?v=1.3.79",
 {
 updateViaCache: "none"
 }

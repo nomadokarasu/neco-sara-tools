@@ -15,7 +15,7 @@ content="noindex, nofollow"
 
 <title>ぐるりペイント</title>
 
-<link rel="stylesheet" href="./style.css?v=1.3.78">
+<link rel="stylesheet" href="./style.css?v=1.3.79">
 </head>
 
 <body>
@@ -1518,15 +1518,6 @@ selected
 
 </div>
 
-
-<button
-id="previewDownloadButton"
-class="tool-button"
-type="button"
->
-ダウンロード
-</button>
-
 </div>
 
 
@@ -1559,6 +1550,10 @@ aria-label="ドラッグして画像の左端を変更"
 ▼
 </button>
 
+<span class="preview-seam-label">
+つなぎ目位置（左右に移動できます）
+</span>
+
 
 <canvas
 id="previewCanvas"
@@ -1568,13 +1563,26 @@ id="previewCanvas"
 
 </div>
 
+
+<div class="preview-footer">
+
+<button
+id="previewDownloadButton"
+class="tool-button"
+type="button"
+>
+ダウンロード
+</button>
+
+</div>
+
 </div>
 
 </div>
 
 <script
 type="module"
-src="./script.js?v=1.3.78"
+src="./script.js?v=1.3.79"
 ></script>
 
 </body>
