@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.85";
+"1.3.86";
 
 
 const appVersion =
@@ -15183,6 +15183,177 @@ pointerup時に実行する
 let pendingTouchTap = null;
 
 
+/* ================================
+パームリジェクション
+================================ */
+
+const activePenPointers =
+new Set();
+
+const PALM_REJECTION_DELAY =
+600;
+
+let palmRejectionUntil =
+0;
+
+
+function clearTouchInputForPen() {
+
+cancelCurrentTouchStroke();
+
+pendingTouchTap =
+null;
+
+
+for (
+const pointerId of
+activeTouchPointers.keys()
+) {
+
+if (
+renderer.domElement
+.hasPointerCapture(
+pointerId
+)
+) {
+
+renderer.domElement
+.releasePointerCapture(
+pointerId
+);
+}
+}
+
+
+activeTouchPointers.clear();
+
+touchNavigationActive =
+false;
+}
+
+
+function handlePalmRejectionEvent(
+event
+) {
+
+const now =
+performance.now();
+
+
+if (
+event.pointerType === "pen"
+) {
+
+if (
+event.type === "pointerdown"
+) {
+
+activePenPointers.add(
+event.pointerId
+);
+
+clearTouchInputForPen();
+}
+
+
+if (
+event.type === "pointerup" ||
+event.type === "pointercancel"
+) {
+
+activePenPointers.delete(
+event.pointerId
+);
+
+palmRejectionUntil =
+now +
+PALM_REJECTION_DELAY;
+
+
+if (
+event.type === "pointercancel"
+) {
+
+cancelCurrentTouchStroke();
+}
+}
+
+
+return;
+}
+
+
+if (
+event.pointerType !== "touch"
+) {
+return;
+}
+
+
+if (
+activePenPointers.size === 0 &&
+now >= palmRejectionUntil
+) {
+return;
+}
+
+
+event.preventDefault();
+
+event.stopImmediatePropagation();
+
+
+activeTouchPointers.delete(
+event.pointerId
+);
+
+
+if (
+pendingTouchTap &&
+pendingTouchTap.pointerId ===
+event.pointerId
+) {
+
+pendingTouchTap =
+null;
+}
+
+
+if (
+activeTouchPointers.size === 0
+) {
+
+touchNavigationActive =
+false;
+}
+
+
+releaseTouchPointer(
+event
+);
+}
+
+
+[
+"pointerdown",
+"pointermove",
+"pointerup",
+"pointercancel"
+].forEach(
+(eventName) => {
+
+renderer.domElement.addEventListener(
+eventName,
+handlePalmRejectionEvent,
+{
+capture: true,
+passive: false
+}
+);
+}
+);
+
+
 /*
 現在のタッチ位置を保存
 */
@@ -16897,7 +17068,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.85",
+"./service-worker.js?v=1.3.86",
 {
 updateViaCache: "none"
 }
