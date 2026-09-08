@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.79";
+"1.3.80";
 
 
 const appVersion =
@@ -1335,8 +1335,8 @@ projectSaveButton.textContent =
 isMobileLayout
 ? (
 currentLanguage === "en"
-? "Save data"
-: "データ保存"
+? "Save data (.gururi)"
+: "データ保存（.gururi）"
 )
 : t("saveData");
 
@@ -1344,8 +1344,8 @@ projectLoadButton.textContent =
 isMobileLayout
 ? (
 currentLanguage === "en"
-? "Import"
-: "インポート"
+? "Import (.gururi)"
+: "インポート（.gururi）"
 )
 : t("loadData");
 
@@ -1356,8 +1356,8 @@ downloadButton.textContent =
 isMobileLayout
 ? (
 currentLanguage === "en"
-? "Save PNG"
-: "PNG保存"
+? "Save PNG (.png)"
+: "PNG保存（.png）"
 )
 : t("savePng");
 
