@@ -1510,13 +1510,13 @@ cursor: grabbing;
 .preview-seam-label {
 position: absolute;
 
-top: 0;
+top: -8px;
 left: 14px;
 
 z-index: 4;
 
 transform:
-translateY(-85%);
+translateY(-100%);
 
 font-size: 12px;
 line-height: 1;
