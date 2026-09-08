@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.77";
+"1.3.78";
 
 
 const appVersion =
@@ -1344,7 +1344,9 @@ shortcutSettingsButton.textContent =
 t("shortcutMenu");
 
 desktopHelpMenuButton.textContent =
-t("helpMenuItem");
+currentLanguage === "en"
+? "Help"
+: "ヘルプ";
 
 
 const languageSwitchLabel =
@@ -16401,7 +16403,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.77",
+"./service-worker.js?v=1.3.78",
 {
 updateViaCache: "none"
 }
