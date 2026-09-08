@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.75";
+"1.3.76";
 
 
 const appVersion =
@@ -7453,7 +7453,7 @@ openPanel
 
 
 /*
-44px = 上部ヘッダー
+52px = 上部ヘッダー
 52px = 下部タブ
 
 下部パネルも差し引いて、
@@ -7464,7 +7464,7 @@ openPanel
 viewport.style.height =
 `calc(
 100dvh -
-44px -
+52px -
 52px -
 ${panelHeight}px -
 env(safe-area-inset-bottom)
@@ -16230,7 +16230,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.75",
+"./service-worker.js?v=1.3.76",
 {
 updateViaCache: "none"
 }

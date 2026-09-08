@@ -2604,16 +2604,40 @@ background: #000;
 */
 
 .toolbar {
-height: 44px;
+height: 52px;
 
-padding: 0 10px;
+gap: 6px;
+
+padding: 0 8px;
 
 overflow: visible;
 }
 
 
+.toolbar__brand {
+flex-direction: column;
+align-items: flex-start;
+justify-content: center;
+
+gap: 0;
+
+line-height: 1;
+}
+
+
 .toolbar__title {
 font-size: 14px;
+}
+
+
+.toolbar__version {
+font-size: 9px;
+line-height: 1.2;
+}
+
+
+.history-controls {
+margin-left: 0;
 }
 
 
@@ -2640,7 +2664,7 @@ display: block;
 height:
 calc(
 100dvh -
-44px -
+52px -
 52px -
 env(
 safe-area-inset-bottom
@@ -3341,7 +3365,7 @@ min-height: 40px;
 */
 
 .welcome-overlay {
-top: 44px;
+top: 52px;
 right: 0;
 bottom:
 calc(
