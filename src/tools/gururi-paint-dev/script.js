@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.83";
+"1.3.84";
 
 
 const appVersion =
@@ -2471,6 +2471,324 @@ height
 }
 
 /* ================================
+PNGメタデータ
+================================ */
+
+function calculatePngCrc32(
+bytes
+) {
+
+let crc =
+0xffffffff;
+
+for (
+let i = 0;
+i < bytes.length;
+i++
+) {
+
+crc ^=
+bytes[i];
+
+for (
+let bit = 0;
+bit < 8;
+bit++
+) {
+
+if (
+crc & 1
+) {
+
+crc =
+(
+crc >>> 1
+) ^
+0xedb88320;
+
+} else {
+
+crc =
+crc >>> 1;
+
+}
+
+}
+
+}
+
+return (
+crc ^
+0xffffffff
+) >>> 0;
+
+}
+
+
+function createPngTextChunk(
+keyword,
+text
+) {
+
+const encoder =
+new TextEncoder();
+
+const keywordBytes =
+encoder.encode(
+keyword
+);
+
+const textBytes =
+encoder.encode(
+text
+);
+
+const typeBytes =
+new Uint8Array([
+0x74,
+0x45,
+0x58,
+0x74
+]);
+
+const dataLength =
+keywordBytes.length +
+1 +
+textBytes.length;
+
+const data =
+new Uint8Array(
+dataLength
+);
+
+data.set(
+keywordBytes,
+0
+);
+
+data[
+keywordBytes.length
+] =
+0;
+
+data.set(
+textBytes,
+keywordBytes.length + 1
+);
+
+const crcData =
+new Uint8Array(
+typeBytes.length +
+data.length
+);
+
+crcData.set(
+typeBytes,
+0
+);
+
+crcData.set(
+data,
+typeBytes.length
+);
+
+const crc =
+calculatePngCrc32(
+crcData
+);
+
+const chunk =
+new Uint8Array(
+12 +
+data.length
+);
+
+const view =
+new DataView(
+chunk.buffer
+);
+
+view.setUint32(
+0,
+data.length
+);
+
+chunk.set(
+typeBytes,
+4
+);
+
+chunk.set(
+data,
+8
+);
+
+view.setUint32(
+8 + data.length,
+crc
+);
+
+return chunk;
+
+}
+
+
+function addGururiEyeHeightToPng(
+pngBuffer,
+eyeHeight
+) {
+
+const source =
+new Uint8Array(
+pngBuffer
+);
+
+const pngSignature = [
+137,
+80,
+78,
+71,
+13,
+10,
+26,
+10
+];
+
+for (
+let i = 0;
+i < pngSignature.length;
+i++
+) {
+
+if (
+source[i] !==
+pngSignature[i]
+) {
+
+throw new Error(
+"PNGデータではありません。"
+);
+
+}
+
+}
+
+const numericEyeHeight =
+Number(
+eyeHeight
+);
+
+if (
+!Number.isFinite(
+numericEyeHeight
+)
+) {
+
+throw new Error(
+"目線の高さが不正です。"
+);
+
+}
+
+const metadataChunk =
+createPngTextChunk(
+"gururiEyeHeight",
+numericEyeHeight.toFixed(1)
+);
+
+let offset =
+8;
+
+while (
+offset + 12 <=
+source.length
+) {
+
+const view =
+new DataView(
+source.buffer,
+source.byteOffset +
+offset
+);
+
+const dataLength =
+view.getUint32(
+0
+);
+
+const chunkEnd =
+offset +
+12 +
+dataLength;
+
+if (
+chunkEnd >
+source.length
+) {
+
+throw new Error(
+"PNGデータが壊れています。"
+);
+
+}
+
+const chunkType =
+String.fromCharCode(
+source[offset + 4],
+source[offset + 5],
+source[offset + 6],
+source[offset + 7]
+);
+
+if (
+chunkType ===
+"IEND"
+) {
+
+const result =
+new Uint8Array(
+source.length +
+metadataChunk.length
+);
+
+result.set(
+source.subarray(
+0,
+offset
+),
+0
+);
+
+result.set(
+metadataChunk,
+offset
+);
+
+result.set(
+source.subarray(
+offset
+),
+offset +
+metadataChunk.length
+);
+
+return result.buffer;
+
+}
+
+offset =
+chunkEnd;
+
+}
+
+throw new Error(
+"PNGの終端を確認できませんでした。"
+);
+
+}
+
+
+/* ================================
 PNG書き出し
 ================================ */
 
@@ -2682,18 +3000,103 @@ outputHeight
 PNGダウンロード
 */
 
-const link =
-document.createElement("a");
+exportCanvas.toBlob(
+async (blob) => {
 
-link.href =
+if (!blob) {
+
+const fallbackLink =
+document.createElement(
+"a"
+);
+
+fallbackLink.href =
 exportCanvas.toDataURL(
 "image/png"
 );
 
+fallbackLink.download =
+"gururi-world.png";
+
+fallbackLink.click();
+
+return;
+
+}
+
+let downloadBlob =
+blob;
+
+try {
+
+const pngBuffer =
+await blob.arrayBuffer();
+
+const pngWithMetadata =
+addGururiEyeHeightToPng(
+pngBuffer,
+camera.position.y
+);
+
+downloadBlob =
+new Blob(
+[
+pngWithMetadata
+],
+{
+type:
+"image/png"
+}
+);
+
+} catch (error) {
+
+console.warn(
+"PNGへの目線情報の埋め込みに失敗したため、通常のPNGとして保存します。",
+error
+);
+
+}
+
+const downloadUrl =
+URL.createObjectURL(
+downloadBlob
+);
+
+const link =
+document.createElement(
+"a"
+);
+
+link.href =
+downloadUrl;
+
 link.download =
 "gururi-world.png";
 
+document.body.appendChild(
+link
+);
+
 link.click();
+
+link.remove();
+
+setTimeout(
+() => {
+
+URL.revokeObjectURL(
+downloadUrl
+);
+
+},
+1000
+);
+
+},
+"image/png"
+);
+
 }
 
 
@@ -16459,7 +16862,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.83",
+"./service-worker.js?v=1.3.84",
 {
 updateViaCache: "none"
 }
