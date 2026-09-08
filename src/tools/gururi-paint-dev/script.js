@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.84";
+"1.3.85";
 
 
 const appVersion =
@@ -5948,8 +5948,17 @@ penSize;
 );
 
 
+penSizeValue.addEventListener(
+"blur",
+() => {
+
+penSizeValue.value =
+penSize;
+}
+);
+
+
 /*
-スマートフォンでは
 Enterで太さを確定して
 入力欄からフォーカスを外す
 */
@@ -5959,7 +5968,6 @@ penSizeValue.addEventListener(
 (event) => {
 
 if (
-!isMobileDevice ||
 event.key !== "Enter"
 ) {
 return;
@@ -7461,6 +7469,33 @@ eyeHeight
 
 eyeHeightInput.value =
 eyeHeight;
+}
+);
+
+
+eyeHeightValue.addEventListener(
+"blur",
+() => {
+
+eyeHeightValue.value =
+camera.position.y;
+}
+);
+
+
+eyeHeightValue.addEventListener(
+"keydown",
+(event) => {
+
+if (
+event.key !== "Enter"
+) {
+return;
+}
+
+event.preventDefault();
+
+eyeHeightValue.blur();
 }
 );
 
@@ -16862,7 +16897,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.84",
+"./service-worker.js?v=1.3.85",
 {
 updateViaCache: "none"
 }
