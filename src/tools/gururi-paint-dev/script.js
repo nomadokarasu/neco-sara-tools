@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.82";
+"1.3.83";
 
 
 const appVersion =
@@ -10761,12 +10761,17 @@ null;
 function getCameraVideoMimeType() {
 
 if (
-typeof MediaRecorder === "undefined"
+typeof MediaRecorder === "undefined" ||
+typeof MediaRecorder.isTypeSupported !==
+"function"
 ) {
 return "";
 }
 
 const mimeTypes = [
+"video/mp4;codecs=avc1.42E01E",
+"video/mp4;codecs=avc1.4D401E",
+"video/mp4",
 "video/webm;codecs=vp9",
 "video/webm;codecs=vp8",
 "video/webm"
@@ -10775,8 +10780,6 @@ const mimeTypes = [
 for (const mimeType of mimeTypes) {
 
 if (
-typeof MediaRecorder.isTypeSupported !==
-"function" ||
 MediaRecorder.isTypeSupported(
 mimeType
 )
@@ -10789,7 +10792,9 @@ return "";
 }
 
 
-function getVideoCaptureFilename() {
+function getVideoCaptureFilename(
+mimeType
+) {
 
 const now =
 new Date();
@@ -10801,6 +10806,17 @@ String(value).padStart(
 "0"
 );
 
+const extension =
+String(
+mimeType
+)
+.toLowerCase()
+.includes(
+"mp4"
+)
+? ".mp4"
+: ".webm";
+
 return (
 "gururi-video-" +
 now.getFullYear() +
@@ -10810,7 +10826,7 @@ pad(now.getDate()) +
 pad(now.getHours()) +
 pad(now.getMinutes()) +
 pad(now.getSeconds()) +
-".webm"
+extension
 );
 }
 
@@ -10951,7 +10967,9 @@ link.href =
 downloadUrl;
 
 link.download =
-getVideoCaptureFilename();
+getVideoCaptureFilename(
+mimeType
+);
 
 link.click();
 
@@ -10997,8 +11015,8 @@ if (!getCameraVideoMimeType()) {
 
 alert(
 currentLanguage === "en"
-? "WebM recording is not supported by this browser."
-: "このブラウザはWebM形式の動画撮影に対応していません。"
+? "Video recording is not supported by this browser."
+: "このブラウザは対応する形式の動画撮影を利用できません。"
 );
 
 return;
@@ -16441,7 +16459,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.82",
+"./service-worker.js?v=1.3.83",
 {
 updateViaCache: "none"
 }

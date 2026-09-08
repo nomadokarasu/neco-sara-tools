@@ -2514,6 +2514,19 @@ min-width: 80px;
 }
 
 
+#autoSaveRestoreYesButton {
+background: #1677ff;
+border-color: #4a9aff;
+color: #fff;
+font-weight: 700;
+}
+
+
+#autoSaveRestoreYesButton:hover {
+background: #2d86ff;
+}
+
+
 .shortcut-save-confirm-actions .tool-button:disabled {
 opacity: 0.4;
 cursor: not-allowed;
