@@ -15,7 +15,7 @@ content="noindex, nofollow"
 
 <title>ぐるりペイント</title>
 
-<link rel="stylesheet" href="./style.css?v=1.3.74">
+<link rel="stylesheet" href="./style.css?v=1.3.75">
 </head>
 
 <body>
@@ -1381,6 +1381,49 @@ type="button"
 
 
 <!-- =============================
+自動保存データの復元確認
+============================== -->
+
+<div
+id="autoSaveRestorePanel"
+class="welcome-overlay shortcut-save-confirm-overlay"
+role="dialog"
+aria-modal="true"
+aria-labelledby="autoSaveRestoreMessage"
+>
+
+<div class="shortcut-save-confirm-panel">
+
+<p id="autoSaveRestoreMessage">
+制作中のデータがあります。もう一度開きますか？
+</p>
+
+<div class="shortcut-save-confirm-actions">
+
+<button
+id="autoSaveRestoreYesButton"
+class="tool-button"
+type="button"
+>
+はい
+</button>
+
+<button
+id="autoSaveRestoreNoButton"
+class="tool-button"
+type="button"
+>
+いいえ
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =============================
 設定保存の確認
 ============================== -->
 
@@ -1521,7 +1564,7 @@ id="previewCanvas"
 
 <script
 type="module"
-src="./script.js?v=1.3.74"
+src="./script.js?v=1.3.75"
 ></script>
 
 </body>

@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.74";
+"1.3.75";
 
 
 const appVersion =
@@ -2159,10 +2159,18 @@ isMobileDevice
 ? 1000 / 30
 : 0;
 
+let autoSaveReady = false;
+let autoSaveTimer = null;
+let autoSaveHasContent = false;
+let autoSaveWriteQueue =
+Promise.resolve();
+
 
 function requestPaintUpdate() {
 
 paintUpdateRequested = true;
+
+scheduleAutoSave();
 }
 
 
@@ -2643,7 +2651,9 @@ link.click();
 プロジェクト保存
 ================================ */
 
-function downloadProject() {
+function downloadProject(
+returnData = false
+) {
 
 const projectData = {
 
@@ -2769,6 +2779,11 @@ const json =
 JSON.stringify(
 projectData
 );
+
+
+if (returnData) {
+return json;
+}
 
 
 const blob =
@@ -3640,6 +3655,8 @@ renderLayerPanel();
 updatePaintCanvas();
 
 updateCameraDirection();
+
+scheduleAutoSave();
 
 
 alert(
@@ -13385,6 +13402,465 @@ projectLoadInput.value =
 
 
 /* ================================
+自動保存
+================================ */
+
+const AUTO_SAVE_DATABASE_NAME =
+"gururi-paint-dev-autosave";
+
+const AUTO_SAVE_STORE_NAME =
+"projects";
+
+const AUTO_SAVE_KEY =
+"current-project";
+
+const AUTO_SAVE_DELAY =
+1500;
+
+
+function useAutoSaveStore(
+mode,
+operation
+) {
+
+return new Promise(
+(
+resolve,
+reject
+) => {
+
+const openRequest =
+indexedDB.open(
+AUTO_SAVE_DATABASE_NAME,
+1
+);
+
+
+openRequest.onupgradeneeded =
+() => {
+
+const database =
+openRequest.result;
+
+if (
+!database.objectStoreNames.contains(
+AUTO_SAVE_STORE_NAME
+)
+) {
+
+database.createObjectStore(
+AUTO_SAVE_STORE_NAME
+);
+}
+};
+
+
+openRequest.onerror =
+() => {
+
+reject(
+openRequest.error
+);
+};
+
+
+openRequest.onsuccess =
+() => {
+
+const database =
+openRequest.result;
+
+const transaction =
+database.transaction(
+AUTO_SAVE_STORE_NAME,
+mode
+);
+
+const store =
+transaction.objectStore(
+AUTO_SAVE_STORE_NAME
+);
+
+const request =
+operation(
+store
+);
+
+
+request.onsuccess =
+() => {
+
+resolve(
+request.result ?? null
+);
+};
+
+
+request.onerror =
+() => {
+
+reject(
+request.error
+);
+};
+
+
+transaction.oncomplete =
+() => {
+
+database.close();
+};
+
+
+transaction.onabort =
+() => {
+
+database.close();
+
+reject(
+transaction.error
+);
+};
+};
+}
+);
+}
+
+
+function readAutoSave() {
+
+return useAutoSaveStore(
+"readonly",
+(store) =>
+store.get(
+AUTO_SAVE_KEY
+)
+);
+}
+
+
+function writeAutoSave(
+projectText
+) {
+
+return useAutoSaveStore(
+"readwrite",
+(store) =>
+store.put(
+projectText,
+AUTO_SAVE_KEY
+)
+);
+}
+
+
+function deleteAutoSave() {
+
+return useAutoSaveStore(
+"readwrite",
+(store) =>
+store.delete(
+AUTO_SAVE_KEY
+)
+);
+}
+
+
+function saveAutoSaveNow() {
+
+if (
+!autoSaveReady ||
+!autoSaveHasContent
+) {
+return;
+}
+
+
+if (autoSaveTimer) {
+
+clearTimeout(
+autoSaveTimer
+);
+
+autoSaveTimer = null;
+}
+
+
+let projectText = null;
+
+
+try {
+
+projectText =
+downloadProject(
+true
+);
+
+} catch (error) {
+
+console.warn(
+"Auto-save creation failed:",
+error
+);
+
+return;
+}
+
+
+autoSaveWriteQueue =
+autoSaveWriteQueue
+.then(
+() =>
+writeAutoSave(
+projectText
+)
+)
+.catch(
+(error) => {
+
+console.warn(
+"Auto-save failed:",
+error
+);
+}
+);
+}
+
+
+function scheduleAutoSave() {
+
+if (!autoSaveReady) {
+return;
+}
+
+
+autoSaveHasContent = true;
+
+
+if (autoSaveTimer) {
+
+clearTimeout(
+autoSaveTimer
+);
+}
+
+
+autoSaveTimer =
+setTimeout(
+saveAutoSaveNow,
+AUTO_SAVE_DELAY
+);
+}
+
+
+async function initializeAutoSave() {
+
+const panel =
+document.getElementById(
+"autoSaveRestorePanel"
+);
+
+const message =
+document.getElementById(
+"autoSaveRestoreMessage"
+);
+
+const yesButton =
+document.getElementById(
+"autoSaveRestoreYesButton"
+);
+
+const noButton =
+document.getElementById(
+"autoSaveRestoreNoButton"
+);
+
+
+if (!("indexedDB" in window)) {
+return;
+}
+
+
+let projectText = null;
+
+
+try {
+
+projectText =
+await readAutoSave();
+
+} catch (error) {
+
+console.warn(
+"Auto-save check failed:",
+error
+);
+
+return;
+}
+
+
+if (
+typeof projectText !== "string" ||
+!projectText
+) {
+
+autoSaveReady = true;
+
+return;
+}
+
+
+message.textContent =
+currentLanguage === "en"
+? "There is unfinished work. Do you want to reopen it?"
+: "制作中のデータがあります。もう一度開きますか？";
+
+yesButton.textContent =
+currentLanguage === "en"
+? "Yes"
+: "はい";
+
+noButton.textContent =
+currentLanguage === "en"
+? "No"
+: "いいえ";
+
+
+panel.classList.add(
+"is-open"
+);
+
+
+yesButton.addEventListener(
+"click",
+async () => {
+
+yesButton.disabled = true;
+noButton.disabled = true;
+
+
+try {
+
+const file =
+new File(
+[projectText],
+"autosave.gururi",
+{
+type:
+"application/json"
+}
+);
+
+
+await loadProject(
+file
+);
+
+autoSaveHasContent = true;
+autoSaveReady = true;
+
+panel.classList.remove(
+"is-open"
+);
+
+} catch (error) {
+
+console.error(
+error
+);
+
+
+alert(
+currentLanguage === "en"
+? "The auto-saved data could not be restored."
+: "自動保存データを復元できませんでした。"
+);
+
+
+await deleteAutoSave()
+.catch(
+() => {
+}
+);
+
+autoSaveReady = true;
+
+panel.classList.remove(
+"is-open"
+);
+
+} finally {
+
+yesButton.disabled = false;
+noButton.disabled = false;
+}
+}
+);
+
+
+noButton.addEventListener(
+"click",
+async () => {
+
+yesButton.disabled = true;
+noButton.disabled = true;
+
+
+await deleteAutoSave()
+.catch(
+(error) => {
+
+console.warn(
+"Auto-save deletion failed:",
+error
+);
+}
+);
+
+
+autoSaveHasContent = false;
+autoSaveReady = true;
+
+panel.classList.remove(
+"is-open"
+);
+
+yesButton.disabled = false;
+noButton.disabled = false;
+}
+);
+}
+
+
+document.addEventListener(
+"visibilitychange",
+() => {
+
+if (
+document.visibilityState ===
+"hidden"
+) {
+
+saveAutoSaveNow();
+}
+}
+);
+
+
+window.addEventListener(
+"pagehide",
+() => {
+
+saveAutoSaveNow();
+}
+);
+
+
+initializeAutoSave();
+
+
+/* ================================
 PNG保存
 ================================ */
 
@@ -15759,7 +16235,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.74",
+"./service-worker.js?v=1.3.75",
 {
 updateViaCache: "none"
 }
