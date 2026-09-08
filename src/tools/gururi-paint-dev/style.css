@@ -1435,7 +1435,8 @@ padding:
 
 background: #111;
 
-overflow: auto;
+overflow-x: hidden;
+overflow-y: auto;
 }
 
 
@@ -1510,17 +1511,15 @@ cursor: grabbing;
 .preview-seam-label {
 position: absolute;
 
-top: -8px;
-left: 14px;
+top: 0;
+left: 26px;
 
 z-index: 4;
-
-transform:
-translateY(-100%);
 
 font-size: 12px;
 line-height: 1;
 color: #ddd;
+text-align: left;
 
 white-space: nowrap;
 
