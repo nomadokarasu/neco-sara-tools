@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.76";
+"1.3.77";
 
 
 const appVersion =
@@ -1367,11 +1367,21 @@ languageSwitchLabel
 );
 
 
+const mobileMenuLabel =
+currentLanguage === "en"
+? "Menu"
+: "メニュー";
+
 helpButton.title =
-t("help");
+mobileMenuLabel;
+
+helpButton.setAttribute(
+"aria-label",
+mobileMenuLabel
+);
 
 helpButton.textContent =
-t("help");
+"☰";
 
 
 penToolButton.title =
@@ -1607,8 +1617,8 @@ t("layers")
 
 
 setElementText(
-'.mobile-bottom-tab[data-mobile-panel="settings"]',
-t("settings")
+'.mobile-bottom-tab[data-mobile-panel="camera"]',
+t("capture")
 );
 
 
@@ -7439,8 +7449,7 @@ viewport.style.height =
 const openPanel =
 document.querySelector(
 ".drawing-tools.is-mobile-open, " +
-".layer-panel.is-mobile-open, " +
-".toolbar__tools.is-mobile-open"
+".layer-panel.is-mobile-open"
 );
 
 
@@ -7494,14 +7503,66 @@ updateCameraViewfinder();
 }
 
 
+function closeMobileSettingsMenu() {
+
+settingsPanel
+?.classList
+.remove(
+"is-mobile-open"
+);
+
+helpButton.setAttribute(
+"aria-expanded",
+"false"
+);
+}
+
+
+function toggleMobileSettingsMenu() {
+
+const shouldOpen =
+!settingsPanel
+?.classList
+.contains(
+"is-mobile-open"
+);
+
+
+if (shouldOpen) {
+
+closeMobileColorPicker();
+
+settingsPanel
+?.classList
+.add(
+"is-mobile-open"
+);
+
+} else {
+
+settingsPanel
+?.classList
+.remove(
+"is-mobile-open"
+);
+}
+
+
+helpButton.setAttribute(
+"aria-expanded",
+shouldOpen
+? "true"
+: "false"
+);
+}
+
+
 function setMobilePanel(
 panelName
 ) {
 
-/*
-描画タブから離れる場合は
-カラーホイールを閉じる
-*/
+closeMobileSettingsMenu();
+
 
 if (panelName !== "draw") {
 
@@ -7525,14 +7586,6 @@ panelName === "layer"
 );
 
 
-settingsPanel
-?.classList
-.toggle(
-"is-mobile-open",
-panelName === "settings"
-);
-
-
 mobileBottomTabButtons.forEach(
 (button) => {
 
@@ -7544,11 +7597,6 @@ panelName
 }
 );
 
-
-/*
-displayが切り替わったあとに
-パネルの実際の高さを測る
-*/
 
 requestAnimationFrame(
 () => {
@@ -7566,8 +7614,25 @@ button.addEventListener(
 "click",
 () => {
 
+const panelName =
+button.dataset.mobilePanel;
+
+
+if (panelName === "camera") {
+
+closeMobileSettingsMenu();
+closeMobileColorPicker();
+
+selectDrawingTool(
+"camera"
+);
+
+return;
+}
+
+
 setMobilePanel(
-button.dataset.mobilePanel
+panelName
 );
 }
 );
@@ -9793,7 +9858,20 @@ desktopHelpMenuButton.addEventListener(
 "click",
 () => {
 
-helpButton.click();
+closeMobileSettingsMenu();
+
+helpPanel.classList.add(
+"is-open"
+);
+
+trackGAEvent(
+"welcome_open",
+{
+source: "button",
+ui_language:
+currentLanguage
+}
+);
 }
 );
 
@@ -9916,6 +9994,8 @@ cameraViewfinder.style.setProperty(
 
 
 function enterCameraMode() {
+
+closeMobileSettingsMenu();
 
 if (guideVisibilityBeforeCamera === null) {
 
@@ -13189,7 +13269,21 @@ currentLanguage
 
 helpButton.addEventListener(
 "click",
-() => {
+(event) => {
+
+if (
+window.matchMedia(
+"(max-width: 700px)"
+).matches
+) {
+
+event.stopPropagation();
+
+toggleMobileSettingsMenu();
+
+return;
+}
+
 
 helpPanel.classList.add(
 "is-open"
@@ -13203,6 +13297,83 @@ ui_language:
 currentLanguage
 }
 );
+}
+);
+
+
+document.addEventListener(
+"pointerdown",
+(event) => {
+
+if (
+!window.matchMedia(
+"(max-width: 700px)"
+).matches ||
+!settingsPanel?.classList.contains(
+"is-mobile-open"
+) ||
+settingsPanel.contains(
+event.target
+) ||
+helpButton.contains(
+event.target
+)
+) {
+return;
+}
+
+
+event.preventDefault();
+event.stopPropagation();
+
+closeMobileSettingsMenu();
+},
+true
+);
+
+
+document.addEventListener(
+"click",
+(event) => {
+
+if (
+!window.matchMedia(
+"(max-width: 700px)"
+).matches ||
+!settingsPanel?.classList.contains(
+"is-mobile-open"
+)
+) {
+return;
+}
+
+
+if (
+event.target.closest(
+".toolbar__tools .app-menu__item, " +
+".toolbar__tools > .tool-button"
+)
+) {
+
+closeMobileSettingsMenu();
+}
+}
+);
+
+
+window.addEventListener(
+"keydown",
+(event) => {
+
+if (
+event.key === "Escape" &&
+settingsPanel?.classList.contains(
+"is-mobile-open"
+)
+) {
+
+closeMobileSettingsMenu();
+}
 }
 );
 
@@ -16230,7 +16401,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.76",
+"./service-worker.js?v=1.3.77",
 {
 updateViaCache: "none"
 }

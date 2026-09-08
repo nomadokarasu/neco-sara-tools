@@ -3245,12 +3245,36 @@ max-height: 190px;
 .toolbar__tools {
 display: none;
 
-flex-wrap: wrap;
-align-items: center;
+position: fixed !important;
+
+top: 52px !important;
+right: 0 !important;
+bottom:
+calc(
+52px +
+env(
+safe-area-inset-bottom
+)
+) !important;
+left: auto !important;
+
+z-index: 400;
+
+flex-direction: column;
+flex-wrap: nowrap;
+align-items: stretch;
 
 gap: 8px;
 
-max-height: 280px;
+width:
+min(
+300px,
+calc(
+100dvw - 40px
+)
+) !important;
+
+max-height: none;
 
 padding: 10px;
 
@@ -3259,6 +3283,8 @@ overflow-y: auto;
 background: #333;
 
 border-top:
+1px solid #555;
+border-left:
 1px solid #555;
 }
 
@@ -3300,9 +3326,7 @@ box-shadow: none;
 
 
 .toolbar__tools
-.app-menu--edit,
-.toolbar__tools
-.app-menu--help {
+.app-menu--edit {
 display: none;
 }
 
