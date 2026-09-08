@@ -3657,11 +3657,6 @@ updatePaintCanvas();
 updateCameraDirection();
 
 scheduleAutoSave();
-
-
-alert(
-"データを読み込みました。"
-);
 }
 
 
