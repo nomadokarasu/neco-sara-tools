@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.92";
+"1.3.93";
 
 
 const appVersion =
@@ -1374,6 +1374,14 @@ const isMobileLayout =
 window.matchMedia(
 "(max-width: 700px)"
 ).matches;
+
+
+document.getElementById(
+"newProjectButton"
+).textContent =
+currentLanguage === "en"
+? "New project"
+: "新規作成";
 
 
 projectSaveButton.textContent =
@@ -17699,7 +17707,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.92",
+"./service-worker.js?v=1.3.93",
 {
 updateViaCache: "none"
 }
