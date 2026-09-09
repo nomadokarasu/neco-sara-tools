@@ -2,7 +2,7 @@ const CACHE_PREFIX =
 "gururi-paint-dev-";
 
 const CACHE_VERSION =
-"1.3.89";
+"1.3.90";
 
 const CACHE_NAME =
 `${CACHE_PREFIX}${CACHE_VERSION}`;
@@ -10,8 +10,9 @@ const CACHE_NAME =
 const STATIC_RESOURCES = [
 "./",
 "./index.html",
-"./style.css?v=1.3.89",
-"./script.js?v=1.3.89",
+"./home-content.json",
+"./style.css?v=1.3.90",
+"./script.js?v=1.3.90",
 "./images/welcome-ja.png",
 "./images/welcome-en.png",
 "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
@@ -96,6 +97,55 @@ event.request;
 if (request.method !== "GET") {
 return;
 }
+
+const requestUrl =
+new URL(
+request.url
+);
+
+
+if (
+requestUrl.pathname.endsWith(
+"/home-content.json"
+)
+) {
+
+event.respondWith(
+fetch(
+request
+).then(
+async (response) => {
+
+if (response.ok) {
+
+const cache =
+await caches.open(
+CACHE_NAME
+);
+
+await cache.put(
+"./home-content.json",
+response.clone()
+);
+}
+
+return response;
+}
+).catch(
+async () => {
+
+return (
+await caches.match(
+"./home-content.json"
+)
+) || Response.error();
+}
+)
+);
+
+return;
+}
+
 
 if (request.mode === "navigate") {
 

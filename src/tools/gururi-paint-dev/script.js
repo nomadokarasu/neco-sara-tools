@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.89";
+"1.3.90";
 
 
 const appVersion =
@@ -1839,7 +1839,385 @@ currentLanguage
 
 
 applyLanguage();
+renderHomePage();
 }
+
+
+/* ================================
+トップページ
+================================ */
+
+let homeContent =
+null;
+
+const homeTitle =
+document.getElementById(
+"homeTitle"
+);
+
+const homeDescription =
+document.getElementById(
+"homeDescription"
+);
+
+const homeNoticeHeading =
+document.getElementById(
+"homeNoticeHeading"
+);
+
+const homeNoticeSection =
+document.getElementById(
+"homeNoticeSection"
+);
+
+const homeNoticeList =
+document.getElementById(
+"homeNoticeList"
+);
+
+const homeLinksHeading =
+document.getElementById(
+"homeLinksHeading"
+);
+
+const homeLinksSection =
+document.getElementById(
+"homeLinksSection"
+);
+
+const homeFooter =
+document.getElementById(
+"homeFooter"
+);
+
+const homeLanguageButtons =
+document.querySelectorAll(
+"[data-home-language]"
+);
+
+const homeLinkElements =
+document.querySelectorAll(
+"[data-home-link]"
+);
+
+
+function setHomeLinkTarget(
+element,
+url,
+newTab
+) {
+
+if (!url) {
+
+element.href =
+"#";
+
+element.classList.add(
+"is-disabled"
+);
+
+element.setAttribute(
+"aria-disabled",
+"true"
+);
+
+element.removeAttribute(
+"target"
+);
+
+element.removeAttribute(
+"rel"
+);
+
+return;
+}
+
+
+element.href =
+url;
+
+element.classList.remove(
+"is-disabled"
+);
+
+element.removeAttribute(
+"aria-disabled"
+);
+
+
+if (newTab) {
+
+element.target =
+"_blank";
+
+element.rel =
+"noopener noreferrer";
+
+} else {
+
+element.removeAttribute(
+"target"
+);
+
+element.removeAttribute(
+"rel"
+);
+}
+}
+
+
+function renderHomePage() {
+
+homeLanguageButtons.forEach(
+(button) => {
+
+const isActive =
+button.dataset.homeLanguage ===
+currentLanguage;
+
+button.classList.toggle(
+"is-active",
+isActive
+);
+
+button.setAttribute(
+"aria-pressed",
+String(isActive)
+);
+}
+);
+
+
+if (!homeContent) {
+return;
+}
+
+
+const languageContent =
+homeContent.languages?.[
+currentLanguage
+];
+
+if (!languageContent) {
+return;
+}
+
+
+document.documentElement.lang =
+currentLanguage;
+
+homeTitle.textContent =
+languageContent.title || "";
+
+homeDescription.textContent =
+languageContent.description || "";
+
+homeStartButton.textContent =
+languageContent.startButton || "";
+
+homeNoticeHeading.textContent =
+languageContent.noticeHeading || "";
+
+homeLinksHeading.textContent =
+languageContent.linksHeading || "";
+
+homeFooter.textContent =
+languageContent.footer || "";
+
+
+homeNoticeList.replaceChildren();
+
+
+const visibleNotices =
+Array.isArray(
+homeContent.notices
+)
+? homeContent.notices.filter(
+(notice) =>
+notice &&
+notice.visible !== false &&
+notice[currentLanguage]?.text
+)
+: [];
+
+
+visibleNotices.forEach(
+(notice) => {
+
+const noticeContent =
+notice[currentLanguage];
+
+const noticeLink =
+document.createElement(
+"a"
+);
+
+noticeLink.className =
+"home-page__notice";
+
+noticeLink.textContent =
+noticeContent.text;
+
+setHomeLinkTarget(
+noticeLink,
+noticeContent.url || "",
+notice.newTab === true
+);
+
+homeNoticeList.appendChild(
+noticeLink
+);
+}
+);
+
+
+homeNoticeSection.hidden =
+visibleNotices.length === 0;
+
+
+let visibleLinkCount =
+0;
+
+
+homeLinkElements.forEach(
+(element) => {
+
+const key =
+element.dataset.homeLink;
+
+const link =
+homeContent.links?.[
+key
+];
+
+const linkContent =
+link?.[
+currentLanguage
+];
+
+
+if (
+!link ||
+link.visible === false ||
+!linkContent
+) {
+
+element.hidden =
+true;
+
+return;
+}
+
+
+element.hidden =
+false;
+
+visibleLinkCount +=
+1;
+
+
+const titleElement =
+element.querySelector(
+".home-page__link-title"
+);
+
+const descriptionElement =
+element.querySelector(
+".home-page__link-description"
+);
+
+
+titleElement.textContent =
+linkContent.title || "";
+
+descriptionElement.textContent =
+linkContent.description || "";
+
+
+setHomeLinkTarget(
+element,
+linkContent.url || "",
+link.newTab === true
+);
+}
+);
+
+
+homeLinksSection.hidden =
+visibleLinkCount === 0;
+}
+
+
+async function loadHomeContent() {
+
+try {
+
+const response =
+await fetch(
+"./home-content.json",
+{
+cache: "no-store"
+}
+);
+
+
+if (!response.ok) {
+
+throw new Error(
+`Home content request failed: ${response.status}`
+);
+}
+
+
+const data =
+await response.json();
+
+
+if (
+!data ||
+typeof data !== "object"
+) {
+
+throw new Error(
+"Home content is invalid."
+);
+}
+
+
+homeContent =
+data;
+
+renderHomePage();
+
+} catch (error) {
+
+console.warn(
+"Home content could not be loaded:",
+error
+);
+
+renderHomePage();
+}
+}
+
+
+homeLanguageButtons.forEach(
+(button) => {
+
+button.addEventListener(
+"click",
+() => {
+
+setLanguage(
+button.dataset.homeLanguage
+);
+}
+);
+}
+);
+
+
+loadHomeContent();
 
 
 /*
@@ -17281,7 +17659,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.89",
+"./service-worker.js?v=1.3.90",
 {
 updateViaCache: "none"
 }
