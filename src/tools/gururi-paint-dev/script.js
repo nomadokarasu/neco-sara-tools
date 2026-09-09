@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.107";
+"1.3.108";
 
 
 const appVersionElements =
@@ -14623,7 +14623,17 @@ projectLoadButton.addEventListener(
 "click",
 () => {
 
+if (!autoSaveHasContent) {
+
 projectLoadInput.click();
+
+return;
+}
+
+
+showProjectReplacementConfirm(
+"import"
+);
 }
 );
 
@@ -15169,6 +15179,40 @@ document.getElementById(
 );
 
 
+let projectReplacementAction =
+"new";
+
+
+function showProjectReplacementConfirm(
+action
+) {
+
+projectReplacementAction =
+action;
+
+
+newProjectConfirmMessage.textContent =
+currentLanguage === "en"
+? "Your unfinished drawing will be deleted. Are you sure?"
+: "描きかけの絵が消えてしまいます。よろしいですか？";
+
+newProjectConfirmNoButton.textContent =
+currentLanguage === "en"
+? "No"
+: "いいえ";
+
+newProjectConfirmYesButton.textContent =
+currentLanguage === "en"
+? "Yes"
+: "はい";
+
+
+newProjectConfirmPanel.classList.add(
+"is-open"
+);
+}
+
+
 async function startNewProject() {
 
 newProjectConfirmYesButton.disabled =
@@ -15239,24 +15283,8 @@ return;
 }
 
 
-newProjectConfirmMessage.textContent =
-currentLanguage === "en"
-? "Your unfinished drawing will be deleted. Are you sure?"
-: "描きかけの絵が消えてしまいます。よろしいですか？";
-
-newProjectConfirmNoButton.textContent =
-currentLanguage === "en"
-? "No"
-: "いいえ";
-
-newProjectConfirmYesButton.textContent =
-currentLanguage === "en"
-? "Yes"
-: "はい";
-
-
-newProjectConfirmPanel.classList.add(
-"is-open"
+showProjectReplacementConfirm(
+"new"
 );
 }
 );
@@ -15265,6 +15293,9 @@ newProjectConfirmPanel.classList.add(
 newProjectConfirmNoButton.addEventListener(
 "click",
 () => {
+
+projectReplacementAction =
+"new";
 
 newProjectConfirmPanel.classList.remove(
 "is-open"
@@ -15275,7 +15306,28 @@ newProjectConfirmPanel.classList.remove(
 
 newProjectConfirmYesButton.addEventListener(
 "click",
-startNewProject
+() => {
+
+if (
+projectReplacementAction ===
+"import"
+) {
+
+projectReplacementAction =
+"new";
+
+newProjectConfirmPanel.classList.remove(
+"is-open"
+);
+
+projectLoadInput.click();
+
+return;
+}
+
+
+startNewProject();
+}
 );
 
 
@@ -17847,7 +17899,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.107",
+"./service-worker.js?v=1.3.108",
 {
 updateViaCache: "none"
 }
