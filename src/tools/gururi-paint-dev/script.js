@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.90";
+"1.3.91";
 
 
 const appVersion =
@@ -1895,9 +1895,9 @@ document.querySelectorAll(
 "[data-home-language]"
 );
 
-const homeLinkElements =
-document.querySelectorAll(
-"[data-home-link]"
+const homeLinks =
+document.getElementById(
+"homeLinks"
 );
 
 
@@ -2075,76 +2075,143 @@ homeNoticeSection.hidden =
 visibleNotices.length === 0;
 
 
-let visibleLinkCount =
-0;
+homeLinks.replaceChildren();
 
 
-homeLinkElements.forEach(
-(element) => {
-
-const key =
-element.dataset.homeLink;
-
-const link =
-homeContent.links?.[
-key
-];
-
-const linkContent =
-link?.[
-currentLanguage
-];
+const visibleRelatedPages =
+Array.isArray(
+homeContent.relatedPages
+)
+? homeContent.relatedPages.filter(
+(page) =>
+page &&
+page.visible !== false &&
+page[currentLanguage]?.title
+)
+: [];
 
 
-if (
-!link ||
-link.visible === false ||
-!linkContent
-) {
+visibleRelatedPages.forEach(
+(page) => {
 
-element.hidden =
-true;
+const pageContent =
+page[currentLanguage];
 
-return;
-}
-
-
-element.hidden =
-false;
-
-visibleLinkCount +=
-1;
-
-
-const titleElement =
-element.querySelector(
-".home-page__link-title"
+const pageLink =
+document.createElement(
+"a"
 );
 
-const descriptionElement =
-element.querySelector(
-".home-page__link-description"
-);
-
-
-titleElement.textContent =
-linkContent.title || "";
-
-descriptionElement.textContent =
-linkContent.description || "";
+pageLink.className =
+"home-page__link";
 
 
 setHomeLinkTarget(
-element,
-linkContent.url || "",
-link.newTab === true
+pageLink,
+pageContent.url || "",
+page.newTab === true
+);
+
+
+if (page.thumbnail) {
+
+const thumbnailWrap =
+document.createElement(
+"span"
+);
+
+thumbnailWrap.className =
+"home-page__link-thumbnail";
+
+
+const thumbnailImage =
+document.createElement(
+"img"
+);
+
+thumbnailImage.src =
+page.thumbnail;
+
+thumbnailImage.alt =
+"";
+
+thumbnailImage.loading =
+"lazy";
+
+
+thumbnailImage.addEventListener(
+"error",
+() => {
+
+thumbnailWrap.remove();
+}
+);
+
+
+thumbnailWrap.appendChild(
+thumbnailImage
+);
+
+pageLink.appendChild(
+thumbnailWrap
+);
+}
+
+
+const textWrap =
+document.createElement(
+"span"
+);
+
+textWrap.className =
+"home-page__link-text";
+
+
+const titleElement =
+document.createElement(
+"span"
+);
+
+titleElement.className =
+"home-page__link-title";
+
+titleElement.textContent =
+pageContent.title || "";
+
+
+const descriptionElement =
+document.createElement(
+"span"
+);
+
+descriptionElement.className =
+"home-page__link-description";
+
+descriptionElement.textContent =
+pageContent.description || "";
+
+
+textWrap.appendChild(
+titleElement
+);
+
+textWrap.appendChild(
+descriptionElement
+);
+
+pageLink.appendChild(
+textWrap
+);
+
+homeLinks.appendChild(
+pageLink
 );
 }
 );
 
 
 homeLinksSection.hidden =
-visibleLinkCount === 0;
+visibleRelatedPages.length === 0;
 }
 
 
@@ -17659,7 +17726,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.90",
+"./service-worker.js?v=1.3.91",
 {
 updateViaCache: "none"
 }

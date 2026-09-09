@@ -3733,11 +3733,11 @@ gap: 12px;
 .home-page__link {
 display: flex;
 flex-direction: column;
-gap: 8px;
-min-height: 112px;
-padding: 20px;
+min-width: 0;
+overflow: hidden;
 border: 1px solid #bcbcb7;
 border-radius: 4px;
+background: transparent;
 color: #181818;
 text-decoration: none;
 transition:
@@ -3756,12 +3756,45 @@ opacity: 0.45;
 pointer-events: none;
 }
 
+.home-page__link-thumbnail {
+display: block;
+width: 100%;
+aspect-ratio: 16 / 9;
+overflow: hidden;
+border-bottom: 1px solid #bcbcb7;
+background: #ddd;
+}
+
+.home-page__link-thumbnail img {
+display: block;
+width: 100%;
+height: 100%;
+object-fit: cover;
+transition: transform 0.2s ease;
+}
+
+.home-page__link:not(.is-disabled):hover
+.home-page__link-thumbnail img {
+transform: scale(1.025);
+}
+
+.home-page__link-text {
+display: flex;
+flex: 1;
+flex-direction: column;
+gap: 8px;
+min-height: 112px;
+padding: 20px;
+}
+
 .home-page__link-title {
+display: block;
 font-size: 16px;
 font-weight: 600;
 }
 
 .home-page__link-description {
+display: block;
 font-size: 13px;
 line-height: 1.6;
 }
