@@ -3648,15 +3648,20 @@ white-space: nowrap;
 
 .home-page__title {
 position: absolute;
-top: 64px;
+top: 110px;
 left: 50%;
+width: min(560px, 64%);
 margin: 0;
-font-size: clamp(38px, 4.8vw, 52px);
-font-weight: 600;
-line-height: 1;
-letter-spacing: -0.05em;
-transform: translateX(-50%);
-white-space: nowrap;
+padding: 0;
+line-height: 0;
+transform: translate(-50%, -50%);
+}
+
+.home-page__title-image {
+display: block;
+width: 100%;
+height: auto;
+pointer-events: none;
 }
 
 .home-page__intro {
@@ -3913,18 +3918,15 @@ transform: none;
 }
 
 .home-page__title {
-top: auto;
+top: 38vw;
 right: auto;
-bottom: 20px;
+bottom: auto;
 left: 50%;
-width: 94%;
+width: 90%;
 margin: 0;
 padding: 0;
-font-size: clamp(28px, 9vw, 50px);
-line-height: 1;
-text-align: center;
-transform: translateX(-50%);
-white-space: nowrap;
+line-height: 0;
+transform: translate(-50%, -50%);
 }
 
 .home-page__intro {

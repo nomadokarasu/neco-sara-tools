@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.104";
+"1.3.105";
 
 
 const appVersionElements =
@@ -1986,6 +1986,11 @@ document.getElementById(
 "homeTitle"
 );
 
+const homeTitleImage =
+document.getElementById(
+"homeTitleImage"
+);
+
 const homeDescription =
 document.getElementById(
 "homeDescription"
@@ -2137,8 +2142,15 @@ return;
 document.documentElement.lang =
 currentLanguage;
 
-homeTitle.textContent =
-languageContent.title || "";
+homeTitle.setAttribute(
+"aria-label",
+languageContent.title || ""
+);
+
+homeTitleImage.src =
+currentLanguage === "en"
+? "./images/home-title-en.png"
+: "./images/home-title-ja.png";
 
 homeDescription.textContent =
 languageContent.description || "";
@@ -17835,7 +17847,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.104",
+"./service-worker.js?v=1.3.105",
 {
 updateViaCache: "none"
 }
