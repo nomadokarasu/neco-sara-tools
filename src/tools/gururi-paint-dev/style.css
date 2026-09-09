@@ -3389,6 +3389,11 @@ text-decoration: none;
 
 
 #desktopHelpMenuButton {
+order: -16;
+}
+
+
+#newProjectButton {
 order: -15;
 }
 
@@ -3398,12 +3403,12 @@ order: -14;
 }
 
 
-#downloadButton {
+#projectSaveButton {
 order: -13;
 }
 
 
-#projectSaveButton {
+#downloadButton {
 order: -12;
 }
 
@@ -3602,6 +3607,12 @@ line-height: 1;
 letter-spacing: -0.05em;
 }
 
+.home-page__version {
+margin: 12px 0 0;
+font-size: 12px;
+color: #777;
+}
+
 .home-page__description {
 max-width: 620px;
 margin: 32px 0 0;
@@ -3697,6 +3708,28 @@ line-height: 1.6;
 padding-top: 28px;
 font-size: 11px;
 color: #777;
+}
+
+.toolbar__title-button {
+display: block;
+margin: 0;
+padding: 0;
+border: 0;
+background: transparent;
+color: inherit;
+font: inherit;
+font-weight: 600;
+white-space: nowrap;
+cursor: pointer;
+}
+
+.toolbar__title-button:hover {
+text-decoration: underline;
+}
+
+.toolbar__title-button:focus-visible {
+outline: 1px solid #fff;
+outline-offset: 4px;
 }
 
 @media (max-width: 700px) {

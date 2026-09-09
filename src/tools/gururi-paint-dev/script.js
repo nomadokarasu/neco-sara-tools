@@ -21,9 +21,9 @@ document.getElementById(
 "homeStartButton"
 );
 
-const homeOpenButton =
-document.getElementById(
-"homeOpenButton"
+const homeOpenButtons =
+document.querySelectorAll(
+"[data-home-open]"
 );
 
 let autoSaveInitialized =
@@ -41,12 +41,17 @@ await initializeAutoSave();
 }
 );
 
-homeOpenButton.addEventListener(
+homeOpenButtons.forEach(
+(button) => {
+
+button.addEventListener(
 "click",
 () => {
 
 homePage.classList.add(
 "is-open"
+);
+}
 );
 }
 );
@@ -59,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.87";
+"1.3.89";
 
 
 const appVersion =
@@ -733,7 +738,7 @@ saveData:
 "データ保存(.gururi)",
 
 loadData:
-"インポート（.gururi)",
+"インポート(.gururi)",
 
 preview:
 "プレビュー",
@@ -1385,7 +1390,7 @@ isMobileLayout
 ? (
 currentLanguage === "en"
 ? "Import (.gururi)"
-: "インポート（.gururi）"
+: "インポート(.gururi)"
 )
 : t("loadData");
 
@@ -14566,6 +14571,171 @@ saveAutoSaveNow();
 
 
 /* ================================
+新規作成
+================================ */
+
+const NEW_PROJECT_SESSION_KEY =
+"gururi-paint-start-new-project";
+
+const newProjectButton =
+document.getElementById(
+"newProjectButton"
+);
+
+const newProjectConfirmPanel =
+document.getElementById(
+"newProjectConfirmPanel"
+);
+
+const newProjectConfirmMessage =
+document.getElementById(
+"newProjectConfirmMessage"
+);
+
+const newProjectConfirmNoButton =
+document.getElementById(
+"newProjectConfirmNoButton"
+);
+
+const newProjectConfirmYesButton =
+document.getElementById(
+"newProjectConfirmYesButton"
+);
+
+
+async function startNewProject() {
+
+newProjectConfirmYesButton.disabled =
+true;
+
+newProjectConfirmNoButton.disabled =
+true;
+
+
+try {
+
+if ("indexedDB" in window) {
+
+await deleteAutoSave();
+}
+
+} catch (error) {
+
+console.error(
+"Auto-save deletion failed:",
+error
+);
+
+
+alert(
+currentLanguage === "en"
+? "A new project could not be created."
+: "新規プロジェクトを作成できませんでした。"
+);
+
+
+newProjectConfirmYesButton.disabled =
+false;
+
+newProjectConfirmNoButton.disabled =
+false;
+
+return;
+}
+
+
+autoSaveHasContent =
+false;
+
+autoSaveReady =
+false;
+
+
+sessionStorage.setItem(
+NEW_PROJECT_SESSION_KEY,
+"1"
+);
+
+
+window.location.reload();
+}
+
+
+newProjectButton.addEventListener(
+"click",
+() => {
+
+if (!autoSaveHasContent) {
+
+startNewProject();
+
+return;
+}
+
+
+newProjectConfirmMessage.textContent =
+currentLanguage === "en"
+? "Your unfinished drawing will be deleted. Are you sure?"
+: "描きかけの絵が消えてしまいます。よろしいですか？";
+
+newProjectConfirmNoButton.textContent =
+currentLanguage === "en"
+? "No"
+: "いいえ";
+
+newProjectConfirmYesButton.textContent =
+currentLanguage === "en"
+? "Yes"
+: "はい";
+
+
+newProjectConfirmPanel.classList.add(
+"is-open"
+);
+}
+);
+
+
+newProjectConfirmNoButton.addEventListener(
+"click",
+() => {
+
+newProjectConfirmPanel.classList.remove(
+"is-open"
+);
+}
+);
+
+
+newProjectConfirmYesButton.addEventListener(
+"click",
+startNewProject
+);
+
+
+/* ================================
+新規作成後の表示
+================================ */
+
+if (
+sessionStorage.getItem(
+NEW_PROJECT_SESSION_KEY
+) === "1"
+) {
+
+sessionStorage.removeItem(
+NEW_PROJECT_SESSION_KEY
+);
+
+homePage.classList.remove(
+"is-open"
+);
+
+initializeAutoSave();
+}
+
+
+/* ================================
 PNG保存
 ================================ */
 
@@ -17111,7 +17281,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.87",
+"./service-worker.js?v=1.3.89",
 {
 updateViaCache: "none"
 }
