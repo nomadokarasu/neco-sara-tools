@@ -3486,12 +3486,9 @@ min-height: 32px;
 > .tool-button {
 
 flex:
-1 1
-calc(
-50% - 4px
-);
+0 0 auto;
 
-min-height: 40px;
+min-height: 0;
 }
 
 
