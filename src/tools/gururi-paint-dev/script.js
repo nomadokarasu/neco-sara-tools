@@ -11,6 +11,46 @@ import iro from
 const viewport =
 document.getElementById("viewport");
 
+const homePage =
+document.getElementById(
+"homePage"
+);
+
+const homeStartButton =
+document.getElementById(
+"homeStartButton"
+);
+
+const homeOpenButton =
+document.getElementById(
+"homeOpenButton"
+);
+
+let autoSaveInitialized =
+false;
+
+homeStartButton.addEventListener(
+"click",
+async () => {
+
+homePage.classList.remove(
+"is-open"
+);
+
+await initializeAutoSave();
+}
+);
+
+homeOpenButton.addEventListener(
+"click",
+() => {
+
+homePage.classList.add(
+"is-open"
+);
+}
+);
+
 const scene = new THREE.Scene();
 
 
@@ -19,7 +59,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.86";
+"1.3.87";
 
 
 const appVersion =
@@ -14317,6 +14357,12 @@ AUTO_SAVE_DELAY
 
 async function initializeAutoSave() {
 
+if (autoSaveInitialized) {
+return;
+}
+
+autoSaveInitialized = true;
+
 const panel =
 document.getElementById(
 "autoSaveRestorePanel"
@@ -14517,9 +14563,6 @@ window.addEventListener(
 saveAutoSaveNow();
 }
 );
-
-
-initializeAutoSave();
 
 
 /* ================================
@@ -17068,7 +17111,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.86",
+"./service-worker.js?v=1.3.87",
 {
 updateViaCache: "none"
 }

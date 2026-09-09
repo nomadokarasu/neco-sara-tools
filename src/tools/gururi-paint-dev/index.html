@@ -15,10 +15,133 @@ content="noindex, nofollow"
 
 <title>ぐるりペイント</title>
 
-<link rel="stylesheet" href="./style.css?v=1.3.86">
+<link rel="stylesheet" href="./style.css?v=1.3.87">
 </head>
 
 <body>
+
+<div
+id="homePage"
+class="home-page is-open"
+>
+
+<div class="home-page__inner">
+
+<header class="home-page__header">
+
+<p class="home-page__label">
+360° PAINTING TOOL
+</p>
+
+<h1 class="home-page__title">
+ぐるりペイント
+</h1>
+
+<p class="home-page__description">
+球体の内側に入り込み、周囲を見渡しながら絵を描けるペイントツールです。
+</p>
+
+<button
+id="homeStartButton"
+class="home-page__start-button"
+type="button"
+>
+ぐるりペイントをはじめる
+</button>
+
+</header>
+
+<main class="home-page__content">
+
+<section class="home-page__section">
+
+<h2 class="home-page__section-title">
+お知らせ
+</h2>
+
+<p class="home-page__text">
+ぐるりペイント Web版V2を開発しています。
+</p>
+
+</section>
+
+<section class="home-page__section">
+
+<h2 class="home-page__section-title">
+関連ページ
+</h2>
+
+<div class="home-page__links">
+
+<a
+class="home-page__link is-disabled"
+href="#"
+aria-disabled="true"
+>
+<span class="home-page__link-title">
+ぐるりあむ
+</span>
+
+<span class="home-page__link-description">
+ぐるり作品を見る
+</span>
+</a>
+
+<a
+class="home-page__link is-disabled"
+href="#"
+aria-disabled="true"
+>
+<span class="home-page__link-title">
+開発ブログ
+</span>
+
+<span class="home-page__link-description">
+開発の記録を読む
+</span>
+</a>
+
+<a
+class="home-page__link is-disabled"
+href="#"
+aria-disabled="true"
+>
+<span class="home-page__link-title">
+製品版発売通知
+</span>
+
+<span class="home-page__link-description">
+製品版の情報を受け取る
+</span>
+</a>
+
+<a
+class="home-page__link is-disabled"
+href="#"
+aria-disabled="true"
+>
+<span class="home-page__link-title">
+JUNOTAを応援する
+</span>
+
+<span class="home-page__link-description">
+寄付ページを見る
+</span>
+</a>
+
+</div>
+
+</section>
+
+</main>
+
+<footer class="home-page__footer">
+© JUNOTA
+</footer>
+
+</div>
+
+</div>
 
 <header class="toolbar">
 
@@ -64,12 +187,13 @@ aria-label="やり直す"
 <div class="toolbar__tools">
 
 
-<a
+<button
+id="homeOpenButton"
 class="tool-button mobile-menu-top-link"
-href="https://tools.neco-sara.com/gururi-paint/"
+type="button"
 >
 TOP
-</a>
+</button>
 
 
 <div class="app-menu app-menu--file">
@@ -1583,7 +1707,7 @@ type="button"
 
 <script
 type="module"
-src="./script.js?v=1.3.86"
+src="./script.js?v=1.3.87"
 ></script>
 
 </body>
