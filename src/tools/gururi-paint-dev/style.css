@@ -3924,7 +3924,7 @@ font-size: clamp(28px, 9vw, 50px);
 line-height: 1;
 color: #181818;
 text-align: center;
--webkit-text-stroke: 5px #fff;
+-webkit-text-stroke: 15px #fff;
 paint-order: stroke fill;
 filter: drop-shadow(0 0 1px #777);
 transform: translateX(-50%);
