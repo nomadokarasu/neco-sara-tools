@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.91";
+"1.3.92";
 
 
 const appVersion =
@@ -14459,33 +14459,6 @@ showWelcomeIfNeeded();
 
 
 /* ================================
-ページを離れる前の確認
-================================ */
-
-/*
-タブを閉じる、
-ページを再読み込みする、
-ブラウザバックする、
-別ページへ移動する場合に
-ブラウザ標準の確認を表示する。
-*/
-
-window.addEventListener(
-"beforeunload",
-(event) => {
-
-event.preventDefault();
-
-/*
-一部ブラウザとの互換性のために必要
-*/
-
-event.returnValue = "";
-}
-);
-
-
-/* ================================
 データ保存／読み込み
 ================================ */
 
@@ -17726,7 +17699,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.91",
+"./service-worker.js?v=1.3.92",
 {
 updateViaCache: "none"
 }
