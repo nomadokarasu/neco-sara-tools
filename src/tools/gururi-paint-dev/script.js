@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.94";
+"1.3.95";
 
 
 const appVersion =
@@ -7335,6 +7335,11 @@ color
 
 rememberColor(
 color
+);
+
+
+selectDrawingTool(
+"bucket"
 );
 }
 
@@ -17828,7 +17833,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.94",
+"./service-worker.js?v=1.3.95",
 {
 updateViaCache: "none"
 }
