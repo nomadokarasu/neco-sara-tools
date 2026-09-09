@@ -1,0 +1,37 @@
+{
+"title": "ぐるりペイント",
+"description": "カメラをぐるぐる回しながらお絵描きできるペイントツールです",
+"startButton": "ぐるりペイントをはじめる",
+"notice": "ぐるりペイント Web版V2を開発しています。",
+"footer": "© JUNOTA",
+"links": {
+"gururiamu": {
+"title": "ぐるりあむ",
+"description": "ぐるり作品を見る",
+"url": "",
+"visible": true,
+"newTab": false
+},
+"blog": {
+"title": "開発ブログ",
+"description": "開発の記録を読む",
+"url": "",
+"visible": true,
+"newTab": false
+},
+"notification": {
+"title": "製品版発売通知",
+"description": "製品版の情報を受け取る",
+"url": "",
+"visible": true,
+"newTab": false
+},
+"donation": {
+"title": "JUNOTAを応援する",
+"description": "寄付ページを見る",
+"url": "",
+"visible": true,
+"newTab": false
+}
+}
+}
