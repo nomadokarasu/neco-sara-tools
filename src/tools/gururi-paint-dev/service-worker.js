@@ -11,10 +11,11 @@ const STATIC_RESOURCES = [
 "./",
 "./index.html",
 "./home-content.json",
-"./style.css?v=1.3.96",
-"./script.js?v=1.3.96",
+"./style.css?v=1.3.98",
+"./script.js?v=1.3.98",
 "./images/welcome-ja.png",
 "./images/welcome-en.png",
+"./images/gururi-paint-hero.png",
 "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
 "https://cdn.jsdelivr.net/npm/@jaames/iro@5/dist/iro.es.js"
 ];
