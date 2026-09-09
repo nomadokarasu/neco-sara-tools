@@ -40,7 +40,7 @@ $defaultContent = [
 ],
 'en' => [
 'title' => 'Gururi Paint',
-'description' => 'A painting tool that lets you draw while rotating the camera around you.',
+'description' => 'You can draw while spinning the camera around.',
 'startButton' => 'START',
 'noticeHeading' => 'News',
 'linksHeading' => 'Links',
