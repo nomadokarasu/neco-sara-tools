@@ -2,7 +2,7 @@ const CACHE_PREFIX =
 "gururi-paint-dev-";
 
 const CACHE_VERSION =
-"1.3.95";
+"1.3.96";
 
 const CACHE_NAME =
 `${CACHE_PREFIX}${CACHE_VERSION}`;
@@ -11,8 +11,8 @@ const STATIC_RESOURCES = [
 "./",
 "./index.html",
 "./home-content.json",
-"./style.css?v=1.3.95",
-"./script.js?v=1.3.95",
+"./style.css?v=1.3.96",
+"./script.js?v=1.3.96",
 "./images/welcome-ja.png",
 "./images/welcome-en.png",
 "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",

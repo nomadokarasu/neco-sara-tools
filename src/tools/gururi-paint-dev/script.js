@@ -64,20 +64,22 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.95";
+"1.3.96";
 
 
-const appVersion =
-document.getElementById(
-"appVersion"
+const appVersionElements =
+document.querySelectorAll(
+"#appVersion, #toolbarAppVersion"
 );
 
 
-if (appVersion) {
+appVersionElements.forEach(
+(versionElement) => {
 
-appVersion.textContent =
+versionElement.textContent =
 `ver.${APP_VERSION}-dev`;
 }
+);
 
 
 let paintStartTracked = false;
@@ -17833,7 +17835,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.95",
+"./service-worker.js?v=1.3.96",
 {
 updateViaCache: "none"
 }
