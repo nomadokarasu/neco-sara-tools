@@ -61,8 +61,8 @@ $defaultContent = [
 'newTab' => false
 ]
 ],
-'links' => [
-'gururiamu' => [
+'relatedPages' => [
+[
 'ja' => [
 'title' => 'ぐるりうむ',
 'description' => 'ぐるり作品を見る',
@@ -73,10 +73,11 @@ $defaultContent = [
 'description' => 'View Gururi artworks',
 'url' => ''
 ],
+'thumbnail' => '',
 'visible' => true,
 'newTab' => false
 ],
-'blog' => [
+[
 'ja' => [
 'title' => '開発ブログ',
 'description' => '開発の記録を読む',
@@ -87,10 +88,11 @@ $defaultContent = [
 'description' => 'Read the development log',
 'url' => ''
 ],
+'thumbnail' => '',
 'visible' => true,
 'newTab' => false
 ],
-'notification' => [
+[
 'ja' => [
 'title' => '製品版発売通知',
 'description' => '製品版の情報を受け取る',
@@ -101,10 +103,11 @@ $defaultContent = [
 'description' => 'Receive product release information',
 'url' => ''
 ],
+'thumbnail' => '',
 'visible' => true,
 'newTab' => false
 ],
-'donation' => [
+[
 'ja' => [
 'title' => 'JUNOTAを応援する',
 'description' => '寄付ページを見る',
@@ -115,17 +118,11 @@ $defaultContent = [
 'description' => 'Visit the donation page',
 'url' => ''
 ],
+'thumbnail' => '',
 'visible' => true,
 'newTab' => false
 ]
 ]
-];
-
-$linkLabels = [
-'gururiamu' => 'ぐるりうむ',
-'blog' => '開発ブログ',
-'notification' => '製品版発売通知',
-'donation' => '寄付ページ'
 ];
 
 function escapeHtml(string $value): string
@@ -204,6 +201,116 @@ string $key
 return trim(
 (string) ($source[$key] ?? '')
 );
+}
+
+function saveThumbnail(
+array $file,
+string $thumbnailDirectory
+): string
+{
+$errorCode =
+(int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+
+if ($errorCode === UPLOAD_ERR_NO_FILE) {
+return '';
+}
+
+if ($errorCode !== UPLOAD_ERR_OK) {
+throw new RuntimeException(
+'サムネイル画像をアップロードできませんでした。'
+);
+}
+
+$fileSize =
+(int) ($file['size'] ?? 0);
+
+if (
+$fileSize <= 0 ||
+$fileSize > 5 * 1024 * 1024
+) {
+throw new RuntimeException(
+'サムネイル画像は5MB以内にしてください。'
+);
+}
+
+$temporaryPath =
+(string) ($file['tmp_name'] ?? '');
+
+if (
+$temporaryPath === '' ||
+!is_uploaded_file($temporaryPath)
+) {
+throw new RuntimeException(
+'アップロードされた画像を確認できませんでした。'
+);
+}
+
+$imageInformation =
+@getimagesize(
+$temporaryPath
+);
+
+if ($imageInformation === false) {
+throw new RuntimeException(
+'画像ファイルを選択してください。'
+);
+}
+
+$mimeType =
+(string) ($imageInformation['mime'] ?? '');
+
+$extensions = [
+'image/jpeg' => 'jpg',
+'image/png' => 'png',
+'image/webp' => 'webp'
+];
+
+if (!isset($extensions[$mimeType])) {
+throw new RuntimeException(
+'使用できる画像形式はJPEG、PNG、WebPです。'
+);
+}
+
+if (
+!is_dir($thumbnailDirectory) &&
+!mkdir(
+$thumbnailDirectory,
+0755,
+true
+) &&
+!is_dir($thumbnailDirectory)
+) {
+throw new RuntimeException(
+'サムネイル保存フォルダを作成できませんでした。'
+);
+}
+
+$fileName =
+bin2hex(
+random_bytes(16)
+) .
+'.' .
+$extensions[$mimeType];
+
+$destination =
+$thumbnailDirectory .
+'/' .
+$fileName;
+
+if (
+!move_uploaded_file(
+$temporaryPath,
+$destination
+)
+) {
+throw new RuntimeException(
+'サムネイル画像を保存できませんでした。'
+);
+}
+
+return
+'home-thumbnails/' .
+$fileName;
 }
 
 if (
@@ -403,7 +510,7 @@ $_SERVER['REQUEST_METHOD'] === 'POST' &&
 $newContent = [
 'languages' => [],
 'notices' => [],
-'links' => []
+'relatedPages' => []
 ];
 
 foreach (
@@ -518,22 +625,33 @@ isset($noticePost['newTab'])
 }
 
 if ($error === '') {
-foreach (
-$linkLabels as $key => $label
-) {
-$linkPost =
-is_array($_POST['links'][$key] ?? null)
-? $_POST['links'][$key]
+$postedRelatedPages =
+is_array($_POST['relatedPages'] ?? null)
+? array_values($_POST['relatedPages'])
 : [];
 
+if (count($postedRelatedPages) > 50) {
+$error =
+'関連ページは50件以内にしてください。';
+}
+}
+
+if ($error === '') {
+foreach (
+$postedRelatedPages as $pageIndex => $pagePost
+) {
+if (!is_array($pagePost)) {
+continue;
+}
+
 $jaPost =
-is_array($linkPost['ja'] ?? null)
-? $linkPost['ja']
+is_array($pagePost['ja'] ?? null)
+? $pagePost['ja']
 : [];
 
 $enPost =
-is_array($linkPost['en'] ?? null)
-? $linkPost['en']
+is_array($pagePost['en'] ?? null)
+? $pagePost['en']
 : [];
 
 $jaUrl =
@@ -553,13 +671,67 @@ if (
 !validPublicUrl($enUrl)
 ) {
 $error =
-$label .
+'関連ページ' .
+($pageIndex + 1) .
 'のURLが正しくありません。';
 
 break;
 }
 
-$newContent['links'][$key] = [
+$thumbnail =
+postedText(
+$pagePost,
+'currentThumbnail'
+);
+
+if (
+!preg_match(
+'#\Ahome-thumbnails/[a-f0-9]{32}\.(jpg|png|webp)\z#D',
+$thumbnail
+)
+) {
+$thumbnail = '';
+}
+
+if (isset($pagePost['removeThumbnail'])) {
+$thumbnail = '';
+}
+
+$uploadedFile = [
+'name' =>
+$_FILES['relatedThumbnails']['name'][$pageIndex] ?? '',
+'type' =>
+$_FILES['relatedThumbnails']['type'][$pageIndex] ?? '',
+'tmp_name' =>
+$_FILES['relatedThumbnails']['tmp_name'][$pageIndex] ?? '',
+'error' =>
+$_FILES['relatedThumbnails']['error'][$pageIndex] ?? UPLOAD_ERR_NO_FILE,
+'size' =>
+$_FILES['relatedThumbnails']['size'][$pageIndex] ?? 0
+];
+
+try {
+$newThumbnail =
+saveThumbnail(
+$uploadedFile,
+__DIR__ . '/home-thumbnails'
+);
+
+if ($newThumbnail !== '') {
+$thumbnail =
+$newThumbnail;
+}
+} catch (RuntimeException $exception) {
+$error =
+'関連ページ' .
+($pageIndex + 1) .
+'：' .
+$exception->getMessage();
+
+break;
+}
+
+$newContent['relatedPages'][] = [
 'ja' => [
 'title' => postedText(
 $jaPost,
@@ -582,10 +754,11 @@ $enPost,
 ),
 'url' => $enUrl
 ],
+'thumbnail' => $thumbnail,
 'visible' =>
-isset($linkPost['visible']),
+isset($pagePost['visible']),
 'newTab' =>
-isset($linkPost['newTab'])
+isset($pagePost['newTab'])
 ];
 }
 }
@@ -803,6 +976,21 @@ display: flex;
 justify-content: flex-end;
 gap: 8px;
 margin-bottom: 16px;
+}
+
+.admin__thumbnail-preview {
+width: min(100%, 320px);
+margin-bottom: 18px;
+border: 1px solid #ccc;
+border-radius: 4px;
+overflow: hidden;
+background: #eee;
+}
+
+.admin__thumbnail-preview img {
+display: block;
+width: 100%;
+height: auto;
 }
 
 .admin__message,
@@ -1055,6 +1243,7 @@ type="submit"
 <form
 class="admin__panel"
 method="post"
+enctype="multipart/form-data"
 >
 
 <input
@@ -1270,13 +1459,100 @@ type="button"
 
 </section>
 
-<?php foreach ($linkLabels as $key => $label): ?>
-
 <section class="admin__section">
 
 <h2 class="admin__section-title">
-<?= escapeHtml($label) ?>
+関連ページ
 </h2>
+
+<div id="relatedPageList">
+
+<?php foreach (($content['relatedPages'] ?? []) as $index => $page): ?>
+
+<div
+class="admin__item"
+data-related-page-item
+>
+
+<div class="admin__item-actions">
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-related-page-up
+>
+上へ
+</button>
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-related-page-down
+>
+下へ
+</button>
+
+<button
+class="admin__button admin__button--danger admin__button--small"
+type="button"
+data-related-page-delete
+>
+削除
+</button>
+
+</div>
+
+<?php if (!empty($page['thumbnail'])): ?>
+
+<div class="admin__thumbnail-preview">
+
+<img
+src="<?= escapeHtml((string) $page['thumbnail']) ?>"
+alt=""
+>
+
+</div>
+
+<?php endif; ?>
+
+<input
+type="hidden"
+name="relatedPages[<?= (int) $index ?>][currentThumbnail]"
+data-related-page-field="currentThumbnail"
+value="<?= escapeHtml((string) ($page['thumbnail'] ?? '')) ?>"
+>
+
+<label class="admin__field">
+
+<span class="admin__label">
+サムネイル画像
+</span>
+
+<input
+class="admin__input"
+type="file"
+name="relatedThumbnails[<?= (int) $index ?>]"
+accept="image/jpeg,image/png,image/webp"
+data-related-page-file
+>
+
+</label>
+
+<?php if (!empty($page['thumbnail'])): ?>
+
+<label class="admin__field">
+
+<input
+type="checkbox"
+name="relatedPages[<?= (int) $index ?>][removeThumbnail]"
+data-related-page-field="removeThumbnail"
+>
+
+現在のサムネイルを外す
+
+</label>
+
+<?php endif; ?>
 
 <div class="admin__language-grid">
 
@@ -1291,14 +1567,15 @@ type="button"
 <label class="admin__field">
 
 <span class="admin__label">
-表示名
+タイトル
 </span>
 
 <input
 class="admin__input"
 type="text"
-name="links[<?= escapeHtml($key) ?>][<?= escapeHtml($language) ?>][title]"
-value="<?= escapeHtml((string) ($content['links'][$key][$language]['title'] ?? '')) ?>"
+name="relatedPages[<?= (int) $index ?>][<?= escapeHtml($language) ?>][title]"
+data-related-page-field="<?= escapeHtml($language) ?>][title"
+value="<?= escapeHtml((string) ($page[$language]['title'] ?? '')) ?>"
 >
 
 </label>
@@ -1312,8 +1589,9 @@ value="<?= escapeHtml((string) ($content['links'][$key][$language]['title'] ?? '
 <input
 class="admin__input"
 type="text"
-name="links[<?= escapeHtml($key) ?>][<?= escapeHtml($language) ?>][description]"
-value="<?= escapeHtml((string) ($content['links'][$key][$language]['description'] ?? '')) ?>"
+name="relatedPages[<?= (int) $index ?>][<?= escapeHtml($language) ?>][description]"
+data-related-page-field="<?= escapeHtml($language) ?>][description"
+value="<?= escapeHtml((string) ($page[$language]['description'] ?? '')) ?>"
 >
 
 </label>
@@ -1327,8 +1605,9 @@ value="<?= escapeHtml((string) ($content['links'][$key][$language]['description'
 <input
 class="admin__input"
 type="url"
-name="links[<?= escapeHtml($key) ?>][<?= escapeHtml($language) ?>][url]"
-value="<?= escapeHtml((string) ($content['links'][$key][$language]['url'] ?? '')) ?>"
+name="relatedPages[<?= (int) $index ?>][<?= escapeHtml($language) ?>][url]"
+data-related-page-field="<?= escapeHtml($language) ?>][url"
+value="<?= escapeHtml((string) ($page[$language]['url'] ?? '')) ?>"
 placeholder="https://"
 >
 
@@ -1346,8 +1625,9 @@ placeholder="https://"
 
 <input
 type="checkbox"
-name="links[<?= escapeHtml($key) ?>][visible]"
-<?= !empty($content['links'][$key]['visible']) ? 'checked' : '' ?>
+name="relatedPages[<?= (int) $index ?>][visible]"
+data-related-page-field="visible"
+<?= !empty($page['visible']) ? 'checked' : '' ?>
 >
 
 表示する
@@ -1358,8 +1638,9 @@ name="links[<?= escapeHtml($key) ?>][visible]"
 
 <input
 type="checkbox"
-name="links[<?= escapeHtml($key) ?>][newTab]"
-<?= !empty($content['links'][$key]['newTab']) ? 'checked' : '' ?>
+name="relatedPages[<?= (int) $index ?>][newTab]"
+data-related-page-field="newTab"
+<?= !empty($page['newTab']) ? 'checked' : '' ?>
 >
 
 新しいタブで開く
@@ -1368,9 +1649,21 @@ name="links[<?= escapeHtml($key) ?>][newTab]"
 
 </div>
 
-</section>
+</div>
 
 <?php endforeach; ?>
+
+</div>
+
+<button
+id="addRelatedPageButton"
+class="admin__button admin__button--secondary"
+type="button"
+>
+関連ページを追加
+</button>
+
+</section>
 
 <div class="admin__actions">
 
@@ -1527,6 +1820,199 @@ data-notice-field="newTab"
 
 </template>
 
+<template id="relatedPageTemplate">
+
+<div
+class="admin__item"
+data-related-page-item
+>
+
+<div class="admin__item-actions">
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-related-page-up
+>
+上へ
+</button>
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-related-page-down
+>
+下へ
+</button>
+
+<button
+class="admin__button admin__button--danger admin__button--small"
+type="button"
+data-related-page-delete
+>
+削除
+</button>
+
+</div>
+
+<input
+type="hidden"
+data-related-page-field="currentThumbnail"
+value=""
+>
+
+<label class="admin__field">
+
+<span class="admin__label">
+サムネイル画像
+</span>
+
+<input
+class="admin__input"
+type="file"
+accept="image/jpeg,image/png,image/webp"
+data-related-page-file
+>
+
+</label>
+
+<div class="admin__language-grid">
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+日本語
+</h3>
+
+<label class="admin__field">
+
+<span class="admin__label">
+タイトル
+</span>
+
+<input
+class="admin__input"
+type="text"
+data-related-page-field="ja][title"
+>
+
+</label>
+
+<label class="admin__field">
+
+<span class="admin__label">
+紹介文
+</span>
+
+<input
+class="admin__input"
+type="text"
+data-related-page-field="ja][description"
+>
+
+</label>
+
+<label class="admin__field">
+
+<span class="admin__label">
+リンク先URL
+</span>
+
+<input
+class="admin__input"
+type="url"
+data-related-page-field="ja][url"
+placeholder="https://"
+>
+
+</label>
+
+</div>
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+English
+</h3>
+
+<label class="admin__field">
+
+<span class="admin__label">
+タイトル
+</span>
+
+<input
+class="admin__input"
+type="text"
+data-related-page-field="en][title"
+>
+
+</label>
+
+<label class="admin__field">
+
+<span class="admin__label">
+紹介文
+</span>
+
+<input
+class="admin__input"
+type="text"
+data-related-page-field="en][description"
+>
+
+</label>
+
+<label class="admin__field">
+
+<span class="admin__label">
+リンク先URL
+</span>
+
+<input
+class="admin__input"
+type="url"
+data-related-page-field="en][url"
+placeholder="https://"
+>
+
+</label>
+
+</div>
+
+</div>
+
+<div class="admin__checks">
+
+<label>
+
+<input
+type="checkbox"
+data-related-page-field="visible"
+checked
+>
+
+表示する
+
+</label>
+
+<label>
+
+<input
+type="checkbox"
+data-related-page-field="newTab"
+>
+
+新しいタブで開く
+
+</label>
+
+</div>
+
+</div>
+
+</template>
+
 <script>
 const noticeList =
 document.getElementById(
@@ -1646,6 +2132,138 @@ reindexNotices();
 );
 
 reindexNotices();
+
+const relatedPageList =
+document.getElementById(
+"relatedPageList"
+);
+
+const addRelatedPageButton =
+document.getElementById(
+"addRelatedPageButton"
+);
+
+const relatedPageTemplate =
+document.getElementById(
+"relatedPageTemplate"
+);
+
+function reindexRelatedPages() {
+const relatedPageItems =
+relatedPageList.querySelectorAll(
+"[data-related-page-item]"
+);
+
+relatedPageItems.forEach(
+(item, index) => {
+const fields =
+item.querySelectorAll(
+"[data-related-page-field]"
+);
+
+fields.forEach(
+(field) => {
+field.name =
+`relatedPages[${index}][${field.dataset.relatedPageField}]`;
+}
+);
+
+const fileInput =
+item.querySelector(
+"[data-related-page-file]"
+);
+
+if (fileInput) {
+fileInput.name =
+`relatedThumbnails[${index}]`;
+}
+}
+);
+}
+
+function handleRelatedPageAction(event) {
+const item =
+event.target.closest(
+"[data-related-page-item]"
+);
+
+if (!item) {
+return;
+}
+
+if (
+event.target.closest(
+"[data-related-page-delete]"
+)
+) {
+item.remove();
+
+reindexRelatedPages();
+
+return;
+}
+
+if (
+event.target.closest(
+"[data-related-page-up]"
+)
+) {
+const previousItem =
+item.previousElementSibling;
+
+if (previousItem) {
+relatedPageList.insertBefore(
+item,
+previousItem
+);
+}
+
+reindexRelatedPages();
+
+return;
+}
+
+if (
+event.target.closest(
+"[data-related-page-down]"
+)
+) {
+const nextItem =
+item.nextElementSibling;
+
+if (nextItem) {
+relatedPageList.insertBefore(
+nextItem,
+item
+);
+}
+
+reindexRelatedPages();
+}
+}
+
+relatedPageList.addEventListener(
+"click",
+handleRelatedPageAction
+);
+
+addRelatedPageButton.addEventListener(
+"click",
+() => {
+const fragment =
+relatedPageTemplate.content.cloneNode(
+true
+);
+
+relatedPageList.appendChild(
+fragment
+);
+
+reindexRelatedPages();
+}
+);
+
+reindexRelatedPages();
 </script>
 
 <?php endif; ?>

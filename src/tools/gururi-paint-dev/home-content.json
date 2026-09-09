@@ -31,8 +31,8 @@
 "newTab": false
 }
 ],
-"links": {
-"gururiamu": {
+"relatedPages": [
+{
 "ja": {
 "title": "ぐるりうむ",
 "description": "ぐるり作品を見る",
@@ -43,10 +43,11 @@
 "description": "View Gururi artworks",
 "url": ""
 },
+"thumbnail": "",
 "visible": true,
 "newTab": false
 },
-"blog": {
+{
 "ja": {
 "title": "開発ブログ",
 "description": "開発の記録を読む",
@@ -57,10 +58,11 @@
 "description": "Read the development log",
 "url": ""
 },
+"thumbnail": "",
 "visible": true,
 "newTab": false
 },
-"notification": {
+{
 "ja": {
 "title": "製品版発売通知",
 "description": "製品版の情報を受け取る",
@@ -71,10 +73,11 @@
 "description": "Receive product release information",
 "url": ""
 },
+"thumbnail": "",
 "visible": true,
 "newTab": false
 },
-"donation": {
+{
 "ja": {
 "title": "JUNOTAを応援する",
 "description": "寄付ページを見る",
@@ -85,8 +88,9 @@
 "description": "Visit the donation page",
 "url": ""
 },
+"thumbnail": "",
 "visible": true,
 "newTab": false
 }
-}
+]
 }
