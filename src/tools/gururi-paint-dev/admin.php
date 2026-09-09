@@ -29,37 +29,92 @@ $contentPath =
 __DIR__ . '/home-content.json';
 
 $defaultContent = [
+'languages' => [
+'ja' => [
 'title' => 'ぐるりペイント',
 'description' => 'カメラをぐるぐる回しながらお絵描きできるペイントツールです',
 'startButton' => 'ぐるりペイントをはじめる',
-'notice' => 'ぐるりペイント Web版V2を開発しています。',
-'footer' => '© JUNOTA',
+'noticeHeading' => 'お知らせ',
+'linksHeading' => '関連ページ',
+'footer' => '© JUNOTA'
+],
+'en' => [
+'title' => 'Gururi Paint',
+'description' => 'A painting tool that lets you draw while rotating the camera around you.',
+'startButton' => 'Start Gururi Paint',
+'noticeHeading' => 'News',
+'linksHeading' => 'Links',
+'footer' => '© JUNOTA'
+]
+],
+'notices' => [
+[
+'ja' => [
+'text' => 'ぐるりペイント Web版V2を開発しています。',
+'url' => ''
+],
+'en' => [
+'text' => 'Gururi Paint Web Version 2 is currently in development.',
+'url' => ''
+],
+'visible' => true,
+'newTab' => false
+]
+],
 'links' => [
 'gururiamu' => [
-'title' => 'ぐるりあむ',
+'ja' => [
+'title' => 'ぐるりうむ',
 'description' => 'ぐるり作品を見る',
-'url' => '',
+'url' => ''
+],
+'en' => [
+'title' => 'Gururium',
+'description' => 'View Gururi artworks',
+'url' => ''
+],
 'visible' => true,
 'newTab' => false
 ],
 'blog' => [
+'ja' => [
 'title' => '開発ブログ',
 'description' => '開発の記録を読む',
-'url' => '',
+'url' => ''
+],
+'en' => [
+'title' => 'Development Blog',
+'description' => 'Read the development log',
+'url' => ''
+],
 'visible' => true,
 'newTab' => false
 ],
 'notification' => [
+'ja' => [
 'title' => '製品版発売通知',
 'description' => '製品版の情報を受け取る',
-'url' => '',
+'url' => ''
+],
+'en' => [
+'title' => 'Product Release Updates',
+'description' => 'Receive product release information',
+'url' => ''
+],
 'visible' => true,
 'newTab' => false
 ],
 'donation' => [
+'ja' => [
 'title' => 'JUNOTAを応援する',
 'description' => '寄付ページを見る',
-'url' => '',
+'url' => ''
+],
+'en' => [
+'title' => 'Support JUNOTA',
+'description' => 'Visit the donation page',
+'url' => ''
+],
 'visible' => true,
 'newTab' => false
 ]
@@ -67,7 +122,7 @@ $defaultContent = [
 ];
 
 $linkLabels = [
-'gururiamu' => 'ぐるりあむ',
+'gururiamu' => 'ぐるりうむ',
 'blog' => '開発ブログ',
 'notification' => '製品版発売通知',
 'donation' => '寄付ページ'
@@ -105,21 +160,10 @@ if (!is_array($data)) {
 return $defaultContent;
 }
 
-$content =
-array_replace(
+return array_replace_recursive(
 $defaultContent,
 $data
 );
-
-$content['links'] =
-array_replace_recursive(
-$defaultContent['links'],
-is_array($data['links'] ?? null)
-? $data['links']
-: []
-);
-
-return $content;
 }
 
 function validPublicUrl(string $url): bool
@@ -152,6 +196,16 @@ true
 );
 }
 
+function postedText(
+array $source,
+string $key
+): string
+{
+return trim(
+(string) ($source[$key] ?? '')
+);
+}
+
 if (
 !isset($_SESSION['csrf_token']) ||
 !is_string($_SESSION['csrf_token'])
@@ -171,9 +225,7 @@ $error = '';
 $isSetup =
 !is_file($credentialsPath);
 
-if (
-$_SERVER['REQUEST_METHOD'] === 'POST'
-) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $postedToken =
 (string) ($_POST['csrf_token'] ?? '');
 
@@ -184,6 +236,7 @@ $postedToken
 )
 ) {
 http_response_code(403);
+
 $error =
 '操作の有効期限が切れました。ページを再読み込みしてください。';
 }
@@ -212,14 +265,10 @@ mb_strlen($username) > 100
 ) {
 $error =
 'ユーザー名を入力してください。';
-} elseif (
-mb_strlen($password) < 12
-) {
+} elseif (mb_strlen($password) < 12) {
 $error =
 'パスワードは12文字以上にしてください。';
-} elseif (
-$password !== $passwordConfirm
-) {
+} elseif ($password !== $passwordConfirm) {
 $error =
 '確認用パスワードが一致していません。';
 } else {
@@ -248,7 +297,7 @@ LOCK_EX
 
 if ($result === false) {
 $error =
-'認証設定を保存できませんでした。ファイルの書き込み権限を確認してください。';
+'認証設定を保存できませんでした。';
 } else {
 @chmod(
 $credentialsPath,
@@ -352,33 +401,157 @@ $_SERVER['REQUEST_METHOD'] === 'POST' &&
 ($_POST['action'] ?? '') === 'save'
 ) {
 $newContent = [
-'title' => trim(
-(string) ($_POST['title'] ?? '')
-),
-'description' => trim(
-(string) ($_POST['description'] ?? '')
-),
-'startButton' => trim(
-(string) ($_POST['startButton'] ?? '')
-),
-'notice' => trim(
-(string) ($_POST['notice'] ?? '')
-),
-'footer' => trim(
-(string) ($_POST['footer'] ?? '')
-),
+'languages' => [],
+'notices' => [],
 'links' => []
 ];
 
 foreach (
-$linkLabels as $key => $label
+['ja', 'en'] as $language
 ) {
-$url =
-trim(
-(string) ($_POST[$key . '_url'] ?? '')
+$languagePost =
+is_array($_POST['languages'][$language] ?? null)
+? $_POST['languages'][$language]
+: [];
+
+$newContent['languages'][$language] = [
+'title' => postedText(
+$languagePost,
+'title'
+),
+'description' => postedText(
+$languagePost,
+'description'
+),
+'startButton' => postedText(
+$languagePost,
+'startButton'
+),
+'noticeHeading' => postedText(
+$languagePost,
+'noticeHeading'
+),
+'linksHeading' => postedText(
+$languagePost,
+'linksHeading'
+),
+'footer' => postedText(
+$languagePost,
+'footer'
+)
+];
+}
+
+$postedNotices =
+is_array($_POST['notices'] ?? null)
+? array_values($_POST['notices'])
+: [];
+
+if (count($postedNotices) > 50) {
+$error =
+'お知らせは50件以内にしてください。';
+}
+
+if ($error === '') {
+foreach (
+$postedNotices as $noticeIndex => $noticePost
+) {
+if (!is_array($noticePost)) {
+continue;
+}
+
+$jaPost =
+is_array($noticePost['ja'] ?? null)
+? $noticePost['ja']
+: [];
+
+$enPost =
+is_array($noticePost['en'] ?? null)
+? $noticePost['en']
+: [];
+
+$jaUrl =
+postedText(
+$jaPost,
+'url'
 );
 
-if (!validPublicUrl($url)) {
+$enUrl =
+postedText(
+$enPost,
+'url'
+);
+
+if (
+!validPublicUrl($jaUrl) ||
+!validPublicUrl($enUrl)
+) {
+$error =
+'お知らせ' .
+($noticeIndex + 1) .
+'のURLが正しくありません。';
+
+break;
+}
+
+$newContent['notices'][] = [
+'ja' => [
+'text' => postedText(
+$jaPost,
+'text'
+),
+'url' => $jaUrl
+],
+'en' => [
+'text' => postedText(
+$enPost,
+'text'
+),
+'url' => $enUrl
+],
+'visible' =>
+isset($noticePost['visible']),
+'newTab' =>
+isset($noticePost['newTab'])
+];
+}
+}
+
+if ($error === '') {
+foreach (
+$linkLabels as $key => $label
+) {
+$linkPost =
+is_array($_POST['links'][$key] ?? null)
+? $_POST['links'][$key]
+: [];
+
+$jaPost =
+is_array($linkPost['ja'] ?? null)
+? $linkPost['ja']
+: [];
+
+$enPost =
+is_array($linkPost['en'] ?? null)
+? $linkPost['en']
+: [];
+
+$jaUrl =
+postedText(
+$jaPost,
+'url'
+);
+
+$enUrl =
+postedText(
+$enPost,
+'url'
+);
+
+if (
+!validPublicUrl($jaUrl) ||
+!validPublicUrl($enUrl)
+) {
 $error =
 $label .
 'のURLが正しくありません。';
@@ -387,18 +560,34 @@ break;
 }
 
 $newContent['links'][$key] = [
-'title' => trim(
-(string) ($_POST[$key . '_title'] ?? '')
+'ja' => [
+'title' => postedText(
+$jaPost,
+'title'
 ),
-'description' => trim(
-(string) ($_POST[$key . '_description'] ?? '')
+'description' => postedText(
+$jaPost,
+'description'
 ),
-'url' => $url,
+'url' => $jaUrl
+],
+'en' => [
+'title' => postedText(
+$enPost,
+'title'
+),
+'description' => postedText(
+$enPost,
+'description'
+),
+'url' => $enUrl
+],
 'visible' =>
-isset($_POST[$key . '_visible']),
+isset($linkPost['visible']),
 'newTab' =>
-isset($_POST[$key . '_new_tab'])
+isset($linkPost['newTab'])
 ];
+}
 }
 
 if ($error === '') {
@@ -464,7 +653,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .admin {
-width: min(100%, 760px);
+width: min(100%, 920px);
 margin: 0 auto;
 }
 
@@ -505,12 +694,29 @@ margin: 0 0 18px;
 font-size: 18px;
 }
 
+.admin__language-grid {
+display: grid;
+grid-template-columns: repeat(2, minmax(0, 1fr));
+gap: 20px;
+}
+
+.admin__language-panel {
+padding: 18px;
+border: 1px solid #ccc;
+border-radius: 5px;
+}
+
+.admin__language-title {
+margin: 0 0 18px;
+font-size: 15px;
+}
+
 .admin__field {
 display: block;
 margin-top: 18px;
 }
 
-.admin__field:first-child {
+.admin__field:first-of-type {
 margin-top: 0;
 }
 
@@ -534,7 +740,7 @@ font: inherit;
 }
 
 .admin__textarea {
-min-height: 90px;
+min-height: 88px;
 resize: vertical;
 }
 
@@ -542,7 +748,7 @@ resize: vertical;
 display: flex;
 flex-wrap: wrap;
 gap: 18px;
-margin-top: 14px;
+margin-top: 16px;
 font-size: 13px;
 }
 
@@ -562,10 +768,41 @@ background: #fff;
 color: #181818;
 }
 
+.admin__button--small {
+min-height: 34px;
+padding: 0 12px;
+font-size: 12px;
+}
+
+.admin__button--danger {
+border-color: #a22;
+background: #fff;
+color: #a22;
+}
+
 .admin__actions {
 display: flex;
 justify-content: flex-end;
+gap: 8px;
 margin-top: 28px;
+}
+
+.admin__item {
+margin-top: 16px;
+padding: 18px;
+border: 1px solid #bbb;
+border-radius: 5px;
+}
+
+.admin__item:first-child {
+margin-top: 0;
+}
+
+.admin__item-actions {
+display: flex;
+justify-content: flex-end;
+gap: 8px;
+margin-bottom: 16px;
 }
 
 .admin__message,
@@ -582,7 +819,7 @@ border-color: #a11;
 color: #a11;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
 body {
 padding: 22px 14px;
 }
@@ -593,6 +830,10 @@ align-items: flex-start;
 
 .admin__panel {
 padding: 18px;
+}
+
+.admin__language-grid {
+grid-template-columns: 1fr;
 }
 }
 </style>
@@ -660,10 +901,6 @@ type="submit"
 <h2 class="admin__section-title">
 初回設定
 </h2>
-
-<p>
-管理画面で使用するユーザー名とパスワードを設定します。
-</p>
 
 <form method="post">
 
@@ -835,21 +1072,34 @@ value="save"
 <section class="admin__section">
 
 <h2 class="admin__section-title">
-基本情報
+トップページ基本情報
 </h2>
+
+<div class="admin__language-grid">
+
+<?php foreach (['ja' => '日本語', 'en' => 'English'] as $language => $languageLabel): ?>
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+<?= escapeHtml($languageLabel) ?>
+</h3>
 
 <?php
 $basicFields = [
 'title' => 'タイトル',
 'description' => '紹介文',
 'startButton' => '開始ボタン',
-'notice' => 'お知らせ',
+'noticeHeading' => 'お知らせ見出し',
+'linksHeading' => '関連ページ見出し',
 'footer' => 'フッター'
 ];
 
-foreach (
-$basicFields as $key => $label
-):
+foreach ($basicFields as $field => $label):
+$value =
+(string) (
+$content['languages'][$language][$field] ?? ''
+);
 ?>
 
 <label class="admin__field">
@@ -858,20 +1108,20 @@ $basicFields as $key => $label
 <?= escapeHtml($label) ?>
 </span>
 
-<?php if (in_array($key, ['description', 'notice'], true)): ?>
+<?php if ($field === 'description'): ?>
 
 <textarea
 class="admin__textarea"
-name="<?= escapeHtml($key) ?>"
-><?= escapeHtml((string) $content[$key]) ?></textarea>
+name="languages[<?= escapeHtml($language) ?>][<?= escapeHtml($field) ?>]"
+><?= escapeHtml($value) ?></textarea>
 
 <?php else: ?>
 
 <input
 class="admin__input"
 type="text"
-name="<?= escapeHtml($key) ?>"
-value="<?= escapeHtml((string) $content[$key]) ?>"
+name="languages[<?= escapeHtml($language) ?>][<?= escapeHtml($field) ?>]"
+value="<?= escapeHtml($value) ?>"
 >
 
 <?php endif; ?>
@@ -879,6 +1129,144 @@ value="<?= escapeHtml((string) $content[$key]) ?>"
 </label>
 
 <?php endforeach; ?>
+
+</div>
+
+<?php endforeach; ?>
+
+</div>
+
+</section>
+
+<section class="admin__section">
+
+<h2 class="admin__section-title">
+お知らせ
+</h2>
+
+<div id="noticeList">
+
+<?php foreach ($content['notices'] as $index => $notice): ?>
+
+<div
+class="admin__item"
+data-notice-item
+>
+
+<div class="admin__item-actions">
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-notice-up
+>
+上へ
+</button>
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-notice-down
+>
+下へ
+</button>
+
+<button
+class="admin__button admin__button--danger admin__button--small"
+type="button"
+data-notice-delete
+>
+削除
+</button>
+
+</div>
+
+<div class="admin__language-grid">
+
+<?php foreach (['ja' => '日本語', 'en' => 'English'] as $language => $languageLabel): ?>
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+<?= escapeHtml($languageLabel) ?>
+</h3>
+
+<label class="admin__field">
+
+<span class="admin__label">
+文章
+</span>
+
+<textarea
+class="admin__textarea"
+name="notices[<?= (int) $index ?>][<?= escapeHtml($language) ?>][text]"
+><?= escapeHtml((string) ($notice[$language]['text'] ?? '')) ?></textarea>
+
+</label>
+
+<label class="admin__field">
+
+<span class="admin__label">
+リンク先URL
+</span>
+
+<input
+class="admin__input"
+type="url"
+name="notices[<?= (int) $index ?>][<?= escapeHtml($language) ?>][url]"
+value="<?= escapeHtml((string) ($notice[$language]['url'] ?? '')) ?>"
+placeholder="https://"
+>
+
+</label>
+
+</div>
+
+<?php endforeach; ?>
+
+</div>
+
+<div class="admin__checks">
+
+<label>
+
+<input
+type="checkbox"
+name="notices[<?= (int) $index ?>][visible]"
+<?= !empty($notice['visible']) ? 'checked' : '' ?>
+>
+
+表示する
+
+</label>
+
+<label>
+
+<input
+type="checkbox"
+name="notices[<?= (int) $index ?>][newTab]"
+<?= !empty($notice['newTab']) ? 'checked' : '' ?>
+>
+
+新しいタブで開く
+
+</label>
+
+</div>
+
+</div>
+
+<?php endforeach; ?>
+
+</div>
+
+<button
+id="addNoticeButton"
+class="admin__button admin__button--secondary"
+type="button"
+>
+お知らせを追加
+</button>
 
 </section>
 
@@ -890,6 +1278,16 @@ value="<?= escapeHtml((string) $content[$key]) ?>"
 <?= escapeHtml($label) ?>
 </h2>
 
+<div class="admin__language-grid">
+
+<?php foreach (['ja' => '日本語', 'en' => 'English'] as $language => $languageLabel): ?>
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+<?= escapeHtml($languageLabel) ?>
+</h3>
+
 <label class="admin__field">
 
 <span class="admin__label">
@@ -899,8 +1297,8 @@ value="<?= escapeHtml((string) $content[$key]) ?>"
 <input
 class="admin__input"
 type="text"
-name="<?= escapeHtml($key) ?>_title"
-value="<?= escapeHtml((string) $content['links'][$key]['title']) ?>"
+name="links[<?= escapeHtml($key) ?>][<?= escapeHtml($language) ?>][title]"
+value="<?= escapeHtml((string) ($content['links'][$key][$language]['title'] ?? '')) ?>"
 >
 
 </label>
@@ -914,8 +1312,8 @@ value="<?= escapeHtml((string) $content['links'][$key]['title']) ?>"
 <input
 class="admin__input"
 type="text"
-name="<?= escapeHtml($key) ?>_description"
-value="<?= escapeHtml((string) $content['links'][$key]['description']) ?>"
+name="links[<?= escapeHtml($key) ?>][<?= escapeHtml($language) ?>][description]"
+value="<?= escapeHtml((string) ($content['links'][$key][$language]['description'] ?? '')) ?>"
 >
 
 </label>
@@ -929,12 +1327,18 @@ value="<?= escapeHtml((string) $content['links'][$key]['description']) ?>"
 <input
 class="admin__input"
 type="url"
-name="<?= escapeHtml($key) ?>_url"
-value="<?= escapeHtml((string) $content['links'][$key]['url']) ?>"
+name="links[<?= escapeHtml($key) ?>][<?= escapeHtml($language) ?>][url]"
+value="<?= escapeHtml((string) ($content['links'][$key][$language]['url'] ?? '')) ?>"
 placeholder="https://"
 >
 
 </label>
+
+</div>
+
+<?php endforeach; ?>
+
+</div>
 
 <div class="admin__checks">
 
@@ -942,7 +1346,7 @@ placeholder="https://"
 
 <input
 type="checkbox"
-name="<?= escapeHtml($key) ?>_visible"
+name="links[<?= escapeHtml($key) ?>][visible]"
 <?= !empty($content['links'][$key]['visible']) ? 'checked' : '' ?>
 >
 
@@ -954,7 +1358,7 @@ name="<?= escapeHtml($key) ?>_visible"
 
 <input
 type="checkbox"
-name="<?= escapeHtml($key) ?>_new_tab"
+name="links[<?= escapeHtml($key) ?>][newTab]"
 <?= !empty($content['links'][$key]['newTab']) ? 'checked' : '' ?>
 >
 
@@ -980,6 +1384,269 @@ type="submit"
 </div>
 
 </form>
+
+<template id="noticeTemplate">
+
+<div
+class="admin__item"
+data-notice-item
+>
+
+<div class="admin__item-actions">
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-notice-up
+>
+上へ
+</button>
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-notice-down
+>
+下へ
+</button>
+
+<button
+class="admin__button admin__button--danger admin__button--small"
+type="button"
+data-notice-delete
+>
+削除
+</button>
+
+</div>
+
+<div class="admin__language-grid">
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+日本語
+</h3>
+
+<label class="admin__field">
+
+<span class="admin__label">
+文章
+</span>
+
+<textarea
+class="admin__textarea"
+data-notice-field="ja][text"
+></textarea>
+
+</label>
+
+<label class="admin__field">
+
+<span class="admin__label">
+リンク先URL
+</span>
+
+<input
+class="admin__input"
+type="url"
+data-notice-field="ja][url"
+placeholder="https://"
+>
+
+</label>
+
+</div>
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+English
+</h3>
+
+<label class="admin__field">
+
+<span class="admin__label">
+文章
+</span>
+
+<textarea
+class="admin__textarea"
+data-notice-field="en][text"
+></textarea>
+
+</label>
+
+<label class="admin__field">
+
+<span class="admin__label">
+リンク先URL
+</span>
+
+<input
+class="admin__input"
+type="url"
+data-notice-field="en][url"
+placeholder="https://"
+>
+
+</label>
+
+</div>
+
+</div>
+
+<div class="admin__checks">
+
+<label>
+
+<input
+type="checkbox"
+data-notice-field="visible"
+checked
+>
+
+表示する
+
+</label>
+
+<label>
+
+<input
+type="checkbox"
+data-notice-field="newTab"
+>
+
+新しいタブで開く
+
+</label>
+
+</div>
+
+</div>
+
+</template>
+
+<script>
+const noticeList =
+document.getElementById(
+"noticeList"
+);
+
+const addNoticeButton =
+document.getElementById(
+"addNoticeButton"
+);
+
+const noticeTemplate =
+document.getElementById(
+"noticeTemplate"
+);
+
+function reindexNotices() {
+const noticeItems =
+noticeList.querySelectorAll(
+"[data-notice-item]"
+);
+
+noticeItems.forEach(
+(item, index) => {
+const fields =
+item.querySelectorAll(
+"[data-notice-field]"
+);
+
+fields.forEach(
+(field) => {
+field.name =
+`notices[${index}][${field.dataset.noticeField}]`;
+}
+);
+}
+);
+}
+
+function handleNoticeAction(event) {
+const item =
+event.target.closest(
+"[data-notice-item]"
+);
+
+if (!item) {
+return;
+}
+
+if (
+event.target.closest(
+"[data-notice-delete]"
+)
+) {
+item.remove();
+reindexNotices();
+return;
+}
+
+if (
+event.target.closest(
+"[data-notice-up]"
+)
+) {
+const previousItem =
+item.previousElementSibling;
+
+if (previousItem) {
+noticeList.insertBefore(
+item,
+previousItem
+);
+}
+
+reindexNotices();
+return;
+}
+
+if (
+event.target.closest(
+"[data-notice-down]"
+)
+) {
+const nextItem =
+item.nextElementSibling;
+
+if (nextItem) {
+noticeList.insertBefore(
+nextItem,
+item
+);
+}
+
+reindexNotices();
+}
+}
+
+noticeList.addEventListener(
+"click",
+handleNoticeAction
+);
+
+addNoticeButton.addEventListener(
+"click",
+() => {
+const fragment =
+noticeTemplate.content.cloneNode(
+true
+);
+
+noticeList.appendChild(
+fragment
+);
+
+reindexNotices();
+}
+);
+
+reindexNotices();
+</script>
 
 <?php endif; ?>
 
