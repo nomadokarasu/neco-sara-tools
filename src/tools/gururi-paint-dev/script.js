@@ -1420,6 +1420,127 @@ t("download");
 shortcutSettingsButton.textContent =
 t("shortcutMenu");
 
+
+document.getElementById(
+"shortcutPanelTitle"
+).textContent =
+currentLanguage === "en"
+? "Shortcut settings"
+: "ショートカット設定";
+
+
+shortcutInstruction.textContent =
+currentLanguage === "en"
+? "Select an item, then press the new key."
+: "変更したい項目を押してから、新しいキーを押してください。";
+
+
+shortcutCloseButton.setAttribute(
+"aria-label",
+currentLanguage === "en"
+? "Close"
+: "閉じる"
+);
+
+
+const shortcutLabelTexts =
+currentLanguage === "en"
+? {
+pen: "Pen",
+eraser: "Eraser",
+bucket: "Bucket",
+eyedropper: "Eyedropper",
+look: "Hand",
+camera: "Camera",
+lookAround: "Look around",
+zoom: "Zoom"
+}
+: {
+pen: "ペン",
+eraser: "消しゴム",
+bucket: "バケツ",
+eyedropper: "スポイト",
+look: "手のひら",
+camera: "カメラ",
+lookAround: "見回し",
+zoom: "ズーム"
+};
+
+
+document.querySelectorAll(
+"[data-shortcut-label]"
+).forEach(
+(labelElement) => {
+
+const labelKey =
+labelElement.dataset.shortcutLabel;
+
+labelElement.textContent =
+shortcutLabelTexts[labelKey] || "";
+}
+);
+
+
+document.querySelector(
+'label[for="lookDirectionHorizontalSelect"]'
+).textContent =
+currentLanguage === "en"
+? "Camera controls (horizontal)"
+: "カメラ操作（水平）";
+
+
+document.querySelector(
+'label[for="lookDirectionVerticalSelect"]'
+).textContent =
+currentLanguage === "en"
+? "Camera controls (vertical)"
+: "カメラ操作（垂直）";
+
+
+lookDirectionHorizontalSelect.querySelector(
+'option[value="standard"]'
+).textContent =
+currentLanguage === "en"
+? "Standard"
+: "標準";
+
+
+lookDirectionHorizontalSelect.querySelector(
+'option[value="reverse"]'
+).textContent =
+currentLanguage === "en"
+? "Reverse"
+: "反転";
+
+
+lookDirectionVerticalSelect.querySelector(
+'option[value="standard"]'
+).textContent =
+currentLanguage === "en"
+? "Standard"
+: "標準";
+
+
+lookDirectionVerticalSelect.querySelector(
+'option[value="reverse"]'
+).textContent =
+currentLanguage === "en"
+? "Reverse"
+: "反転";
+
+
+shortcutResetButton.textContent =
+currentLanguage === "en"
+? "Reset to defaults"
+: "初期設定に戻す";
+
+
+shortcutConfirmButton.textContent =
+currentLanguage === "en"
+? "Save"
+: "保存";
+
+
 desktopHelpMenuButton.textContent =
 currentLanguage === "en"
 ? "Help"
