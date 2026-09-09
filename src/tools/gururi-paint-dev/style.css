@@ -3592,6 +3592,7 @@ padding: 0 32px 28px;
 position: absolute;
 top: 24px;
 right: 32px;
+z-index: 3;
 display: flex;
 gap: 4px;
 padding: 3px;
@@ -3634,13 +3635,12 @@ background-repeat: no-repeat;
 background-size: contain;
 }
 
-.home-page__label {
+.home-page__version {
 position: absolute;
 top: 22px;
 left: 50%;
 margin: 0;
 font-size: 11px;
-letter-spacing: 0.18em;
 color: #555;
 transform: translateX(-50%);
 white-space: nowrap;
@@ -3659,34 +3659,29 @@ transform: translateX(-50%);
 white-space: nowrap;
 }
 
-.home-page__version {
-position: absolute;
-top: 96px;
-left: 50%;
-margin: 0;
-font-size: 11px;
-color: #666;
-transform: translateX(-50%);
-white-space: nowrap;
+.home-page__intro {
+position: relative;
+z-index: 1;
+display: flex;
+flex-direction: column;
+align-items: center;
+margin-top: -116px;
+padding: 0 32px 24px;
 }
 
 .home-page__description {
-position: absolute;
-left: 32px;
-bottom: 88px;
-max-width: 520px;
+width: 100%;
+max-width: 620px;
 margin: 0;
 font-size: 15px;
 line-height: 1.7;
+text-align: center;
 }
 
 .home-page__start-button {
-position: absolute;
-left: 32px;
-bottom: 24px;
-width: min(360px, calc(100% - 64px));
+width: min(360px, 100%);
 min-height: 48px;
-margin: 0;
+margin: 20px 0 0;
 padding: 0 28px;
 border: 1px solid #181818;
 border-radius: 4px;
@@ -3864,55 +3859,50 @@ padding: 0 20px 22px;
 }
 
 .home-page__language {
-top: 12px;
-right: 12px;
+top: 8px;
+right: 8px;
 }
 
 .home-page__header {
-display: flex;
-flex-direction: column;
-align-items: flex-start;
-aspect-ratio: auto;
+aspect-ratio: 2 / 1;
 min-height: 0;
 margin: 0 -20px;
-padding: calc(50vw + 28px) 20px 36px;
-background-color: #fff15b;
-background-position: center top;
-background-size: 100% auto;
-}
-
-.home-page__label {
-position: static;
-margin: 0 0 8px;
-font-size: 10px;
-transform: none;
-}
-
-.home-page__title {
-position: static;
-margin: 0;
-font-size: clamp(34px, 11vw, 48px);
-transform: none;
-white-space: normal;
+padding: 0;
+background-color: #efffc0;
+background-position: center center;
+background-size: contain;
 }
 
 .home-page__version {
-position: static;
-margin: 8px 0 0;
-transform: none;
+top: 16px;
+font-size: 9px;
+}
+
+.home-page__title {
+top: 52px;
+width: 100%;
+padding: 0 12px;
+font-size: clamp(24px, 8vw, 34px);
+text-align: center;
+white-space: normal;
+}
+
+.home-page__intro {
+margin: 0 -20px;
+padding: 24px 20px 32px;
+background: #fff15b;
 }
 
 .home-page__description {
-position: static;
+width: 100%;
 max-width: 100%;
-margin: 20px 0 0;
 font-size: 14px;
+text-align: center;
 }
 
 .home-page__start-button {
-position: static;
 width: 100%;
-margin-top: 24px;
+margin-top: 20px;
 }
 
 .home-page__section {
