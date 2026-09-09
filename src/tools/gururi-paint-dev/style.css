@@ -3585,7 +3585,7 @@ flex-direction: column;
 width: min(100%, 960px);
 min-height: 100%;
 margin: 0 auto;
-padding: 64px 32px 28px;
+padding: 0 32px 28px;
 }
 
 .home-page__language {
@@ -3622,8 +3622,18 @@ color: #fff;
 }
 
 .home-page__header {
-padding: 56px 0 72px;
+display: flex;
+flex-direction: column;
+justify-content: center;
+min-height: 480px;
+margin: 0 -32px;
+padding: 100px 32px 72px;
 border-bottom: 1px solid #bcbcb7;
+background-color: #efffc0;
+background-image: url("./images/gururi-paint-hero.png");
+background-position: center center;
+background-repeat: no-repeat;
+background-size: cover;
 }
 
 .home-page__label {
@@ -3830,7 +3840,7 @@ outline-offset: 4px;
 @media (max-width: 700px) {
 
 .home-page__inner {
-padding: 72px 20px 22px;
+padding: 0 20px 22px;
 }
 
 .home-page__language {
@@ -3839,7 +3849,10 @@ right: 20px;
 }
 
 .home-page__header {
-padding: 28px 0 48px;
+min-height: 460px;
+margin: 0 -20px;
+padding: 90px 20px 48px;
+background-position: center center;
 }
 
 .home-page__title {
