@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.115";
+"1.3.116";
 
 
 const appVersionElements =
@@ -4103,8 +4103,7 @@ projectData.canvas
 if (
 [
 2048,
-4096,
-8192
+4096
 ].includes(
 savedOutputWidth
 )
@@ -4122,7 +4121,6 @@ outputWidth =
 
 outputHeight =
 outputWidth / 2;
-
 
 canvasSizeSelect.value =
 String(
@@ -17909,7 +17907,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.115",
+"./service-worker.js?v=1.3.116",
 {
 updateViaCache: "none"
 }
