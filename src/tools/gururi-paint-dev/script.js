@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.114";
+"1.3.115";
 
 
 const appVersionElements =
@@ -577,6 +577,11 @@ document.getElementById(
 const desktopHelpMenuButton =
 document.getElementById(
 "desktopHelpMenuButton"
+);
+
+const bugReportLink =
+document.getElementById(
+"bugReportLink"
 );
 
 const appMenuTriggers =
@@ -1532,6 +1537,11 @@ desktopHelpMenuButton.textContent =
 currentLanguage === "en"
 ? "How to use"
 : "使い方";
+
+bugReportLink.textContent =
+currentLanguage === "en"
+? "Report a problem"
+: "不具合報告";
 
 setElementText(
 ".mobile-menu-top-link",
@@ -14579,6 +14589,25 @@ currentLanguage
 );
 
 
+bugReportLink.addEventListener(
+"click",
+() => {
+
+closeAllAppMenus();
+
+closeMobileSettingsMenu();
+
+trackGAEvent(
+"bug_report_click",
+{
+ui_language:
+currentLanguage
+}
+);
+}
+);
+
+
 /*
 初回アクセス時のみ
 自動で「はじめに」を表示
@@ -17880,7 +17909,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.114",
+"./service-worker.js?v=1.3.115",
 {
 updateViaCache: "none"
 }

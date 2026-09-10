@@ -159,9 +159,15 @@ min-width: 310px;
 
 .app-menu__panel
 .app-menu__item {
+display: flex;
+align-items: center;
+
 width: 100%;
 
+box-sizing: border-box;
+
 text-align: left;
+text-decoration: none;
 }
 
 
@@ -3439,6 +3445,11 @@ text-decoration: none;
 
 
 #desktopHelpMenuButton {
+order: -17;
+}
+
+
+#bugReportLink {
 order: -16;
 }
 
