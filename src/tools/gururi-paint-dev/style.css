@@ -1724,17 +1724,80 @@ overscroll-behavior: contain;
 }
 
 
-.welcome-image {
+.welcome-guide {
+padding: 4px 0;
+}
+
+
+.welcome-guide-language {
+display: none;
+}
+
+
+.welcome-guide-language.is-active {
 display: block;
+}
 
-width: 100%;
-height: auto;
 
-border-radius: 4px;
+.welcome-guide__device--mobile {
+display: none;
+}
 
-user-select: none;
--webkit-user-select: none;
--webkit-user-drag: none;
+
+.welcome-guide__title {
+margin: 0 0 12px;
+
+font-size: 18px;
+line-height: 1.4;
+text-align: center;
+}
+
+
+.welcome-guide__controls {
+display: grid;
+grid-template-columns:
+repeat(
+3,
+minmax(
+0,
+1fr
+)
+);
+
+gap: 8px;
+}
+
+
+.welcome-guide__control {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 7px;
+
+min-height: 108px;
+padding: 12px 8px;
+
+background: #292929;
+
+border:
+1px solid #666;
+border-radius: 6px;
+
+text-align: center;
+}
+
+
+.welcome-guide__control strong {
+font-size: 14px;
+color: #fff;
+}
+
+
+.welcome-guide__control span {
+font-size: 13px;
+line-height: 1.5;
+color: #ddd;
 }
 
 
@@ -3536,6 +3599,36 @@ font-size: 10px;
 
 .welcome-panel__content {
 padding: 10px;
+}
+
+
+.welcome-guide__device--desktop {
+display: none;
+}
+
+
+.welcome-guide__device--mobile {
+display: block;
+}
+
+
+.welcome-guide__title {
+margin-bottom: 8px;
+
+font-size: 15px;
+}
+
+
+.welcome-guide__controls {
+grid-template-columns: 1fr;
+
+gap: 6px;
+}
+
+
+.welcome-guide__control {
+min-height: 58px;
+padding: 8px 10px;
 }
 
 

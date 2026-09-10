@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.109";
+"1.3.110";
 
 
 const appVersionElements =
@@ -616,9 +616,9 @@ document.querySelectorAll(
 "[data-welcome-language]"
 );
 
-const welcomeImage =
-document.getElementById(
-"welcomeImage"
+const welcomeGuideLanguageContents =
+document.querySelectorAll(
+"[data-welcome-content-language]"
 );
 
 const welcomeXLink =
@@ -626,25 +626,10 @@ document.getElementById(
 "welcomeXLink"
 );
 
-const welcomeNoteLink =
+const welcomeGuideLink =
 document.getElementById(
-"welcomeNoteLink"
+"welcomeGuideLink"
 );
-
-
-/*
-言語ごとのnote記事URL
-*/
-
-const WELCOME_NOTE_URLS = {
-
-ja:
-"https://note.com/junnoota/n/n87a466960ce6",
-
-en:
-"https://note.com/junnoota/n/ne455507ce7ec"
-
-};
 
 
 const previewOverlay =
@@ -784,8 +769,8 @@ welcomeShareText:
 welcomeX:
 "Xをフォロー",
 
-welcomeNote:
-"開発について読む・応援する",
+welcomeGuide:
+"詳しい使い方・テクニックを見る",
 
 pen:
 "ペン",
@@ -1049,8 +1034,8 @@ welcomeShareText:
 welcomeX:
 "Follow on X",
 
-welcomeNote:
-"Read about the project / Support",
+welcomeGuide:
+"View the full guide and tips",
 
 pen:
 "Pen",
@@ -1844,21 +1829,22 @@ t("help")
 );
 
 
-if (welcomeImage) {
+welcomeGuideLanguageContents.forEach(
+(content) => {
 
-const isEnglish =
-currentLanguage === "en";
+const isActive =
+content.dataset.welcomeContentLanguage ===
+currentLanguage;
 
-welcomeImage.src =
-isEnglish
-? "./images/welcome-en.png"
-: "./images/welcome-ja.png";
+content.classList.toggle(
+"is-active",
+isActive
+);
 
-welcomeImage.alt =
-isEnglish
-? "Gururi Paint basic controls and introduction"
-: "ぐるりペイントの基本操作と案内";
+content.hidden =
+!isActive;
 }
+);
 
 
 setElementText(
@@ -1867,14 +1853,9 @@ t("welcomeX")
 );
 
 setElementText(
-"#welcomeNoteLink",
-t("welcomeNote")
+"#welcomeGuideLink",
+t("welcomeGuide")
 );
-
-welcomeNoteLink.href =
-WELCOME_NOTE_URLS[
-currentLanguage
-];
 
 helpCloseButton.setAttribute(
 "aria-label",
@@ -14583,12 +14564,12 @@ currentLanguage
 );
 
 
-welcomeNoteLink.addEventListener(
+welcomeGuideLink.addEventListener(
 "click",
 () => {
 
 trackGAEvent(
-"welcome_note_click",
+"welcome_guide_click",
 {
 ui_language:
 currentLanguage
@@ -17899,7 +17880,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.109",
+"./service-worker.js?v=1.3.110",
 {
 updateViaCache: "none"
 }
