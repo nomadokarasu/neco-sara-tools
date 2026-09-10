@@ -150,6 +150,44 @@ force: true
 
 
 // ========================================
+// ぐるりペイントのサーバー管理データを除外
+// ========================================
+
+for (const toolName of [
+"gururi-paint",
+"gururi-paint-dev"
+]) {
+
+const toolDirectory =
+path.join(
+outputDirectory,
+"tools",
+toolName
+);
+
+for (const entryName of [
+".admin-credentials.php",
+".htaccess",
+".htpasswd",
+"home-content.json",
+"home-thumbnails"
+]) {
+
+fs.rmSync(
+path.join(
+toolDirectory,
+entryName
+),
+{
+recursive: true,
+force: true
+}
+);
+}
+}
+
+
+// ========================================
 // HTMLファイルを再帰的に取得
 // ========================================
 
@@ -213,6 +251,35 @@ function findHtmlFiles(
 
   return htmlFiles;
 }
+
+
+// ========================================
+// 開発版のHTMLをアクセス解析の対象から外す
+// ========================================
+
+const developmentDirectory =
+path.join(
+outputDirectory,
+"tools",
+"gururi-paint-dev"
+);
+
+const originalFindHtmlFiles =
+findHtmlFiles;
+
+findHtmlFiles = function(directory) {
+
+if (
+path.resolve(directory) ===
+path.resolve(developmentDirectory)
+) {
+return [];
+}
+
+return originalFindHtmlFiles(
+directory
+);
+};
 
 
 // ========================================

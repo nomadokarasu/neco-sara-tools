@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.118";
+"2.0.1-dev";
 
 
 const appVersionElements =
@@ -77,7 +77,7 @@ appVersionElements.forEach(
 (versionElement) => {
 
 versionElement.textContent =
-`ver.${APP_VERSION}-dev`;
+`ver.${APP_VERSION}`;
 }
 );
 
@@ -284,10 +284,10 @@ return window.matchMedia(
 
 
 const DESKTOP_TOOL_PALETTE_STORAGE_KEY =
-"gururi-paint-dev-palette-tools-v3";
+"gururi-paint-testing-palette-tools-v3";
 
 const MOBILE_TOOL_PALETTE_STORAGE_KEY =
-"gururi-paint-dev-palette-tools-mobile-v1";
+"gururi-paint-testing-palette-tools-mobile-v1";
 
 
 const TOOL_PALETTE_STORAGE_KEY =
@@ -666,7 +666,7 @@ document.getElementById(
 ================================ */
 
 const LANGUAGE_STORAGE_KEY =
-"gururi-paint-dev-language";
+"gururi-paint-testing-language";
 
 
 let savedLanguage = null;
@@ -2492,7 +2492,7 @@ const VIDEO_CAPTURE_FPS =
 30;
 
 const CAMERA_VIDEO_ASPECT_STORAGE_KEY =
-"gururi-paint-dev-video-aspect";
+"gururi-paint-testing-video-aspect";
 
 let cameraVideoAspect =
 "vertical";
@@ -14329,7 +14329,7 @@ const WELCOME_VERSION =
 "2";
 
 const WELCOME_STORAGE_KEY =
-"gururi-paint-dev-welcome-version";
+"gururi-paint-testing-welcome-version";
 
 
 function markWelcomeAsSeen() {
@@ -14697,7 +14697,7 @@ projectLoadInput.value =
 ================================ */
 
 const AUTO_SAVE_DATABASE_NAME =
-"gururi-paint-dev-autosave";
+"gururi-paint-testing-autosave";
 
 const AUTO_SAVE_STORE_NAME =
 "projects";
@@ -15159,7 +15159,7 @@ saveAutoSaveNow();
 ================================ */
 
 const NEW_PROJECT_SESSION_KEY =
-"gururi-paint-start-new-project";
+"gururi-paint-testing-start-new-project";
 
 const newProjectButton =
 document.getElementById(
@@ -15400,7 +15400,7 @@ redo();
 ================================ */
 
 const SHORTCUT_STORAGE_KEY =
-"gururi-paint-dev-shortcuts";
+"gururi-paint-testing-shortcuts";
 
 
 const DEFAULT_SHORTCUT_KEYS = {
@@ -15571,10 +15571,10 @@ loadShortcutKeys();
 ================================ */
 
 const LOOK_DIRECTION_HORIZONTAL_STORAGE_KEY =
-"gururi-paint-dev-look-direction-horizontal-v2";
+"gururi-paint-testing-look-direction-horizontal-v2";
 
 const LOOK_DIRECTION_VERTICAL_STORAGE_KEY =
-"gururi-paint-dev-look-direction-vertical-v2";
+"gururi-paint-testing-look-direction-vertical-v2";
 
 const DEFAULT_LOOK_DIRECTION =
 "standard";
@@ -17907,7 +17907,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.118",
+"./service-worker.js?v=2.0.1-dev",
 {
 updateViaCache: "none"
 }

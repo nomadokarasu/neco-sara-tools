@@ -7,9 +7,11 @@ isset($_SERVER['HTTPS']) &&
 $_SERVER['HTTPS'] !== '' &&
 $_SERVER['HTTPS'] !== 'off';
 
+session_name('gururi_paint_testing_admin');
+
 session_set_cookie_params([
 'lifetime' => 0,
-'path' => '/',
+'path' => '/tools/gururi-paint-dev/',
 'secure' => $isHttps,
 'httponly' => true,
 'samesite' => 'Strict'

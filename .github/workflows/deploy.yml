@@ -1,16 +1,19 @@
+# GURURI_DEV_DEPLOY_READY
+
 name: Deploy to Lolipop
 
 on:
   push:
     branches:
       - main
+      - gururi-paint-dev-deploy
 
 permissions:
   contents: read
 
 concurrency:
   group: lolipop-deployment
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -29,7 +32,59 @@ jobs:
       - name: Build website
         run: npm run build
 
-      - name: Upload dist by FTPS
+      - name: Prepare Gururi Paint development files
+        if: github.ref == 'refs/heads/gururi-paint-dev-deploy'
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const source =
+          "dist/tools/gururi-paint-dev";
+
+          const destination =
+          ".gururi-deploy/tools/gururi-paint-dev";
+
+          if (!fs.existsSync(source + "/index.html")) {
+          throw new Error("開発版のindex.htmlが見つかりません。");
+          }
+
+          fs.mkdirSync(
+          ".gururi-deploy/tools",
+          { recursive: true }
+          );
+
+          fs.cpSync(
+          source,
+          destination,
+          { recursive: true }
+          );
+          NODE
+
+      - name: Upload Gururi Paint development by FTPS
+        if: github.ref == 'refs/heads/gururi-paint-dev-deploy'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.LOLIPOP_FTP_SERVER }}
+          username: ${{ secrets.LOLIPOP_FTP_USERNAME }}
+          password: ${{ secrets.LOLIPOP_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./.gururi-deploy/
+          server-dir: /tools/
+          state-name: .ftp-deploy-gururi-dev-state.json
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.admin-credentials.php
+            **/.htpasswd
+            **/.htaccess
+            **/.env*
+            tools/gururi-paint-dev/home-content.json
+            tools/gururi-paint-dev/home-thumbnails/**
+
+      - name: Upload other tools by FTPS
+        if: github.ref == 'refs/heads/main'
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.LOLIPOP_FTP_SERVER }}
@@ -40,6 +95,14 @@ jobs:
           local-dir: ./dist/
           server-dir: /tools/
           exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.admin-credentials.php
+            **/.htpasswd
+            **/.env*
             tools/gururi-watch/data/**
             tools/gururi-watch/uploads/**
             tools/gururi-watch/api/admin-config.php
+            tools/gururi-paint/**
+            tools/gururi-paint-dev/**
