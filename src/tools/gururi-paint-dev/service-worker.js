@@ -2,7 +2,7 @@ const CACHE_PREFIX =
 "gururi-paint-dev-";
 
 const CACHE_VERSION =
-"1.3.116";
+"1.3.118";
 
 const CACHE_NAME =
 `${CACHE_PREFIX}${CACHE_VERSION}`;
@@ -11,8 +11,8 @@ const STATIC_RESOURCES = [
 "./",
 "./index.html",
 "./home-content.json",
-"./style.css?v=1.3.116",
-"./script.js?v=1.3.116",
+"./style.css?v=1.3.118",
+"./script.js?v=1.3.118",
 "./images/gururi-paint-hero.png",
 "./images/home-title-ja.png",
 "./images/home-title-en.png",
@@ -104,12 +104,48 @@ new URL(
 request.url
 );
 
+const appIndexUrl =
+new URL(
+"./index.html",
+self.location.href
+);
+
+const appRootUrl =
+new URL(
+"./",
+self.location.href
+);
+
+const isAppDocument =
+requestUrl.origin === appIndexUrl.origin &&
+(
+requestUrl.pathname === appIndexUrl.pathname ||
+requestUrl.pathname === appRootUrl.pathname
+);
+
+if (
+requestUrl.origin === self.location.origin &&
+requestUrl.pathname.toLowerCase().endsWith(
+".php"
+)
+) {
+return;
+}
+
+if (
+request.mode === "navigate" &&
+!isAppDocument
+) {
+return;
+}
+
 
 if (
 requestUrl.pathname.endsWith(
 "/home-content.json"
 )
-) {
+)
+{
 
 event.respondWith(
 fetch(
@@ -156,6 +192,18 @@ request
 ).then(
 async (response) => {
 
+if (
+response.ok &&
+!response.redirected &&
+(
+response.headers.get(
+"Content-Type"
+) || ""
+).includes(
+"text/html"
+)
+) {
+
 const cache =
 await caches.open(
 CACHE_NAME
@@ -165,14 +213,20 @@ await cache.put(
 "./index.html",
 response.clone()
 );
+}
 
 return response;
 }
 ).catch(
 async () => {
 
+const cache =
+await caches.open(
+CACHE_NAME
+);
+
 return (
-await caches.match(
+await cache.match(
 "./index.html"
 )
 ) || Response.error();
