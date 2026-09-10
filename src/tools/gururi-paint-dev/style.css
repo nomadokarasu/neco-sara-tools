@@ -20,6 +20,10 @@ sans-serif;
 
 background: #222;
 color: #fff;
+
+user-select: none;
+-webkit-user-select: none;
+-webkit-touch-callout: none;
 }
 
 .toolbar {

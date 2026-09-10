@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.1-dev";
+"2.0.2-dev";
 
 
 const appVersionElements =
@@ -10104,28 +10104,8 @@ toggleLanguage();
 
 
 /*
-スマートフォンでは
-clickが正しく発火しない場合があるため、
-touchendでも直接切り替える。
-
-preventDefaultによって、
-直後に生成されるclickとの
-二重実行を防ぐ。
+言語切り替えはclickイベントで処理する。
 */
-
-languageButton.addEventListener(
-"touchend",
-(event) => {
-
-event.preventDefault();
-event.stopPropagation();
-
-toggleLanguage();
-},
-{
-passive: false
-}
-);
 
 
 /* ================================
@@ -16181,7 +16161,7 @@ event
 ].forEach(
 (eventName) => {
 
-renderer.domElement.addEventListener(
+document.addEventListener(
 eventName,
 handlePalmRejectionEvent,
 {
@@ -17907,7 +17887,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.1-dev",
+"./service-worker.js?v=2.0.2-dev",
 {
 updateViaCache: "none"
 }
