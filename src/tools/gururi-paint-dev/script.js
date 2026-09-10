@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.3.112";
+"1.3.114";
 
 
 const appVersionElements =
@@ -1530,8 +1530,8 @@ currentLanguage === "en"
 
 desktopHelpMenuButton.textContent =
 currentLanguage === "en"
-? "Help"
-: "ヘルプ";
+? "How to use"
+: "使い方";
 
 setElementText(
 ".mobile-menu-top-link",
@@ -17880,7 +17880,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=1.3.112",
+"./service-worker.js?v=1.3.114",
 {
 updateViaCache: "none"
 }
