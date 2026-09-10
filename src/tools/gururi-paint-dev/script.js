@@ -1553,8 +1553,8 @@ currentLanguage === "en"
 setElementText(
 ".preview-seam-label",
 currentLanguage === "en"
-? "Seam position (drag left or right)"
-: "つなぎ目位置（左右に移動できます）"
+? "Seam position (drag right)"
+: "つなぎ目位置（移動できます）"
 );
 
 
