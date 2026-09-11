@@ -1,15 +1,60 @@
 import * as THREE from
-  "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
 import iro from
-  "https://cdn.jsdelivr.net/npm/@jaames/iro@5/dist/iro.es.js";
+"https://cdn.jsdelivr.net/npm/@jaames/iro@5/dist/iro.es.js";
 
 /* ================================
-   基本設定
+基本設定
 ================================ */
 
 const viewport =
 document.getElementById("viewport");
+
+const homePage =
+document.getElementById(
+"homePage"
+);
+
+const homeStartButton =
+document.getElementById(
+"homeStartButton"
+);
+
+const homeOpenButtons =
+document.querySelectorAll(
+"[data-home-open]"
+);
+
+let autoSaveInitialized =
+false;
+
+homeStartButton.addEventListener(
+"click",
+async () => {
+
+homePage.classList.remove(
+"is-open"
+);
+
+await initializeAutoSave();
+}
+);
+
+homeOpenButtons.forEach(
+(button) => {
+
+button.addEventListener(
+"click",
+() => {
+
+homePage.classList.add(
+"is-open"
+);
+}
+);
+}
+);
 
 const scene = new THREE.Scene();
 
@@ -19,20 +64,22 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"1.4";
+"2.0.1";
 
 
-const appVersion =
-document.getElementById(
-"appVersion"
+const appVersionElements =
+document.querySelectorAll(
+"#appVersion, #toolbarAppVersion"
 );
 
 
-if (appVersion) {
+appVersionElements.forEach(
+(versionElement) => {
 
-appVersion.textContent =
+versionElement.textContent =
 `ver.${APP_VERSION}`;
 }
+);
 
 
 let paintStartTracked = false;
@@ -85,150 +132,369 @@ paintStartTracked = true;
 
 
 /* ================================
-   ツールUI
+ツールUI
 ================================ */
 
 const penToolButton =
-  document.getElementById("penTool");
+document.getElementById("penTool");
 
 const eraserToolButton =
-  document.getElementById("eraserTool");
+document.getElementById("eraserTool");
 
 const bucketToolButton =
-  document.getElementById("bucketTool");
+document.getElementById("bucketTool");
 
 const eyedropperToolButton =
-  document.getElementById("eyedropperTool");
+document.getElementById("eyedropperTool");
+
+const lookToolButton =
+document.getElementById("lookTool");
+
+const drawingToolButtons =
+document.querySelector(
+".drawing-tool-buttons"
+);
+
+const addToolButton =
+document.getElementById("addToolButton");
+
+const toolLibraryPanel =
+document.getElementById(
+"toolLibraryPanel"
+);
+
+const toolLibraryCloseButton =
+document.getElementById(
+"toolLibraryCloseButton"
+);
+
+const toolPaletteResetButton =
+document.getElementById(
+"toolPaletteResetButton"
+);
+
+const toolLibraryList =
+document.querySelector(
+".tool-library-list"
+);
+
+const cameraToolButton =
+document.getElementById(
+"cameraTool"
+);
+
+const cameraCaptureUi =
+document.getElementById(
+"cameraCaptureUi"
+);
+
+const cameraViewfinder =
+document.getElementById(
+"cameraViewfinder"
+);
+
+const cameraCloseButton =
+document.getElementById(
+"cameraCloseButton"
+);
+
+const cameraPhotoModeButton =
+document.getElementById(
+"cameraPhotoModeButton"
+);
+
+const cameraVideoModeButton =
+document.getElementById(
+"cameraVideoModeButton"
+);
+
+const cameraVideoAspectSwitch =
+document.getElementById(
+"cameraVideoAspectSwitch"
+);
+
+const cameraVideoSquareButton =
+document.getElementById(
+"cameraVideoSquareButton"
+);
+
+const cameraVideoVerticalButton =
+document.getElementById(
+"cameraVideoVerticalButton"
+);
+
+const cameraShutterButton =
+document.getElementById(
+"cameraShutterButton"
+);
+
+const cameraRecordingTime =
+document.getElementById(
+"cameraRecordingTime"
+);
+
+
+const TOOL_REGISTRY =
+Object.freeze({
+
+pen: {
+id: "pen",
+labelKey: "pen",
+button: penToolButton
+},
+
+eraser: {
+id: "eraser",
+labelKey: "eraser",
+button: eraserToolButton
+},
+
+bucket: {
+id: "bucket",
+labelKey: "bucket",
+button: bucketToolButton
+},
+
+eyedropper: {
+id: "eyedropper",
+labelKey: "eyedropper",
+button: eyedropperToolButton
+},
+
+look: {
+id: "look",
+labelKey: "lookTool",
+button: lookToolButton
+},
+
+camera: {
+id: "camera",
+labelKey: "camera",
+button: cameraToolButton
+}
+});
+
+
+function isMobileToolPalette() {
+
+return window.matchMedia(
+"(max-width: 700px)"
+).matches;
+}
+
+
+const DESKTOP_TOOL_PALETTE_STORAGE_KEY =
+"gururi-paint-dev-palette-tools-v3";
+
+const MOBILE_TOOL_PALETTE_STORAGE_KEY =
+"gururi-paint-dev-palette-tools-mobile-v1";
+
+
+const TOOL_PALETTE_STORAGE_KEY =
+isMobileToolPalette()
+? MOBILE_TOOL_PALETTE_STORAGE_KEY
+: DESKTOP_TOOL_PALETTE_STORAGE_KEY;
+
+
+const DESKTOP_DEFAULT_PALETTE_TOOL_IDS = [
+"pen",
+"eraser",
+"bucket",
+"eyedropper",
+"look"
+];
+
+const MOBILE_DEFAULT_PALETTE_TOOL_IDS = [
+"pen",
+"eraser",
+"bucket",
+"eyedropper",
+"camera"
+];
+
+
+const DEFAULT_PALETTE_TOOL_IDS =
+isMobileToolPalette()
+? MOBILE_DEFAULT_PALETTE_TOOL_IDS
+: DESKTOP_DEFAULT_PALETTE_TOOL_IDS;
+
+
+let addedPaletteToolIds = [
+...DEFAULT_PALETTE_TOOL_IDS
+];
+
+
+try {
+
+const savedPaletteToolIds =
+JSON.parse(
+localStorage.getItem(
+TOOL_PALETTE_STORAGE_KEY
+) || "null"
+);
+
+if (Array.isArray(savedPaletteToolIds)) {
+
+const validToolIds =
+savedPaletteToolIds.filter(
+(toolId, index, toolIds) =>
+TOOL_REGISTRY[toolId] &&
+toolIds.indexOf(toolId) === index &&
+(
+toolId !== "camera" ||
+isMobileToolPalette()
+)
+);
+
+if (validToolIds.length > 0) {
+
+addedPaletteToolIds =
+validToolIds;
+}
+}
+
+} catch (error) {
+
+addedPaletteToolIds = [
+...DEFAULT_PALETTE_TOOL_IDS
+];
+}
+
 
 const layerList =
-  document.getElementById("layerList");
+document.getElementById("layerList");
 
 const addLayerButton =
-  document.getElementById("addLayerButton");
+document.getElementById("addLayerButton");
 
 const layerUpButton =
-  document.getElementById("layerUpButton");
+document.getElementById("layerUpButton");
 
 const layerDownButton =
-  document.getElementById("layerDownButton");
+document.getElementById("layerDownButton");
 
 const deleteLayerButton =
-  document.getElementById("deleteLayerButton");
+document.getElementById("deleteLayerButton");
 
 const penSizeInput =
-  document.getElementById("penSize");
+document.getElementById("penSize");
 
 const penSizeMinus =
-  document.getElementById("penSizeMinus");
+document.getElementById("penSizeMinus");
 
 const penSizePlus =
-  document.getElementById("penSizePlus");
+document.getElementById("penSizePlus");
 
 const penSizeValue =
-  document.getElementById("penSizeValue");
+document.getElementById("penSizeValue");
 
 const colorPickerWheel =
-  document.getElementById(
-    "colorPickerWheel"
-  );
+document.getElementById(
+"colorPickerWheel"
+);
 
 
 const colorWheelLayer =
-  document.getElementById(
-    "colorWheelLayer"
-  );
+document.getElementById(
+"colorWheelLayer"
+);
 
 
 const colorBoxLayer =
-  document.getElementById(
-    "colorBoxLayer"
-  );
+document.getElementById(
+"colorBoxLayer"
+);
 
 
 const penColorInput =
-  document.getElementById("penColorInput");
+document.getElementById("penColorInput");
 
 
 const currentPenColorSwatch =
-  document.getElementById(
-    "currentPenColorSwatch"
-  );
+document.getElementById(
+"currentPenColorSwatch"
+);
 
 
 const recentColorsElement =
-  document.getElementById("recentColors");
+document.getElementById("recentColors");
 
 
 const penColorControl =
-  document.querySelector(
-    ".pen-color-control"
-  );
+document.querySelector(
+".pen-color-control"
+);
 
 
 const mobileColorButton =
-  document.getElementById(
-    "mobileColorButton"
-  );
+document.getElementById(
+"mobileColorButton"
+);
 
 
 const mobileColorBackdrop =
-  document.getElementById(
-    "mobileColorBackdrop"
-  );
+document.getElementById(
+"mobileColorBackdrop"
+);
 
 
 const undoButton =
-  document.getElementById("undoButton");
+document.getElementById("undoButton");
 
 const redoButton =
-  document.getElementById("redoButton");
+document.getElementById("redoButton");
 
 const canvasSizeSelect =
-  document.getElementById("canvasSize");
+document.getElementById("canvasSize");
 
 const eyeHeightInput =
-  document.getElementById("eyeHeight");
+document.getElementById("eyeHeight");
 
 const eyeHeightMinus =
-  document.getElementById(
-    "eyeHeightMinus"
-  );
+document.getElementById(
+"eyeHeightMinus"
+);
 
 const eyeHeightPlus =
-  document.getElementById(
-    "eyeHeightPlus"
-  );
+document.getElementById(
+"eyeHeightPlus"
+);
 
 const eyeHeightValue =
-  document.getElementById(
-    "eyeHeightValue"
-  );
+document.getElementById(
+"eyeHeightValue"
+);
 
 const groundToggle =
-  document.getElementById(
-    "groundToggle"
-  );
+document.getElementById(
+"groundToggle"
+);
 
 const projectSaveButton =
-  document.getElementById(
-    "projectSaveButton"
-  );
+document.getElementById(
+"projectSaveButton"
+);
 
 const projectLoadButton =
-  document.getElementById(
-    "projectLoadButton"
-  );
+document.getElementById(
+"projectLoadButton"
+);
 
 const projectLoadInput =
-  document.getElementById(
-    "projectLoadInput"
-  );
+document.getElementById(
+"projectLoadInput"
+);
 
 const previewButton =
-  document.getElementById("previewButton");
+document.getElementById("previewButton");
 
 const downloadButton =
 document.getElementById("downloadButton");
+
+const previewDownloadButton =
+document.getElementById(
+"previewDownloadButton"
+);
 
 const languageButton =
 document.getElementById(
@@ -246,14 +512,118 @@ document.getElementById(
 "helpCloseButton"
 );
 
+
+const shortcutSettingsButton =
+document.getElementById(
+"shortcutSettingsButton"
+);
+
+const shortcutPanel =
+document.getElementById(
+"shortcutPanel"
+);
+
+const shortcutCloseButton =
+document.getElementById(
+"shortcutCloseButton"
+);
+
+const shortcutResetButton =
+document.getElementById(
+"shortcutResetButton"
+);
+
+const shortcutConfirmButton =
+document.getElementById(
+"shortcutConfirmButton"
+);
+
+const shortcutInstruction =
+document.getElementById(
+"shortcutInstruction"
+);
+
+const shortcutStatus =
+document.getElementById(
+"shortcutStatus"
+);
+
+const shortcutKeyButtons =
+document.querySelectorAll(
+"[data-shortcut-action]"
+);
+
+const lookDirectionHorizontalSelect =
+document.getElementById(
+"lookDirectionHorizontalSelect"
+);
+
+const lookDirectionVerticalSelect =
+document.getElementById(
+"lookDirectionVerticalSelect"
+);
+
+
+const drawingModeMenuButton =
+document.getElementById(
+"drawingModeMenuButton"
+);
+
+const cameraModeMenuButton =
+document.getElementById(
+"cameraModeMenuButton"
+);
+
+const desktopHelpMenuButton =
+document.getElementById(
+"desktopHelpMenuButton"
+);
+
+const bugReportLink =
+document.getElementById(
+"bugReportLink"
+);
+
+const appMenuTriggers =
+document.querySelectorAll(
+".app-menu__trigger"
+);
+
+const appMenus =
+document.querySelectorAll(
+".app-menu"
+);
+
+
+const shortcutSaveConfirmPanel =
+document.getElementById(
+"shortcutSaveConfirmPanel"
+);
+
+const shortcutSaveConfirmMessage =
+document.getElementById(
+"shortcutSaveConfirmMessage"
+);
+
+const shortcutSaveConfirmYesButton =
+document.getElementById(
+"shortcutSaveConfirmYesButton"
+);
+
+const shortcutSaveConfirmNoButton =
+document.getElementById(
+"shortcutSaveConfirmNoButton"
+);
+
+
 const welcomeLanguageButtons =
 document.querySelectorAll(
 "[data-welcome-language]"
 );
 
-const welcomeImage =
-document.getElementById(
-"welcomeImage"
+const welcomeGuideLanguageContents =
+document.querySelectorAll(
+"[data-welcome-content-language]"
 );
 
 const welcomeXLink =
@@ -261,43 +631,28 @@ document.getElementById(
 "welcomeXLink"
 );
 
-const welcomeNoteLink =
+const welcomeGuideLink =
 document.getElementById(
-"welcomeNoteLink"
+"welcomeGuideLink"
 );
 
 
-/*
-言語ごとのnote記事URL
-*/
-
-const WELCOME_NOTE_URLS = {
-
-ja:
-"https://note.com/junnoota/n/n87a466960ce6",
-
-en:
-"https://note.com/junnoota/n/ne455507ce7ec"
-
-};
-
-
 const previewOverlay =
-  document.getElementById("previewOverlay");
+document.getElementById("previewOverlay");
 
 const previewCloseButton =
-  document.getElementById(
-    "previewCloseButton"
-  );
+document.getElementById(
+"previewCloseButton"
+);
 
 const previewCanvas =
-  document.getElementById(
-    "previewCanvas"
-  );
+document.getElementById(
+"previewCanvas"
+);
 
 
 const previewContext =
-  previewCanvas.getContext("2d");
+previewCanvas.getContext("2d");
 
 
 const previewSeamHandle =
@@ -311,7 +666,7 @@ document.getElementById(
 ================================ */
 
 const LANGUAGE_STORAGE_KEY =
-"gururi-paint-language";
+"gururi-paint-dev-language";
 
 
 let savedLanguage = null;
@@ -372,16 +727,19 @@ guideGrid:
 "補助グリッド",
 
 saveData:
-"データ保存",
+"データ保存(.gururi)",
 
 loadData:
-"読み込み",
+"インポート(.gururi)",
 
 preview:
 "プレビュー",
 
 savePng:
-"PNG保存",
+"PNG保存(2：1画像)",
+
+download:
+"ダウンロード",
 
 help:
 "はじめに",
@@ -416,8 +774,8 @@ welcomeShareText:
 welcomeX:
 "Xをフォロー",
 
-welcomeNote:
-"開発について読む・応援する",
+welcomeGuide:
+"詳しい使い方・テクニックを見る",
 
 pen:
 "ペン",
@@ -430,6 +788,36 @@ bucket:
 
 eyedropper:
 "スポイト",
+
+lookTool:
+"手のひら",
+
+addTool:
+"ツールを追加",
+
+add:
+"追加",
+
+added:
+"追加済み",
+
+camera:
+"カメラ",
+
+cameraDescription:
+"現在見えている360°空間を通常の画像として撮影します。",
+
+captureFormat:
+"撮影形式",
+
+photo:
+"写真",
+
+video:
+"動画",
+
+capture:
+"撮影",
 
 brushSize:
 "太さ",
@@ -485,6 +873,24 @@ draw:
 settings:
 "設定",
 
+fileMenu:
+"ファイル",
+
+editMenu:
+"編集",
+
+settingsMenu:
+"設定",
+
+helpMenu:
+"ヘルプ",
+
+shortcutMenu:
+"ショートカット",
+
+helpMenuItem:
+"はじめに",
+
 helpLookAround:
 "Space + ドラッグ：見回す",
 
@@ -507,7 +913,7 @@ helpMobileZoom:
 "ピンチ：ズーム",
 
 previewTitle:
-"360°プレビュー",
+"ぐるり画像プレビュー",
 
 close:
 "閉じる",
@@ -586,16 +992,19 @@ guideGrid:
 "Guide grid",
 
 saveData:
-"Save data",
+"Save data (.gururi)",
 
 loadData:
-"Load",
+"Import",
 
 preview:
 "Preview",
 
 savePng:
-"Save PNG",
+"Save PNG (2:1 image)",
+
+download:
+"Download",
 
 help:
 "About",
@@ -630,8 +1039,8 @@ welcomeShareText:
 welcomeX:
 "Follow on X",
 
-welcomeNote:
-"Read about the project / Support",
+welcomeGuide:
+"View the full guide and tips",
 
 pen:
 "Pen",
@@ -644,6 +1053,36 @@ bucket:
 
 eyedropper:
 "Eyedropper",
+
+lookTool:
+"Hand",
+
+addTool:
+"Add tools",
+
+add:
+"Add",
+
+added:
+"Added",
+
+camera:
+"Camera",
+
+cameraDescription:
+"Capture the current view of the 360° space as a standard image.",
+
+captureFormat:
+"Capture format",
+
+photo:
+"Photo",
+
+video:
+"Video",
+
+capture:
+"Capture",
 
 brushSize:
 "Size",
@@ -699,6 +1138,24 @@ draw:
 settings:
 "Settings",
 
+fileMenu:
+"File",
+
+editMenu:
+"Edit",
+
+settingsMenu:
+"Settings",
+
+helpMenu:
+"Help",
+
+shortcutMenu:
+"Shortcuts",
+
+helpMenuItem:
+"About",
+
 helpLookAround:
 "Space + Drag: Look around",
 
@@ -721,7 +1178,7 @@ helpMobileZoom:
 "Pinch to zoom",
 
 previewTitle:
-"360° Preview",
+"Gururi Image Preview",
 
 close:
 "Close",
@@ -828,6 +1285,29 @@ t("appTitle")
 );
 
 
+setElementText(
+'[data-app-menu="file"]',
+t("fileMenu")
+);
+
+setElementText(
+'[data-app-menu="mode"]',
+currentLanguage === "en"
+? "Mode"
+: "モード"
+);
+
+setElementText(
+'[data-app-menu="settings"]',
+t("settingsMenu")
+);
+
+setElementText(
+'[data-app-menu="help"]',
+t("helpMenu")
+);
+
+
 undoButton.title =
 t("undoTitle");
 
@@ -844,6 +1324,17 @@ redoButton.setAttribute(
 "aria-label",
 t("redo")
 );
+
+
+drawingModeMenuButton.textContent =
+currentLanguage === "en"
+? "Draw"
+: "描画";
+
+cameraModeMenuButton.textContent =
+currentLanguage === "en"
+? "Capture"
+: "撮影";
 
 
 setElementText(
@@ -871,17 +1362,200 @@ t("guideGrid")
 );
 
 
+const isMobileLayout =
+window.matchMedia(
+"(max-width: 700px)"
+).matches;
+
+
+document.getElementById(
+"newProjectButton"
+).textContent =
+currentLanguage === "en"
+? "New project"
+: "新規作成";
+
+
 projectSaveButton.textContent =
-t("saveData");
+isMobileLayout
+? (
+currentLanguage === "en"
+? "Save data (.gururi)"
+: "データ保存（.gururi）"
+)
+: t("saveData");
 
 projectLoadButton.textContent =
-t("loadData");
+isMobileLayout
+? (
+currentLanguage === "en"
+? "Import (.gururi)"
+: "インポート(.gururi)"
+)
+: t("loadData");
 
 previewButton.textContent =
 t("preview");
 
 downloadButton.textContent =
-t("savePng");
+isMobileLayout
+? (
+currentLanguage === "en"
+? "Save PNG (.png)"
+: "PNG保存（.png）"
+)
+: t("savePng");
+
+previewDownloadButton.textContent =
+t("download");
+
+shortcutSettingsButton.textContent =
+t("shortcutMenu");
+
+
+document.getElementById(
+"shortcutPanelTitle"
+).textContent =
+currentLanguage === "en"
+? "Shortcut settings"
+: "ショートカット設定";
+
+
+shortcutInstruction.textContent =
+currentLanguage === "en"
+? "Select an item, then press the new key."
+: "変更したい項目を押してから、新しいキーを押してください。";
+
+
+shortcutCloseButton.setAttribute(
+"aria-label",
+currentLanguage === "en"
+? "Close"
+: "閉じる"
+);
+
+
+const shortcutLabelTexts =
+currentLanguage === "en"
+? {
+pen: "Pen",
+eraser: "Eraser",
+bucket: "Bucket",
+eyedropper: "Eyedropper",
+look: "Hand",
+camera: "Camera",
+lookAround: "Look around",
+zoom: "Zoom"
+}
+: {
+pen: "ペン",
+eraser: "消しゴム",
+bucket: "バケツ",
+eyedropper: "スポイト",
+look: "手のひら",
+camera: "カメラ",
+lookAround: "見回し",
+zoom: "ズーム"
+};
+
+
+document.querySelectorAll(
+"[data-shortcut-label]"
+).forEach(
+(labelElement) => {
+
+const labelKey =
+labelElement.dataset.shortcutLabel;
+
+labelElement.textContent =
+shortcutLabelTexts[labelKey] || "";
+}
+);
+
+
+document.querySelector(
+'label[for="lookDirectionHorizontalSelect"]'
+).textContent =
+currentLanguage === "en"
+? "Camera controls (horizontal)"
+: "カメラ操作（水平）";
+
+
+document.querySelector(
+'label[for="lookDirectionVerticalSelect"]'
+).textContent =
+currentLanguage === "en"
+? "Camera controls (vertical)"
+: "カメラ操作（垂直）";
+
+
+lookDirectionHorizontalSelect.querySelector(
+'option[value="standard"]'
+).textContent =
+currentLanguage === "en"
+? "Standard"
+: "標準";
+
+
+lookDirectionHorizontalSelect.querySelector(
+'option[value="reverse"]'
+).textContent =
+currentLanguage === "en"
+? "Reverse"
+: "反転";
+
+
+lookDirectionVerticalSelect.querySelector(
+'option[value="standard"]'
+).textContent =
+currentLanguage === "en"
+? "Standard"
+: "標準";
+
+
+lookDirectionVerticalSelect.querySelector(
+'option[value="reverse"]'
+).textContent =
+currentLanguage === "en"
+? "Reverse"
+: "反転";
+
+
+shortcutResetButton.textContent =
+currentLanguage === "en"
+? "Reset to defaults"
+: "初期設定に戻す";
+
+
+shortcutConfirmButton.textContent =
+currentLanguage === "en"
+? "Save"
+: "保存";
+
+
+desktopHelpMenuButton.textContent =
+currentLanguage === "en"
+? "How to use"
+: "使い方";
+
+bugReportLink.textContent =
+currentLanguage === "en"
+? "Report a problem"
+: "不具合報告";
+
+setElementText(
+".mobile-menu-top-link",
+currentLanguage === "en"
+? "Top"
+: "トップ"
+);
+
+setElementText(
+".preview-seam-label",
+currentLanguage === "en"
+? "Seam position (drag right)"
+: "つなぎ目位置（移動できます）"
+);
 
 
 const languageSwitchLabel =
@@ -904,39 +1578,158 @@ languageSwitchLabel
 );
 
 
+const mobileMenuLabel =
+currentLanguage === "en"
+? "Menu"
+: "メニュー";
+
 helpButton.title =
-t("help");
+mobileMenuLabel;
+
+helpButton.setAttribute(
+"aria-label",
+mobileMenuLabel
+);
 
 helpButton.textContent =
-t("help");
+"☰";
 
-
-penToolButton.textContent =
-t("pen");
 
 penToolButton.title =
 t("pen");
 
+penToolButton.setAttribute(
+"aria-label",
+t("pen")
+);
 
-eraserToolButton.textContent =
-t("eraser");
+penToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("pen");
+
 
 eraserToolButton.title =
 t("eraser");
 
+eraserToolButton.setAttribute(
+"aria-label",
+t("eraser")
+);
 
-bucketToolButton.textContent =
-t("bucket");
+eraserToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("eraser");
+
 
 bucketToolButton.title =
 t("bucket");
 
+bucketToolButton.setAttribute(
+"aria-label",
+t("bucket")
+);
 
-eyedropperToolButton.textContent =
-t("eyedropper");
+bucketToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("bucket");
+
 
 eyedropperToolButton.title =
 t("eyedropper");
+
+eyedropperToolButton.setAttribute(
+"aria-label",
+t("eyedropper")
+);
+
+eyedropperToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("eyedropper");
+
+
+lookToolButton.title =
+t("lookTool");
+
+lookToolButton.setAttribute(
+"aria-label",
+t("lookTool")
+);
+
+lookToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("lookTool");
+
+
+addToolButton.title =
+t("addTool");
+
+addToolButton.setAttribute(
+"aria-label",
+t("addTool")
+);
+
+
+setElementText(
+"#toolLibraryPanelTitle",
+currentLanguage === "en"
+? "Tools"
+: "ツール一覧"
+);
+
+toolLibraryCloseButton.setAttribute(
+"aria-label",
+t("close")
+);
+
+toolPaletteResetButton.textContent =
+currentLanguage === "en"
+? "Reset settings"
+: "設定をリセット";
+
+cameraToolButton.title =
+t("camera");
+
+cameraToolButton.setAttribute(
+"aria-label",
+t("camera")
+);
+
+cameraToolButton.querySelector(
+".drawing-tool-label"
+).textContent =
+t("camera");
+
+
+updateToolPalette();
+
+
+cameraPhotoModeButton.textContent =
+t("photo");
+
+cameraVideoModeButton.textContent =
+t("video");
+
+cameraShutterButton.setAttribute(
+"aria-label",
+t("capture")
+);
+
+cameraCloseButton.setAttribute(
+"aria-label",
+t("close")
+);
+
+document.querySelector(
+".camera-mode-switch"
+)?.setAttribute(
+"aria-label",
+t("captureFormat")
+);
 
 
 setElementText(
@@ -1035,8 +1828,8 @@ t("layers")
 
 
 setElementText(
-'.mobile-bottom-tab[data-mobile-panel="settings"]',
-t("settings")
+'.mobile-bottom-tab[data-mobile-panel="camera"]',
+t("capture")
 );
 
 
@@ -1046,21 +1839,22 @@ t("help")
 );
 
 
-if (welcomeImage) {
+welcomeGuideLanguageContents.forEach(
+(content) => {
 
-const isEnglish =
-currentLanguage === "en";
+const isActive =
+content.dataset.welcomeContentLanguage ===
+currentLanguage;
 
-welcomeImage.src =
-isEnglish
-? "./images/welcome-en.png"
-: "./images/welcome-ja.png";
+content.classList.toggle(
+"is-active",
+isActive
+);
 
-welcomeImage.alt =
-isEnglish
-? "Gururi Paint basic controls and introduction"
-: "ぐるりペイントの基本操作と案内";
+content.hidden =
+!isActive;
 }
+);
 
 
 setElementText(
@@ -1069,14 +1863,9 @@ t("welcomeX")
 );
 
 setElementText(
-"#welcomeNoteLink",
-t("welcomeNote")
+"#welcomeGuideLink",
+t("welcomeGuide")
 );
-
-welcomeNoteLink.href =
-WELCOME_NOTE_URLS[
-currentLanguage
-];
 
 helpCloseButton.setAttribute(
 "aria-label",
@@ -1172,7 +1961,464 @@ currentLanguage
 
 
 applyLanguage();
+renderHomePage();
 }
+
+
+/* ================================
+トップページ
+================================ */
+
+let homeContent =
+null;
+
+const homeTitle =
+document.getElementById(
+"homeTitle"
+);
+
+const homeTitleImage =
+document.getElementById(
+"homeTitleImage"
+);
+
+const homeDescription =
+document.getElementById(
+"homeDescription"
+);
+
+const homeNoticeHeading =
+document.getElementById(
+"homeNoticeHeading"
+);
+
+const homeNoticeSection =
+document.getElementById(
+"homeNoticeSection"
+);
+
+const homeNoticeList =
+document.getElementById(
+"homeNoticeList"
+);
+
+const homeLinksHeading =
+document.getElementById(
+"homeLinksHeading"
+);
+
+const homeLinksSection =
+document.getElementById(
+"homeLinksSection"
+);
+
+const homeFooter =
+document.getElementById(
+"homeFooter"
+);
+
+const homeLanguageButtons =
+document.querySelectorAll(
+"[data-home-language]"
+);
+
+const homeLinks =
+document.getElementById(
+"homeLinks"
+);
+
+
+function setHomeLinkTarget(
+element,
+url,
+newTab
+) {
+
+if (!url) {
+
+element.href =
+"#";
+
+element.classList.add(
+"is-disabled"
+);
+
+element.setAttribute(
+"aria-disabled",
+"true"
+);
+
+element.removeAttribute(
+"target"
+);
+
+element.removeAttribute(
+"rel"
+);
+
+return;
+}
+
+
+element.href =
+url;
+
+element.classList.remove(
+"is-disabled"
+);
+
+element.removeAttribute(
+"aria-disabled"
+);
+
+
+if (newTab) {
+
+element.target =
+"_blank";
+
+element.rel =
+"noopener noreferrer";
+
+} else {
+
+element.removeAttribute(
+"target"
+);
+
+element.removeAttribute(
+"rel"
+);
+}
+}
+
+
+function renderHomePage() {
+
+homeLanguageButtons.forEach(
+(button) => {
+
+const isActive =
+button.dataset.homeLanguage ===
+currentLanguage;
+
+button.classList.toggle(
+"is-active",
+isActive
+);
+
+button.setAttribute(
+"aria-pressed",
+String(isActive)
+);
+}
+);
+
+
+if (!homeContent) {
+return;
+}
+
+
+const languageContent =
+homeContent.languages?.[
+currentLanguage
+];
+
+if (!languageContent) {
+return;
+}
+
+
+document.documentElement.lang =
+currentLanguage;
+
+homeTitle.setAttribute(
+"aria-label",
+languageContent.title || ""
+);
+
+homeTitleImage.src =
+currentLanguage === "en"
+? "./images/home-title-en.png"
+: "./images/home-title-ja.png";
+
+homeDescription.textContent =
+languageContent.description || "";
+
+homeStartButton.textContent =
+languageContent.startButton || "";
+
+homeNoticeHeading.textContent =
+languageContent.noticeHeading || "";
+
+homeLinksHeading.textContent =
+languageContent.linksHeading || "";
+
+homeFooter.textContent =
+languageContent.footer || "";
+
+
+homeNoticeList.replaceChildren();
+
+
+const visibleNotices =
+Array.isArray(
+homeContent.notices
+)
+? homeContent.notices.filter(
+(notice) =>
+notice &&
+notice.visible !== false &&
+notice[currentLanguage]?.text
+)
+: [];
+
+
+visibleNotices.forEach(
+(notice) => {
+
+const noticeContent =
+notice[currentLanguage];
+
+const noticeLink =
+document.createElement(
+"a"
+);
+
+noticeLink.className =
+"home-page__notice";
+
+noticeLink.textContent =
+noticeContent.text;
+
+setHomeLinkTarget(
+noticeLink,
+noticeContent.url || "",
+notice.newTab === true
+);
+
+homeNoticeList.appendChild(
+noticeLink
+);
+}
+);
+
+
+homeNoticeSection.hidden =
+visibleNotices.length === 0;
+
+
+homeLinks.replaceChildren();
+
+
+const visibleRelatedPages =
+Array.isArray(
+homeContent.relatedPages
+)
+? homeContent.relatedPages.filter(
+(page) =>
+page &&
+page.visible !== false &&
+page[currentLanguage]?.title
+)
+: [];
+
+
+visibleRelatedPages.forEach(
+(page) => {
+
+const pageContent =
+page[currentLanguage];
+
+const pageLink =
+document.createElement(
+"a"
+);
+
+pageLink.className =
+"home-page__link";
+
+
+setHomeLinkTarget(
+pageLink,
+pageContent.url || "",
+page.newTab === true
+);
+
+
+if (page.thumbnail) {
+
+const thumbnailWrap =
+document.createElement(
+"span"
+);
+
+thumbnailWrap.className =
+"home-page__link-thumbnail";
+
+
+const thumbnailImage =
+document.createElement(
+"img"
+);
+
+thumbnailImage.src =
+page.thumbnail;
+
+thumbnailImage.alt =
+"";
+
+thumbnailImage.loading =
+"lazy";
+
+
+thumbnailImage.addEventListener(
+"error",
+() => {
+
+thumbnailWrap.remove();
+}
+);
+
+
+thumbnailWrap.appendChild(
+thumbnailImage
+);
+
+pageLink.appendChild(
+thumbnailWrap
+);
+}
+
+
+const textWrap =
+document.createElement(
+"span"
+);
+
+textWrap.className =
+"home-page__link-text";
+
+
+const titleElement =
+document.createElement(
+"span"
+);
+
+titleElement.className =
+"home-page__link-title";
+
+titleElement.textContent =
+pageContent.title || "";
+
+
+const descriptionElement =
+document.createElement(
+"span"
+);
+
+descriptionElement.className =
+"home-page__link-description";
+
+descriptionElement.textContent =
+pageContent.description || "";
+
+
+textWrap.appendChild(
+titleElement
+);
+
+textWrap.appendChild(
+descriptionElement
+);
+
+pageLink.appendChild(
+textWrap
+);
+
+homeLinks.appendChild(
+pageLink
+);
+}
+);
+
+
+homeLinksSection.hidden =
+visibleRelatedPages.length === 0;
+}
+
+
+async function loadHomeContent() {
+
+try {
+
+const response =
+await fetch(
+"./home-content.json",
+{
+cache: "no-store"
+}
+);
+
+
+if (!response.ok) {
+
+throw new Error(
+`Home content request failed: ${response.status}`
+);
+}
+
+
+const data =
+await response.json();
+
+
+if (
+!data ||
+typeof data !== "object"
+) {
+
+throw new Error(
+"Home content is invalid."
+);
+}
+
+
+homeContent =
+data;
+
+renderHomePage();
+
+} catch (error) {
+
+console.warn(
+"Home content could not be loaded:",
+error
+);
+
+renderHomePage();
+}
+}
+
+
+homeLanguageButtons.forEach(
+(button) => {
+
+button.addEventListener(
+"click",
+() => {
+
+setLanguage(
+button.dataset.homeLanguage
+);
+}
+);
+}
+);
+
+
+loadHomeContent();
 
 
 /*
@@ -1182,72 +2428,175 @@ FOV：75度
 視点位置：高さ1.5m
 */
 const camera = new THREE.PerspectiveCamera(
-  85,
-  viewport.clientWidth / viewport.clientHeight,
-  0.1,
-  1000
+85,
+viewport.clientWidth / viewport.clientHeight,
+0.1,
+1000
 );
 
 camera.position.set(0, 1.5, 0);
 
 
 /* ================================
-   Renderer
+Renderer
 ================================ */
 
-const renderer =
-  new THREE.WebGLRenderer({
-    antialias: true
-  });
-
 /*
-  スマートフォンでは
-  Three.jsの描画解像度を抑えて
-  動作を軽くする
+スマートフォンでは
+Three.jsの描画解像度を抑えて
+動作を軽くする
 */
 
+const renderer =
+new THREE.WebGLRenderer({
+antialias: true
+});
+
 const isMobileDevice =
-  window.matchMedia(
-    "(max-width: 700px)"
-  ).matches;
+window.matchMedia(
+"(max-width: 700px)"
+).matches;
 
 
 renderer.setPixelRatio(
-  isMobileDevice
-    ? 1
-    : Math.min(
-        window.devicePixelRatio,
-        2
-      )
+isMobileDevice
+? 1
+: Math.min(
+window.devicePixelRatio,
+2
+)
 );
 
 renderer.setSize(
-  viewport.clientWidth,
-  viewport.clientHeight
+viewport.clientWidth,
+viewport.clientHeight
 );
 
 viewport.appendChild(renderer.domElement);
 
 
 /* ================================
-   360°キャンバス
+撮影用Renderer
+================================ */
+
+const PHOTO_CAPTURE_SIZE =
+1080;
+
+const VIDEO_CAPTURE_SIZE =
+720;
+
+const VIDEO_CAPTURE_VERTICAL_HEIGHT =
+1280;
+
+const VIDEO_CAPTURE_FPS =
+30;
+
+const CAMERA_VIDEO_ASPECT_STORAGE_KEY =
+"gururi-paint-dev-video-aspect";
+
+let cameraVideoAspect =
+"vertical";
+
+
+try {
+
+const savedCameraVideoAspect =
+localStorage.getItem(
+CAMERA_VIDEO_ASPECT_STORAGE_KEY
+);
+
+if (
+savedCameraVideoAspect === "square" ||
+savedCameraVideoAspect === "vertical"
+) {
+
+cameraVideoAspect =
+savedCameraVideoAspect;
+}
+
+} catch (error) {
+
+/*
+保存できない環境では
+9:16を初期値として使用する
+*/
+}
+
+const VIDEO_CAPTURE_MAX_DURATION =
+12000;
+
+const photoCaptureCanvas =
+document.createElement(
+"canvas"
+);
+
+const photoCaptureRenderer =
+new THREE.WebGLRenderer({
+canvas: photoCaptureCanvas,
+antialias: true,
+preserveDrawingBuffer: true
+});
+
+photoCaptureRenderer.setPixelRatio(
+1
+);
+
+photoCaptureRenderer.outputColorSpace =
+renderer.outputColorSpace;
+
+
+const videoCaptureCanvas =
+document.createElement(
+"canvas"
+);
+
+const videoCaptureRenderer =
+new THREE.WebGLRenderer({
+canvas: videoCaptureCanvas,
+antialias: true
+});
+
+videoCaptureRenderer.setPixelRatio(
+1
+);
+
+videoCaptureRenderer.setSize(
+VIDEO_CAPTURE_SIZE,
+VIDEO_CAPTURE_SIZE,
+false
+);
+
+videoCaptureRenderer.outputColorSpace =
+renderer.outputColorSpace;
+
+const videoCaptureCamera =
+camera.clone();
+
+videoCaptureCamera.aspect =
+1;
+
+videoCaptureCamera.updateProjectionMatrix();
+
+
+/* ================================
+360°キャンバス
 ================================ */
 
 /*
-  最終的には、このCanvasへ絵を描きます。
+最終的には、このCanvasへ絵を描きます。
 
-  Version 1の標準サイズ：
-  4096 × 2048
+Version 1の標準サイズ：
+4096 × 2048
 */
 
 const paintCanvas =
-  document.createElement("canvas");
+document.createElement("canvas");
 
 /*
-  最終出力サイズ
+最終出力サイズ
 
-  書き出し時には
-  このサイズを使用する
+書き出し時には
+このサイズを使用する
 */
 
 let outputWidth = 4096;
@@ -1255,73 +2604,73 @@ let outputHeight = 2048;
 
 
 /*
-  編集時の解像度
+編集時の解像度
 
-  最終出力の1/2
+最終出力の1/2
 */
 
 const editScale = 0.5;
 
 paintCanvas.width =
-  Math.round(
-    outputWidth *
-    editScale
-  );
+Math.round(
+outputWidth *
+editScale
+);
 
 paintCanvas.height =
-  Math.round(
-    outputHeight *
-    editScale
-  );
+Math.round(
+outputHeight *
+editScale
+);
 
 const paintContext =
-  paintCanvas.getContext("2d");
+paintCanvas.getContext("2d");
 
 
 /* ================================
-   描画専用Canvas
+描画専用Canvas
 ================================ */
 
 /*
-  編集用Canvasの解像度。
+編集用Canvasの解像度。
 
-  0.5 = 出力サイズの1/2
-  4096 × 2048
-       ↓
-  2048 × 1024
+0.5 = 出力サイズの1/2
+4096 × 2048
+↓
+2048 × 1024
 */
 
 /*
-  描画Canvasは
-  編集用Canvasと同じ解像度にする
+描画Canvasは
+編集用Canvasと同じ解像度にする
 */
 
 const drawScale = 1;
 
 
 let drawCanvas =
-  document.createElement("canvas");
+document.createElement("canvas");
 
 drawCanvas.width =
-  paintCanvas.width;
+paintCanvas.width;
 
 drawCanvas.height =
-  paintCanvas.height;
+paintCanvas.height;
 
 let drawContext =
-  drawCanvas.getContext("2d");
+drawCanvas.getContext("2d");
 
 
 /*
-  画像拡大時の補間を無効化
+画像拡大時の補間を無効化
 */
 
 drawContext.imageSmoothingEnabled =
-  false;
+false;
 
 
 /* ================================
-   レイヤー
+レイヤー
 ================================ */
 
 const layers = [
@@ -1330,10 +2679,10 @@ id: 1,
 name:
 getDefaultLayerName(1),
 canvas: drawCanvas,
-    context: drawContext,
-    visible: true,
-    opacity: 1
-  }
+context: drawContext,
+visible: true,
+opacity: 1
+}
 ];
 
 let activeLayerId = 1;
@@ -1343,235 +2692,243 @@ let nextLayerNumber = 2;
 
 function createLayerCanvas() {
 
-  const canvas =
-    document.createElement("canvas");
+const canvas =
+document.createElement("canvas");
 
-  canvas.width =
-    paintCanvas.width;
+canvas.width =
+paintCanvas.width;
 
-  canvas.height =
-    paintCanvas.height;
+canvas.height =
+paintCanvas.height;
 
-  const context =
-    canvas.getContext("2d");
+const context =
+canvas.getContext("2d");
 
-  context.imageSmoothingEnabled =
-    false;
+context.imageSmoothingEnabled =
+false;
 
-  return {
-    canvas,
-    context
-  };
+return {
+canvas,
+context
+};
 }
 
 
 function getLayerById(layerId) {
 
-  return (
-    layers.find(
-      (layer) =>
-        layer.id === layerId
-    ) || null
-  );
+return (
+layers.find(
+(layer) =>
+layer.id === layerId
+) || null
+);
 }
 
 
 function getActiveLayer() {
 
-  return getLayerById(
-    activeLayerId
-  );
+return getLayerById(
+activeLayerId
+);
 }
 
 
 function setActiveLayerReference(
-  layerId
+layerId
 ) {
 
-  const layer =
-    getLayerById(layerId);
+const layer =
+getLayerById(layerId);
 
-  if (!layer) {
-    return false;
-  }
+if (!layer) {
+return false;
+}
 
-  activeLayerId =
-    layer.id;
+activeLayerId =
+layer.id;
 
-  drawCanvas =
-    layer.canvas;
+drawCanvas =
+layer.canvas;
 
-  drawContext =
-    layer.context;
+drawContext =
+layer.context;
 
-  return true;
+return true;
 }
 
 
 function setActiveLayer(layerId) {
 
-  if (
-    !setActiveLayerReference(
-      layerId
-    )
-  ) {
-    return;
-  }
+if (
+!setActiveLayerReference(
+layerId
+)
+) {
+return;
+}
 
-  renderLayerPanel();
+renderLayerPanel();
 }
 
 
 /*
-  テストしやすいように、
-  最初は単色で塗っておきます。
+テストしやすいように、
+最初は単色で塗っておきます。
 */
 
 function drawBaseCanvas() {
 
-  /*
-    表示用Canvasを初期化
-  */
+/*
+表示用Canvasを初期化
+*/
 
-  paintContext.clearRect(
-    0,
-    0,
-    paintCanvas.width,
-    paintCanvas.height
-  );
+paintContext.clearRect(
+0,
+0,
+paintCanvas.width,
+paintCanvas.height
+);
 
 
-  /*
-    背景
-  */
+/*
+背景
+*/
 
-  paintContext.fillStyle =
-    "#eeeeee";
+paintContext.fillStyle =
+"#eeeeee";
 
-  paintContext.fillRect(
-    0,
-    0,
-    paintCanvas.width,
-    paintCanvas.height
-  );
+paintContext.fillRect(
+0,
+0,
+paintCanvas.width,
+paintCanvas.height
+);
 }
 
 
 drawBaseCanvas();
 
 /* ================================
-   Canvas → Texture
+Canvas → Texture
 ================================ */
 
 /*
-  描画レイヤーを
-  表示用Canvasへ合成する
+描画レイヤーを
+表示用Canvasへ合成する
 */
 
 let paintUpdateRequested = false;
 
 
 /*
-  スマートフォンでは
-  360°テクスチャ更新を
-  最大30fps程度に抑える
+スマートフォンでは
+360°テクスチャ更新を
+最大30fps程度に抑える
 */
 
 let lastPaintUpdateTime = 0;
 
 const paintUpdateInterval =
-  isMobileDevice
-    ? 1000 / 30
-    : 0;
+isMobileDevice
+? 1000 / 30
+: 0;
+
+let autoSaveReady = false;
+let autoSaveTimer = null;
+let autoSaveHasContent = false;
+let autoSaveWriteQueue =
+Promise.resolve();
 
 
 function requestPaintUpdate() {
 
-  paintUpdateRequested = true;
+paintUpdateRequested = true;
+
+scheduleAutoSave();
 }
 
 
 function updatePaintCanvas() {
 
-  /*
-    背景とグリッドを維持したまま
-    描画レイヤーを重ねるため、
-    後ほど背景を再描画する
-  */
+/*
+背景とグリッドを維持したまま
+描画レイヤーを重ねるため、
+後ほど背景を再描画する
+*/
 
-  drawBaseCanvas();
+drawBaseCanvas();
 
-  /*
-    表示中のレイヤーを
-    下から順番に合成する
-  */
+/*
+表示中のレイヤーを
+下から順番に合成する
+*/
 
-  paintContext.imageSmoothingEnabled =
-    false;
+paintContext.imageSmoothingEnabled =
+false;
 
 for (const layer of layers) {
 
-    if (!layer.visible) {
-      continue;
-    }
+if (!layer.visible) {
+continue;
+}
 
 
-    /*
-      レイヤーの不透明度
-    */
+/*
+レイヤーの不透明度
+*/
 
-    paintContext.globalAlpha =
-      typeof layer.opacity === "number"
-        ? layer.opacity
-        : 1;
-
-
-    paintContext.drawImage(
-      layer.canvas,
-      0,
-      0
-    );
-  }
+paintContext.globalAlpha =
+typeof layer.opacity === "number"
+? layer.opacity
+: 1;
 
 
-  /*
-    次の描画に影響しないよう
-    100%へ戻す
-  */
+paintContext.drawImage(
+layer.canvas,
+0,
+0
+);
+}
 
-  paintContext.globalAlpha = 1;
 
-  texture.needsUpdate = true;
+/*
+次の描画に影響しないよう
+100%へ戻す
+*/
+
+paintContext.globalAlpha = 1;
+
+texture.needsUpdate = true;
 }
 
 /* ================================
-   長方形プレビュー
+長方形プレビュー
 ================================ */
 
 
 /*
-  左右反転済みの画像を
-  一時保存するCanvas
+左右反転済みの画像を
+一時保存するCanvas
 */
 
 const previewSourceCanvas =
-  document.createElement(
-    "canvas"
-  );
+document.createElement(
+"canvas"
+);
 
 
 const previewSourceContext =
-  previewSourceCanvas.getContext(
-    "2d"
-  );
+previewSourceCanvas.getContext(
+"2d"
+);
 
 
 /*
-  360°画像の左端位置。
+360°画像の左端位置。
 
-  0 = 元の左端
-  0.5 = 画像中央
-  1 = 一周して元の左端
+0 = 元の左端
+0.5 = 画像中央
+1 = 一周して元の左端
 */
 
 let previewSeamRatio = 0;
@@ -1579,162 +2936,162 @@ let previewSeamRatio = 0;
 
 function updatePreview() {
 
-  /*
-    プレビューは
-    編集時と同じ解像度を使用
-  */
+/*
+プレビューは
+編集時と同じ解像度を使用
+*/
 
-  previewCanvas.width =
-    paintCanvas.width;
+previewCanvas.width =
+paintCanvas.width;
 
-  previewCanvas.height =
-    paintCanvas.height;
-
-
-  previewSourceCanvas.width =
-    paintCanvas.width;
-
-  previewSourceCanvas.height =
-    paintCanvas.height;
+previewCanvas.height =
+paintCanvas.height;
 
 
-  previewContext.imageSmoothingEnabled =
-    false;
+previewSourceCanvas.width =
+paintCanvas.width;
+
+previewSourceCanvas.height =
+paintCanvas.height;
 
 
-  previewSourceContext
-    .imageSmoothingEnabled =
-      false;
+previewContext.imageSmoothingEnabled =
+false;
 
 
-  /*
-    まず左右反転した
-    通常のプレビュー画像を作る
-  */
-
-  previewSourceContext.clearRect(
-    0,
-    0,
-    previewSourceCanvas.width,
-    previewSourceCanvas.height
-  );
+previewSourceContext
+.imageSmoothingEnabled =
+false;
 
 
-  previewSourceContext.save();
+/*
+まず左右反転した
+通常のプレビュー画像を作る
+*/
+
+previewSourceContext.clearRect(
+0,
+0,
+previewSourceCanvas.width,
+previewSourceCanvas.height
+);
 
 
-  previewSourceContext.translate(
-    previewSourceCanvas.width,
-    0
-  );
+previewSourceContext.save();
 
 
-  previewSourceContext.scale(
-    -1,
-    1
-  );
+previewSourceContext.translate(
+previewSourceCanvas.width,
+0
+);
 
 
-  previewSourceContext.drawImage(
-    paintCanvas,
-    0,
-    0
-  );
+previewSourceContext.scale(
+-1,
+1
+);
 
 
-  previewSourceContext.restore();
+previewSourceContext.drawImage(
+paintCanvas,
+0,
+0
+);
 
 
-  /*
-    左端位置をCanvas上の
-    X座標へ変換する
-  */
-
-  const width =
-    previewCanvas.width;
+previewSourceContext.restore();
 
 
-  const height =
-    previewCanvas.height;
+/*
+左端位置をCanvas上の
+X座標へ変換する
+*/
+
+const width =
+previewCanvas.width;
 
 
-  const normalizedRatio =
-    (
-      (
-        previewSeamRatio %
-        1
-      ) +
-      1
-    ) % 1;
+const height =
+previewCanvas.height;
 
 
-  const seamX =
-    Math.round(
-      normalizedRatio *
-      width
-    ) % width;
+const normalizedRatio =
+(
+(
+previewSeamRatio %
+1
+) +
+1
+) % 1;
 
 
-  previewContext.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
+const seamX =
+Math.round(
+normalizedRatio *
+width
+) % width;
 
 
-  /*
-    seamX以降を
-    左側へ描画
-  */
-
-  const rightWidth =
-    width -
-    seamX;
+previewContext.clearRect(
+0,
+0,
+width,
+height
+);
 
 
-  if (rightWidth > 0) {
+/*
+seamX以降を
+左側へ描画
+*/
 
-    previewContext.drawImage(
-      previewSourceCanvas,
-
-      seamX,
-      0,
-      rightWidth,
-      height,
-
-      0,
-      0,
-      rightWidth,
-      height
-    );
-  }
+const rightWidth =
+width -
+seamX;
 
 
-  /*
-    元画像の左側部分を
-    右端へつなげる。
+if (rightWidth > 0) {
 
-    360°なので継ぎ目なく
-    循環させることができる。
-  */
+previewContext.drawImage(
+previewSourceCanvas,
 
-  if (seamX > 0) {
+seamX,
+0,
+rightWidth,
+height,
 
-    previewContext.drawImage(
-      previewSourceCanvas,
+0,
+0,
+rightWidth,
+height
+);
+}
 
-      0,
-      0,
-      seamX,
-      height,
 
-      rightWidth,
-      0,
-      seamX,
-      height
-    );
-  }
+/*
+元画像の左側部分を
+右端へつなげる。
+
+360°なので継ぎ目なく
+循環させることができる。
+*/
+
+if (seamX > 0) {
+
+previewContext.drawImage(
+previewSourceCanvas,
+
+0,
+0,
+seamX,
+height,
+
+rightWidth,
+0,
+seamX,
+height
+);
+}
 }
 
 /* ================================
@@ -2054,212 +3411,213 @@ throw new Error(
 
 }
 
+
 /* ================================
-   PNG書き出し
+PNG書き出し
 ================================ */
 
 function downloadPNG() {
 
-  /*
-    念のため最新の描画内容を
-    paintCanvasへ反映
-  */
+/*
+念のため最新の描画内容を
+paintCanvasへ反映
+*/
 
-  updatePaintCanvas();
-
-
-  /*
-    書き出し専用Canvas
-  */
-
-  const exportCanvas =
-    document.createElement("canvas");
-
-  exportCanvas.width =
-    outputWidth;
-
-  exportCanvas.height =
-    outputHeight;
-
-  const exportContext =
-    exportCanvas.getContext("2d");
-
-  exportContext.imageSmoothingEnabled =
-    false;
+updatePaintCanvas();
 
 
-  /*
-    まず、プレビューと同じ並び順の
-    元画像を作るための一時Canvasを用意する
-  */
+/*
+書き出し専用Canvas
+*/
 
-  const previewLikeSourceCanvas =
-    document.createElement("canvas");
+const exportCanvas =
+document.createElement("canvas");
 
-  previewLikeSourceCanvas.width =
-    paintCanvas.width;
+exportCanvas.width =
+outputWidth;
 
-  previewLikeSourceCanvas.height =
-    paintCanvas.height;
+exportCanvas.height =
+outputHeight;
 
-  const previewLikeSourceContext =
-    previewLikeSourceCanvas.getContext("2d");
+const exportContext =
+exportCanvas.getContext("2d");
 
-  previewLikeSourceContext.imageSmoothingEnabled =
-    false;
-
-
-  /*
-    左右反転した通常の
-    360°長方形画像を作る
-  */
-
-  previewLikeSourceContext.clearRect(
-    0,
-    0,
-    previewLikeSourceCanvas.width,
-    previewLikeSourceCanvas.height
-  );
-
-  previewLikeSourceContext.save();
-
-  previewLikeSourceContext.translate(
-    previewLikeSourceCanvas.width,
-    0
-  );
-
-  previewLikeSourceContext.scale(
-    -1,
-    1
-  );
-
-  previewLikeSourceContext.drawImage(
-    paintCanvas,
-    0,
-    0
-  );
-
-  previewLikeSourceContext.restore();
+exportContext.imageSmoothingEnabled =
+false;
 
 
-  /*
-    次に、プレビューと同じく
-    左端位置を previewSeamRatio に合わせて
-    循環移動した画像を作る
-  */
+/*
+まず、プレビューと同じ並び順の
+元画像を作るための一時Canvasを用意する
+*/
 
-  const previewLikeCanvas =
-    document.createElement("canvas");
+const previewLikeSourceCanvas =
+document.createElement("canvas");
 
-  previewLikeCanvas.width =
-    paintCanvas.width;
+previewLikeSourceCanvas.width =
+paintCanvas.width;
 
-  previewLikeCanvas.height =
-    paintCanvas.height;
+previewLikeSourceCanvas.height =
+paintCanvas.height;
 
-  const previewLikeContext =
-    previewLikeCanvas.getContext("2d");
+const previewLikeSourceContext =
+previewLikeSourceCanvas.getContext("2d");
 
-  previewLikeContext.imageSmoothingEnabled =
-    false;
-
-
-  const sourceWidth =
-    previewLikeCanvas.width;
-
-  const sourceHeight =
-    previewLikeCanvas.height;
-
-  const normalizedRatio =
-    (
-      (
-        previewSeamRatio %
-        1
-      ) +
-      1
-    ) % 1;
-
-  const seamX =
-    Math.round(
-      normalizedRatio *
-      sourceWidth
-    ) % sourceWidth;
+previewLikeSourceContext.imageSmoothingEnabled =
+false;
 
 
-  previewLikeContext.clearRect(
-    0,
-    0,
-    sourceWidth,
-    sourceHeight
-  );
+/*
+左右反転した通常の
+360°長方形画像を作る
+*/
+
+previewLikeSourceContext.clearRect(
+0,
+0,
+previewLikeSourceCanvas.width,
+previewLikeSourceCanvas.height
+);
+
+previewLikeSourceContext.save();
+
+previewLikeSourceContext.translate(
+previewLikeSourceCanvas.width,
+0
+);
+
+previewLikeSourceContext.scale(
+-1,
+1
+);
+
+previewLikeSourceContext.drawImage(
+paintCanvas,
+0,
+0
+);
+
+previewLikeSourceContext.restore();
 
 
-  /*
-    seamX 以降を左側へ描画
-  */
+/*
+次に、プレビューと同じく
+左端位置を previewSeamRatio に合わせて
+循環移動した画像を作る
+*/
 
-  const rightWidth =
-    sourceWidth - seamX;
+const previewLikeCanvas =
+document.createElement("canvas");
 
-  if (rightWidth > 0) {
+previewLikeCanvas.width =
+paintCanvas.width;
 
-    previewLikeContext.drawImage(
-      previewLikeSourceCanvas,
-      seamX,
-      0,
-      rightWidth,
-      sourceHeight,
-      0,
-      0,
-      rightWidth,
-      sourceHeight
-    );
-  }
+previewLikeCanvas.height =
+paintCanvas.height;
 
+const previewLikeContext =
+previewLikeCanvas.getContext("2d");
 
-  /*
-    元画像左側を右端へつなげる
-  */
-
-  if (seamX > 0) {
-
-    previewLikeContext.drawImage(
-      previewLikeSourceCanvas,
-      0,
-      0,
-      seamX,
-      sourceHeight,
-      rightWidth,
-      0,
-      seamX,
-      sourceHeight
-    );
-  }
+previewLikeContext.imageSmoothingEnabled =
+false;
 
 
-  /*
-    プレビューと同じ並び順の画像を
-    出力サイズへ拡大して書き出す
-  */
+const sourceWidth =
+previewLikeCanvas.width;
 
-  exportContext.clearRect(
-    0,
-    0,
-    outputWidth,
-    outputHeight
-  );
+const sourceHeight =
+previewLikeCanvas.height;
 
-  exportContext.drawImage(
-    previewLikeCanvas,
-    0,
-    0,
-    sourceWidth,
-    sourceHeight,
-    0,
-    0,
-    outputWidth,
-    outputHeight
-  );
+const normalizedRatio =
+(
+(
+previewSeamRatio %
+1
+) +
+1
+) % 1;
+
+const seamX =
+Math.round(
+normalizedRatio *
+sourceWidth
+) % sourceWidth;
+
+
+previewLikeContext.clearRect(
+0,
+0,
+sourceWidth,
+sourceHeight
+);
+
+
+/*
+seamX 以降を左側へ描画
+*/
+
+const rightWidth =
+sourceWidth - seamX;
+
+if (rightWidth > 0) {
+
+previewLikeContext.drawImage(
+previewLikeSourceCanvas,
+seamX,
+0,
+rightWidth,
+sourceHeight,
+0,
+0,
+rightWidth,
+sourceHeight
+);
+}
+
+
+/*
+元画像左側を右端へつなげる
+*/
+
+if (seamX > 0) {
+
+previewLikeContext.drawImage(
+previewLikeSourceCanvas,
+0,
+0,
+seamX,
+sourceHeight,
+rightWidth,
+0,
+seamX,
+sourceHeight
+);
+}
+
+
+/*
+プレビューと同じ並び順の画像を
+出力サイズへ拡大して書き出す
+*/
+
+exportContext.clearRect(
+0,
+0,
+outputWidth,
+outputHeight
+);
+
+exportContext.drawImage(
+previewLikeCanvas,
+0,
+0,
+sourceWidth,
+sourceHeight,
+0,
+0,
+outputWidth,
+outputHeight
+);
 
 
 /*
@@ -2367,1057 +3725,1077 @@ downloadUrl
 
 
 /* ================================
-   プロジェクト保存
+プロジェクト保存
 ================================ */
 
-function downloadProject() {
+function downloadProject(
+returnData = false
+) {
 
-  const projectData = {
+const projectData = {
 
-    format:
-      "gururi-paint-project",
+format:
+"gururi-paint-project",
 
-    version: 1,
+version: 1,
 
-    savedAt:
-      new Date().toISOString(),
-
-
-    /*
-      Canvas
-    */
-
-    canvas: {
-
-      editWidth:
-        paintCanvas.width,
-
-      editHeight:
-        paintCanvas.height,
-
-      outputWidth,
-
-      outputHeight
-    },
+savedAt:
+new Date().toISOString(),
 
 
-    /*
-      視点
-    */
+/*
+Canvas
+*/
 
-    view: {
+canvas: {
 
-      eyeHeight:
-        camera.position.y,
+editWidth:
+paintCanvas.width,
 
-      yaw,
+editHeight:
+paintCanvas.height,
 
-      pitch,
+outputWidth,
 
-      fov:
-        camera.fov,
+outputHeight
+},
+
+
+/*
+視点
+*/
+
+view: {
+
+eyeHeight:
+camera.position.y,
+
+yaw,
+
+pitch,
+
+fov:
+camera.fov,
 
 guideVisible:
-        groundToggle.checked,
+groundToggle.checked,
 
-      previewSeamRatio
-    },
-
-
-    /*
-      描画ツール
-    */
-
-    tools: {
-
-      penColor,
-
-      penSize,
-
-      savedPenSize,
-
-      savedEraserSize,
-
-      recentColors:
-        [...recentColors],
-
-      currentTool
-    },
+previewSeamRatio
+},
 
 
-    /*
-      レイヤー管理
-    */
+/*
+描画ツール
+*/
 
-    layerState: {
+tools: {
 
-      activeLayerId,
+penColor,
 
-      nextLayerId,
+penSize,
 
-      nextLayerNumber
-    },
+savedPenSize,
+
+savedEraserSize,
+
+recentColors:
+[...recentColors],
+
+currentTool
+},
 
 
-    /*
-      各レイヤーを
-      透明PNGとして保存
-    */
+/*
+レイヤー管理
+*/
 
-    layers:
-      layers.map(
-        (layer) => ({
+layerState: {
 
-          id:
-            layer.id,
+activeLayerId,
 
-          name:
-            layer.name,
+nextLayerId,
+
+nextLayerNumber
+},
+
+
+/*
+各レイヤーを
+透明PNGとして保存
+*/
+
+layers:
+layers.map(
+(layer) => ({
+
+id:
+layer.id,
+
+name:
+layer.name,
 
 visible:
-            layer.visible,
+layer.visible,
 
-          opacity:
-            typeof layer.opacity ===
-              "number"
-              ? layer.opacity
-              : 1,
+opacity:
+typeof layer.opacity ===
+"number"
+? layer.opacity
+: 1,
 
-          image:
-            layer.canvas.toDataURL(
-              "image/png"
-            )
-        })
-      )
-  };
-
-
-  const json =
-    JSON.stringify(
-      projectData
-    );
+image:
+layer.canvas.toDataURL(
+"image/png"
+)
+})
+)
+};
 
 
-  const blob =
-    new Blob(
-      [json],
-      {
-        type:
-          "application/json"
-      }
-    );
+const json =
+JSON.stringify(
+projectData
+);
 
 
-  const url =
-    URL.createObjectURL(
-      blob
-    );
+if (returnData) {
+return json;
+}
 
 
-  const now =
-    new Date();
+const blob =
+new Blob(
+[json],
+{
+type:
+"application/json"
+}
+);
 
 
-  const pad =
-    (value) =>
-      String(value)
-        .padStart(2, "0");
+const url =
+URL.createObjectURL(
+blob
+);
 
 
-  const filename =
-    "gururi-" +
-    now.getFullYear() +
-    pad(
-      now.getMonth() + 1
-    ) +
-    pad(
-      now.getDate()
-    ) +
-    "-" +
-    pad(
-      now.getHours()
-    ) +
-    pad(
-      now.getMinutes()
-    ) +
-    ".gururi";
+const now =
+new Date();
 
 
-  const link =
-    document.createElement("a");
+const pad =
+(value) =>
+String(value)
+.padStart(2, "0");
 
 
-  link.href =
-    url;
+const filename =
+"gururi-" +
+now.getFullYear() +
+pad(
+now.getMonth() + 1
+) +
+pad(
+now.getDate()
+) +
+"-" +
+pad(
+now.getHours()
+) +
+pad(
+now.getMinutes()
+) +
+".gururi";
 
-  link.download =
-    filename;
+
+const link =
+document.createElement("a");
 
 
-  document.body.appendChild(
-    link
-  );
+link.href =
+url;
 
-  link.click();
-
-  link.remove();
+link.download =
+filename;
 
 
-  setTimeout(
-    () => {
+document.body.appendChild(
+link
+);
 
-      URL.revokeObjectURL(
-        url
-      );
-    },
-    1000
-  );
+link.click();
+
+link.remove();
+
+
+setTimeout(
+() => {
+
+URL.revokeObjectURL(
+url
+);
+},
+1000
+);
 }
 
 
 /* ================================
-   プロジェクト読み込み
+プロジェクト読み込み
 ================================ */
 
 function loadProjectImage(
-  source
+source
 ) {
 
-  return new Promise(
-    (
-      resolve,
-      reject
-    ) => {
+return new Promise(
+(
+resolve,
+reject
+) => {
 
-      const image =
-        new Image();
-
-
-      image.onload =
-        () => {
-
-          resolve(
-            image
-          );
-        };
+const image =
+new Image();
 
 
-      image.onerror =
-        () => {
+image.onload =
+() => {
 
-          reject(
-            new Error(
-              "レイヤー画像を読み込めませんでした。"
-            )
-          );
-        };
+resolve(
+image
+);
+};
 
 
-      image.src =
-        source;
-    }
-  );
+image.onerror =
+() => {
+
+reject(
+new Error(
+"レイヤー画像を読み込めませんでした。"
+)
+);
+};
+
+
+image.src =
+source;
+}
+);
 }
 
 
 function clampProjectNumber(
-  value,
-  min,
-  max,
-  fallback
+value,
+min,
+max,
+fallback
 ) {
 
-  const number =
-    Number(value);
+const number =
+Number(value);
 
 
-  if (
-    !Number.isFinite(
-      number
-    )
-  ) {
+if (
+!Number.isFinite(
+number
+)
+) {
 
-    return fallback;
-  }
+return fallback;
+}
 
 
-  return Math.max(
-    min,
-    Math.min(
-      max,
-      number
-    )
-  );
+return Math.max(
+min,
+Math.min(
+max,
+number
+)
+);
 }
 
 
 async function loadProject(
-  file
+file
 ) {
 
-  const text =
-    await file.text();
-
-
-  const projectData =
-    JSON.parse(
-      text
-    );
+const text =
+await file.text();
+
+
+const projectData =
+JSON.parse(
+text
+);
 
-
-  /*
-    ぐるりペイントの
-    保存データか確認
-  */
+
+/*
+ぐるりペイントの
+保存データか確認
+*/
 
-  if (
-    projectData.format !==
-      "gururi-paint-project" ||
-    projectData.version !== 1 ||
-    !Array.isArray(
-      projectData.layers
-    ) ||
-    projectData.layers.length === 0
-  ) {
+if (
+projectData.format !==
+"gururi-paint-project" ||
+projectData.version !== 1 ||
+!Array.isArray(
+projectData.layers
+) ||
+projectData.layers.length === 0
+) {
 
-    throw new Error(
-      "ぐるりペイントの保存データではありません。"
-    );
-  }
+throw new Error(
+"ぐるりペイントの保存データではありません。"
+);
+}
 
 
-  /*
-    編集Canvasサイズ
-  */
+/*
+編集Canvasサイズ
+*/
 
-  const editWidth =
-    Math.round(
-      clampProjectNumber(
-        projectData.canvas
-          ?.editWidth,
-        256,
-        8192,
-        2048
-      )
-    );
+const editWidth =
+Math.round(
+clampProjectNumber(
+projectData.canvas
+?.editWidth,
+256,
+8192,
+2048
+)
+);
 
 
-  const editHeight =
-    Math.round(
-      clampProjectNumber(
-        projectData.canvas
-          ?.editHeight,
-        128,
-        4096,
-        1024
-      )
-    );
+const editHeight =
+Math.round(
+clampProjectNumber(
+projectData.canvas
+?.editHeight,
+128,
+4096,
+1024
+)
+);
 
 
-  paintCanvas.width =
-    editWidth;
+paintCanvas.width =
+editWidth;
 
-  paintCanvas.height =
-    editHeight;
+paintCanvas.height =
+editHeight;
 
-  paintContext
-    .imageSmoothingEnabled =
-      false;
+paintContext
+.imageSmoothingEnabled =
+false;
 
 
-  /*
-    出力サイズ
-  */
+/*
+出力サイズ
+*/
 
-  const savedOutputWidth =
-    Number(
-      projectData.canvas
-        ?.outputWidth
-    );
+const savedOutputWidth =
+Number(
+projectData.canvas
+?.outputWidth
+);
 
+if (
+[
+2048,
+4096
+].includes(
+savedOutputWidth
+)
+) {
 
-  if (
-    [
-      2048,
-      4096,
-      8192
-    ].includes(
-      savedOutputWidth
-    )
-  ) {
+outputWidth =
+savedOutputWidth;
 
-    outputWidth =
-      savedOutputWidth;
+} else {
 
-  } else {
+outputWidth =
+4096;
+}
 
-    outputWidth =
-      4096;
-  }
 
+outputHeight =
+outputWidth / 2;
 
-  outputHeight =
-    outputWidth / 2;
+canvasSizeSelect.value =
+String(
+outputWidth
+);
 
 
-  canvasSizeSelect.value =
-    String(
-      outputWidth
-    );
+/*
+レイヤーを復元
+*/
 
+const loadedLayers = [];
 
-  /*
-    レイヤーを復元
-  */
 
-  const loadedLayers = [];
+for (
+let i = 0;
+i <
+projectData.layers.length;
+i++
+) {
 
+const layerData =
+projectData.layers[i];
 
-  for (
-    let i = 0;
-    i <
-      projectData.layers.length;
-    i++
-  ) {
 
-    const layerData =
-      projectData.layers[i];
+if (
+typeof layerData.image !==
+"string"
+) {
 
+throw new Error(
+"レイヤー画像が壊れています。"
+);
+}
 
-    if (
-      typeof layerData.image !==
-        "string"
-    ) {
 
-      throw new Error(
-        "レイヤー画像が壊れています。"
-      );
-    }
+const {
+canvas,
+context
+} =
+createLayerCanvas();
 
 
-    const {
-      canvas,
-      context
-    } =
-      createLayerCanvas();
+const image =
+await loadProjectImage(
+layerData.image
+);
 
 
-    const image =
-      await loadProjectImage(
-        layerData.image
-      );
+context.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
 
 
-    context.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+context.drawImage(
+image,
+0,
+0,
+canvas.width,
+canvas.height
+);
 
 
-    context.drawImage(
-      image,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+/*
+Undo用の基準画像を作る
+*/
 
+const baseCanvas =
+document.createElement(
+"canvas"
+);
 
-    /*
-      Undo用の基準画像を作る
-    */
 
-    const baseCanvas =
-      document.createElement(
-        "canvas"
-      );
+baseCanvas.width =
+canvas.width;
 
+baseCanvas.height =
+canvas.height;
 
-    baseCanvas.width =
-      canvas.width;
 
-    baseCanvas.height =
-      canvas.height;
+const baseContext =
+baseCanvas.getContext(
+"2d"
+);
 
 
-    const baseContext =
-      baseCanvas.getContext(
-        "2d"
-      );
+baseContext
+.imageSmoothingEnabled =
+false;
 
 
-    baseContext
-      .imageSmoothingEnabled =
-        false;
+baseContext.drawImage(
+canvas,
+0,
+0
+);
 
 
-    baseContext.drawImage(
-      canvas,
-      0,
-      0
-    );
+const layerId =
+Number(
+layerData.id
+);
 
 
-    const layerId =
-      Number(
-        layerData.id
-      );
+loadedLayers.push({
 
+id:
+Number.isInteger(
+layerId
+)
+? layerId
+: i + 1,
 
-    loadedLayers.push({
+name:
+typeof layerData.name ===
+"string" &&
+layerData.name.trim()
+? layerData.name
+: `レイヤー${i + 1}`,
 
-      id:
-        Number.isInteger(
-          layerId
-        )
-          ? layerId
-          : i + 1,
+canvas,
 
-      name:
-        typeof layerData.name ===
-          "string" &&
-        layerData.name.trim()
-          ? layerData.name
-          : `レイヤー${i + 1}`,
+context,
 
-      canvas,
-
-      context,
-
-      baseCanvas,
+baseCanvas,
 
 visible:
-        layerData.visible !==
-          false,
+layerData.visible !==
+false,
 
-      opacity:
-        clampProjectNumber(
-          layerData.opacity,
-          0,
-          1,
-          1
-        )
-    });
-  }
-
-
-  /*
-    現在のレイヤー配列を
-    読み込んだものへ置換
-  */
-
-  layers.splice(
-    0,
-    layers.length,
-    ...loadedLayers
-  );
+opacity:
+clampProjectNumber(
+layerData.opacity,
+0,
+1,
+1
+)
+});
+}
 
 
-  /*
-    レイヤーID管理
-  */
+/*
+現在のレイヤー配列を
+読み込んだものへ置換
+*/
 
-  const maxLayerId =
-    Math.max(
-      ...layers.map(
-        (layer) =>
-          layer.id
-      )
-    );
-
-
-  nextLayerId =
-    Math.max(
-      maxLayerId + 1,
-      Number(
-        projectData
-          .layerState
-          ?.nextLayerId
-      ) ||
-        maxLayerId + 1
-    );
+layers.splice(
+0,
+layers.length,
+...loadedLayers
+);
 
 
-  nextLayerNumber =
-    Math.max(
-      layers.length + 1,
-      Number(
-        projectData
-          .layerState
-          ?.nextLayerNumber
-      ) ||
-        layers.length + 1
-    );
+/*
+レイヤーID管理
+*/
+
+const maxLayerId =
+Math.max(
+...layers.map(
+(layer) =>
+layer.id
+)
+);
 
 
-  const savedActiveLayerId =
-    Number(
-      projectData
-        .layerState
-        ?.activeLayerId
-    );
+nextLayerId =
+Math.max(
+maxLayerId + 1,
+Number(
+projectData
+.layerState
+?.nextLayerId
+) ||
+maxLayerId + 1
+);
 
 
-  if (
-    getLayerById(
-      savedActiveLayerId
-    )
-  ) {
-
-    activeLayerId =
-      savedActiveLayerId;
-
-  } else {
-
-    activeLayerId =
-      layers[
-        layers.length - 1
-      ].id;
-  }
+nextLayerNumber =
+Math.max(
+layers.length + 1,
+Number(
+projectData
+.layerState
+?.nextLayerNumber
+) ||
+layers.length + 1
+);
 
 
-  setActiveLayerReference(
-    activeLayerId
-  );
+const savedActiveLayerId =
+Number(
+projectData
+.layerState
+?.activeLayerId
+);
 
 
-  /*
-    ペン設定
-  */
+if (
+getLayerById(
+savedActiveLayerId
+)
+) {
 
-  const loadedPenColor =
-    projectData.tools
-      ?.penColor;
+activeLayerId =
+savedActiveLayerId;
+
+} else {
+
+activeLayerId =
+layers[
+layers.length - 1
+].id;
+}
 
 
-  if (
-    typeof loadedPenColor ===
-      "string" &&
-    /^#[0-9a-fA-F]{6}$/.test(
-      loadedPenColor
-    )
-  ) {
+setActiveLayerReference(
+activeLayerId
+);
+
+
+/*
+ペン設定
+*/
+
+const loadedPenColor =
+projectData.tools
+?.penColor;
+
+
+if (
+typeof loadedPenColor ===
+"string" &&
+/^#[0-9a-fA-F]{6}$/.test(
+loadedPenColor
+)
+) {
 
 setPenColor(
-      loadedPenColor
-    );
-  }
+loadedPenColor
+);
+}
 
 
-  savedPenSize =
-    clampProjectNumber(
-      projectData.tools
-        ?.savedPenSize,
-      1,
-      50,
-      3
-    );
+savedPenSize =
+clampProjectNumber(
+projectData.tools
+?.savedPenSize,
+1,
+50,
+3
+);
 
 
-  savedEraserSize =
-    clampProjectNumber(
-      projectData.tools
-        ?.savedEraserSize,
-      1,
-      50,
-      10
-    );
+savedEraserSize =
+clampProjectNumber(
+projectData.tools
+?.savedEraserSize,
+1,
+50,
+10
+);
 
 
-  penSize =
-    clampProjectNumber(
-      projectData.tools
-        ?.penSize,
-      1,
-      50,
-      savedPenSize
-    );
+penSize =
+clampProjectNumber(
+projectData.tools
+?.penSize,
+1,
+50,
+savedPenSize
+);
 
 
-  penSizeInput.value =
-    penSize;
+penSizeInput.value =
+penSize;
 
-  penSizeValue.value =
-    penSize;
-
-
-  /*
-    最近使用した色
-  */
-
-  if (
-    Array.isArray(
-      projectData.tools
-        ?.recentColors
-    )
-  ) {
-
-    recentColors =
-      projectData.tools
-        .recentColors
-        .filter(
-          (color) =>
-            typeof color ===
-              "string" &&
-            /^#[0-9a-fA-F]{6}$/.test(
-              color
-            )
-        )
-        .map(
-          (color) =>
-            color.toLowerCase()
-        )
-        .slice(
-          0,
-          8
-        );
-
-  } else {
-
-    recentColors = [];
-  }
+penSizeValue.value =
+penSize;
 
 
-  renderRecentColors();
+/*
+最近使用した色
+*/
+
+if (
+Array.isArray(
+projectData.tools
+?.recentColors
+)
+) {
+
+recentColors =
+projectData.tools
+.recentColors
+.filter(
+(color) =>
+typeof color ===
+"string" &&
+/^#[0-9a-fA-F]{6}$/.test(
+color
+)
+)
+.map(
+(color) =>
+color.toLowerCase()
+)
+.slice(
+0,
+8
+);
+
+} else {
+
+recentColors = [];
+}
 
 
-  /*
-    使用ツール
-  */
-
-  const loadedTool =
-    projectData.tools
-      ?.currentTool;
+renderRecentColors();
 
 
-  if (
-    [
-      "pen",
-      "eraser",
-      "bucket",
-      "eyedropper"
-    ].includes(
-      loadedTool
-    )
-  ) {
+/*
+使用ツール
+*/
 
-    currentTool =
-      loadedTool;
-
-  } else {
-
-    currentTool =
-      "pen";
-  }
+const loadedTool =
+projectData.tools
+?.currentTool;
 
 
-  penToolButton
-    .classList
-    .toggle(
-      "is-active",
-      currentTool === "pen"
-    );
+if (
+[
+"pen",
+"eraser",
+"bucket",
+"eyedropper",
+"look"
+].includes(
+loadedTool
+)
+) {
 
-  eraserToolButton
-    .classList
-    .toggle(
-      "is-active",
-      currentTool === "eraser"
-    );
+currentTool =
+loadedTool;
 
-  bucketToolButton
-    .classList
-    .toggle(
-      "is-active",
-      currentTool === "bucket"
-    );
+} else {
 
-  eyedropperToolButton
-    .classList
-    .toggle(
-      "is-active",
-      currentTool ===
-        "eyedropper"
-    );
+currentTool =
+"pen";
+}
 
 
-  if (
-    currentTool === "bucket" ||
-    currentTool === "eyedropper"
-  ) {
+penToolButton
+.classList
+.toggle(
+"is-active",
+currentTool === "pen"
+);
 
-    renderer
-      .domElement
-      .style
-      .cursor =
-        "crosshair";
+eraserToolButton
+.classList
+.toggle(
+"is-active",
+currentTool === "eraser"
+);
 
-  } else {
+bucketToolButton
+.classList
+.toggle(
+"is-active",
+currentTool === "bucket"
+);
 
-    renderer
-      .domElement
-      .style
-      .cursor =
-        "none";
-  }
+eyedropperToolButton
+.classList
+.toggle(
+"is-active",
+currentTool ===
+"eyedropper"
+);
 
-
-  eraserCursor.visible =
-    false;
-
-
-  /*
-    目線
-  */
-
-  const eyeHeight =
-    clampProjectNumber(
-      projectData.view
-        ?.eyeHeight,
-      0.5,
-      30,
-      1.5
-    );
-
-
-  camera.position.y =
-    eyeHeight;
+lookToolButton
+.classList
+.toggle(
+"is-active",
+currentTool ===
+"look"
+);
 
 
-  eyeHeightInput.value =
-    eyeHeight;
+if (
+currentTool === "bucket" ||
+currentTool === "eyedropper"
+) {
 
-  eyeHeightValue.value =
-    eyeHeight.toFixed(1);
+renderer
+.domElement
+.style
+.cursor =
+"crosshair";
+
+} else if (
+currentTool === "look"
+) {
+
+renderer
+.domElement
+.style
+.cursor =
+"grab";
+
+} else {
+
+renderer
+.domElement
+.style
+.cursor =
+"none";
+}
+
+
+eraserCursor.visible =
+false;
+
+
+/*
+目線
+*/
+
+const eyeHeight =
+clampProjectNumber(
+projectData.view
+?.eyeHeight,
+0.5,
+30,
+1.5
+);
+
+
+camera.position.y =
+eyeHeight;
+
+
+eyeHeightInput.value =
+eyeHeight;
+
+eyeHeightValue.value =
+eyeHeight.toFixed(1);
 
 
 updateGroundGridSize(
-    eyeHeight
-  );
+eyeHeight
+);
 
-  updateHorizontalGuideHeight(
-    eyeHeight
-  );
-
-
-  /*
-    カメラ方向
-  */
-
-  const savedYaw =
-    Number(
-      projectData.view
-        ?.yaw
-    );
-
-  const savedPitch =
-    Number(
-      projectData.view
-        ?.pitch
-    );
+updateHorizontalGuideHeight(
+eyeHeight
+);
 
 
-  yaw =
-    Number.isFinite(
-      savedYaw
-    )
-      ? savedYaw
-      : 0;
+/*
+カメラ方向
+*/
+
+const savedYaw =
+Number(
+projectData.view
+?.yaw
+);
+
+const savedPitch =
+Number(
+projectData.view
+?.pitch
+);
 
 
-  const pitchLimit =
-    Math.PI / 2 -
-    0.01;
+yaw =
+Number.isFinite(
+savedYaw
+)
+? savedYaw
+: 0;
 
 
-  pitch =
-    Number.isFinite(
-      savedPitch
-    )
-      ? Math.max(
-          -pitchLimit,
-          Math.min(
-            pitchLimit,
-            savedPitch
-          )
-        )
-      : 0;
+const pitchLimit =
+Math.PI / 2 -
+0.01;
 
 
-  /*
-    ズーム
-  */
-
-  camera.fov =
-    clampProjectNumber(
-      projectData.view
-        ?.fov,
-      20,
-      120,
-      85
-    );
-
-
-  camera
-    .updateProjectionMatrix();
+pitch =
+Number.isFinite(
+savedPitch
+)
+? Math.max(
+-pitchLimit,
+Math.min(
+pitchLimit,
+savedPitch
+)
+)
+: 0;
 
 
-  /*
-    補助グリッド
-  */
+/*
+ズーム
+*/
 
-  const guideVisible =
-    projectData.view
-      ?.guideVisible !==
-        false;
-
-
-  groundToggle.checked =
-    guideVisible;
-
-  groundGrid.visible =
-    guideVisible;
-
-  verticalGuides.visible =
-    guideVisible;
-
-  horizontalGuides.visible =
-    guideVisible;
+camera.fov =
+clampProjectNumber(
+projectData.view
+?.fov,
+20,
+120,
+85
+);
 
 
-  /*
-    プレビュー画像の
-    左端位置を復元する。
-
-    古い保存データには
-    この値がないため0を使用する。
-  */
-
-  previewSeamRatio =
-    clampProjectNumber(
-      projectData.view
-        ?.previewSeamRatio,
-      0,
-      1,
-      0
-    );
+camera
+.updateProjectionMatrix();
 
 
-  /*
-    1は0と同じ位置なので
-    0へ統一する
-  */
+/*
+補助グリッド
+*/
 
-  if (
-    previewSeamRatio >= 1
-  ) {
-    previewSeamRatio = 0;
-  }
+const guideVisible =
+projectData.view
+?.guideVisible !==
+false;
 
 
-  previewDragRatio = 0;
+groundToggle.checked =
+guideVisible;
+
+groundGrid.visible =
+guideVisible;
+
+verticalGuides.visible =
+guideVisible;
+
+horizontalGuides.visible =
+guideVisible;
 
 
-  previewSeamHandle
-    .style
-    .left =
-      "0px";
+/*
+プレビュー画像の
+左端位置を復元する。
+
+古い保存データには
+この値がないため0を使用する。
+*/
+
+previewSeamRatio =
+clampProjectNumber(
+projectData.view
+?.previewSeamRatio,
+0,
+1,
+0
+);
 
 
-  /*
-    読み込み前の
-    Undo / Redo履歴は破棄
-  */
+/*
+1は0と同じ位置なので
+0へ統一する
+*/
 
-  strokeHistory.length = 0;
-
-  redoStrokeHistory.length = 0;
-
-  currentStroke = null;
-
-  isDrawing = false;
+if (
+previewSeamRatio >= 1
+) {
+previewSeamRatio = 0;
+}
 
 
-  /*
-    UIと球体へ反映
-  */
-
-  renderLayerPanel();
-
-  updatePaintCanvas();
-
-  updateCameraDirection();
+previewDragRatio = 0;
 
 
-  alert(
-    "データを読み込みました。"
-  );
+previewSeamHandle
+.style
+.left =
+"0px";
+
+
+/*
+読み込み前の
+Undo / Redo履歴は破棄
+*/
+
+strokeHistory.length = 0;
+
+redoStrokeHistory.length = 0;
+
+currentStroke = null;
+
+isDrawing = false;
+
+
+/*
+UIと球体へ反映
+*/
+
+renderLayerPanel();
+
+updatePaintCanvas();
+
+updateCameraDirection();
+
+scheduleAutoSave();
 }
 
 
 const texture =
-  new THREE.CanvasTexture(paintCanvas);
+new THREE.CanvasTexture(paintCanvas);
 
 texture.colorSpace = THREE.SRGBColorSpace;
 
 
 /* ================================
-   球体
+球体
 ================================ */
 
 /*
-  半径10mの球体。
+半径10mの球体。
 
-  BackSideを指定することで、
-  球体の内側を見ることができます。
+BackSideを指定することで、
+球体の内側を見ることができます。
 */
 
 const geometry =
-  new THREE.SphereGeometry(
-    50,
-    64,
-    32
-  );
+new THREE.SphereGeometry(
+50,
+64,
+32
+);
 
 const material =
-  new THREE.MeshBasicMaterial({
-    map: texture,
-    side: THREE.BackSide
-  });
+new THREE.MeshBasicMaterial({
+map: texture,
+side: THREE.BackSide
+});
 
 const sphere =
-  new THREE.Mesh(
-    geometry,
-    material
-  );
+new THREE.Mesh(
+geometry,
+material
+);
 
 scene.add(sphere);
 
 
 /* ================================
-   ペン／消しゴムカーソル
+ペン／消しゴムカーソル
 ================================ */
 
 const eraserCursorGeometry =
-  new THREE.BufferGeometry();
+new THREE.BufferGeometry();
 
 
 const eraserCursorMaterial =
-  new THREE.LineDashedMaterial({
-    color: 0x222222,
-    dashSize: 0.12,
-    gapSize: 0.08,
-    depthTest: false
-  });
+new THREE.LineDashedMaterial({
+color: 0x222222,
+dashSize: 0.12,
+gapSize: 0.08,
+depthTest: false
+});
 
 
 const eraserCursor =
-  new THREE.LineLoop(
-    eraserCursorGeometry,
-    eraserCursorMaterial
-  );
+new THREE.LineLoop(
+eraserCursorGeometry,
+eraserCursorMaterial
+);
 
 
 eraserCursor.visible = false;
@@ -3425,184 +4803,184 @@ eraserCursor.renderOrder = 20;
 
 
 /*
-  動的に形状を書き換える
-  カーソルなので
-  視錐台カリングを無効化
+動的に形状を書き換える
+カーソルなので
+視錐台カリングを無効化
 */
 
 eraserCursor.frustumCulled = false;
 
 
 scene.add(
-  eraserCursor
+eraserCursor
 );
 
 
 /* ================================
-   地面グリッド
+地面グリッド
 ================================ */
 
 /*
-  巨大な1枚の平面を作り、
-  シェーダーで1m間隔のグリッドを描く。
+巨大な1枚の平面を作り、
+シェーダーで1m間隔のグリッドを描く。
 
-  カメラのfarが1000mなので、
-  2000m四方あれば
-  実質的に無限の地面として見える。
+カメラのfarが1000mなので、
+2000m四方あれば
+実質的に無限の地面として見える。
 */
 
 /*
-  地面グリッドと上空グリッドで共通して使う
-  グリッド面の大きさ。
+地面グリッドと上空グリッドで共通して使う
+グリッド面の大きさ。
 
-  かなり大きくして、
-  無限遠方まで続いて見えるようにする。
+かなり大きくして、
+無限遠方まで続いて見えるようにする。
 */
 
 const guideGridPlaneSize = 20000;
 
 
 const groundGridGeometry =
-  new THREE.PlaneGeometry(
-    guideGridPlaneSize,
-    guideGridPlaneSize
-  );
+new THREE.PlaneGeometry(
+guideGridPlaneSize,
+guideGridPlaneSize
+);
 
 
 const groundGridMaterial =
-  new THREE.ShaderMaterial({
+new THREE.ShaderMaterial({
 
-    uniforms: {
+uniforms: {
 
-      gridSize: {
-        value: 1.0
-      }
-    },
+gridSize: {
+value: 1.0
+}
+},
 
-    transparent: true,
+transparent: true,
 
-    depthTest: false,
+depthTest: false,
 
-    depthWrite: false,
+depthWrite: false,
 
-    side: THREE.DoubleSide,
+side: THREE.DoubleSide,
 
-    vertexShader: `
-      varying vec3 vWorldPosition;
-
-      void main() {
-
-        vec4 worldPosition =
-          modelMatrix *
-          vec4(
-            position,
-            1.0
-          );
-
-        vWorldPosition =
-          worldPosition.xyz;
-
-        gl_Position =
-          projectionMatrix *
-          viewMatrix *
-          worldPosition;
-      }
-    `,
-
-    fragmentShader: `
+vertexShader: `
 varying vec3 vWorldPosition;
 
-      uniform float gridSize;
+void main() {
 
-      void main() {
+vec4 worldPosition =
+modelMatrix *
+vec4(
+position,
+1.0
+);
 
-        /*
-          gridSizeで世界座標を割ることで
-          グリッドの1マスの大きさを変更する
-        */
+vWorldPosition =
+worldPosition.xyz;
 
-        vec2 gridPosition =
-          vWorldPosition.xz /
-          gridSize;
+gl_Position =
+projectionMatrix *
+viewMatrix *
+worldPosition;
+}
+`,
 
+fragmentShader: `
+varying vec3 vWorldPosition;
 
-        /*
-          線を画面上で
-          なめらかに表示する
-        */
+uniform float gridSize;
 
-        vec2 gridDistance =
-          abs(
-            fract(
-              gridPosition -
-              0.5
-            ) -
-            0.5
-          ) /
-          fwidth(
-            gridPosition
-          );
+void main() {
 
+/*
+gridSizeで世界座標を割ることで
+グリッドの1マスの大きさを変更する
+*/
 
-        float line =
-          1.0 -
-          min(
-            min(
-              gridDistance.x,
-              gridDistance.y
-            ),
-            1.0
-          );
+vec2 gridPosition =
+vWorldPosition.xz /
+gridSize;
 
 
-        /*
-          青いグリッド
-        */
+/*
+線を画面上で
+なめらかに表示する
+*/
 
-        vec3 gridColor =
-          vec3(
-            0.25,
-            0.55,
-            1.0
-          );
+vec2 gridDistance =
+abs(
+fract(
+gridPosition -
+0.5
+) -
+0.5
+) /
+fwidth(
+gridPosition
+);
 
 
-        gl_FragColor =
-          vec4(
-            gridColor,
-            line * 0.35
-          );
-      }
-    `
-  });
+float line =
+1.0 -
+min(
+min(
+gridDistance.x,
+gridDistance.y
+),
+1.0
+);
+
+
+/*
+青いグリッド
+*/
+
+vec3 gridColor =
+vec3(
+0.25,
+0.55,
+1.0
+);
+
+
+gl_FragColor =
+vec4(
+gridColor,
+line * 0.35
+);
+}
+`
+});
 
 
 const groundGrid =
-  new THREE.Mesh(
-    groundGridGeometry,
-    groundGridMaterial
-  );
+new THREE.Mesh(
+groundGridGeometry,
+groundGridMaterial
+);
 
 
 /*
-  PlaneGeometryは最初は縦向きなので
-  水平な地面にする
+PlaneGeometryは最初は縦向きなので
+水平な地面にする
 */
 
 groundGrid.rotation.x =
-  -Math.PI / 2;
+-Math.PI / 2;
 
 
 /*
-  高さ0m
+高さ0m
 */
 
 groundGrid.position.y = 0;
 
 
 /*
-  球体より後、
-  アイレベルより前に描画
+球体より後、
+アイレベルより前に描画
 */
 
 groundGrid.renderOrder = 9;
@@ -3611,76 +4989,76 @@ groundGrid.frustumCulled = false;
 
 
 scene.add(
-  groundGrid
+groundGrid
 );
 
 
 /*
-  高さ20mグリッド専用Material
+高さ20mグリッド専用Material
 */
 
 const horizontalGridMaterial =
-  groundGridMaterial.clone();
+groundGridMaterial.clone();
 
 
 /*
-  地面より粗いマス目にする
-  1マス = 10m
+地面より粗いマス目にする
+1マス = 10m
 */
 
 horizontalGridMaterial
-  .uniforms
-  .gridSize
-  .value = 10;
+.uniforms
+.gridSize
+.value = 10;
 
 
 /* ================================
-   目線の高さに合わせて
-   グリッドサイズを変更
+目線の高さに合わせて
+グリッドサイズを変更
 ================================ */
 
 function updateGroundGridSize(
-  eyeHeight
+eyeHeight
 ) {
 
-  /*
-    目線1.5mのとき
-    1マス = 1m
+/*
+目線1.5mのとき
+1マス = 1m
 
-    高さに比例して
-    マス目も大きくする
-  */
+高さに比例して
+マス目も大きくする
+*/
 
 const gridSize =
-  Math.sqrt(
-    eyeHeight / 1.5
-  );
+Math.sqrt(
+eyeHeight / 1.5
+);
 
-  groundGridMaterial
-    .uniforms
-    .gridSize
-    .value =
-      gridSize;
+groundGridMaterial
+.uniforms
+.gridSize
+.value =
+gridSize;
 }
 
 
 /*
-  初期値
-  目線1.5m → 1mグリッド
+初期値
+目線1.5m → 1mグリッド
 */
 
 updateGroundGridSize(
-  camera.position.y
+camera.position.y
 );
 
 
 /* ================================
-   縦方向の補助線
+縦方向の補助線
 ================================ */
 
 /*
-  30度ごとの12方向に、
-  垂直線を遠方まで繰り返す。
+30度ごとの12方向に、
+垂直線を遠方まで繰り返す。
 */
 
 const verticalGuidePoints = [];
@@ -3689,184 +5067,184 @@ const verticalGuideCount = 12;
 
 
 /*
-  垂直線同士の奥行き間隔
+垂直線同士の奥行き間隔
 */
 
 const verticalGuideSpacing = 50;
 
 
 /*
-  カメラのfarが1000mなので、
-  その少し手前まで配置する
+カメラのfarが1000mなので、
+その少し手前まで配置する
 */
 
 const verticalGuideMaxDistance =
-  950;
+950;
 
 
 /*
-  垂直線の高さ
+垂直線の高さ
 */
 
 const verticalGuideHeight = 80;
 
 
 for (
-  let distance =
-    verticalGuideSpacing;
+let distance =
+verticalGuideSpacing;
 
-  distance <=
-    verticalGuideMaxDistance;
+distance <=
+verticalGuideMaxDistance;
 
-  distance +=
-    verticalGuideSpacing
+distance +=
+verticalGuideSpacing
 ) {
 
-  for (
-    let i = 0;
-    i < verticalGuideCount;
-    i++
-  ) {
+for (
+let i = 0;
+i < verticalGuideCount;
+i++
+) {
 
-    const angle =
-      (
-        i /
-        verticalGuideCount
-      ) *
-      Math.PI *
-      2;
-
-
-    const x =
-      Math.cos(angle) *
-      distance;
-
-    const z =
-      Math.sin(angle) *
-      distance;
+const angle =
+(
+i /
+verticalGuideCount
+) *
+Math.PI *
+2;
 
 
-    /*
-      地面から上方向へ
-      垂直線を伸ばす
-    */
+const x =
+Math.cos(angle) *
+distance;
 
-    verticalGuidePoints.push(
-      new THREE.Vector3(
-        x,
-        0,
-        z
-      )
-    );
+const z =
+Math.sin(angle) *
+distance;
 
-    verticalGuidePoints.push(
-      new THREE.Vector3(
-        x,
-        verticalGuideHeight,
-        z
-      )
-    );
-  }
+
+/*
+地面から上方向へ
+垂直線を伸ばす
+*/
+
+verticalGuidePoints.push(
+new THREE.Vector3(
+x,
+0,
+z
+)
+);
+
+verticalGuidePoints.push(
+new THREE.Vector3(
+x,
+verticalGuideHeight,
+z
+)
+);
+}
 }
 
 
 const verticalGuideGeometry =
-  new THREE.BufferGeometry()
-    .setFromPoints(
-      verticalGuidePoints
-    );
+new THREE.BufferGeometry()
+.setFromPoints(
+verticalGuidePoints
+);
 
 
 const verticalGuideMaterial =
-  new THREE.LineBasicMaterial({
+new THREE.LineBasicMaterial({
 
-    color: 0x6699ff,
+color: 0x6699ff,
 
-    transparent: true,
+transparent: true,
 
-    opacity: 0.18,
+opacity: 0.18,
 
-    depthTest: false,
+depthTest: false,
 
-    depthWrite: false
-  });
+depthWrite: false
+});
 
 
 const verticalGuides =
-  new THREE.LineSegments(
-    verticalGuideGeometry,
-    verticalGuideMaterial
-  );
+new THREE.LineSegments(
+verticalGuideGeometry,
+verticalGuideMaterial
+);
 
 
 verticalGuides.renderOrder = 10;
 
 verticalGuides.frustumCulled =
-  false;
+false;
 
 
 scene.add(
-  verticalGuides
+verticalGuides
 );
 
 
 /* ================================
-   高さ20mの水平グリッド
+高さ20mの水平グリッド
 ================================ */
 
 /*
-  地面グリッドと
-  まったく同じGeometry・Materialを使い、
-  高さ20mに1枚だけ配置する
+地面グリッドと
+まったく同じGeometry・Materialを使い、
+高さ20mに1枚だけ配置する
 */
 
 const horizontalGuides =
-  new THREE.Mesh(
-    groundGridGeometry,
-    horizontalGridMaterial
-  );
+new THREE.Mesh(
+groundGridGeometry,
+horizontalGridMaterial
+);
 
 
 horizontalGuides.rotation.x =
-  -Math.PI / 2;
+-Math.PI / 2;
 
 
 /*
-  水平グリッドは
-  常に目線より30m上へ配置する
+水平グリッドは
+常に目線より30m上へ配置する
 */
 
 function updateHorizontalGuideHeight(
-  eyeHeight
+eyeHeight
 ) {
 
-  horizontalGuides.position.y =
-    eyeHeight + 30;
+horizontalGuides.position.y =
+eyeHeight + 30;
 }
 
 
 updateHorizontalGuideHeight(
-  camera.position.y
+camera.position.y
 );
 
 
 /*
-  補助線として前面に表示
+補助線として前面に表示
 */
 
 horizontalGuides.renderOrder =
-  8;
+8;
 
 horizontalGuides.frustumCulled =
-  false;
+false;
 
 
 scene.add(
-  horizontalGuides
+horizontalGuides
 );
 
 /* ================================
-   視点回転
+視点回転
 ================================ */
 
 let isSpacePressed = false;
@@ -3881,15 +5259,16 @@ let previousMouseY = 0;
 let yaw = 0;
 let pitch = 0;
 
+
 /* ================================
-   ペン描画
+ペン描画
 ================================ */
 
 const raycaster =
-  new THREE.Raycaster();
+new THREE.Raycaster();
 
 const pointer =
-  new THREE.Vector2();
+new THREE.Vector2();
 
 let isDrawing = false;
 
@@ -3901,708 +5280,708 @@ let previousMidY = null;
 
 
 /* ================================
-   Undo / Redo
+Undo / Redo
 ================================ */
 
 /*
-  完了したストロークの履歴
+完了したストロークの履歴
 */
 
 const strokeHistory = [];
 
 
 /*
-  Undoしたストロークの履歴
+Undoしたストロークの履歴
 */
 
 const redoStrokeHistory = [];
 
 
 /*
-  現在描画中のストローク
+現在描画中のストローク
 */
 
 let currentStroke = null;
 
 
 /* ================================
-   高速Undo / Redo
+高速Undo / Redo
 ================================ */
 
 /*
-  Canvasを小さなタイルに分け、
-  ストロークが触ったタイルだけ
-  描画前の状態を保存する。
+Canvasを小さなタイルに分け、
+ストロークが触ったタイルだけ
+描画前の状態を保存する。
 
-  128 × 128pxにすることで、
-  短い線でも保存メモリが
-  大きくなりすぎないようにする。
+128 × 128pxにすることで、
+短い線でも保存メモリが
+大きくなりすぎないようにする。
 */
 
 const HISTORY_TILE_SIZE = 128;
 
 
 /*
-  X座標を360°Canvas内へ戻す
+X座標を360°Canvas内へ戻す
 */
 
 function wrapHistoryX(
-  x,
-  width
+x,
+width
 ) {
 
-  return (
-    (x % width) +
-    width
-  ) % width;
+return (
+(x % width) +
+width
+) % width;
 }
 
 
 /*
-  指定された範囲に含まれる
-  タイルを描画前に保存する
+指定された範囲に含まれる
+タイルを描画前に保存する
 */
 
 function captureStrokeTiles(
-  stroke,
-  minX,
-  minY,
-  maxX,
-  maxY
+stroke,
+minX,
+minY,
+maxX,
+maxY
 ) {
 
-  if (
-    !stroke ||
-    !(stroke.tileDiffs instanceof Map)
-  ) {
-    return;
-  }
+if (
+!stroke ||
+!(stroke.tileDiffs instanceof Map)
+) {
+return;
+}
 
 
-  const layer =
-    getLayerById(
-      stroke.layerId
-    );
+const layer =
+getLayerById(
+stroke.layerId
+);
 
 
-  if (!layer) {
-    return;
-  }
+if (!layer) {
+return;
+}
 
 
-  const canvas =
-    layer.canvas;
+const canvas =
+layer.canvas;
 
-  const context =
-    layer.context;
-
-
-  const yStart =
-    Math.max(
-      0,
-      Math.floor(minY)
-    );
-
-  const yEnd =
-    Math.min(
-      canvas.height - 1,
-      Math.ceil(maxY)
-    );
+const context =
+layer.context;
 
 
-  if (yEnd < yStart) {
-    return;
-  }
+const yStart =
+Math.max(
+0,
+Math.floor(minY)
+);
+
+const yEnd =
+Math.min(
+canvas.height - 1,
+Math.ceil(maxY)
+);
 
 
-  /*
-    横方向の一部分を
-    タイル単位で保存する
-  */
-
-  function captureXRange(
-    rangeStart,
-    rangeEnd
-  ) {
-
-    const xStart =
-      Math.max(
-        0,
-        Math.floor(rangeStart)
-      );
-
-    const xEnd =
-      Math.min(
-        canvas.width - 1,
-        Math.ceil(rangeEnd)
-      );
-
-
-    if (xEnd < xStart) {
-      return;
-    }
-
-
-    const firstTileX =
-      Math.floor(
-        xStart /
-        HISTORY_TILE_SIZE
-      );
-
-    const lastTileX =
-      Math.floor(
-        xEnd /
-        HISTORY_TILE_SIZE
-      );
-
-    const firstTileY =
-      Math.floor(
-        yStart /
-        HISTORY_TILE_SIZE
-      );
-
-    const lastTileY =
-      Math.floor(
-        yEnd /
-        HISTORY_TILE_SIZE
-      );
-
-
-    for (
-      let tileY = firstTileY;
-      tileY <= lastTileY;
-      tileY++
-    ) {
-
-      for (
-        let tileX = firstTileX;
-        tileX <= lastTileX;
-        tileX++
-      ) {
-
-        const key =
-          `${tileX}:${tileY}`;
-
-
-        /*
-          同じストローク内で
-          同じタイルは一度だけ保存
-        */
-
-        if (
-          stroke.tileDiffs.has(
-            key
-          )
-        ) {
-          continue;
-        }
-
-
-        const x =
-          tileX *
-          HISTORY_TILE_SIZE;
-
-        const y =
-          tileY *
-          HISTORY_TILE_SIZE;
-
-
-        const width =
-          Math.min(
-            HISTORY_TILE_SIZE,
-            canvas.width - x
-          );
-
-        const height =
-          Math.min(
-            HISTORY_TILE_SIZE,
-            canvas.height - y
-          );
-
-
-        stroke.tileDiffs.set(
-          key,
-          {
-            x,
-            y,
-            width,
-            height,
-
-            imageData:
-              context.getImageData(
-                x,
-                y,
-                width,
-                height
-              )
-          }
-        );
-      }
-    }
-  }
-
-
-  const spanX =
-    Math.max(
-      0,
-      maxX - minX
-    );
-
-
-  /*
-    Canvas一周以上なら
-    横方向すべてを保存
-  */
-
-  if (
-    spanX >= canvas.width
-  ) {
-
-    captureXRange(
-      0,
-      canvas.width - 1
-    );
-
-    return;
-  }
-
-
-  /*
-    左右端をまたぐ場合にも
-    正しくタイルを保存する
-  */
-
-  const wrappedStart =
-    wrapHistoryX(
-      minX,
-      canvas.width
-    );
-
-  const wrappedEnd =
-    wrappedStart +
-    spanX;
-
-
-  if (
-    wrappedEnd <
-    canvas.width
-  ) {
-
-    captureXRange(
-      wrappedStart,
-      wrappedEnd
-    );
-
-  } else {
-
-    captureXRange(
-      wrappedStart,
-      canvas.width - 1
-    );
-
-    captureXRange(
-      0,
-      wrappedEnd -
-        canvas.width
-    );
-  }
+if (yEnd < yStart) {
+return;
 }
 
 
 /*
-  Undo / Redo時には、
-  保存してあるタイルと
-  現在のタイルを交換する。
+横方向の一部分を
+タイル単位で保存する
+*/
 
-  同じ処理をもう一度行えば
-  Redoになる。
+function captureXRange(
+rangeStart,
+rangeEnd
+) {
+
+const xStart =
+Math.max(
+0,
+Math.floor(rangeStart)
+);
+
+const xEnd =
+Math.min(
+canvas.width - 1,
+Math.ceil(rangeEnd)
+);
+
+
+if (xEnd < xStart) {
+return;
+}
+
+
+const firstTileX =
+Math.floor(
+xStart /
+HISTORY_TILE_SIZE
+);
+
+const lastTileX =
+Math.floor(
+xEnd /
+HISTORY_TILE_SIZE
+);
+
+const firstTileY =
+Math.floor(
+yStart /
+HISTORY_TILE_SIZE
+);
+
+const lastTileY =
+Math.floor(
+yEnd /
+HISTORY_TILE_SIZE
+);
+
+
+for (
+let tileY = firstTileY;
+tileY <= lastTileY;
+tileY++
+) {
+
+for (
+let tileX = firstTileX;
+tileX <= lastTileX;
+tileX++
+) {
+
+const key =
+`${tileX}:${tileY}`;
+
+
+/*
+同じストローク内で
+同じタイルは一度だけ保存
+*/
+
+if (
+stroke.tileDiffs.has(
+key
+)
+) {
+continue;
+}
+
+
+const x =
+tileX *
+HISTORY_TILE_SIZE;
+
+const y =
+tileY *
+HISTORY_TILE_SIZE;
+
+
+const width =
+Math.min(
+HISTORY_TILE_SIZE,
+canvas.width - x
+);
+
+const height =
+Math.min(
+HISTORY_TILE_SIZE,
+canvas.height - y
+);
+
+
+stroke.tileDiffs.set(
+key,
+{
+x,
+y,
+width,
+height,
+
+imageData:
+context.getImageData(
+x,
+y,
+width,
+height
+)
+}
+);
+}
+}
+}
+
+
+const spanX =
+Math.max(
+0,
+maxX - minX
+);
+
+
+/*
+Canvas一周以上なら
+横方向すべてを保存
+*/
+
+if (
+spanX >= canvas.width
+) {
+
+captureXRange(
+0,
+canvas.width - 1
+);
+
+return;
+}
+
+
+/*
+左右端をまたぐ場合にも
+正しくタイルを保存する
+*/
+
+const wrappedStart =
+wrapHistoryX(
+minX,
+canvas.width
+);
+
+const wrappedEnd =
+wrappedStart +
+spanX;
+
+
+if (
+wrappedEnd <
+canvas.width
+) {
+
+captureXRange(
+wrappedStart,
+wrappedEnd
+);
+
+} else {
+
+captureXRange(
+wrappedStart,
+canvas.width - 1
+);
+
+captureXRange(
+0,
+wrappedEnd -
+canvas.width
+);
+}
+}
+
+
+/*
+Undo / Redo時には、
+保存してあるタイルと
+現在のタイルを交換する。
+
+同じ処理をもう一度行えば
+Redoになる。
 */
 
 function swapStrokeTiles(
-  stroke
+stroke
 ) {
 
-  if (
-    !stroke ||
-    !(stroke.tileDiffs instanceof Map) ||
-    stroke.tileDiffs.size === 0
-  ) {
-    return false;
-  }
+if (
+!stroke ||
+!(stroke.tileDiffs instanceof Map) ||
+stroke.tileDiffs.size === 0
+) {
+return false;
+}
 
 
-  const layer =
-    getLayerById(
-      stroke.layerId
-    );
+const layer =
+getLayerById(
+stroke.layerId
+);
 
 
-  if (!layer) {
-    return false;
-  }
+if (!layer) {
+return false;
+}
 
 
-  const context =
-    layer.context;
+const context =
+layer.context;
 
 
-  for (
-    const tile of
-      stroke.tileDiffs.values()
-  ) {
+for (
+const tile of
+stroke.tileDiffs.values()
+) {
 
-    const currentImage =
-      context.getImageData(
-        tile.x,
-        tile.y,
-        tile.width,
-        tile.height
-      );
-
-
-    context.putImageData(
-      tile.imageData,
-      tile.x,
-      tile.y
-    );
+const currentImage =
+context.getImageData(
+tile.x,
+tile.y,
+tile.width,
+tile.height
+);
 
 
-    /*
-      保存内容を現在状態へ交換する。
-      これにより同じ関数で
-      UndoとRedoの両方に対応できる。
-    */
-
-    tile.imageData =
-      currentImage;
-  }
+context.putImageData(
+tile.imageData,
+tile.x,
+tile.y
+);
 
 
-  return true;
+/*
+保存内容を現在状態へ交換する。
+これにより同じ関数で
+UndoとRedoの両方に対応できる。
+*/
+
+tile.imageData =
+currentImage;
+}
+
+
+return true;
 }
 
 
 /*
-  ペン設定
+ペン設定
 */
 
 let penColor = "#000000";
 
 
 function setPenColor(
-  color
+color
 ) {
 
-  const normalizedColor =
-    String(color)
-      .toLowerCase();
+const normalizedColor =
+String(color)
+.toLowerCase();
 
 
-  penColor =
-    normalizedColor;
+penColor =
+normalizedColor;
 
 
-  penColorInput.value =
-    normalizedColor;
+penColorInput.value =
+normalizedColor;
 
 
-  /*
-    スマートフォン用
-    現在色表示
-  */
+/*
+スマートフォン用
+現在色表示
+*/
 
-  mobileColorButton
-    .style
-    .backgroundColor =
-      normalizedColor;
-
-
-  /*
-    PC用の
-    現在色表示も更新する
-  */
-
-  currentPenColorSwatch
-    .style
-    .backgroundColor =
-      normalizedColor;
+mobileColorButton
+.style
+.backgroundColor =
+normalizedColor;
 
 
-  /*
-    中央の彩度・明度Boxへ
-    色を同期する
-  */
+/*
+PC用の
+現在色表示も更新する
+*/
 
-  if (
-    colorBoxPicker.color.hexString
-      .toLowerCase() !==
-    normalizedColor
-  ) {
-
-    colorBoxPicker.color.hexString =
-      normalizedColor;
-  }
+currentPenColorSwatch
+.style
+.backgroundColor =
+normalizedColor;
 
 
-  /*
-    色相環のハンドルも
-    現在色へ同期する
-  */
+/*
+中央の彩度・明度Boxへ
+色を同期する
+*/
 
-  const hsv =
-    colorBoxPicker.color.hsv;
+if (
+colorBoxPicker.color.hexString
+.toLowerCase() !==
+normalizedColor
+) {
+
+colorBoxPicker.color.hexString =
+normalizedColor;
+}
 
 
-  currentHue =
-    hsv.h;
+/*
+色相環のハンドルも
+現在色へ同期する
+*/
+
+const hsv =
+colorBoxPicker.color.hsv;
 
 
-  updateHueRingHandle(
-    currentHue
-  );
+currentHue =
+hsv.h;
+
+
+updateHueRingHandle(
+currentHue
+);
 }
 
 /*
-  外側の色相環は
-  iro.jsではなくCSSで表示する。
+外側の色相環は
+iro.jsではなくCSSで表示する。
 
-  JavaScriptでは
-  選択ハンドルだけを管理する。
+JavaScriptでは
+選択ハンドルだけを管理する。
 */
 
 const colorHueHandle =
-  document.getElementById(
-    "colorHueHandle"
-  );
+document.getElementById(
+"colorHueHandle"
+);
 
 
 let currentHue = 0;
 /*
-  中央の
-  彩度・明度ボックス
+中央の
+彩度・明度ボックス
 */
 
 const colorBoxPicker =
-  new iro.ColorPicker(
-    colorBoxLayer,
-    {
-      width: 64,
+new iro.ColorPicker(
+colorBoxLayer,
+{
+width: 64,
 
-      color: {
-        h: 0,
-        s: 0,
-        v: 0
-      },
+color: {
+h: 0,
+s: 0,
+v: 0
+},
 
-      borderWidth: 1,
-      borderColor: "#777",
+borderWidth: 1,
+borderColor: "#777",
 
-      padding: 0,
+padding: 0,
 
-      layout: [
-        {
-          component:
-            iro.ui.Box,
+layout: [
+{
+component:
+iro.ui.Box,
 
-          options: {
-            boxHeight: 64
-          }
-        }
-      ]
-    }
-  );
+options: {
+boxHeight: 64
+}
+}
+]
+}
+);
 
-  /* ================================
-   色相環
+/* ================================
+色相環
 ================================ */
 
 
 /*
-  色相から
-  ハンドル位置を更新する
+色相から
+ハンドル位置を更新する
 */
 
 function updateHueRingHandle(
-  hue
+hue
 ) {
 
-  const size =
-    colorWheelLayer
-      .clientWidth;
+const size =
+colorWheelLayer
+.clientWidth;
 
 
-  if (size <= 0) {
-    return;
-  }
+if (size <= 0) {
+return;
+}
 
 
-  const center =
-    size / 2;
+const center =
+size / 2;
 
 
-  /*
-    リング幅24pxなので
-    その中央をハンドルが通る
-  */
+/*
+リング幅24pxなので
+その中央をハンドルが通る
+*/
 
-  const radius =
-    center - 12;
-
-
-  /*
-    0°を円の上側にする
-  */
-
-  const angle =
-    (
-      hue - 90
-    ) *
-    Math.PI /
-    180;
+const radius =
+center - 12;
 
 
-  const x =
-    center +
-    Math.cos(angle) *
-    radius;
+/*
+0°を円の上側にする
+*/
+
+const angle =
+(
+hue - 90
+) *
+Math.PI /
+180;
 
 
-  const y =
-    center +
-    Math.sin(angle) *
-    radius;
+const x =
+center +
+Math.cos(angle) *
+radius;
 
 
-  colorHueHandle.style.left =
-    `${x}px`;
+const y =
+center +
+Math.sin(angle) *
+radius;
 
-  colorHueHandle.style.top =
-    `${y}px`;
+
+colorHueHandle.style.left =
+`${x}px`;
+
+colorHueHandle.style.top =
+`${y}px`;
 }
 
 
 /*
-  ポインター位置から
-  色相を求める
+ポインター位置から
+色相を求める
 */
 
 function updateHueFromPointer(
-  event,
-  checkRingArea = false
+event,
+checkRingArea = false
 ) {
 
-  const rect =
-    colorWheelLayer
-      .getBoundingClientRect();
+const rect =
+colorWheelLayer
+.getBoundingClientRect();
 
 
-  const centerX =
-    rect.left +
-    rect.width / 2;
+const centerX =
+rect.left +
+rect.width / 2;
 
-  const centerY =
-    rect.top +
-    rect.height / 2;
-
-
-  const dx =
-    event.clientX -
-    centerX;
-
-  const dy =
-    event.clientY -
-    centerY;
+const centerY =
+rect.top +
+rect.height / 2;
 
 
-  const distance =
-    Math.hypot(
-      dx,
-      dy
-    );
+const dx =
+event.clientX -
+centerX;
+
+const dy =
+event.clientY -
+centerY;
 
 
-  const outerRadius =
-    rect.width / 2;
+const distance =
+Math.hypot(
+dx,
+dy
+);
 
 
-  const innerRadius =
-    outerRadius - 24;
+const outerRadius =
+rect.width / 2;
 
 
-  /*
-    最初に押した位置が
-    リング上でなければ
-    色相操作を開始しない
-  */
-
-  if (
-    checkRingArea &&
-    (
-      distance <
-        innerRadius ||
-      distance >
-        outerRadius
-    )
-  ) {
-
-    return false;
-  }
+const innerRadius =
+outerRadius - 24;
 
 
-  /*
-    上 = 0°
-    右 = 90°
-    下 = 180°
-    左 = 270°
-  */
+/*
+最初に押した位置が
+リング上でなければ
+色相操作を開始しない
+*/
 
-  let hue =
-    (
-      Math.atan2(
-        dy,
-        dx
-      ) *
-      180 /
-      Math.PI +
-      90
-    );
+if (
+checkRingArea &&
+(
+distance <
+innerRadius ||
+distance >
+outerRadius
+)
+) {
 
-
-  hue =
-    (
-      hue +
-      360
-    ) % 360;
+return false;
+}
 
 
-  currentHue =
-    hue;
+/*
+上 = 0°
+右 = 90°
+下 = 180°
+左 = 270°
+*/
+
+let hue =
+(
+Math.atan2(
+dy,
+dx
+) *
+180 /
+Math.PI +
+90
+);
 
 
-  const hsv =
-    colorBoxPicker
-      .color
-      .hsv;
+hue =
+(
+hue +
+360
+) % 360;
 
 
-  /*
-    彩度・明度はそのまま、
-    色相だけ変更する
-  */
-
-  colorBoxPicker.color.hsv = {
-    h: hue,
-    s: hsv.s,
-    v: hsv.v
-  };
+currentHue =
+hue;
 
 
-  updateHueRingHandle(
-    hue
-  );
+const hsv =
+colorBoxPicker
+.color
+.hsv;
 
 
-  return true;
+/*
+彩度・明度はそのまま、
+色相だけ変更する
+*/
+
+colorBoxPicker.color.hsv = {
+h: hue,
+s: hsv.s,
+v: hsv.v
+};
+
+
+updateHueRingHandle(
+hue
+);
+
+
+return true;
 }
 
 
@@ -4610,498 +5989,498 @@ let isHueDragging = false;
 
 
 colorWheelLayer.addEventListener(
-  "pointerdown",
-  (event) => {
+"pointerdown",
+(event) => {
 
-    const started =
-      updateHueFromPointer(
-        event,
-        true
-      );
-
-
-    if (!started) {
-      return;
-    }
+const started =
+updateHueFromPointer(
+event,
+true
+);
 
 
-    isHueDragging =
-      true;
+if (!started) {
+return;
+}
 
 
-    colorWheelLayer
-      .setPointerCapture(
-        event.pointerId
-      );
+isHueDragging =
+true;
 
 
-    event.preventDefault();
-    event.stopPropagation();
-  }
+colorWheelLayer
+.setPointerCapture(
+event.pointerId
+);
+
+
+event.preventDefault();
+event.stopPropagation();
+}
 );
 
 
 colorWheelLayer.addEventListener(
-  "pointermove",
-  (event) => {
+"pointermove",
+(event) => {
 
-    if (!isHueDragging) {
-      return;
-    }
-
-
-    updateHueFromPointer(
-      event
-    );
+if (!isHueDragging) {
+return;
+}
 
 
-    event.preventDefault();
-    event.stopPropagation();
-  }
+updateHueFromPointer(
+event
+);
+
+
+event.preventDefault();
+event.stopPropagation();
+}
 );
 
 
 function finishHuePointer(
-  event
+event
 ) {
 
-  if (!isHueDragging) {
-    return;
-  }
+if (!isHueDragging) {
+return;
+}
 
 
-  isHueDragging =
-    false;
+isHueDragging =
+false;
 
 
-  if (
-    colorWheelLayer
-      .hasPointerCapture(
-        event.pointerId
-      )
-  ) {
+if (
+colorWheelLayer
+.hasPointerCapture(
+event.pointerId
+)
+) {
 
-    colorWheelLayer
-      .releasePointerCapture(
-        event.pointerId
-      );
-  }
+colorWheelLayer
+.releasePointerCapture(
+event.pointerId
+);
+}
 
 
-  event.stopPropagation();
+event.stopPropagation();
 }
 
 
 colorWheelLayer.addEventListener(
-  "pointerup",
-  finishHuePointer
+"pointerup",
+finishHuePointer
 );
 
 
 colorWheelLayer.addEventListener(
-  "pointercancel",
-  finishHuePointer
+"pointercancel",
+finishHuePointer
 );
 
 
 /*
-  ================================
-  外側リング
-  色相変更
-  ================================
+================================
+外側リング
+色相変更
+================================
 */
 
 
 
 
 /*
-  ================================
-  中央ボックス
-  彩度・明度変更
-  ================================
+================================
+中央ボックス
+彩度・明度変更
+================================
 */
 
 colorBoxPicker.on(
-  "color:change",
-  (color) => {
+"color:change",
+(color) => {
 
-    const normalizedColor =
-      color.hexString
-        .toLowerCase();
-
-
-    /*
-      選択した色を
-      実際のペン色へ反映する
-    */
-
-    penColor =
-      normalizedColor;
+const normalizedColor =
+color.hexString
+.toLowerCase();
 
 
-    /*
-      hiddenのカラー入力も同期
-    */
+/*
+選択した色を
+実際のペン色へ反映する
+*/
 
-    penColorInput.value =
-      normalizedColor;
-
-
-    /*
-      スマートフォンの
-      現在色表示も同期
-    */
-
-    mobileColorButton
-      .style
-      .backgroundColor =
-        normalizedColor;
+penColor =
+normalizedColor;
 
 
-    /*
-      PC用の
-      現在色表示も同期する
-    */
+/*
+hiddenのカラー入力も同期
+*/
 
-    currentPenColorSwatch
-      .style
-      .backgroundColor =
-        normalizedColor;
+penColorInput.value =
+normalizedColor;
 
 
-    /*
-      色相環のハンドルを
-      現在の色相へ同期する
-    */
+/*
+スマートフォンの
+現在色表示も同期
+*/
 
-    const hsv =
-      color.hsv;
-
-
-    currentHue =
-      hsv.h;
+mobileColorButton
+.style
+.backgroundColor =
+normalizedColor;
 
 
-    updateHueRingHandle(
-      currentHue
-    );
-  }
+/*
+PC用の
+現在色表示も同期する
+*/
+
+currentPenColorSwatch
+.style
+.backgroundColor =
+normalizedColor;
+
+
+/*
+色相環のハンドルを
+現在の色相へ同期する
+*/
+
+const hsv =
+color.hsv;
+
+
+currentHue =
+hsv.h;
+
+
+updateHueRingHandle(
+currentHue
+);
+}
 );
 
 /* ================================
-   45°回転したSVひし形の操作
+45°回転したSVひし形の操作
 ================================ */
 
 let isColorBoxDragging = false;
 
 
 /*
-  画面上のポインター座標を
-  45°回転前のBox座標へ戻して、
-  彩度・明度へ変換する
+画面上のポインター座標を
+45°回転前のBox座標へ戻して、
+彩度・明度へ変換する
 */
 
 function updateColorBoxFromPointer(
-  event
+event
 ) {
 
-  const rect =
-    colorBoxLayer
-      .getBoundingClientRect();
+const rect =
+colorBoxLayer
+.getBoundingClientRect();
 
 
-  /*
-    回転後の要素の中心
-  */
+/*
+回転後の要素の中心
+*/
 
-  const centerX =
-    rect.left +
-    rect.width / 2;
+const centerX =
+rect.left +
+rect.width / 2;
 
-  const centerY =
-    rect.top +
-    rect.height / 2;
-
-
-  /*
-    中心から見た
-    マウス／指の位置
-  */
-
-  const dx =
-    event.clientX -
-    centerX;
-
-  const dy =
-    event.clientY -
-    centerY;
+const centerY =
+rect.top +
+rect.height / 2;
 
 
-  /*
-    CSSで時計回り45°回しているので、
-    座標を反時計回り45°戻す
-  */
+/*
+中心から見た
+マウス／指の位置
+*/
 
-  const angle =
-    Math.PI / 4;
+const dx =
+event.clientX -
+centerX;
 
-  const cos =
-    Math.cos(angle);
-
-  const sin =
-    Math.sin(angle);
-
-
-  const boxSize =
-    colorBoxLayer.offsetWidth;
+const dy =
+event.clientY -
+centerY;
 
 
-  const localX =
-    dx * cos +
-    dy * sin +
-    boxSize / 2;
+/*
+CSSで時計回り45°回しているので、
+座標を反時計回り45°戻す
+*/
 
-  const localY =
-    -dx * sin +
-    dy * cos +
-    boxSize / 2;
+const angle =
+Math.PI / 4;
 
+const cos =
+Math.cos(angle);
 
-  /*
-    Boxの範囲内へ収める
-  */
-
-  const x =
-    Math.max(
-      0,
-      Math.min(
-        boxSize,
-        localX
-      )
-    );
-
-  const y =
-    Math.max(
-      0,
-      Math.min(
-        boxSize,
-        localY
-      )
-    );
+const sin =
+Math.sin(angle);
 
 
-  /*
-    横軸：彩度
-    縦軸：明度
-  */
-
-  const saturation =
-    (
-      x /
-      boxSize
-    ) * 100;
-
-  const value =
-    100 -
-    (
-      y /
-      boxSize
-    ) * 100;
+const boxSize =
+colorBoxLayer.offsetWidth;
 
 
-  const currentHSV =
-    colorBoxPicker
-      .color
-      .hsv;
+const localX =
+dx * cos +
+dy * sin +
+boxSize / 2;
+
+const localY =
+-dx * sin +
+dy * cos +
+boxSize / 2;
 
 
-  colorBoxPicker.color.hsv = {
-    h: currentHSV.h,
-    s: saturation,
-    v: value
-  };
+/*
+Boxの範囲内へ収める
+*/
+
+const x =
+Math.max(
+0,
+Math.min(
+boxSize,
+localX
+)
+);
+
+const y =
+Math.max(
+0,
+Math.min(
+boxSize,
+localY
+)
+);
+
+
+/*
+横軸：彩度
+縦軸：明度
+*/
+
+const saturation =
+(
+x /
+boxSize
+) * 100;
+
+const value =
+100 -
+(
+y /
+boxSize
+) * 100;
+
+
+const currentHSV =
+colorBoxPicker
+.color
+.hsv;
+
+
+colorBoxPicker.color.hsv = {
+h: currentHSV.h,
+s: saturation,
+v: value
+};
 }
 
 
 /*
-  ひし形を押した
+ひし形を押した
 */
 
 colorBoxLayer.addEventListener(
-  "pointerdown",
-  (event) => {
+"pointerdown",
+(event) => {
 
-    isColorBoxDragging =
-      true;
-
-
-    colorBoxLayer
-      .setPointerCapture(
-        event.pointerId
-      );
+isColorBoxDragging =
+true;
 
 
-    updateColorBoxFromPointer(
-      event
-    );
+colorBoxLayer
+.setPointerCapture(
+event.pointerId
+);
 
 
-    event.preventDefault();
-    event.stopPropagation();
-  }
+updateColorBoxFromPointer(
+event
+);
+
+
+event.preventDefault();
+event.stopPropagation();
+}
 );
 
 
 /*
-  ひし形上をドラッグ
+ひし形上をドラッグ
 */
 
 colorBoxLayer.addEventListener(
-  "pointermove",
-  (event) => {
+"pointermove",
+(event) => {
 
-    if (!isColorBoxDragging) {
-      return;
-    }
-
-
-    updateColorBoxFromPointer(
-      event
-    );
+if (!isColorBoxDragging) {
+return;
+}
 
 
-    event.preventDefault();
-    event.stopPropagation();
-  }
+updateColorBoxFromPointer(
+event
+);
+
+
+event.preventDefault();
+event.stopPropagation();
+}
 );
 
 
 /*
-  操作終了
+操作終了
 */
 
 function finishColorBoxPointer(
-  event
+event
 ) {
 
-  if (!isColorBoxDragging) {
-    return;
-  }
+if (!isColorBoxDragging) {
+return;
+}
 
 
-  isColorBoxDragging =
-    false;
+isColorBoxDragging =
+false;
 
 
-  if (
-    colorBoxLayer
-      .hasPointerCapture(
-        event.pointerId
-      )
-  ) {
+if (
+colorBoxLayer
+.hasPointerCapture(
+event.pointerId
+)
+) {
 
-    colorBoxLayer
-      .releasePointerCapture(
-        event.pointerId
-      );
-  }
+colorBoxLayer
+.releasePointerCapture(
+event.pointerId
+);
+}
 
 
-  event.stopPropagation();
+event.stopPropagation();
 }
 
 
 colorBoxLayer.addEventListener(
-  "pointerup",
-  finishColorBoxPointer
+"pointerup",
+finishColorBoxPointer
 );
 
 
 colorBoxLayer.addEventListener(
-  "pointercancel",
-  finishColorBoxPointer
+"pointercancel",
+finishColorBoxPointer
 );
 
 
 /* ================================
-   スマートフォン用
-   カラーホイール
+スマートフォン用
+カラーホイール
 ================================ */
 
 function openMobileColorPicker() {
 
-  if (!isMobileDevice) {
-    return;
-  }
+if (!isMobileDevice) {
+return;
+}
 
 
-  penColorControl.classList.add(
-    "is-mobile-color-open"
-  );
+penColorControl.classList.add(
+"is-mobile-color-open"
+);
 
 
-  mobileColorBackdrop.classList.add(
-    "is-open"
-  );
+mobileColorBackdrop.classList.add(
+"is-open"
+);
 
 
-  mobileColorButton.setAttribute(
-    "aria-expanded",
-    "true"
-  );
+mobileColorButton.setAttribute(
+"aria-expanded",
+"true"
+);
 }
 
 
 function closeMobileColorPicker() {
 
-  penColorControl.classList.remove(
-    "is-mobile-color-open"
-  );
+penColorControl.classList.remove(
+"is-mobile-color-open"
+);
 
 
-  mobileColorBackdrop.classList.remove(
-    "is-open"
-  );
+mobileColorBackdrop.classList.remove(
+"is-open"
+);
 
 
-  mobileColorButton.setAttribute(
-    "aria-expanded",
-    "false"
-  );
+mobileColorButton.setAttribute(
+"aria-expanded",
+"false"
+);
 }
 
 
 mobileColorButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    if (!isMobileDevice) {
-      return;
-    }
+if (!isMobileDevice) {
+return;
+}
 
 
-    if (
-      penColorControl.classList.contains(
-        "is-mobile-color-open"
-      )
-    ) {
+if (
+penColorControl.classList.contains(
+"is-mobile-color-open"
+)
+) {
 
-      closeMobileColorPicker();
+closeMobileColorPicker();
 
-    } else {
+} else {
 
-      openMobileColorPicker();
-    }
-  }
+openMobileColorPicker();
+}
+}
 );
 
 
 mobileColorBackdrop.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    closeMobileColorPicker();
-  }
+closeMobileColorPicker();
+}
 );
 
 
@@ -5111,252 +6490,260 @@ let savedEraserSize = 10;
 
 
 /* ================================
-   ペンサイズ
+ペンサイズ
 ================================ */
 
 penSizeInput.addEventListener(
-  "input",
-  () => {
+"input",
+() => {
 
-    penSize =
-      Number(
-        penSizeInput.value
-      );
+penSize =
+Number(
+penSizeInput.value
+);
 
-    penSizeValue.value =
-      penSize;
+penSizeValue.value =
+penSize;
 
 
-    if (currentTool === "pen") {
+if (currentTool === "pen") {
 
-      savedPenSize =
-        penSize;
+savedPenSize =
+penSize;
 
-    } else if (
-      currentTool === "eraser"
-    ) {
+} else if (
+currentTool === "eraser"
+) {
 
-      savedEraserSize =
-        penSize;
-    }
-  }
+savedEraserSize =
+penSize;
+}
+}
 );
 
 
 penSizeValue.addEventListener(
-  "input",
-  () => {
+"input",
+() => {
 
-    let value =
-      Number(
-        penSizeValue.value
-      );
-
-
-    if (!Number.isFinite(value)) {
-      return;
-    }
+let value =
+Number(
+penSizeValue.value
+);
 
 
-    value =
-      Math.max(
-        1,
-        Math.min(
-          50,
-          value
-        )
-      );
+if (!Number.isFinite(value)) {
+return;
+}
 
 
-    penSize =
-      value;
+value =
+Math.max(
+1,
+Math.min(
+50,
+value
+)
+);
 
-    penSizeInput.value =
-      value;
+
+penSize =
+value;
+
+penSizeInput.value =
+value;
 
 
-    if (currentTool === "pen") {
+if (currentTool === "pen") {
 
-      savedPenSize =
-        penSize;
+savedPenSize =
+penSize;
 
-    } else if (
-      currentTool === "eraser"
-    ) {
+} else if (
+currentTool === "eraser"
+) {
 
-      savedEraserSize =
-        penSize;
-    }
-  }
+savedEraserSize =
+penSize;
+}
+}
+);
+
+
+penSizeValue.addEventListener(
+"blur",
+() => {
+
+penSizeValue.value =
+penSize;
+}
 );
 
 
 /*
-  スマートフォンでは
-  Enterで太さを確定して
-  入力欄からフォーカスを外す
+Enterで太さを確定して
+入力欄からフォーカスを外す
 */
 
 penSizeValue.addEventListener(
-  "keydown",
-  (event) => {
+"keydown",
+(event) => {
 
-    if (
-      !isMobileDevice ||
-      event.key !== "Enter"
-    ) {
-      return;
-    }
-
-
-    event.preventDefault();
+if (
+event.key !== "Enter"
+) {
+return;
+}
 
 
-    let value =
-      Number(
-        penSizeValue.value
-      );
+event.preventDefault();
 
 
-    /*
-      不正な値の場合は
-      現在の太さへ戻す
-    */
-
-    if (!Number.isFinite(value)) {
-
-      penSizeValue.value =
-        penSize;
-
-      penSizeValue.blur();
-
-      return;
-    }
-
-
-    /*
-      1～50の範囲に収めて確定
-    */
-
-    value =
-      Math.max(
-        1,
-        Math.min(
-          50,
-          value
-        )
-      );
-
-
-    penSize =
-      value;
-
-    penSizeInput.value =
-      value;
-
-    penSizeValue.value =
-      value;
-
-
-    if (currentTool === "pen") {
-
-      savedPenSize =
-        penSize;
-
-    } else if (
-      currentTool === "eraser"
-    ) {
-
-      savedEraserSize =
-        penSize;
-    }
-
-
-    /*
-      数字キーボードを閉じる
-    */
-
-    penSizeValue.blur();
-  }
+let value =
+Number(
+penSizeValue.value
 );
 
 
 /*
-  太さ −
+不正な値の場合は
+現在の太さへ戻す
+*/
+
+if (!Number.isFinite(value)) {
+
+penSizeValue.value =
+penSize;
+
+penSizeValue.blur();
+
+return;
+}
+
+
+/*
+1～50の範囲に収めて確定
+*/
+
+value =
+Math.max(
+1,
+Math.min(
+50,
+value
+)
+);
+
+
+penSize =
+value;
+
+penSizeInput.value =
+value;
+
+penSizeValue.value =
+value;
+
+
+if (currentTool === "pen") {
+
+savedPenSize =
+penSize;
+
+} else if (
+currentTool === "eraser"
+) {
+
+savedEraserSize =
+penSize;
+}
+
+
+/*
+数字キーボードを閉じる
+*/
+
+penSizeValue.blur();
+}
+);
+
+
+/*
+太さ −
 */
 
 penSizeMinus.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    penSize =
-      Math.max(
-        1,
-        penSize - 1
-      );
+penSize =
+Math.max(
+1,
+penSize - 1
+);
 
-    penSizeInput.value =
-      penSize;
+penSizeInput.value =
+penSize;
 
-    penSizeValue.value =
-      penSize;
+penSizeValue.value =
+penSize;
 
 
-    if (currentTool === "pen") {
+if (currentTool === "pen") {
 
-      savedPenSize =
-        penSize;
+savedPenSize =
+penSize;
 
-    } else if (
-      currentTool === "eraser"
-    ) {
+} else if (
+currentTool === "eraser"
+) {
 
-      savedEraserSize =
-        penSize;
-    }
-  }
+savedEraserSize =
+penSize;
+}
+}
 );
 
 
 /*
-  太さ ＋
+太さ ＋
 */
 
 penSizePlus.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    penSize =
-      Math.min(
-        50,
-        penSize + 1
-      );
+penSize =
+Math.min(
+50,
+penSize + 1
+);
 
-    penSizeInput.value =
-      penSize;
+penSizeInput.value =
+penSize;
 
-    penSizeValue.value =
-      penSize;
+penSizeValue.value =
+penSize;
 
 
-    if (currentTool === "pen") {
+if (currentTool === "pen") {
 
-      savedPenSize =
-        penSize;
+savedPenSize =
+penSize;
 
-    } else if (
-      currentTool === "eraser"
-    ) {
+} else if (
+currentTool === "eraser"
+) {
 
-      savedEraserSize =
-        penSize;
-    }
-  }
+savedEraserSize =
+penSize;
+}
+}
 );
 
 
 /* ================================
-   ペン色
+ペン色
 ================================ */
 
 let recentColors = [];
@@ -5364,153 +6751,153 @@ let recentColors = [];
 
 function renderRecentColors() {
 
-  recentColorsElement.innerHTML = "";
+recentColorsElement.innerHTML = "";
 
 
-  /*
-    スマートフォンでは
-    最近使用した色を表示しない
-  */
+/*
+スマートフォンでは
+最近使用した色を表示しない
+*/
 
-  if (isMobileDevice) {
-    return;
-  }
-
-
-  /*
-    常に4色 × 2段の
-    8マスを表示する
-  */
-
-  for (
-    let i = 0;
-    i < 8;
-    i++
-  ) {
-
-    const color =
-      recentColors[i] || null;
-
-    const button =
-      document.createElement("button");
-
-    button.type =
-      "button";
-
-    button.className =
-      "recent-color-button";
+if (isMobileDevice) {
+return;
+}
 
 
-    if (!color) {
+/*
+常に4色 × 2段の
+8マスを表示する
+*/
 
-      button.classList.add(
-        "is-empty"
-      );
+for (
+let i = 0;
+i < 8;
+i++
+) {
 
-      button.disabled = true;
+const color =
+recentColors[i] || null;
 
-    } else {
+const button =
+document.createElement("button");
 
-      button.style.backgroundColor =
-        color;
+button.type =
+"button";
 
-      button.title =
-        color;
+button.className =
+"recent-color-button";
 
 
-      button.addEventListener(
-        "click",
-        () => {
+if (!color) {
+
+button.classList.add(
+"is-empty"
+);
+
+button.disabled = true;
+
+} else {
+
+button.style.backgroundColor =
+color;
+
+button.title =
+color;
+
+
+button.addEventListener(
+"click",
+() => {
 
 setPenColor(
-            color
-          );
+color
+);
 
-          rememberColor(
-            color
-          );
-        }
-      );
-    }
+rememberColor(
+color
+);
+}
+);
+}
 
 
-    recentColorsElement.appendChild(
-      button
-    );
-  }
+recentColorsElement.appendChild(
+button
+);
+}
 }
 
 
 function rememberColor(color) {
 
-  if (
-    typeof color !== "string" ||
-    !/^#[0-9a-fA-F]{6}$/.test(color)
-  ) {
-    return;
-  }
+if (
+typeof color !== "string" ||
+!/^#[0-9a-fA-F]{6}$/.test(color)
+) {
+return;
+}
 
 
-  const normalizedColor =
-    color.toLowerCase();
+const normalizedColor =
+color.toLowerCase();
 
 
-  recentColors =
-    [
-      normalizedColor,
-      ...recentColors.filter(
-        (item) =>
-          item !== normalizedColor
-      )
-    ].slice(0, 8);
+recentColors =
+[
+normalizedColor,
+...recentColors.filter(
+(item) =>
+item !== normalizedColor
+)
+].slice(0, 8);
 
 
-  renderRecentColors();
+renderRecentColors();
 }
 
 
 penColorInput.addEventListener(
-  "input",
-  () => {
+"input",
+() => {
 
-    setPenColor(
-      penColorInput.value
-    );
-  }
+setPenColor(
+penColorInput.value
+);
+}
 );
 
 
 penColorInput.addEventListener(
-  "change",
-  () => {
+"change",
+() => {
 
-    rememberColor(
-      penColorInput.value
-    );
-  }
+rememberColor(
+penColorInput.value
+);
+}
 );
 
 
 rememberColor(
-  penColor
+penColor
 );
 
 
 /*
-  現在選択しているツール
+現在選択しているツール
 
-  pen
-  eraser
-  bucket
-  eyedropper
+pen
+eraser
+bucket
+eyedropper
 */
 
 let currentTool = "pen";
 
 
 /*
-  ストローク履歴は
-  描画開始時と終了時に記録する
+ストローク履歴は
+描画開始時と終了時に記録する
 */
 
 
@@ -5520,2107 +6907,2207 @@ let currentTool = "pen";
 
 function updateEraserCursor(event) {
 
-  /*
-    視点回転・ズーム中は
-    カーソルを表示しない
-  */
+/*
+視点回転・ズーム中は
+カーソルを表示しない
+*/
+
+if (
+currentTool === "bucket" ||
+currentTool === "eyedropper" ||
+currentTool === "look" ||
+currentTool === "camera" ||
+isLooking ||
+isZooming
+) {
+
+eraserCursor.visible = false;
+
+return;
+}
+
+const rect =
+renderer.domElement
+.getBoundingClientRect();
+
 
-  if (
-    currentTool === "bucket" ||
-    currentTool === "eyedropper" ||
-    isLooking ||
-    isZooming
-  ) {
-
-    eraserCursor.visible = false;
-
-    return;
-  }
-
-  const rect =
-    renderer.domElement
-      .getBoundingClientRect();
+/*
+実際の描画と同じ方法で
+マウス位置をThree.js座標へ変換
+*/
 
+pointer.x =
+(
+(event.clientX - rect.left) /
+rect.width
+) * 2 - 1;
+
+pointer.y =
+-(
+(
+event.clientY - rect.top
+) /
+rect.height
+) * 2 + 1;
 
-  /*
-    実際の描画と同じ方法で
-    マウス位置をThree.js座標へ変換
-  */
 
-  pointer.x =
-    (
-      (event.clientX - rect.left) /
-      rect.width
-    ) * 2 - 1;
+/*
+実際の描画と同じRaycast
+*/
 
-  pointer.y =
-    -(
-      (
-        event.clientY - rect.top
-      ) /
-      rect.height
-    ) * 2 + 1;
+raycaster.setFromCamera(
+pointer,
+camera
+);
 
+
+const intersections =
+raycaster.intersectObject(
+sphere,
+false
+);
 
-  /*
-    実際の描画と同じRaycast
-  */
 
-  raycaster.setFromCamera(
-    pointer,
-    camera
-  );
+if (intersections.length === 0) {
+
+eraserCursor.visible = false;
 
+return;
+}
+
+
+const intersection =
+intersections[0];
 
-  const intersections =
-    raycaster.intersectObject(
-      sphere,
-      false
-    );
 
+/*
+カーソル直下の色を調べて
+明るい場所では黒、
+暗い場所では白にする
+*/
 
-  if (intersections.length === 0) {
+if (intersection.uv) {
 
-    eraserCursor.visible = false;
+const sampleX =
+Math.max(
+0,
+Math.min(
+paintCanvas.width - 1,
+Math.floor(
+intersection.uv.x *
+paintCanvas.width
+)
+)
+);
 
-    return;
-  }
-
-
-  const intersection =
-    intersections[0];
+const sampleY =
+Math.max(
+0,
+Math.min(
+paintCanvas.height - 1,
+Math.floor(
+(1 - intersection.uv.y) *
+paintCanvas.height
+)
+)
+);
 
 
-  /*
-    カーソル直下の色を調べて
-    明るい場所では黒、
-    暗い場所では白にする
-  */
+const pixel =
+paintContext.getImageData(
+sampleX,
+sampleY,
+1,
+1
+).data;
 
-  if (intersection.uv) {
 
-    const sampleX =
-      Math.max(
-        0,
-        Math.min(
-          paintCanvas.width - 1,
-          Math.floor(
-            intersection.uv.x *
-            paintCanvas.width
-          )
-        )
-      );
+const brightness =
+pixel[0] * 0.2126 +
+pixel[1] * 0.7152 +
+pixel[2] * 0.0722;
 
-    const sampleY =
-      Math.max(
-        0,
-        Math.min(
-          paintCanvas.height - 1,
-          Math.floor(
-            (1 - intersection.uv.y) *
-            paintCanvas.height
-          )
-        )
-      );
 
+if (brightness < 140) {
 
-    const pixel =
-      paintContext.getImageData(
-        sampleX,
-        sampleY,
-        1,
-        1
-      ).data;
+eraserCursorMaterial.color.setHex(
+0xffffff
+);
 
+} else {
 
-    const brightness =
-      pixel[0] * 0.2126 +
-      pixel[1] * 0.7152 +
-      pixel[2] * 0.0722;
+eraserCursorMaterial.color.setHex(
+0x222222
+);
+}
+}
 
 
-    if (brightness < 140) {
-
-      eraserCursorMaterial.color.setHex(
-        0xffffff
-      );
-
-    } else {
-
-      eraserCursorMaterial.color.setHex(
-        0x222222
-      );
-    }
-  }
-
-
-  const centerDirection =
-    intersection.point
-      .clone()
-      .normalize();
-
-
-  /*
-    球面上で円を作るための
-    直交する2方向
-  */
-
-  let tangentX =
-    new THREE.Vector3(
-      0,
-      1,
-      0
-    );
-
-
-  if (
-    Math.abs(
-      centerDirection.dot(
-        tangentX
-      )
-    ) > 0.95
-  ) {
-
-    tangentX.set(
-      1,
-      0,
-      0
-    );
-  }
-
-
-  tangentX
-    .cross(
-      centerDirection
-    )
-    .normalize();
-
-
-  const tangentY =
-    centerDirection
-      .clone()
-      .cross(
-        tangentX
-      )
-      .normalize();
-
-
-  /*
-    消しゴム直径penSize pxの
-    半径を球面角度へ変換
-  */
-
-  const angularRadius =
-    (
-      penSize /
-      drawCanvas.width
-    ) *
-    Math.PI;
-
-
-  /*
-    球体より少し内側に表示
-  */
-
-  const cursorRadius = 49.8;
-
-  const points = [];
-
-  const segments = 64;
-
-
-  for (
-    let i = 0;
-    i < segments;
-    i++
-  ) {
-
-    const angle =
-      (
-        i /
-        segments
-      ) *
-      Math.PI *
-      2;
-
-
-    const direction =
-      centerDirection
-        .clone()
-        .multiplyScalar(
-          Math.cos(
-            angularRadius
-          )
-        )
-        .add(
-          tangentX
-            .clone()
-            .multiplyScalar(
-              Math.sin(
-                angularRadius
-              ) *
-              Math.cos(angle)
-            )
-        )
-        .add(
-          tangentY
-            .clone()
-            .multiplyScalar(
-              Math.sin(
-                angularRadius
-              ) *
-              Math.sin(angle)
-            )
-        )
-        .normalize();
-
-
-    points.push(
-      direction.multiplyScalar(
-        cursorRadius
-      )
-    );
-  }
-
-
-  eraserCursorGeometry
-    .setFromPoints(
-      points
-    );
-
-  eraserCursor.computeLineDistances();
-
-  eraserCursor.visible = true;
+const centerDirection =
+intersection.point
+.clone()
+.normalize();
+
+
+/*
+球面上で円を作るための
+直交する2方向
+*/
+
+let tangentX =
+new THREE.Vector3(
+0,
+1,
+0
+);
+
+
+if (
+Math.abs(
+centerDirection.dot(
+tangentX
+)
+) > 0.95
+) {
+
+tangentX.set(
+1,
+0,
+0
+);
+}
+
+
+tangentX
+.cross(
+centerDirection
+)
+.normalize();
+
+
+const tangentY =
+centerDirection
+.clone()
+.cross(
+tangentX
+)
+.normalize();
+
+
+/*
+消しゴム直径penSize pxの
+半径を球面角度へ変換
+*/
+
+const angularRadius =
+(
+penSize /
+drawCanvas.width
+) *
+Math.PI;
+
+
+/*
+球体より少し内側に表示
+*/
+
+const cursorRadius = 49.8;
+
+const points = [];
+
+const segments = 64;
+
+
+for (
+let i = 0;
+i < segments;
+i++
+) {
+
+const angle =
+(
+i /
+segments
+) *
+Math.PI *
+2;
+
+
+const direction =
+centerDirection
+.clone()
+.multiplyScalar(
+Math.cos(
+angularRadius
+)
+)
+.add(
+tangentX
+.clone()
+.multiplyScalar(
+Math.sin(
+angularRadius
+) *
+Math.cos(angle)
+)
+)
+.add(
+tangentY
+.clone()
+.multiplyScalar(
+Math.sin(
+angularRadius
+) *
+Math.sin(angle)
+)
+)
+.normalize();
+
+
+points.push(
+direction.multiplyScalar(
+cursorRadius
+)
+);
+}
+
+
+eraserCursorGeometry
+.setFromPoints(
+points
+);
+
+eraserCursor.computeLineDistances();
+
+eraserCursor.visible = true;
 }
 
 
 function getPaintPosition(event) {
 
-  const rect =
-    renderer.domElement.getBoundingClientRect();
+const rect =
+renderer.domElement.getBoundingClientRect();
 
 
-  /*
-    マウス位置を
-    Three.jsの座標系
-    -1 ～ +1 に変換
-  */
+/*
+マウス位置を
+Three.jsの座標系
+-1 ～ +1 に変換
+*/
 
-  pointer.x =
-    (
-      (event.clientX - rect.left) /
-      rect.width
-    ) * 2 - 1;
+pointer.x =
+(
+(event.clientX - rect.left) /
+rect.width
+) * 2 - 1;
 
-  pointer.y =
-    -(
-      (
-        event.clientY - rect.top
-      ) /
-      rect.height
-    ) * 2 + 1;
-
-
-  /*
-    カメラからRayを飛ばす
-  */
-
-  raycaster.setFromCamera(
-    pointer,
-    camera
-  );
+pointer.y =
+-(
+(
+event.clientY - rect.top
+) /
+rect.height
+) * 2 + 1;
 
 
-  /*
-    球体との交点を調べる
-  */
+/*
+カメラからRayを飛ばす
+*/
 
-  const intersections =
-    raycaster.intersectObject(
-      sphere,
-      false
-    );
-
-
-  if (intersections.length === 0) {
-    return null;
-  }
+raycaster.setFromCamera(
+pointer,
+camera
+);
 
 
-  const intersection =
-    intersections[0];
+/*
+球体との交点を調べる
+*/
 
-  if (!intersection.uv) {
-    return null;
-  }
-
-
-  /*
-    UV座標
-       ↓
-    Canvas座標
-  */
-
-  const u =
-    intersection.uv.x;
-
-  const v =
-    intersection.uv.y;
-
-  /*
-    UV座標を
-    編集用Canvasの座標へ変換
-  */
-
-  const x =
-    u * drawCanvas.width;
-
-  const y =
-    (1 - v) *
-    drawCanvas.height;
+const intersections =
+raycaster.intersectObject(
+sphere,
+false
+);
 
 
-  return {
-    x,
-    y
-  };
+if (intersections.length === 0) {
+return null;
+}
+
+
+const intersection =
+intersections[0];
+
+if (!intersection.uv) {
+return null;
+}
+
+
+/*
+UV座標
+↓
+Canvas座標
+*/
+
+const u =
+intersection.uv.x;
+
+const v =
+intersection.uv.y;
+
+/*
+UV座標を
+編集用Canvasの座標へ変換
+*/
+
+const x =
+u * drawCanvas.width;
+
+const y =
+(1 - v) *
+drawCanvas.height;
+
+
+return {
+x,
+y
+};
 }
 
 /* ================================
-   スポイト
+スポイト
 ================================ */
 
 function pickColorAt(
-  x,
-  y
+x,
+y
 ) {
 
-  /*
-    背景と表示中の全レイヤーを
-    最新状態で合成してから色を取得する
-  */
+/*
+背景と表示中の全レイヤーを
+最新状態で合成してから色を取得する
+*/
 
-  updatePaintCanvas();
-
-
-  const sampleX =
-    Math.max(
-      0,
-      Math.min(
-        paintCanvas.width - 1,
-        Math.floor(x)
-      )
-    );
-
-  const sampleY =
-    Math.max(
-      0,
-      Math.min(
-        paintCanvas.height - 1,
-        Math.floor(y)
-      )
-    );
+updatePaintCanvas();
 
 
-  const pixel =
-    paintContext.getImageData(
-      sampleX,
-      sampleY,
-      1,
-      1
-    ).data;
+const sampleX =
+Math.max(
+0,
+Math.min(
+paintCanvas.width - 1,
+Math.floor(x)
+)
+);
+
+const sampleY =
+Math.max(
+0,
+Math.min(
+paintCanvas.height - 1,
+Math.floor(y)
+)
+);
 
 
-  const toHex =
-    (value) =>
-      value
-        .toString(16)
-        .padStart(2, "0");
+const pixel =
+paintContext.getImageData(
+sampleX,
+sampleY,
+1,
+1
+).data;
 
 
-  const color =
-    `#${toHex(pixel[0])}${toHex(pixel[1])}${toHex(pixel[2])}`;
+const toHex =
+(value) =>
+value
+.toString(16)
+.padStart(2, "0");
+
+
+const color =
+`#${toHex(pixel[0])}${toHex(pixel[1])}${toHex(pixel[2])}`;
 
 
 setPenColor(
-      color
-    );
+color
+);
 
 
-  rememberColor(
-    color
-  );
+rememberColor(
+color
+);
+
+
+selectDrawingTool(
+"bucket"
+);
 }
 
 
 /* ================================
-   バケツ塗り
+バケツ塗り
 ================================ */
 
 function hexToRgba(hex) {
 
-  const value =
-    hex.replace("#", "");
+const value =
+hex.replace("#", "");
 
-  return [
-    parseInt(value.slice(0, 2), 16),
-    parseInt(value.slice(2, 4), 16),
-    parseInt(value.slice(4, 6), 16),
-    255
-  ];
+return [
+parseInt(value.slice(0, 2), 16),
+parseInt(value.slice(2, 4), 16),
+parseInt(value.slice(4, 6), 16),
+255
+];
 }
 
 
 function floodFill(
-  x,
-  y,
-  fillColor,
-  layerId,
-  historyAction = null
+x,
+y,
+fillColor,
+layerId,
+historyAction = null
 ) {
 
-  const layer =
-    getLayerById(layerId);
+const layer =
+getLayerById(layerId);
 
-  if (!layer) {
-    return false;
-  }
+if (!layer) {
+return false;
+}
 
 
-  const fillCanvas =
-    layer.canvas;
+const fillCanvas =
+layer.canvas;
 
-  const fillContext =
-    layer.context;
+const fillContext =
+layer.context;
 
 
-  const width =
-    fillCanvas.width;
+const width =
+fillCanvas.width;
 
-  const height =
-    fillCanvas.height;
+const height =
+fillCanvas.height;
 
 
-  const startX =
-    Math.max(
-      0,
-      Math.min(
-        width - 1,
-        Math.floor(x)
-      )
-    );
+const startX =
+Math.max(
+0,
+Math.min(
+width - 1,
+Math.floor(x)
+)
+);
 
-  const startY =
-    Math.max(
-      0,
-      Math.min(
-        height - 1,
-        Math.floor(y)
-      )
-    );
-
-
-  /*
-    バケツの境界判定用Canvas。
-
-    表示中の全レイヤーを合成し、
-    選択中レイヤーだけではなく
-    レイヤーを横断して塗る範囲を決める。
-  */
-
-  const referenceCanvas =
-    document.createElement("canvas");
-
-  referenceCanvas.width =
-    width;
-
-  referenceCanvas.height =
-    height;
-
-
-  const referenceContext =
-    referenceCanvas.getContext("2d");
-
-  referenceContext.imageSmoothingEnabled =
-    false;
-
-
-  for (const referenceLayer of layers) {
-
-    if (!referenceLayer.visible) {
-      continue;
-    }
-
-referenceContext.globalAlpha =
-      typeof referenceLayer.opacity ===
-        "number"
-        ? referenceLayer.opacity
-        : 1;
-
-
-    referenceContext.drawImage(
-      referenceLayer.canvas,
-      0,
-      0
-    );
-
-
-    referenceContext.globalAlpha =
-      1;
-  }
-
-
-  const referenceImageData =
-    referenceContext.getImageData(
-      0,
-      0,
-      width,
-      height
-    );
-
-  const referenceData =
-    referenceImageData.data;
-
-
-  /*
-    実際に色を書き込むのは
-    選択中のレイヤーだけ
-  */
-
-  const fillImageData =
-    fillContext.getImageData(
-      0,
-      0,
-      width,
-      height
-    );
-
-  const fillData =
-    fillImageData.data;
-
-
-  const startOffset =
-    (
-      startY * width +
-      startX
-    ) * 4;
-
-
-  const targetR =
-    referenceData[startOffset];
-
-  const targetG =
-    referenceData[startOffset + 1];
-
-  const targetB =
-    referenceData[startOffset + 2];
-
-  const targetA =
-    referenceData[startOffset + 3];
-
-
-  const [
-    fillR,
-    fillG,
-    fillB,
-    fillA
-  ] =
-    hexToRgba(fillColor);
-
-
-  function isTarget(offset) {
-
-    /*
-      透明部分はRGB値に関係なく
-      同じ領域として扱う。
-
-      アンチエイリアスによる
-      薄い半透明ピクセルも
-      塗り領域として扱う。
-    */
-
-    if (targetA <= 64) {
-
-      return (
-        referenceData[offset + 3] <= 64
-      );
-    }
-
-
-    return (
-      referenceData[offset] === targetR &&
-      referenceData[offset + 1] === targetG &&
-      referenceData[offset + 2] === targetB &&
-      referenceData[offset + 3] === targetA
-    );
-  }
-
-
-  const queue =
-    new Int32Array(
-      width * height
-    );
-
-  const visited =
-    new Uint8Array(
-      width * height
-    );
-
-  let head = 0;
-  let tail = 0;
-  let changed = false;
-
-
-  function paintAndQueue(
-    pixelX,
-    pixelY
-  ) {
-
-    const pixelIndex =
-      pixelY * width +
-      pixelX;
-
-
-    if (visited[pixelIndex]) {
-      return;
-    }
-
-
-    const offset =
-      pixelIndex * 4;
-
-
-    if (!isTarget(offset)) {
-      return;
-    }
-
-
-    visited[pixelIndex] = 1;
-
-
-    if (
-      fillData[offset] !== fillR ||
-      fillData[offset + 1] !== fillG ||
-      fillData[offset + 2] !== fillB ||
-      fillData[offset + 3] !== fillA
-    ) {
-
-      changed = true;
-    }
-
-
-    fillData[offset] =
-      fillR;
-
-    fillData[offset + 1] =
-      fillG;
-
-    fillData[offset + 2] =
-      fillB;
-
-    fillData[offset + 3] =
-      fillA;
-
-
-    queue[tail] =
-      pixelIndex;
-
-    tail++;
-  }
-
-
-  paintAndQueue(
-    startX,
-    startY
-  );
-
-
-  while (head < tail) {
-
-    const pixelIndex =
-      queue[head];
-
-    head++;
-
-
-    const pixelX =
-      pixelIndex % width;
-
-    const pixelY =
-      Math.floor(
-        pixelIndex / width
-      );
-
-
-    /*
-      360°画像なので
-      左右端をつなげる
-    */
-
-    const leftX =
-      pixelX === 0
-        ? width - 1
-        : pixelX - 1;
-
-    const rightX =
-      pixelX === width - 1
-        ? 0
-        : pixelX + 1;
-
-
-    paintAndQueue(
-      leftX,
-      pixelY
-    );
-
-    paintAndQueue(
-      rightX,
-      pixelY
-    );
-
-
-    if (pixelY > 0) {
-
-      paintAndQueue(
-        pixelX,
-        pixelY - 1
-      );
-    }
-
-
-    if (pixelY < height - 1) {
-
-      paintAndQueue(
-        pixelX,
-        pixelY + 1
-      );
-    }
-  }
+const startY =
+Math.max(
+0,
+Math.min(
+height - 1,
+Math.floor(y)
+)
+);
 
 
 /*
-    塗り残し防止。
+バケツの境界判定用Canvas。
 
-    flood fillで確定した領域から
-    境界方向へ1pxだけ塗りを広げる。
+表示中の全レイヤーを合成し、
+選択中レイヤーだけではなく
+レイヤーを横断して塗る範囲を決める。
+*/
 
-    このピクセルは次の探索には使わないため、
-    線を越えて反対側まで
-    塗りが漏れることはない。
-  */
+const referenceCanvas =
+document.createElement("canvas");
 
-  const edgePainted =
-    new Uint8Array(
-      width * height
-    );
+referenceCanvas.width =
+width;
 
-
-  function paintUnderEdge(
-    pixelIndex
-  ) {
-
-    /*
-      本来の塗り領域は
-      すでに処理済み
-    */
-
-    if (
-      visited[pixelIndex] ||
-      edgePainted[pixelIndex]
-    ) {
-      return;
-    }
+referenceCanvas.height =
+height;
 
 
-    const offset =
-      pixelIndex * 4;
+const referenceContext =
+referenceCanvas.getContext("2d");
+
+referenceContext.imageSmoothingEnabled =
+false;
 
 
-    /*
-      透明部分には広げない。
+for (const referenceLayer of layers) {
 
-      アンチエイリアスされた線など、
-      境界として認識されたピクセルだけを
-      対象にする。
-    */
+if (!referenceLayer.visible) {
+continue;
+}
 
-    if (
-      referenceData[
-        offset + 3
-      ] <= 64
-    ) {
-      return;
-    }
+referenceContext.globalAlpha =
+typeof referenceLayer.opacity ===
+"number"
+? referenceLayer.opacity
+: 1;
 
 
-    edgePainted[pixelIndex] =
-      1;
+referenceContext.drawImage(
+referenceLayer.canvas,
+0,
+0
+);
 
 
-    /*
-      このレイヤーにすでに線がある場合は、
-      線を消さず、その「下」に
-      塗り色がある状態を計算する。
-    */
-
-    const existingAlpha =
-      fillData[
-        offset + 3
-      ] / 255;
+referenceContext.globalAlpha =
+1;
+}
 
 
-    const backgroundRatio =
-      1 - existingAlpha;
+const referenceImageData =
+referenceContext.getImageData(
+0,
+0,
+width,
+height
+);
+
+const referenceData =
+referenceImageData.data;
 
 
-    const nextR =
-      Math.round(
-        fillData[offset] *
-          existingAlpha +
-        fillR *
-          backgroundRatio
-      );
+/*
+実際に色を書き込むのは
+選択中のレイヤーだけ
+*/
+
+const fillImageData =
+fillContext.getImageData(
+0,
+0,
+width,
+height
+);
+
+const fillData =
+fillImageData.data;
 
 
-    const nextG =
-      Math.round(
-        fillData[offset + 1] *
-          existingAlpha +
-        fillG *
-          backgroundRatio
-      );
+const startOffset =
+(
+startY * width +
+startX
+) * 4;
 
 
-    const nextB =
-      Math.round(
-        fillData[offset + 2] *
-          existingAlpha +
-        fillB *
-          backgroundRatio
-      );
+const targetR =
+referenceData[startOffset];
+
+const targetG =
+referenceData[startOffset + 1];
+
+const targetB =
+referenceData[startOffset + 2];
+
+const targetA =
+referenceData[startOffset + 3];
 
 
-    if (
-      fillData[offset] !== nextR ||
-      fillData[offset + 1] !==
-        nextG ||
-      fillData[offset + 2] !==
-        nextB ||
-      fillData[offset + 3] !==
-        255
-    ) {
-
-      changed = true;
-    }
+const [
+fillR,
+fillG,
+fillB,
+fillA
+] =
+hexToRgba(fillColor);
 
 
-    fillData[offset] =
-      nextR;
+function isTarget(offset) {
 
-    fillData[offset + 1] =
-      nextG;
+/*
+透明部分はRGB値に関係なく
+同じ領域として扱う。
 
-    fillData[offset + 2] =
-      nextB;
+アンチエイリアスによる
+薄い半透明ピクセルも
+塗り領域として扱う。
+*/
 
-    fillData[offset + 3] =
-      255;
-  }
+if (targetA <= 64) {
 
-
-  /*
-    flood fillで塗ったすべてのピクセルを
-    基準として、その周囲8方向を調べる。
-
-    斜め線の角にも塗り残しが
-    出ないよう8方向にしている。
-  */
-
-  for (
-    let i = 0;
-    i < tail;
-    i++
-  ) {
-
-    const pixelIndex =
-      queue[i];
+return (
+referenceData[offset + 3] <= 64
+);
+}
 
 
-    const pixelX =
-      pixelIndex % width;
+return (
+referenceData[offset] === targetR &&
+referenceData[offset + 1] === targetG &&
+referenceData[offset + 2] === targetB &&
+referenceData[offset + 3] === targetA
+);
+}
 
 
-    const pixelY =
-      Math.floor(
-        pixelIndex / width
-      );
+const queue =
+new Int32Array(
+width * height
+);
+
+const visited =
+new Uint8Array(
+width * height
+);
+
+let head = 0;
+let tail = 0;
+let changed = false;
 
 
-    for (
-      let offsetY = -1;
-      offsetY <= 1;
-      offsetY++
-    ) {
+function paintAndQueue(
+pixelX,
+pixelY
+) {
 
-      const nextY =
-        pixelY + offsetY;
-
-
-      if (
-        nextY < 0 ||
-        nextY >= height
-      ) {
-        continue;
-      }
+const pixelIndex =
+pixelY * width +
+pixelX;
 
 
-      for (
-        let offsetX = -1;
-        offsetX <= 1;
-        offsetX++
-      ) {
-
-        if (
-          offsetX === 0 &&
-          offsetY === 0
-        ) {
-          continue;
-        }
+if (visited[pixelIndex]) {
+return;
+}
 
 
-        /*
-          360°画像なので
-          左右端はつなげる
-        */
-
-        let nextX =
-          pixelX + offsetX;
+const offset =
+pixelIndex * 4;
 
 
-        if (nextX < 0) {
-
-          nextX =
-            width - 1;
-
-        } else if (
-          nextX >= width
-        ) {
-
-          nextX = 0;
-        }
+if (!isTarget(offset)) {
+return;
+}
 
 
-        const nextIndex =
-          nextY * width +
-          nextX;
+visited[pixelIndex] = 1;
 
 
-        paintUnderEdge(
-          nextIndex
-        );
-      }
-    }
-  }
+if (
+fillData[offset] !== fillR ||
+fillData[offset + 1] !== fillG ||
+fillData[offset + 2] !== fillB ||
+fillData[offset + 3] !== fillA
+) {
+
+changed = true;
+}
+
+
+fillData[offset] =
+fillR;
+
+fillData[offset + 1] =
+fillG;
+
+fillData[offset + 2] =
+fillB;
+
+fillData[offset + 3] =
+fillA;
+
+
+queue[tail] =
+pixelIndex;
+
+tail++;
+}
+
+
+paintAndQueue(
+startX,
+startY
+);
+
+
+while (head < tail) {
+
+const pixelIndex =
+queue[head];
+
+head++;
+
+
+const pixelX =
+pixelIndex % width;
+
+const pixelY =
+Math.floor(
+pixelIndex / width
+);
+
+
+/*
+360°画像なので
+左右端をつなげる
+*/
+
+const leftX =
+pixelX === 0
+? width - 1
+: pixelX - 1;
+
+const rightX =
+pixelX === width - 1
+? 0
+: pixelX + 1;
+
+
+paintAndQueue(
+leftX,
+pixelY
+);
+
+paintAndQueue(
+rightX,
+pixelY
+);
+
+
+if (pixelY > 0) {
+
+paintAndQueue(
+pixelX,
+pixelY - 1
+);
+}
+
+
+if (pixelY < height - 1) {
+
+paintAndQueue(
+pixelX,
+pixelY + 1
+);
+}
+}
+
+
+/*
+塗り残し防止。
+
+flood fillで確定した領域から
+境界方向へ1pxだけ塗りを広げる。
+
+このピクセルは次の探索には使わないため、
+線を越えて反対側まで
+塗りが漏れることはない。
+*/
+
+const edgePainted =
+new Uint8Array(
+width * height
+);
+
+
+function paintUnderEdge(
+pixelIndex
+) {
+
+/*
+本来の塗り領域は
+すでに処理済み
+*/
+
+if (
+visited[pixelIndex] ||
+edgePainted[pixelIndex]
+) {
+return;
+}
+
+
+const offset =
+pixelIndex * 4;
+
+
+/*
+透明部分には広げない。
+
+アンチエイリアスされた線など、
+境界として認識されたピクセルだけを
+対象にする。
+*/
+
+if (
+referenceData[
+offset + 3
+] <= 64
+) {
+return;
+}
+
+
+edgePainted[pixelIndex] =
+1;
+
+
+/*
+このレイヤーにすでに線がある場合は、
+線を消さず、その「下」に
+塗り色がある状態を計算する。
+*/
+
+const existingAlpha =
+fillData[
+offset + 3
+] / 255;
+
+
+const backgroundRatio =
+1 - existingAlpha;
+
+
+const nextR =
+Math.round(
+fillData[offset] *
+existingAlpha +
+fillR *
+backgroundRatio
+);
+
+
+const nextG =
+Math.round(
+fillData[offset + 1] *
+existingAlpha +
+fillG *
+backgroundRatio
+);
+
+
+const nextB =
+Math.round(
+fillData[offset + 2] *
+existingAlpha +
+fillB *
+backgroundRatio
+);
+
+
+if (
+fillData[offset] !== nextR ||
+fillData[offset + 1] !==
+nextG ||
+fillData[offset + 2] !==
+nextB ||
+fillData[offset + 3] !==
+255
+) {
+
+changed = true;
+}
+
+
+fillData[offset] =
+nextR;
+
+fillData[offset + 1] =
+nextG;
+
+fillData[offset + 2] =
+nextB;
+
+fillData[offset + 3] =
+255;
+}
+
+
+/*
+flood fillで塗ったすべてのピクセルを
+基準として、その周囲8方向を調べる。
+
+斜め線の角にも塗り残しが
+出ないよう8方向にしている。
+*/
+
+for (
+let i = 0;
+i < tail;
+i++
+) {
+
+const pixelIndex =
+queue[i];
+
+
+const pixelX =
+pixelIndex % width;
+
+
+const pixelY =
+Math.floor(
+pixelIndex / width
+);
+
+
+for (
+let offsetY = -1;
+offsetY <= 1;
+offsetY++
+) {
+
+const nextY =
+pixelY + offsetY;
+
+
+if (
+nextY < 0 ||
+nextY >= height
+) {
+continue;
+}
+
+
+for (
+let offsetX = -1;
+offsetX <= 1;
+offsetX++
+) {
+
+if (
+offsetX === 0 &&
+offsetY === 0
+) {
+continue;
+}
+
+
+/*
+360°画像なので
+左右端はつなげる
+*/
+
+let nextX =
+pixelX + offsetX;
+
+
+if (nextX < 0) {
+
+nextX =
+width - 1;
+
+} else if (
+nextX >= width
+) {
+
+nextX = 0;
+}
+
+
+const nextIndex =
+nextY * width +
+nextX;
+
+
+paintUnderEdge(
+nextIndex
+);
+}
+}
+}
 
 
 if (!changed) {
-    return false;
-  }
+return false;
+}
 
 
-  /*
-    差分Undo用。
+/*
+差分Undo用。
 
-    flood fillで実際に変更対象となった
-    ピクセル（visited と edgePainted）から
-    変更範囲を求め、
-    putImageDataする前のキャンバス状態を
-    タイル単位で保存する。
-  */
+flood fillで実際に変更対象となった
+ピクセル（visited と edgePainted）から
+変更範囲を求め、
+putImageDataする前のキャンバス状態を
+タイル単位で保存する。
+*/
 
-  if (
-    historyAction &&
-    historyAction.tileDiffs instanceof Map
-  ) {
+if (
+historyAction &&
+historyAction.tileDiffs instanceof Map
+) {
 
-    let minChangedX = width;
-    let minChangedY = height;
+let minChangedX = width;
+let minChangedY = height;
 
-    let maxChangedX = -1;
-    let maxChangedY = -1;
-
-
-    for (
-      let i = 0;
-      i < visited.length;
-      i++
-    ) {
-
-      if (
-        !visited[i] &&
-        !edgePainted[i]
-      ) {
-        continue;
-      }
+let maxChangedX = -1;
+let maxChangedY = -1;
 
 
-      const x =
-        i % width;
+for (
+let i = 0;
+i < visited.length;
+i++
+) {
 
-      const y =
-        Math.floor(i / width);
-
-
-      if (x < minChangedX) {
-        minChangedX = x;
-      }
-
-      if (y < minChangedY) {
-        minChangedY = y;
-      }
-
-      if (x > maxChangedX) {
-        maxChangedX = x;
-      }
-
-      if (y > maxChangedY) {
-        maxChangedY = y;
-      }
-    }
+if (
+!visited[i] &&
+!edgePainted[i]
+) {
+continue;
+}
 
 
-    if (
-      maxChangedX >= 0 &&
-      maxChangedY >= 0
-    ) {
+const x =
+i % width;
 
-      captureStrokeTiles(
-        historyAction,
-        minChangedX,
-        minChangedY,
-        maxChangedX,
-        maxChangedY
-      );
-    }
-  }
+const y =
+Math.floor(i / width);
 
 
-  fillContext.putImageData(
-    fillImageData,
-    0,
-    0
-  );
+if (x < minChangedX) {
+minChangedX = x;
+}
+
+if (y < minChangedY) {
+minChangedY = y;
+}
+
+if (x > maxChangedX) {
+maxChangedX = x;
+}
+
+if (y > maxChangedY) {
+maxChangedY = y;
+}
+}
 
 
-  return true;
+if (
+maxChangedX >= 0 &&
+maxChangedY >= 0
+) {
+
+captureStrokeTiles(
+historyAction,
+minChangedX,
+minChangedY,
+maxChangedX,
+maxChangedY
+);
+}
+}
+
+
+fillContext.putImageData(
+fillImageData,
+0,
+0
+);
+
+
+return true;
 }
 
 /* ================================
-   出力サイズ
+出力サイズ
 ================================ */
 
 canvasSizeSelect.addEventListener(
-  "change",
-  () => {
+"change",
+() => {
 
-    outputWidth =
-      Number(
-        canvasSizeSelect.value
-      );
+outputWidth =
+Number(
+canvasSizeSelect.value
+);
 
-    outputHeight =
-      outputWidth / 2;
-  }
+outputHeight =
+outputWidth / 2;
+}
 );
 
 
 /* ================================
-   目線の高さ
+目線の高さ
 ================================ */
 
 eyeHeightInput.addEventListener(
-  "input",
-  () => {
+"input",
+() => {
 
-    const eyeHeight =
-      Number(
-        eyeHeightInput.value
-      );
+const eyeHeight =
+Number(
+eyeHeightInput.value
+);
 
 camera.position.y =
-      eyeHeight;
+eyeHeight;
 
-    updateGroundGridSize(
-      eyeHeight
-    );
+updateGroundGridSize(
+eyeHeight
+);
 
-    updateHorizontalGuideHeight(
-      eyeHeight
-    );
+updateHorizontalGuideHeight(
+eyeHeight
+);
 
-    eyeHeightValue.value =
-      eyeHeight.toFixed(1);
-  }
+eyeHeightValue.value =
+eyeHeight.toFixed(1);
+}
 );
 
 
 eyeHeightValue.addEventListener(
-  "input",
-  () => {
+"input",
+() => {
 
-    let eyeHeight =
-      Number(
-        eyeHeightValue.value
-      );
-
-
-    if (!Number.isFinite(eyeHeight)) {
-      return;
-    }
+let eyeHeight =
+Number(
+eyeHeightValue.value
+);
 
 
-    eyeHeight =
-      Math.max(
-        0.5,
-        Math.min(
-          30,
-          eyeHeight
-        )
-      );
+if (!Number.isFinite(eyeHeight)) {
+return;
+}
+
+
+eyeHeight =
+Math.max(
+0.5,
+Math.min(
+30,
+eyeHeight
+)
+);
 
 
 camera.position.y =
-      eyeHeight;
+eyeHeight;
 
-    updateGroundGridSize(
-      eyeHeight
-    );
+updateGroundGridSize(
+eyeHeight
+);
 
-    updateHorizontalGuideHeight(
-      eyeHeight
-    );
+updateHorizontalGuideHeight(
+eyeHeight
+);
 
-    eyeHeightInput.value =
-      eyeHeight;
-  }
+eyeHeightInput.value =
+eyeHeight;
+}
+);
+
+
+eyeHeightValue.addEventListener(
+"blur",
+() => {
+
+eyeHeightValue.value =
+camera.position.y;
+}
+);
+
+
+eyeHeightValue.addEventListener(
+"keydown",
+(event) => {
+
+if (
+event.key !== "Enter"
+) {
+return;
+}
+
+event.preventDefault();
+
+eyeHeightValue.blur();
+}
 );
 
 /*
-  目線 −
+目線 −
 */
 
 eyeHeightMinus.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    let eyeHeight =
-      Number(
-        eyeHeightInput.value
-      );
+let eyeHeight =
+Number(
+eyeHeightInput.value
+);
 
-    eyeHeight =
-      Math.max(
-        0.5,
-        eyeHeight - 0.1
-      );
+eyeHeight =
+Math.max(
+0.5,
+eyeHeight - 0.1
+);
 
-    eyeHeight =
-      Number(
-        eyeHeight.toFixed(1)
-      );
+eyeHeight =
+Number(
+eyeHeight.toFixed(1)
+);
 
 camera.position.y =
-      eyeHeight;
+eyeHeight;
 
-    updateGroundGridSize(
-      eyeHeight
-    );
+updateGroundGridSize(
+eyeHeight
+);
 
-    updateHorizontalGuideHeight(
-      eyeHeight
-    );
+updateHorizontalGuideHeight(
+eyeHeight
+);
 
-    eyeHeightInput.value =
-      eyeHeight;
+eyeHeightInput.value =
+eyeHeight;
 
-    eyeHeightValue.value =
-      eyeHeight.toFixed(1);
-  }
+eyeHeightValue.value =
+eyeHeight.toFixed(1);
+}
 );
 
 
 /*
-  目線 ＋
+目線 ＋
 */
 
 eyeHeightPlus.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    let eyeHeight =
-      Number(
-        eyeHeightInput.value
-      );
+let eyeHeight =
+Number(
+eyeHeightInput.value
+);
 
-    eyeHeight =
-      Math.min(
-        30,
-        eyeHeight + 0.1
-      );
+eyeHeight =
+Math.min(
+30,
+eyeHeight + 0.1
+);
 
-    eyeHeight =
-      Number(
-        eyeHeight.toFixed(1)
-      );
+eyeHeight =
+Number(
+eyeHeight.toFixed(1)
+);
 
 camera.position.y =
-      eyeHeight;
+eyeHeight;
 
-    updateGroundGridSize(
-      eyeHeight
-    );
+updateGroundGridSize(
+eyeHeight
+);
 
-    updateHorizontalGuideHeight(
-      eyeHeight
-    );
+updateHorizontalGuideHeight(
+eyeHeight
+);
 
-    eyeHeightInput.value =
-      eyeHeight;
+eyeHeightInput.value =
+eyeHeight;
 
-    eyeHeightValue.value =
-      eyeHeight.toFixed(1);
-  }
+eyeHeightValue.value =
+eyeHeight.toFixed(1);
+}
 );
 
 /* ================================
-   ガイド表示
+ガイド表示
 ================================ */
 
 groundToggle.addEventListener(
-  "change",
-  () => {
+"change",
+() => {
 
-    groundGrid.visible =
-      groundToggle.checked;
+groundGrid.visible =
+groundToggle.checked;
 
-    verticalGuides.visible =
-      groundToggle.checked;
+verticalGuides.visible =
+groundToggle.checked;
 
-    horizontalGuides.visible =
-      groundToggle.checked;
-  }
+horizontalGuides.visible =
+groundToggle.checked;
+}
 );
 
 
 
 /* ================================
-   パネル移動
+パネル移動
 ================================ */
 
 function makePanelDraggable(
-  panel
+panel
 ) {
 
-  if (!panel) {
-    return;
-  }
+if (!panel) {
+return;
+}
 
 
-  let isDraggingPanel = false;
+let isDraggingPanel = false;
 
-  let startPointerX = 0;
-  let startPointerY = 0;
+let startPointerX = 0;
+let startPointerY = 0;
 
-  let startPanelLeft = 0;
-  let startPanelTop = 0;
+let startPanelLeft = 0;
+let startPanelTop = 0;
 
 
 panel.addEventListener(
-    "pointerdown",
-    (event) => {
+"pointerdown",
+(event) => {
 
-      /*
-        スマートフォンでは
-        パネルを下部固定にするため
-        ドラッグ移動を無効にする
-      */
-
-      if (
-        window.matchMedia(
-          "(max-width: 700px)"
-        ).matches
-      ) {
-        return;
-      }
-
-
-      /*
-        左クリック以外では
-        移動を開始しない
-      */
-
-      if (event.button !== 0) {
-        return;
-      }
-
-
-      /*
-        ボタンや入力欄などを
-        操作しているときは
-        パネルを移動しない
-      */
+/*
+スマートフォンでは
+パネルを下部固定にするため
+ドラッグ移動を無効にする
+*/
 
 if (
-        event.target.closest(
-          [
-            "button",
-            "input",
-            "select",
-            "textarea",
-            "label",
-            "a",
-            ".pen-color-control",
-            ".recent-colors"
-          ].join(",")
-        )
-      ) {
-
-        return;
-      }
-
-
-      const rect =
-        panel.getBoundingClientRect();
-
-
-      isDraggingPanel = true;
-
-      startPointerX =
-        event.clientX;
-
-      startPointerY =
-        event.clientY;
-
-      startPanelLeft =
-        rect.left;
-
-      startPanelTop =
-        rect.top;
-
-
-      /*
-        右基準で配置されている
-        レイヤーパネルも、
-        ドラッグ開始時に
-        左上基準へ切り替える
-      */
-
-      panel.style.left =
-        `${rect.left}px`;
-
-      panel.style.top =
-        `${rect.top}px`;
-
-      panel.style.right =
-        "auto";
-
-      panel.style.bottom =
-        "auto";
-
-
-      panel.classList.add(
-        "is-dragging"
-      );
-
-
-      document.body.style.userSelect =
-        "none";
-
-
-      event.preventDefault();
-    }
-  );
-
-
-  window.addEventListener(
-    "pointermove",
-    (event) => {
-
-      if (!isDraggingPanel) {
-        return;
-      }
-
-
-      const deltaX =
-        event.clientX -
-        startPointerX;
-
-      const deltaY =
-        event.clientY -
-        startPointerY;
-
-
-      /*
-        画面外へ完全に
-        出てしまわないよう制限
-      */
-
-      const maxLeft =
-        Math.max(
-          0,
-          window.innerWidth -
-          panel.offsetWidth
-        );
-
-
-      /*
-        上部ツールバー48pxを
-        避けるため52pxから下にする
-      */
-
-      const minTop = 52;
-
-      const maxTop =
-        Math.max(
-          minTop,
-          window.innerHeight -
-          panel.offsetHeight
-        );
-
-
-      const nextLeft =
-        Math.max(
-          0,
-          Math.min(
-            maxLeft,
-            startPanelLeft +
-            deltaX
-          )
-        );
-
-
-      const nextTop =
-        Math.max(
-          minTop,
-          Math.min(
-            maxTop,
-            startPanelTop +
-            deltaY
-          )
-        );
-
-
-      panel.style.left =
-        `${nextLeft}px`;
-
-      panel.style.top =
-        `${nextTop}px`;
-    }
-  );
-
-
-  function stopPanelDrag() {
-
-    if (!isDraggingPanel) {
-      return;
-    }
-
-
-    isDraggingPanel = false;
-
-
-    panel.classList.remove(
-      "is-dragging"
-    );
-
-
-    document.body.style.userSelect =
-      "";
-  }
-
-
-  window.addEventListener(
-    "pointerup",
-    stopPanelDrag
-  );
-
-
-  window.addEventListener(
-    "pointercancel",
-    stopPanelDrag
-  );
+window.matchMedia(
+"(max-width: 700px)"
+).matches
+) {
+return;
 }
 
 
 /*
-  左：ツールパネル
+左クリック以外では
+移動を開始しない
 */
 
-makePanelDraggable(
-  document.querySelector(
-    ".drawing-tools"
-  )
+if (event.button !== 0) {
+return;
+}
+
+
+/*
+ボタンや入力欄などを
+操作しているときは
+パネルを移動しない
+*/
+
+if (
+event.target.closest(
+[
+"button",
+"input",
+"select",
+"textarea",
+"label",
+"a",
+".pen-color-control",
+".recent-colors"
+].join(",")
+)
+) {
+
+return;
+}
+
+
+const rect =
+panel.getBoundingClientRect();
+
+
+isDraggingPanel = true;
+
+startPointerX =
+event.clientX;
+
+startPointerY =
+event.clientY;
+
+startPanelLeft =
+rect.left;
+
+startPanelTop =
+rect.top;
+
+
+/*
+右基準で配置されている
+レイヤーパネルも、
+ドラッグ開始時に
+左上基準へ切り替える
+*/
+
+panel.style.left =
+`${rect.left}px`;
+
+panel.style.top =
+`${rect.top}px`;
+
+panel.style.right =
+"auto";
+
+panel.style.bottom =
+"auto";
+
+
+panel.classList.add(
+"is-dragging"
+);
+
+
+document.body.style.userSelect =
+"none";
+
+
+event.preventDefault();
+}
+);
+
+
+window.addEventListener(
+"pointermove",
+(event) => {
+
+if (!isDraggingPanel) {
+return;
+}
+
+
+const deltaX =
+event.clientX -
+startPointerX;
+
+const deltaY =
+event.clientY -
+startPointerY;
+
+
+/*
+画面外へ完全に
+出てしまわないよう制限
+*/
+
+const maxLeft =
+Math.max(
+0,
+window.innerWidth -
+panel.offsetWidth
 );
 
 
 /*
-  右：レイヤーパネル
+上部ツールバー48pxを
+避けるため52pxから下にする
+*/
+
+const minTop = 52;
+
+const maxTop =
+Math.max(
+minTop,
+window.innerHeight -
+panel.offsetHeight
+);
+
+
+const nextLeft =
+Math.max(
+0,
+Math.min(
+maxLeft,
+startPanelLeft +
+deltaX
+)
+);
+
+
+const nextTop =
+Math.max(
+minTop,
+Math.min(
+maxTop,
+startPanelTop +
+deltaY
+)
+);
+
+
+panel.style.left =
+`${nextLeft}px`;
+
+panel.style.top =
+`${nextTop}px`;
+}
+);
+
+
+function stopPanelDrag() {
+
+if (!isDraggingPanel) {
+return;
+}
+
+
+isDraggingPanel = false;
+
+
+panel.classList.remove(
+"is-dragging"
+);
+
+
+document.body.style.userSelect =
+"";
+}
+
+
+window.addEventListener(
+"pointerup",
+stopPanelDrag
+);
+
+
+window.addEventListener(
+"pointercancel",
+stopPanelDrag
+);
+}
+
+
+/*
+左：ツールパネル
 */
 
 makePanelDraggable(
-  document.querySelector(
-    ".layer-panel"
-  )
+document.querySelector(
+".drawing-tools"
+)
+);
+
+
+/*
+右：レイヤーパネル
+*/
+
+makePanelDraggable(
+document.querySelector(
+".layer-panel"
+)
 );
 
 
 /* ================================
-   スマートフォン用
-   下部パネル切り替え
+スマートフォン用
+下部パネル切り替え
 ================================ */
 
 const mobileBottomTabButtons =
-  document.querySelectorAll(
-    ".mobile-bottom-tab"
-  );
+document.querySelectorAll(
+".mobile-bottom-tab"
+);
 
 const drawingToolsPanel =
-  document.querySelector(
-    ".drawing-tools"
-  );
+document.querySelector(
+".drawing-tools"
+);
 
 const layerPanel =
-  document.querySelector(
-    ".layer-panel"
-  );
+document.querySelector(
+".layer-panel"
+);
 
 const settingsPanel =
-  document.querySelector(
-    ".toolbar__tools"
-  );
+document.querySelector(
+".toolbar__tools"
+);
 
 
 function updateMobileViewportSize() {
 
-  /*
-    PCでは通常サイズへ戻す
-  */
+/*
+PCでは通常サイズへ戻す
+*/
 
-  if (
-    !window.matchMedia(
-      "(max-width: 700px)"
-    ).matches
-  ) {
+if (
+!window.matchMedia(
+"(max-width: 700px)"
+).matches
+) {
 
-    viewport.style.height = "";
+viewport.style.height = "";
 
-  } else {
+} else if (
+document.body.classList.contains(
+"is-camera-mode"
+)
+) {
 
-    /*
-      現在開いている
-      下部パネルを取得
-    */
+viewport.style.height =
+"100dvh";
 
-    const openPanel =
-      document.querySelector(
-        ".drawing-tools.is-mobile-open, " +
-        ".layer-panel.is-mobile-open, " +
-        ".toolbar__tools.is-mobile-open"
-      );
+} else {
 
+/*
+現在開いている
+下部パネルを取得
+*/
 
-    const panelHeight =
-      openPanel
-        ? openPanel
-            .getBoundingClientRect()
-            .height
-        : 0;
-
-
-    /*
-      44px = 上部ヘッダー
-      52px = 下部タブ
-
-      下部パネルも差し引いて、
-      実際に見える部分だけを
-      描画エリアにする
-    */
-
-    viewport.style.height =
-      `calc(
-        100dvh -
-        44px -
-        52px -
-        ${panelHeight}px -
-        env(safe-area-inset-bottom)
-      )`;
-  }
+const openPanel =
+document.querySelector(
+".drawing-tools.is-mobile-open, " +
+".layer-panel.is-mobile-open"
+);
 
 
-  /*
-    Three.js側も
-    新しい描画領域サイズへ合わせる
-  */
-
-  camera.aspect =
-    viewport.clientWidth /
-    viewport.clientHeight;
+const panelHeight =
+openPanel
+? openPanel
+.getBoundingClientRect()
+.height
+: 0;
 
 
-  camera.updateProjectionMatrix();
+/*
+52px = 上部ヘッダー
+52px = 下部タブ
+
+下部パネルも差し引いて、
+実際に見える部分だけを
+描画エリアにする
+*/
+
+viewport.style.height =
+`calc(
+100dvh -
+52px -
+52px -
+${panelHeight}px -
+env(safe-area-inset-bottom)
+)`;
+}
 
 
-  renderer.setSize(
-    viewport.clientWidth,
-    viewport.clientHeight
-  );
+/*
+Three.js側も
+新しい描画領域サイズへ合わせる
+*/
+
+camera.aspect =
+viewport.clientWidth /
+viewport.clientHeight;
+
+
+camera.updateProjectionMatrix();
+
+
+renderer.setSize(
+viewport.clientWidth,
+viewport.clientHeight
+);
+
+updateCameraViewfinder();
+}
+
+
+function closeMobileSettingsMenu() {
+
+settingsPanel
+?.classList
+.remove(
+"is-mobile-open"
+);
+
+helpButton.setAttribute(
+"aria-expanded",
+"false"
+);
+}
+
+
+function toggleMobileSettingsMenu() {
+
+const shouldOpen =
+!settingsPanel
+?.classList
+.contains(
+"is-mobile-open"
+);
+
+
+if (shouldOpen) {
+
+closeMobileColorPicker();
+
+settingsPanel
+?.classList
+.add(
+"is-mobile-open"
+);
+
+} else {
+
+settingsPanel
+?.classList
+.remove(
+"is-mobile-open"
+);
+}
+
+
+helpButton.setAttribute(
+"aria-expanded",
+shouldOpen
+? "true"
+: "false"
+);
 }
 
 
 function setMobilePanel(
-  panelName
+panelName
 ) {
 
-  /*
-    描画タブから離れる場合は
-    カラーホイールを閉じる
-  */
-
-  if (panelName !== "draw") {
-
-    closeMobileColorPicker();
-  }
+closeMobileSettingsMenu();
 
 
-  drawingToolsPanel
-    ?.classList
-    .toggle(
-      "is-mobile-open",
-      panelName === "draw"
-    );
+if (panelName !== "draw") {
+
+closeMobileColorPicker();
+}
 
 
-  layerPanel
-    ?.classList
-    .toggle(
-      "is-mobile-open",
-      panelName === "layer"
-    );
+drawingToolsPanel
+?.classList
+.toggle(
+"is-mobile-open",
+panelName === "draw"
+);
 
 
-  settingsPanel
-    ?.classList
-    .toggle(
-      "is-mobile-open",
-      panelName === "settings"
-    );
+layerPanel
+?.classList
+.toggle(
+"is-mobile-open",
+panelName === "layer"
+);
 
 
 mobileBottomTabButtons.forEach(
-    (button) => {
+(button) => {
 
-      button.classList.toggle(
-        "is-active",
-        button.dataset.mobilePanel ===
-          panelName
-      );
-    }
-  );
+button.classList.toggle(
+"is-active",
+button.dataset.mobilePanel ===
+panelName
+);
+}
+);
 
 
-  /*
-    displayが切り替わったあとに
-    パネルの実際の高さを測る
-  */
+requestAnimationFrame(
+() => {
 
-  requestAnimationFrame(
-    () => {
-
-      updateMobileViewportSize();
-    }
-  );
+updateMobileViewportSize();
+}
+);
 }
 
 
 mobileBottomTabButtons.forEach(
-  (button) => {
+(button) => {
 
-    button.addEventListener(
-      "click",
-      () => {
+button.addEventListener(
+"click",
+() => {
 
-        setMobilePanel(
-          button.dataset.mobilePanel
-        );
-      }
-    );
-  }
+const panelName =
+button.dataset.mobilePanel;
+
+
+if (panelName === "camera") {
+
+closeMobileSettingsMenu();
+closeMobileColorPicker();
+
+selectDrawingTool(
+"camera"
+);
+
+return;
+}
+
+
+setMobilePanel(
+panelName
+);
+}
+);
+}
 );
 
 
 /*
-  初期状態では
-  描画パネルを表示する
+初期状態では
+描画パネルを表示する
 */
 
 setMobilePanel(
-  "draw"
+"draw"
 );
 
 
 /* ================================
-   レイヤーUI
+レイヤーUI
 ================================ */
 
 function updateLayerActionButtons() {
 
-  const activeIndex =
-    layers.findIndex(
-      (layer) =>
-        layer.id === activeLayerId
-    );
+const activeIndex =
+layers.findIndex(
+(layer) =>
+layer.id === activeLayerId
+);
 
 
-  layerUpButton.disabled =
-    activeIndex < 0 ||
-    activeIndex ===
-      layers.length - 1;
+layerUpButton.disabled =
+activeIndex < 0 ||
+activeIndex ===
+layers.length - 1;
 
-  layerDownButton.disabled =
-    activeIndex <= 0;
+layerDownButton.disabled =
+activeIndex <= 0;
 
-  deleteLayerButton.disabled =
-    layers.length <= 1;
+deleteLayerButton.disabled =
+layers.length <= 1;
 }
 
 
 /* ================================
-   レイヤー
-   ドラッグ並び替え
+レイヤー
+ドラッグ並び替え
 ================================ */
 
 let layerDragState = null;
 
 
 /*
-  ドロップ位置の表示を消す
+ドロップ位置の表示を消す
 */
 
 function clearLayerDropMarkers() {
 
-  for (
-    const item of
-      layerList.querySelectorAll(
-        ".layer-item"
-      )
-  ) {
+for (
+const item of
+layerList.querySelectorAll(
+".layer-item"
+)
+) {
 
-    item.classList.remove(
-      "is-drop-before",
-      "is-drop-after"
-    );
-  }
+item.classList.remove(
+"is-drop-before",
+"is-drop-after"
+);
+}
 }
 
 
 /*
-  ドラッグ中の
-  ドロップ位置を調べる
+ドラッグ中の
+ドロップ位置を調べる
 */
 
 function updateLayerDragTarget(
-  event
+event
 ) {
 
-  if (!layerDragState) {
-    return;
-  }
-
-
-  /*
-    スマートフォンで
-    リスト端までドラッグした場合は
-    少しずつスクロールする
-  */
-
-  const listRect =
-    layerList.getBoundingClientRect();
-
-
-  if (
-    event.clientY <
-    listRect.top + 28
-  ) {
-
-    layerList.scrollTop -= 12;
-
-  } else if (
-    event.clientY >
-    listRect.bottom - 28
-  ) {
-
-    layerList.scrollTop += 12;
-  }
-
-
-  const element =
-    document.elementFromPoint(
-      event.clientX,
-      event.clientY
-    );
-
-
-  const targetItem =
-    element
-      ?.closest(
-        ".layer-item"
-      );
-
-
-  clearLayerDropMarkers();
-
-
-  layerDragState.targetLayerId =
-    null;
-
-
-  if (
-    !targetItem ||
-    targetItem ===
-      layerDragState.sourceItem
-  ) {
-    return;
-  }
-
-
-  const targetLayerId =
-    Number(
-      targetItem.dataset.layerId
-    );
-
-
-  if (
-    !Number.isFinite(
-      targetLayerId
-    )
-  ) {
-    return;
-  }
-
-
-  const rect =
-    targetItem
-      .getBoundingClientRect();
-
-
-  /*
-    対象レイヤーの上半分なら
-    その上へ。
-
-    下半分なら
-    その下へ配置する。
-  */
-
-  const placeAfter =
-    event.clientY >=
-    rect.top +
-      rect.height / 2;
-
-
-  targetItem.classList.add(
-    placeAfter
-      ? "is-drop-after"
-      : "is-drop-before"
-  );
-
-
-  layerDragState.targetLayerId =
-    targetLayerId;
-
-
-  layerDragState.placeAfter =
-    placeAfter;
+if (!layerDragState) {
+return;
 }
 
 
 /*
-  ドラッグ終了
+スマートフォンで
+リスト端までドラッグした場合は
+少しずつスクロールする
+*/
+
+const listRect =
+layerList.getBoundingClientRect();
+
+
+if (
+event.clientY <
+listRect.top + 28
+) {
+
+layerList.scrollTop -= 12;
+
+} else if (
+event.clientY >
+listRect.bottom - 28
+) {
+
+layerList.scrollTop += 12;
+}
+
+
+const element =
+document.elementFromPoint(
+event.clientX,
+event.clientY
+);
+
+
+const targetItem =
+element
+?.closest(
+".layer-item"
+);
+
+
+clearLayerDropMarkers();
+
+
+layerDragState.targetLayerId =
+null;
+
+
+if (
+!targetItem ||
+targetItem ===
+layerDragState.sourceItem
+) {
+return;
+}
+
+
+const targetLayerId =
+Number(
+targetItem.dataset.layerId
+);
+
+
+if (
+!Number.isFinite(
+targetLayerId
+)
+) {
+return;
+}
+
+
+const rect =
+targetItem
+.getBoundingClientRect();
+
+
+/*
+対象レイヤーの上半分なら
+その上へ。
+
+下半分なら
+その下へ配置する。
+*/
+
+const placeAfter =
+event.clientY >=
+rect.top +
+rect.height / 2;
+
+
+targetItem.classList.add(
+placeAfter
+? "is-drop-after"
+: "is-drop-before"
+);
+
+
+layerDragState.targetLayerId =
+targetLayerId;
+
+
+layerDragState.placeAfter =
+placeAfter;
+}
+
+
+/*
+ドラッグ終了
 */
 
 function finishLayerDrag(
-  commit = true
+commit = true
 ) {
 
-  if (!layerDragState) {
-    return;
-  }
+if (!layerDragState) {
+return;
+}
 
 
-  const {
-    layerId,
-    targetLayerId,
-    placeAfter,
-    sourceItem
-  } =
-    layerDragState;
+const {
+layerId,
+targetLayerId,
+placeAfter,
+sourceItem
+} =
+layerDragState;
 
 
-  sourceItem.classList.remove(
-    "is-layer-dragging"
-  );
+sourceItem.classList.remove(
+"is-layer-dragging"
+);
 
 
-  clearLayerDropMarkers();
+clearLayerDropMarkers();
 
 
-  layerDragState = null;
+layerDragState = null;
 
 
-  if (
-    !commit ||
-    targetLayerId === null ||
-    targetLayerId === layerId
-  ) {
-    return;
-  }
+if (
+!commit ||
+targetLayerId === null ||
+targetLayerId === layerId
+) {
+return;
+}
 
 
-  /*
-    UIと同じ
-    上→下の配列を一時的に作る
-  */
+/*
+UIと同じ
+上→下の配列を一時的に作る
+*/
 
-  const visualLayers =
-    [...layers].reverse();
-
-
-  const draggedIndex =
-    visualLayers.findIndex(
-      (layer) =>
-        layer.id === layerId
-    );
+const visualLayers =
+[...layers].reverse();
 
 
-  if (draggedIndex < 0) {
-    return;
-  }
+const draggedIndex =
+visualLayers.findIndex(
+(layer) =>
+layer.id === layerId
+);
 
 
-  const [
-    draggedLayer
-  ] =
-    visualLayers.splice(
-      draggedIndex,
-      1
-    );
+if (draggedIndex < 0) {
+return;
+}
 
 
-  const targetIndex =
-    visualLayers.findIndex(
-      (layer) =>
-        layer.id ===
-          targetLayerId
-    );
+const [
+draggedLayer
+] =
+visualLayers.splice(
+draggedIndex,
+1
+);
 
 
-  if (targetIndex < 0) {
-    return;
-  }
+const targetIndex =
+visualLayers.findIndex(
+(layer) =>
+layer.id ===
+targetLayerId
+);
 
 
-  const insertIndex =
-    targetIndex +
-    (
-      placeAfter
-        ? 1
-        : 0
-    );
+if (targetIndex < 0) {
+return;
+}
 
 
-  visualLayers.splice(
-    insertIndex,
-    0,
-    draggedLayer
-  );
+const insertIndex =
+targetIndex +
+(
+placeAfter
+? 1
+: 0
+);
 
 
-  /*
-    実際のlayers配列は
-    下→上なので再び反転して戻す
-  */
-
-  layers.splice(
-    0,
-    layers.length,
-    ...visualLayers.reverse()
-  );
+visualLayers.splice(
+insertIndex,
+0,
+draggedLayer
+);
 
 
-  requestPaintUpdate();
+/*
+実際のlayers配列は
+下→上なので再び反転して戻す
+*/
 
-  renderLayerPanel();
+layers.splice(
+0,
+layers.length,
+...visualLayers.reverse()
+);
+
+
+requestPaintUpdate();
+
+renderLayerPanel();
 }
 
 
 function renderLayerPanel() {
 
-  layerList.innerHTML = "";
+layerList.innerHTML = "";
 
-  /*
-    配列は下→上の順なので、
-    UIでは逆順に表示する
-  */
+/*
+配列は下→上の順なので、
+UIでは逆順に表示する
+*/
 
-  for (
-    let i = layers.length - 1;
-    i >= 0;
-    i--
-  ) {
+for (
+let i = layers.length - 1;
+i >= 0;
+i--
+) {
 
-    const layer =
-      layers[i];
+const layer =
+layers[i];
 
-    const item =
-      document.createElement("div");
+const item =
+document.createElement("div");
 
-    item.className =
-      "layer-item";
-
-
-    /*
-      ドラッグ並び替えで
-      対象レイヤーを判別する
-    */
-
-    item.dataset.layerId =
-      String(
-        layer.id
-      );
+item.className =
+"layer-item";
 
 
-    if (
-      layer.id === activeLayerId
-    ) {
+/*
+ドラッグ並び替えで
+対象レイヤーを判別する
+*/
 
-      item.classList.add(
-        "is-active"
-      );
-    }
+item.dataset.layerId =
+String(
+layer.id
+);
 
 
-    const visibilityButton =
-      document.createElement("button");
+if (
+layer.id === activeLayerId
+) {
 
-    visibilityButton.type =
-      "button";
+item.classList.add(
+"is-active"
+);
+}
 
-    visibilityButton.className =
-      "layer-visibility-button";
 
-    visibilityButton.textContent =
-      layer.visible
-        ? "●"
-        : "○";
+const visibilityButton =
+document.createElement("button");
+
+visibilityButton.type =
+"button";
+
+visibilityButton.className =
+"layer-visibility-button";
+
+visibilityButton.textContent =
+layer.visible
+? "●"
+: "○";
 
 visibilityButton.title =
 layer.visible
@@ -7628,43 +9115,43 @@ layer.visible
 : t("showLayer");
 
 
-    visibilityButton.addEventListener(
-      "click",
-      (event) => {
+visibilityButton.addEventListener(
+"click",
+(event) => {
 
-        event.stopPropagation();
+event.stopPropagation();
 
-        layer.visible =
-          !layer.visible;
+layer.visible =
+!layer.visible;
 
-        requestPaintUpdate();
+requestPaintUpdate();
 
-        renderLayerPanel();
-      }
-    );
-
-
-    /*
-      レイヤー並び替え用
-      ドラッグハンドル
-    */
-
-    const dragHandle =
-      document.createElement(
-        "button"
-      );
+renderLayerPanel();
+}
+);
 
 
-    dragHandle.type =
-      "button";
+/*
+レイヤー並び替え用
+ドラッグハンドル
+*/
+
+const dragHandle =
+document.createElement(
+"button"
+);
 
 
-    dragHandle.className =
-      "layer-drag-handle";
+dragHandle.type =
+"button";
 
 
-    dragHandle.textContent =
-      "≡";
+dragHandle.className =
+"layer-drag-handle";
+
+
+dragHandle.textContent =
+"≡";
 
 
 dragHandle.title =
@@ -7677,176 +9164,176 @@ t("dragReorderAria")
 );
 
 
-    dragHandle.addEventListener(
-      "pointerdown",
-      (event) => {
+dragHandle.addEventListener(
+"pointerdown",
+(event) => {
 
-        /*
-          PCでは左クリックだけ
-        */
+/*
+PCでは左クリックだけ
+*/
 
-        if (
-          event.pointerType ===
-            "mouse" &&
-          event.button !== 0
-        ) {
-          return;
-        }
-
-
-        layerDragState = {
-          layerId:
-            layer.id,
-
-          sourceItem:
-            item,
-
-          targetLayerId:
-            null,
-
-          placeAfter:
-            false
-        };
+if (
+event.pointerType ===
+"mouse" &&
+event.button !== 0
+) {
+return;
+}
 
 
-        item.classList.add(
-          "is-layer-dragging"
-        );
+layerDragState = {
+layerId:
+layer.id,
+
+sourceItem:
+item,
+
+targetLayerId:
+null,
+
+placeAfter:
+false
+};
 
 
-        dragHandle
-          .setPointerCapture(
-            event.pointerId
-          );
+item.classList.add(
+"is-layer-dragging"
+);
 
 
-        event.preventDefault();
-
-        event.stopPropagation();
-      }
-    );
-
-
-    dragHandle.addEventListener(
-      "pointermove",
-      (event) => {
-
-        if (!layerDragState) {
-          return;
-        }
+dragHandle
+.setPointerCapture(
+event.pointerId
+);
 
 
-        updateLayerDragTarget(
-          event
-        );
+event.preventDefault();
+
+event.stopPropagation();
+}
+);
 
 
-        event.preventDefault();
+dragHandle.addEventListener(
+"pointermove",
+(event) => {
 
-        event.stopPropagation();
-      }
-    );
-
-
-    dragHandle.addEventListener(
-      "pointerup",
-      (event) => {
-
-        if (!layerDragState) {
-          return;
-        }
+if (!layerDragState) {
+return;
+}
 
 
-        if (
-          dragHandle
-            .hasPointerCapture(
-              event.pointerId
-            )
-        ) {
-
-          dragHandle
-            .releasePointerCapture(
-              event.pointerId
-            );
-        }
+updateLayerDragTarget(
+event
+);
 
 
-        finishLayerDrag(
-          true
-        );
+event.preventDefault();
+
+event.stopPropagation();
+}
+);
 
 
-        event.preventDefault();
+dragHandle.addEventListener(
+"pointerup",
+(event) => {
 
-        event.stopPropagation();
-      }
-    );
-
-
-    dragHandle.addEventListener(
-      "pointercancel",
-      (event) => {
-
-        if (
-          dragHandle
-            .hasPointerCapture(
-              event.pointerId
-            )
-        ) {
-
-          dragHandle
-            .releasePointerCapture(
-              event.pointerId
-            );
-        }
+if (!layerDragState) {
+return;
+}
 
 
-        finishLayerDrag(
-          false
-        );
-      }
-    );
+if (
+dragHandle
+.hasPointerCapture(
+event.pointerId
+)
+) {
+
+dragHandle
+.releasePointerCapture(
+event.pointerId
+);
+}
+
+
+finishLayerDrag(
+true
+);
+
+
+event.preventDefault();
+
+event.stopPropagation();
+}
+);
+
+
+dragHandle.addEventListener(
+"pointercancel",
+(event) => {
+
+if (
+dragHandle
+.hasPointerCapture(
+event.pointerId
+)
+) {
+
+dragHandle
+.releasePointerCapture(
+event.pointerId
+);
+}
+
+
+finishLayerDrag(
+false
+);
+}
+);
 
 
 /*
-      レイヤー名。
+レイヤー名。
 
-      PC：
-      ダブルクリックで編集。
+PC：
+ダブルクリックで編集。
 
-      スマートフォン：
-      長押しで編集。
-    */
+スマートフォン：
+長押しで編集。
+*/
 
-    const nameInput =
-      document.createElement("input");
-
-
-    nameInput.type =
-      "text";
+const nameInput =
+document.createElement("input");
 
 
-    nameInput.className =
-      "layer-name-input";
+nameInput.type =
+"text";
 
 
-    nameInput.value =
-      layer.name;
+nameInput.className =
+"layer-name-input";
 
 
-    nameInput.maxLength =
-      80;
+nameInput.value =
+layer.name;
 
 
-    /*
-      最初は編集不可。
+nameInput.maxLength =
+80;
 
-      1回クリック／タップでは
-      レイヤー選択だけを行う。
-    */
 
-    nameInput.readOnly =
-      true;
+/*
+最初は編集不可。
+
+1回クリック／タップでは
+レイヤー選択だけを行う。
+*/
+
+nameInput.readOnly =
+true;
 
 
 nameInput.title =
@@ -7855,545 +9342,545 @@ isMobileDevice
 : t("editLayerNameDesktop");
 
 
-    /*
-      レイヤー名編集を開始する
-    */
-
-    function startLayerNameEditing() {
-
-      /*
-        readonly状態のinputには
-        すでにフォーカスが当たっている
-        場合がある。
-
-        スマートフォンでキーボードを
-        確実に開き直すため、
-        一度フォーカスを外す。
-      */
-
-      nameInput.blur();
-
-
-      /*
-        編集可能にする
-      */
-
-      nameInput.readOnly =
-        false;
-
-
-      /*
-        pointerup / dblclick の
-        ユーザー操作中に
-        すぐフォーカスし直す。
-
-        遅延処理にはしない。
-      */
-
-      nameInput.focus({
-        preventScroll: true
-      });
-
-
-      /*
-        名前全体を選択する
-      */
-
-      nameInput.setSelectionRange(
-        0,
-        nameInput.value.length
-      );
-    }
-
-
-    /*
-      クリック／タップされた
-      レイヤーを選択する
-    */
-
-    nameInput.addEventListener(
-      "focus",
-      () => {
-
-        if (
-          layer.id !== activeLayerId
-        ) {
-
-          setActiveLayerReference(
-            layer.id
-          );
-
-
-          for (
-            const otherItem of
-            layerList.querySelectorAll(
-              ".layer-item"
-            )
-          ) {
-
-            otherItem.classList.remove(
-              "is-active"
-            );
-          }
-
-
-          item.classList.add(
-            "is-active"
-          );
-
-
-          updateLayerActionButtons();
-        }
-      }
-    );
-
-
-    /*
-      PC：
-      ダブルクリックで編集開始
-    */
-
-    nameInput.addEventListener(
-      "dblclick",
-      (event) => {
-
-        if (isMobileDevice) {
-          return;
-        }
-
-
-        event.preventDefault();
-
-        event.stopPropagation();
-
-
-        startLayerNameEditing();
-      }
-    );
-
-
-    /*
-      ================================
-      スマートフォン：
-      長押しで編集開始
-      ================================
-    */
-
-    let layerNameLongPressTimer =
-      null;
-
-
-    let layerNameLongPressReady =
-      false;
-
-
-    let layerNamePressStartX =
-      0;
-
-
-    let layerNamePressStartY =
-      0;
-
-
-    function cancelLayerNameLongPress() {
-
-      if (
-        layerNameLongPressTimer !==
-        null
-      ) {
-
-        clearTimeout(
-          layerNameLongPressTimer
-        );
-
-
-        layerNameLongPressTimer =
-          null;
-      }
-    }
-
-
-    nameInput.addEventListener(
-      "pointerdown",
-      (event) => {
-
-        if (
-          !isMobileDevice ||
-          !nameInput.readOnly
-        ) {
-          return;
-        }
-
-
-        layerNamePressStartX =
-          event.clientX;
-
-
-        layerNamePressStartY =
-          event.clientY;
-
-
-        layerNameLongPressReady =
-          false;
-
-
-        cancelLayerNameLongPress();
-
-
-        /*
-          約0.55秒で
-          長押しと判定する
-        */
-
-        layerNameLongPressTimer =
-          setTimeout(
-            () => {
-
-              layerNameLongPressReady =
-                true;
-
-
-              layerNameLongPressTimer =
-                null;
-            },
-            550
-          );
-      }
-    );
-
-
-    /*
-      指が大きく動いたら
-      スクロール操作とみなし、
-      長押しをキャンセルする
-    */
-
-    nameInput.addEventListener(
-      "pointermove",
-      (event) => {
-
-        if (
-          !isMobileDevice ||
-          layerNameLongPressTimer ===
-            null
-        ) {
-          return;
-        }
-
-
-        const distance =
-          Math.hypot(
-            event.clientX -
-              layerNamePressStartX,
-
-            event.clientY -
-              layerNamePressStartY
-          );
-
-
-        if (distance > 10) {
-
-          cancelLayerNameLongPress();
-
-          layerNameLongPressReady =
-            false;
-        }
-      }
-    );
-
-
-    /*
-      長押し後に指を離したら
-      編集状態へ切り替える
-    */
-
-    nameInput.addEventListener(
-      "pointerup",
-      (event) => {
-
-        if (!isMobileDevice) {
-          return;
-        }
-
-
-        cancelLayerNameLongPress();
-
-
-        if (
-          !layerNameLongPressReady
-        ) {
-          return;
-        }
-
-
-        layerNameLongPressReady =
-          false;
-
-
-        /*
-          キーボード表示のため、
-          preventDefaultは行わない。
-
-          このpointerupイベント中に
-          編集状態へ切り替える。
-        */
-
-        startLayerNameEditing();
-
-
-        event.stopPropagation();
-      }
-    );
-
-
-    nameInput.addEventListener(
-      "pointercancel",
-      () => {
-
-        cancelLayerNameLongPress();
-
-        layerNameLongPressReady =
-          false;
-      }
-    );
-
-
-    /*
-      名前を確定
-    */
-
-    nameInput.addEventListener(
-      "change",
-      () => {
-
-        const newName =
-          nameInput.value.trim();
-
-
-        if (newName) {
-
-          layer.name =
-            newName;
-
-
-          nameInput.value =
-            layer.name;
-
-        } else {
-
-          nameInput.value =
-            layer.name;
-        }
-      }
-    );
-
-
-    /*
-      Enterで確定
-    */
-
-    nameInput.addEventListener(
-      "keydown",
-      (event) => {
-
-        if (
-          event.key === "Enter" &&
-          !event.isComposing
-        ) {
-
-          nameInput.blur();
-        }
-
-
-        /*
-          Escなら変更前へ戻す
-        */
-
-        if (
-          event.key === "Escape"
-        ) {
-
-          nameInput.value =
-            layer.name;
-
-
-          nameInput.blur();
-        }
-      }
-    );
-
-
-    /*
-      編集終了後は
-      再び読み取り専用へ戻す
-    */
-
-    nameInput.addEventListener(
-      "blur",
-      () => {
-
-        nameInput.readOnly =
-          true;
-      }
-    );
+/*
+レイヤー名編集を開始する
+*/
+
+function startLayerNameEditing() {
+
+/*
+readonly状態のinputには
+すでにフォーカスが当たっている
+場合がある。
+
+スマートフォンでキーボードを
+確実に開き直すため、
+一度フォーカスを外す。
+*/
+
+nameInput.blur();
 
 
 /*
-      不透明度
-    */
+編集可能にする
+*/
 
-    const opacityControl =
-      document.createElement("div");
-
-    opacityControl.className =
-      "layer-opacity-control";
+nameInput.readOnly =
+false;
 
 
-    const opacityHeader =
-      document.createElement("div");
+/*
+pointerup / dblclick の
+ユーザー操作中に
+すぐフォーカスし直す。
 
-    opacityHeader.className =
-      "layer-opacity-header";
+遅延処理にはしない。
+*/
+
+nameInput.focus({
+preventScroll: true
+});
 
 
-    const opacityLabel =
-      document.createElement("span");
+/*
+名前全体を選択する
+*/
+
+nameInput.setSelectionRange(
+0,
+nameInput.value.length
+);
+}
+
+
+/*
+クリック／タップされた
+レイヤーを選択する
+*/
+
+nameInput.addEventListener(
+"focus",
+() => {
+
+if (
+layer.id !== activeLayerId
+) {
+
+setActiveLayerReference(
+layer.id
+);
+
+
+for (
+const otherItem of
+layerList.querySelectorAll(
+".layer-item"
+)
+) {
+
+otherItem.classList.remove(
+"is-active"
+);
+}
+
+
+item.classList.add(
+"is-active"
+);
+
+
+updateLayerActionButtons();
+}
+}
+);
+
+
+/*
+PC：
+ダブルクリックで編集開始
+*/
+
+nameInput.addEventListener(
+"dblclick",
+(event) => {
+
+if (isMobileDevice) {
+return;
+}
+
+
+event.preventDefault();
+
+event.stopPropagation();
+
+
+startLayerNameEditing();
+}
+);
+
+
+/*
+================================
+スマートフォン：
+長押しで編集開始
+================================
+*/
+
+let layerNameLongPressTimer =
+null;
+
+
+let layerNameLongPressReady =
+false;
+
+
+let layerNamePressStartX =
+0;
+
+
+let layerNamePressStartY =
+0;
+
+
+function cancelLayerNameLongPress() {
+
+if (
+layerNameLongPressTimer !==
+null
+) {
+
+clearTimeout(
+layerNameLongPressTimer
+);
+
+
+layerNameLongPressTimer =
+null;
+}
+}
+
+
+nameInput.addEventListener(
+"pointerdown",
+(event) => {
+
+if (
+!isMobileDevice ||
+!nameInput.readOnly
+) {
+return;
+}
+
+
+layerNamePressStartX =
+event.clientX;
+
+
+layerNamePressStartY =
+event.clientY;
+
+
+layerNameLongPressReady =
+false;
+
+
+cancelLayerNameLongPress();
+
+
+/*
+約0.55秒で
+長押しと判定する
+*/
+
+layerNameLongPressTimer =
+setTimeout(
+() => {
+
+layerNameLongPressReady =
+true;
+
+
+layerNameLongPressTimer =
+null;
+},
+550
+);
+}
+);
+
+
+/*
+指が大きく動いたら
+スクロール操作とみなし、
+長押しをキャンセルする
+*/
+
+nameInput.addEventListener(
+"pointermove",
+(event) => {
+
+if (
+!isMobileDevice ||
+layerNameLongPressTimer ===
+null
+) {
+return;
+}
+
+
+const distance =
+Math.hypot(
+event.clientX -
+layerNamePressStartX,
+
+event.clientY -
+layerNamePressStartY
+);
+
+
+if (distance > 10) {
+
+cancelLayerNameLongPress();
+
+layerNameLongPressReady =
+false;
+}
+}
+);
+
+
+/*
+長押し後に指を離したら
+編集状態へ切り替える
+*/
+
+nameInput.addEventListener(
+"pointerup",
+(event) => {
+
+if (!isMobileDevice) {
+return;
+}
+
+
+cancelLayerNameLongPress();
+
+
+if (
+!layerNameLongPressReady
+) {
+return;
+}
+
+
+layerNameLongPressReady =
+false;
+
+
+/*
+キーボード表示のため、
+preventDefaultは行わない。
+
+このpointerupイベント中に
+編集状態へ切り替える。
+*/
+
+startLayerNameEditing();
+
+
+event.stopPropagation();
+}
+);
+
+
+nameInput.addEventListener(
+"pointercancel",
+() => {
+
+cancelLayerNameLongPress();
+
+layerNameLongPressReady =
+false;
+}
+);
+
+
+/*
+名前を確定
+*/
+
+nameInput.addEventListener(
+"change",
+() => {
+
+const newName =
+nameInput.value.trim();
+
+
+if (newName) {
+
+layer.name =
+newName;
+
+
+nameInput.value =
+layer.name;
+
+} else {
+
+nameInput.value =
+layer.name;
+}
+}
+);
+
+
+/*
+Enterで確定
+*/
+
+nameInput.addEventListener(
+"keydown",
+(event) => {
+
+if (
+event.key === "Enter" &&
+!event.isComposing
+) {
+
+nameInput.blur();
+}
+
+
+/*
+Escなら変更前へ戻す
+*/
+
+if (
+event.key === "Escape"
+) {
+
+nameInput.value =
+layer.name;
+
+
+nameInput.blur();
+}
+}
+);
+
+
+/*
+編集終了後は
+再び読み取り専用へ戻す
+*/
+
+nameInput.addEventListener(
+"blur",
+() => {
+
+nameInput.readOnly =
+true;
+}
+);
+
+
+/*
+不透明度
+*/
+
+const opacityControl =
+document.createElement("div");
+
+opacityControl.className =
+"layer-opacity-control";
+
+
+const opacityHeader =
+document.createElement("div");
+
+opacityHeader.className =
+"layer-opacity-header";
+
+
+const opacityLabel =
+document.createElement("span");
 
 opacityLabel.textContent =
 t("opacity");
 
 
-    const opacityValue =
-      document.createElement("span");
+const opacityValue =
+document.createElement("span");
 
-    opacityValue.textContent =
-      `${Math.round(
-        (
-          typeof layer.opacity ===
-            "number"
-            ? layer.opacity
-            : 1
-        ) * 100
-      )}%`;
-
-
-    opacityHeader.appendChild(
-      opacityLabel
-    );
-
-    opacityHeader.appendChild(
-      opacityValue
-    );
+opacityValue.textContent =
+`${Math.round(
+(
+typeof layer.opacity ===
+"number"
+? layer.opacity
+: 1
+) * 100
+)}%`;
 
 
-    const opacityInput =
-      document.createElement("input");
+opacityHeader.appendChild(
+opacityLabel
+);
 
-    opacityInput.type =
-      "range";
-
-    opacityInput.min =
-      "0";
-
-    opacityInput.max =
-      "100";
-
-    opacityInput.step =
-      "1";
-
-    opacityInput.value =
-      String(
-        Math.round(
-          (
-            typeof layer.opacity ===
-              "number"
-              ? layer.opacity
-              : 1
-          ) * 100
-        )
-      );
+opacityHeader.appendChild(
+opacityValue
+);
 
 
-    opacityInput.addEventListener(
-      "input",
-      () => {
+const opacityInput =
+document.createElement("input");
 
-        const value =
-          Number(
-            opacityInput.value
-          );
+opacityInput.type =
+"range";
 
+opacityInput.min =
+"0";
 
-        layer.opacity =
-          Math.max(
-            0,
-            Math.min(
-              1,
-              value / 100
-            )
-          );
+opacityInput.max =
+"100";
 
+opacityInput.step =
+"1";
 
-        opacityValue.textContent =
-          `${Math.round(
-            layer.opacity * 100
-          )}%`;
-
-
-        requestPaintUpdate();
-      }
-    );
+opacityInput.value =
+String(
+Math.round(
+(
+typeof layer.opacity ===
+"number"
+? layer.opacity
+: 1
+) * 100
+)
+);
 
 
-    opacityControl.appendChild(
-      opacityHeader
-    );
+opacityInput.addEventListener(
+"input",
+() => {
 
-    opacityControl.appendChild(
-      opacityInput
-    );
-
-
-    item.appendChild(
-      visibilityButton
-    );
+const value =
+Number(
+opacityInput.value
+);
 
 
-    item.appendChild(
-      nameInput
-    );
+layer.opacity =
+Math.max(
+0,
+Math.min(
+1,
+value / 100
+)
+);
 
 
-    item.appendChild(
-      dragHandle
-    );
+opacityValue.textContent =
+`${Math.round(
+layer.opacity * 100
+)}%`;
 
 
-    item.appendChild(
-      opacityControl
-    );
-
-    layerList.appendChild(
-      item
-    );
-  }
+requestPaintUpdate();
+}
+);
 
 
-  updateLayerActionButtons();
+opacityControl.appendChild(
+opacityHeader
+);
+
+opacityControl.appendChild(
+opacityInput
+);
+
+
+item.appendChild(
+visibilityButton
+);
+
+
+item.appendChild(
+nameInput
+);
+
+
+item.appendChild(
+dragHandle
+);
+
+
+item.appendChild(
+opacityControl
+);
+
+layerList.appendChild(
+item
+);
+}
+
+
+updateLayerActionButtons();
 }
 
 
 function addLayer() {
 
-  const previousActiveLayerId =
-    activeLayerId;
+const previousActiveLayerId =
+activeLayerId;
 
 
-  const {
-    canvas,
-    context
-  } =
-    createLayerCanvas();
+const {
+canvas,
+context
+} =
+createLayerCanvas();
 
 
 const layer = {
@@ -8403,188 +9890,188 @@ getDefaultLayerName(
 nextLayerNumber
 ),
 canvas,
-    context,
-    visible: true,
-    opacity: 1
-  };
+context,
+visible: true,
+opacity: 1
+};
 
 
-  nextLayerId++;
-  nextLayerNumber++;
+nextLayerId++;
+nextLayerNumber++;
 
 
-  const index =
-    layers.length;
+const index =
+layers.length;
 
 
-  layers.push(
-    layer
-  );
+layers.push(
+layer
+);
 
 
-  /*
-    レイヤー追加もUndo対象にする
-  */
+/*
+レイヤー追加もUndo対象にする
+*/
 
-  redoStrokeHistory.length = 0;
+redoStrokeHistory.length = 0;
 
-  strokeHistory.push({
-    historyType: "layer-add",
-    layer,
-    index,
-    previousActiveLayerId
-  });
+strokeHistory.push({
+historyType: "layer-add",
+layer,
+index,
+previousActiveLayerId
+});
 
 
-  setActiveLayer(
-    layer.id
-  );
+setActiveLayer(
+layer.id
+);
 
-  requestPaintUpdate();
+requestPaintUpdate();
 }
 
 
 function deleteActiveLayer() {
 
-  if (layers.length <= 1) {
-    return;
-  }
+if (layers.length <= 1) {
+return;
+}
 
 
-  const index =
-    layers.findIndex(
-      (layer) =>
-        layer.id === activeLayerId
-    );
+const index =
+layers.findIndex(
+(layer) =>
+layer.id === activeLayerId
+);
 
-  if (index < 0) {
-    return;
-  }
-
-
-  const deletedLayer =
-    layers[index];
+if (index < 0) {
+return;
+}
 
 
-  layers.splice(
-    index,
-    1
-  );
+const deletedLayer =
+layers[index];
 
 
-  if (
-    currentStroke &&
-    currentStroke.layerId ===
-      deletedLayer.id
-  ) {
-
-    currentStroke = null;
-    isDrawing = false;
-  }
+layers.splice(
+index,
+1
+);
 
 
-  const nextIndex =
-    Math.min(
-      index,
-      layers.length - 1
-    );
+if (
+currentStroke &&
+currentStroke.layerId ===
+deletedLayer.id
+) {
 
-  const nextActiveLayerId =
-    layers[nextIndex].id;
-
-
-  /*
-    レイヤー削除もUndo対象にする。
-    削除したレイヤー本体を履歴へ保持するので、
-    描画内容と名前もそのまま復元できる。
-  */
-
-  redoStrokeHistory.length = 0;
-
-  strokeHistory.push({
-    historyType: "layer-delete",
-    layer: deletedLayer,
-    index,
-    nextActiveLayerId
-  });
+currentStroke = null;
+isDrawing = false;
+}
 
 
-  setActiveLayer(
-    nextActiveLayerId
-  );
+const nextIndex =
+Math.min(
+index,
+layers.length - 1
+);
 
-  requestPaintUpdate();
+const nextActiveLayerId =
+layers[nextIndex].id;
+
+
+/*
+レイヤー削除もUndo対象にする。
+削除したレイヤー本体を履歴へ保持するので、
+描画内容と名前もそのまま復元できる。
+*/
+
+redoStrokeHistory.length = 0;
+
+strokeHistory.push({
+historyType: "layer-delete",
+layer: deletedLayer,
+index,
+nextActiveLayerId
+});
+
+
+setActiveLayer(
+nextActiveLayerId
+);
+
+requestPaintUpdate();
 }
 
 
 function moveActiveLayer(
-  direction
+direction
 ) {
 
-  const index =
-    layers.findIndex(
-      (layer) =>
-        layer.id === activeLayerId
-    );
+const index =
+layers.findIndex(
+(layer) =>
+layer.id === activeLayerId
+);
 
-  if (index < 0) {
-    return;
-  }
-
-
-  const targetIndex =
-    index + direction;
+if (index < 0) {
+return;
+}
 
 
-  if (
-    targetIndex < 0 ||
-    targetIndex >= layers.length
-  ) {
-
-    return;
-  }
+const targetIndex =
+index + direction;
 
 
-  const temp =
-    layers[index];
+if (
+targetIndex < 0 ||
+targetIndex >= layers.length
+) {
 
-  layers[index] =
-    layers[targetIndex];
-
-  layers[targetIndex] =
-    temp;
+return;
+}
 
 
-  requestPaintUpdate();
+const temp =
+layers[index];
 
-  renderLayerPanel();
+layers[index] =
+layers[targetIndex];
+
+layers[targetIndex] =
+temp;
+
+
+requestPaintUpdate();
+
+renderLayerPanel();
 }
 
 
 addLayerButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    addLayer();
-  }
+addLayer();
+}
 );
 
 
 deleteLayerButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    deleteActiveLayer();
-  }
+deleteActiveLayer();
+}
 );
 
 
 layerUpButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    moveActiveLayer(1);
-  }
+moveActiveLayer(1);
+}
 );
 
 
@@ -8617,27 +10104,704 @@ toggleLanguage();
 
 
 /*
-スマートフォンでは
-clickが正しく発火しない場合があるため、
-touchendでも直接切り替える。
-
-preventDefaultによって、
-直後に生成されるclickとの
-二重実行を防ぐ。
+言語切り替えはclickイベントで処理する。
 */
 
-languageButton.addEventListener(
-"touchend",
+
+/* ================================
+ショートカット設定画面
+================================ */
+
+let shortcutCaptureAction = null;
+
+let shortcutDraftKeys = null;
+
+let lookDirectionHorizontalDraft = null;
+let lookDirectionVerticalDraft = null;
+
+
+function formatShortcutKey(
+key
+) {
+
+if (key === "space") {
+return "Space";
+}
+
+
+if (key.length === 1) {
+return key.toUpperCase();
+}
+
+
+return key;
+}
+
+
+function getShortcutSettingsSource() {
+
+return (
+shortcutDraftKeys ||
+shortcutKeys
+);
+}
+
+
+function getDuplicateShortcutKeys() {
+
+const keyCounts =
+new Map();
+
+const shortcutSettingsSource =
+getShortcutSettingsSource();
+
+
+Object.values(
+shortcutSettingsSource
+).forEach(
+(key) => {
+
+keyCounts.set(
+key,
+(
+keyCounts.get(key) ||
+0
+) + 1
+);
+}
+);
+
+
+return new Set(
+[...keyCounts.entries()]
+.filter(
+([, count]) =>
+count > 1
+)
+.map(
+([key]) =>
+key
+)
+);
+}
+
+
+function refreshShortcutSettingsButtons() {
+
+const shortcutSettingsSource =
+getShortcutSettingsSource();
+
+const duplicateShortcutKeys =
+getDuplicateShortcutKeys();
+
+
+shortcutKeyButtons.forEach(
+(button) => {
+
+const action =
+button.dataset.shortcutAction;
+
+const shortcutKey =
+shortcutSettingsSource[action];
+
+
+button.textContent =
+formatShortcutKey(
+shortcutKey
+);
+
+
+button.classList.toggle(
+"is-duplicate",
+duplicateShortcutKeys.has(
+shortcutKey
+)
+);
+}
+);
+}
+
+
+function updateShortcutStatusForDuplicates(
+normalMessage = ""
+) {
+
+const hasDuplicates =
+getDuplicateShortcutKeys().size > 0;
+
+
+shortcutStatus.classList.toggle(
+"is-error",
+hasDuplicates
+);
+
+shortcutConfirmButton.disabled =
+hasDuplicates;
+
+
+shortcutStatus.textContent =
+hasDuplicates
+? (
+currentLanguage === "en"
+? "Duplicate keys are assigned."
+: "キーが重複しています"
+)
+: normalMessage;
+
+
+return hasDuplicates;
+}
+
+
+function refreshLookDirectionSetting() {
+
+lookDirectionHorizontalSelect.value =
+lookDirectionHorizontalDraft ??
+lookDirectionHorizontal;
+
+lookDirectionVerticalSelect.value =
+lookDirectionVerticalDraft ??
+lookDirectionVertical;
+}
+
+
+function stopShortcutCapture() {
+
+shortcutCaptureAction = null;
+
+shortcutKeyButtons.forEach(
+(button) => {
+
+button.classList.remove(
+"is-capturing"
+);
+}
+);
+}
+
+
+function openShortcutSettings() {
+
+stopShortcutCapture();
+
+
+shortcutDraftKeys = {
+...shortcutKeys
+};
+
+lookDirectionHorizontalDraft =
+lookDirectionHorizontal;
+
+lookDirectionVerticalDraft =
+lookDirectionVertical;
+
+
+refreshShortcutSettingsButtons();
+refreshLookDirectionSetting();
+
+updateShortcutStatusForDuplicates();
+
+shortcutPanel.classList.add(
+"is-open"
+);
+}
+
+
+function closeShortcutSettings() {
+
+stopShortcutCapture();
+
+
+shortcutDraftKeys = null;
+
+lookDirectionHorizontalDraft = null;
+lookDirectionVerticalDraft = null;
+
+
+shortcutStatus.classList.remove(
+"is-error"
+);
+
+shortcutStatus.textContent = "";
+
+shortcutConfirmButton.disabled =
+false;
+
+
+shortcutPanel.classList.remove(
+"is-open"
+);
+}
+
+
+function hasShortcutSettingsChanges() {
+
+if (!shortcutDraftKeys) {
+return false;
+}
+
+
+const shortcutChanged =
+Object.keys(
+DEFAULT_SHORTCUT_KEYS
+).some(
+(action) =>
+shortcutDraftKeys[action] !==
+shortcutKeys[action]
+);
+
+
+const horizontalChanged =
+lookDirectionHorizontalDraft !==
+lookDirectionHorizontal;
+
+
+const verticalChanged =
+lookDirectionVerticalDraft !==
+lookDirectionVertical;
+
+
+return (
+shortcutChanged ||
+horizontalChanged ||
+verticalChanged
+);
+}
+
+
+function saveShortcutSettingsDraft() {
+
+if (
+!shortcutDraftKeys ||
+getDuplicateShortcutKeys().size > 0
+) {
+
+updateShortcutStatusForDuplicates();
+
+return false;
+}
+
+
+shortcutKeys = {
+...shortcutDraftKeys
+};
+
+
+lookDirectionHorizontal =
+lookDirectionHorizontalDraft ??
+lookDirectionHorizontal;
+
+
+lookDirectionVertical =
+lookDirectionVerticalDraft ??
+lookDirectionVertical;
+
+
+saveShortcutKeys();
+saveLookDirections();
+
+
+closeShortcutSettings();
+
+return true;
+}
+
+
+function closeShortcutSaveConfirm() {
+
+shortcutSaveConfirmPanel.classList.remove(
+"is-open"
+);
+}
+
+
+function openShortcutSaveConfirm() {
+
+const hasDuplicates =
+getDuplicateShortcutKeys().size > 0;
+
+
+shortcutSaveConfirmMessage.textContent =
+currentLanguage === "en"
+? "Save settings?"
+: "設定を保存しますか？";
+
+
+shortcutSaveConfirmYesButton.textContent =
+currentLanguage === "en"
+? "Yes"
+: "する";
+
+shortcutSaveConfirmNoButton.textContent =
+currentLanguage === "en"
+? "No"
+: "しない";
+
+
+shortcutSaveConfirmYesButton.disabled =
+hasDuplicates;
+
+
+shortcutSaveConfirmPanel.classList.add(
+"is-open"
+);
+}
+
+
+function requestCloseShortcutSettings() {
+
+stopShortcutCapture();
+
+
+if (
+!hasShortcutSettingsChanges()
+) {
+
+closeShortcutSettings();
+
+return;
+}
+
+
+/*
+キーが重複している場合は
+保存確認を出さず、
+一時変更を破棄して閉じる。
+*/
+
+if (
+getDuplicateShortcutKeys().size > 0
+) {
+
+closeShortcutSettings();
+
+return;
+}
+
+
+openShortcutSaveConfirm();
+}
+
+
+function startShortcutCapture(
+action
+) {
+
+shortcutCaptureAction =
+action;
+
+
+shortcutKeyButtons.forEach(
+(button) => {
+
+button.classList.toggle(
+"is-capturing",
+button.dataset.shortcutAction ===
+action
+);
+}
+);
+
+
+shortcutStatus.classList.remove(
+"is-error"
+);
+
+shortcutStatus.textContent =
+currentLanguage === "en"
+? "Press a new key. Press Esc to cancel."
+: "新しいキーを押してください。Escでキャンセルできます。";
+}
+
+
+function assignShortcutKey(
+action,
+newKey
+) {
+
+if (!shortcutDraftKeys) {
+return;
+}
+
+
+shortcutDraftKeys[action] =
+newKey;
+
+refreshShortcutSettingsButtons();
+
+stopShortcutCapture();
+
+
+updateShortcutStatusForDuplicates(
+currentLanguage === "en"
+? "Change ready. Press Save to apply."
+: "変更内容を更新しました。「保存」で確定します。"
+);
+}
+
+
+shortcutSettingsButton.addEventListener(
+"click",
+() => {
+
+openShortcutSettings();
+}
+);
+
+
+shortcutCloseButton.addEventListener(
+"click",
+() => {
+
+requestCloseShortcutSettings();
+}
+);
+
+
+shortcutPanel.addEventListener(
+"click",
 (event) => {
 
-event.preventDefault();
-event.stopPropagation();
+if (
+event.target === shortcutPanel
+) {
 
-toggleLanguage();
-},
-{
-passive: false
+requestCloseShortcutSettings();
 }
+}
+);
+
+
+shortcutKeyButtons.forEach(
+(button) => {
+
+button.addEventListener(
+"click",
+() => {
+
+startShortcutCapture(
+button.dataset.shortcutAction
+);
+}
+);
+}
+);
+
+
+lookDirectionHorizontalSelect.addEventListener(
+"change",
+() => {
+
+lookDirectionHorizontalDraft =
+lookDirectionHorizontalSelect.value ===
+"reverse"
+? "reverse"
+: "standard";
+
+
+updateShortcutStatusForDuplicates(
+currentLanguage === "en"
+? "Change ready. Press Apply to save."
+: "変更内容を更新しました。「設定する」で確定します。"
+);
+}
+);
+
+
+lookDirectionVerticalSelect.addEventListener(
+"change",
+() => {
+
+lookDirectionVerticalDraft =
+lookDirectionVerticalSelect.value ===
+"reverse"
+? "reverse"
+: "standard";
+
+
+updateShortcutStatusForDuplicates(
+currentLanguage === "en"
+? "Change ready. Press Apply to save."
+: "変更内容を更新しました。「設定する」で確定します。"
+);
+}
+);
+
+
+shortcutResetButton.addEventListener(
+"click",
+() => {
+
+shortcutDraftKeys = {
+...DEFAULT_SHORTCUT_KEYS
+};
+
+lookDirectionHorizontalDraft =
+DEFAULT_LOOK_DIRECTION;
+
+lookDirectionVerticalDraft =
+DEFAULT_LOOK_DIRECTION;
+
+
+refreshShortcutSettingsButtons();
+refreshLookDirectionSetting();
+
+stopShortcutCapture();
+
+
+updateShortcutStatusForDuplicates(
+currentLanguage === "en"
+? "Default settings are ready. Press Save to apply."
+: "初期設定を表示しています。「保存」で確定します。"
+);
+}
+);
+
+
+shortcutConfirmButton.addEventListener(
+"click",
+() => {
+
+saveShortcutSettingsDraft();
+}
+);
+
+
+shortcutSaveConfirmYesButton.addEventListener(
+"click",
+() => {
+
+if (
+getDuplicateShortcutKeys().size > 0
+) {
+return;
+}
+
+
+closeShortcutSaveConfirm();
+
+saveShortcutSettingsDraft();
+}
+);
+
+
+shortcutSaveConfirmNoButton.addEventListener(
+"click",
+() => {
+
+closeShortcutSaveConfirm();
+
+closeShortcutSettings();
+}
+);
+
+
+/*
+キー変更待ちの間だけ、
+通常の描画ショートカットより先に
+KeyboardEventを受け取る。
+*/
+
+window.addEventListener(
+"keydown",
+(event) => {
+
+if (
+!shortcutPanel.classList.contains(
+"is-open"
+)
+) {
+return;
+}
+
+
+if (
+shortcutSaveConfirmPanel.classList.contains(
+"is-open"
+)
+) {
+
+event.preventDefault();
+event.stopImmediatePropagation();
+
+return;
+}
+
+
+if (
+event.key === "Escape"
+) {
+
+event.preventDefault();
+event.stopImmediatePropagation();
+
+
+if (shortcutCaptureAction) {
+
+stopShortcutCapture();
+
+updateShortcutStatusForDuplicates();
+
+} else {
+
+requestCloseShortcutSettings();
+}
+
+return;
+}
+
+
+if (!shortcutCaptureAction) {
+return;
+}
+
+
+event.preventDefault();
+event.stopImmediatePropagation();
+
+
+if (
+event.ctrlKey ||
+event.metaKey ||
+event.altKey ||
+event.isComposing
+) {
+
+shortcutStatus.textContent =
+currentLanguage === "en"
+? "Use a single key without Ctrl, Command, or Alt."
+: "Ctrl・Command・Altを使わず、1つのキーを押してください。";
+
+return;
+}
+
+
+const newShortcutKey =
+getShortcutKey(
+event
+);
+
+
+if (
+newShortcutKey !== "space" &&
+newShortcutKey.length !== 1
+) {
+
+shortcutStatus.textContent =
+currentLanguage === "en"
+? "Please use a letter, symbol, or Space key."
+: "文字・記号・Spaceのいずれかを使用してください。";
+
+return;
+}
+
+
+assignShortcutKey(
+shortcutCaptureAction,
+newShortcutKey
+);
+},
+true
 );
 
 
@@ -8647,1135 +10811,3494 @@ renderLayerPanel();
 
 
 /* ================================
-   ツール切り替え
+PC用 メニューバー
 ================================ */
 
+function closeAllAppMenus() {
+
+appMenus.forEach(
+(menu) => {
+
+menu.classList.remove(
+"is-open"
+);
+}
+);
+}
+
+
+appMenuTriggers.forEach(
+(trigger) => {
+
+trigger.addEventListener(
+"click",
+(event) => {
+
+event.stopPropagation();
+
+
+const targetMenu =
+trigger.closest(
+".app-menu"
+);
+
+
+const shouldOpen =
+!targetMenu.classList.contains(
+"is-open"
+);
+
+
+closeAllAppMenus();
+
+
+if (shouldOpen) {
+
+targetMenu.classList.add(
+"is-open"
+);
+}
+}
+);
+}
+);
+
+
+document.addEventListener(
+"click",
+(event) => {
+
+if (
+event.target.closest(
+".app-menu"
+)
+) {
+return;
+}
+
+
+closeAllAppMenus();
+}
+);
+
+
+window.addEventListener(
+"keydown",
+(event) => {
+
+if (
+event.key !== "Escape"
+) {
+return;
+}
+
+
+closeAllAppMenus();
+}
+);
+
+
+document.querySelectorAll(
+".app-menu__item"
+).forEach(
+(button) => {
+
+button.addEventListener(
+"click",
+() => {
+
+closeAllAppMenus();
+}
+);
+}
+);
+
+
+drawingModeMenuButton.addEventListener(
+"click",
+() => {
+
+if (currentTool === "camera") {
+
+selectDrawingTool(
+toolBeforeCamera
+);
+}
+}
+);
+
+
+cameraModeMenuButton.addEventListener(
+"click",
+() => {
+
+selectDrawingTool(
+"camera"
+);
+}
+);
+
+
+desktopHelpMenuButton.addEventListener(
+"click",
+() => {
+
+closeMobileSettingsMenu();
+
+helpPanel.classList.add(
+"is-open"
+);
+
+trackGAEvent(
+"welcome_open",
+{
+source: "button",
+ui_language:
+currentLanguage
+}
+);
+}
+);
+
+
+/* ================================
+ツール切り替え
+================================ */
+
+const CAMERA_VIEWFINDER_SCALE =
+0.85;
+
+let guideVisibilityBeforeCamera =
+null;
+
+let toolBeforeCamera =
+"pen";
+
+
+function setGuideVisibility(
+visible
+) {
+
+groundToggle.checked =
+visible;
+
+groundGrid.visible =
+visible;
+
+verticalGuides.visible =
+visible;
+
+horizontalGuides.visible =
+visible;
+}
+
+
+function getCameraVideoAspectRatio() {
+
+return cameraVideoAspect ===
+"vertical"
+? 9 / 16
+: 1;
+}
+
+
+function getCameraCaptureAspectRatio() {
+
+if (
+cameraVideoModeButton.classList.contains(
+"is-active"
+)
+) {
+
+return getCameraVideoAspectRatio();
+}
+
+return 1;
+}
+
+
+function getCameraCaptureFrameSize(
+captureAspect
+) {
+
+const availableWidth =
+viewport.clientWidth *
+CAMERA_VIEWFINDER_SCALE;
+
+const availableHeight =
+viewport.clientHeight *
+CAMERA_VIEWFINDER_SCALE;
+
+let width =
+availableWidth;
+
+let height =
+width /
+captureAspect;
+
+
+if (height > availableHeight) {
+
+height =
+availableHeight;
+
+width =
+height *
+captureAspect;
+}
+
+
+return {
+width,
+height
+};
+}
+
+
+function updateCameraViewfinder() {
+
+if (!cameraViewfinder) {
+return;
+}
+
+const frameSize =
+getCameraCaptureFrameSize(
+getCameraCaptureAspectRatio()
+);
+
+cameraViewfinder.style.setProperty(
+"--camera-frame-width",
+`${frameSize.width}px`
+);
+
+cameraViewfinder.style.setProperty(
+"--camera-frame-height",
+`${frameSize.height}px`
+);
+}
+
+
+function enterCameraMode() {
+
+closeMobileSettingsMenu();
+
+if (guideVisibilityBeforeCamera === null) {
+
+guideVisibilityBeforeCamera =
+groundToggle.checked;
+}
+
+setGuideVisibility(
+false
+);
+
+groundToggle.disabled =
+true;
+
+eraserCursor.visible =
+false;
+
+closeMobileColorPicker();
+
+document.body.classList.add(
+"is-camera-mode"
+);
+
+updateMobileViewportSize();
+updateCameraViewfinder();
+
+cameraViewfinder.hidden =
+false;
+
+cameraCaptureUi.hidden =
+false;
+}
+
+
+function leaveCameraMode() {
+
+if (
+cameraVideoRecording ||
+cameraVideoCountdownTimerId !==
+null
+) {
+
+stopCameraVideo();
+}
+
+document.body.classList.remove(
+"is-camera-mode"
+);
+
+updateMobileViewportSize();
+
+if (guideVisibilityBeforeCamera === null) {
+return;
+}
+
+setGuideVisibility(
+guideVisibilityBeforeCamera
+);
+
+guideVisibilityBeforeCamera =
+null;
+
+groundToggle.disabled =
+false;
+
+cameraViewfinder.hidden =
+true;
+
+cameraCaptureUi.hidden =
+true;
+}
+
+
+function selectDrawingTool(
+tool
+) {
+
+if (!TOOL_REGISTRY[tool]) {
+return;
+}
+
+
+const previousTool =
+currentTool;
+
+
+if (
+tool === "camera" &&
+previousTool !== "camera"
+) {
+
+toolBeforeCamera =
+previousTool;
+}
+
+
+if (
+previousTool === "camera" &&
+tool !== "camera"
+) {
+
+leaveCameraMode();
+}
+
+
+currentTool = tool;
+
+
+if (tool === "camera") {
+
+enterCameraMode();
+}
+
+
+/*
+ペン・消しゴムでは
+それぞれ保存してある太さを復元する
+*/
+
+if (tool === "pen") {
+
+penSize =
+savedPenSize;
+
+} else if (tool === "eraser") {
+
+penSize =
+savedEraserSize;
+}
+
+
+if (
+tool === "pen" ||
+tool === "eraser"
+) {
+
+penSizeInput.value =
+penSize;
+
+penSizeValue.value =
+penSize;
+
+renderer.domElement.style.cursor =
+"none";
+
+} else {
+
+eraserCursor.visible = false;
+
+if (
+tool === "look" ||
+tool === "camera"
+) {
+
+renderer.domElement.style.cursor =
+"grab";
+
+} else {
+
+renderer.domElement.style.cursor =
+"crosshair";
+}
+}
+
+
+penToolButton.classList.toggle(
+"is-active",
+tool === "pen"
+);
+
+eraserToolButton.classList.toggle(
+"is-active",
+tool === "eraser"
+);
+
+bucketToolButton.classList.toggle(
+"is-active",
+tool === "bucket"
+);
+
+eyedropperToolButton.classList.toggle(
+"is-active",
+tool === "eyedropper"
+);
+
+lookToolButton.classList.toggle(
+"is-active",
+tool === "look"
+);
+
+cameraToolButton.classList.toggle(
+"is-active",
+tool === "camera"
+);
+
+drawingModeMenuButton.classList.toggle(
+"is-active",
+tool !== "camera"
+);
+
+drawingModeMenuButton.setAttribute(
+"aria-pressed",
+tool !== "camera"
+? "true"
+: "false"
+);
+
+cameraModeMenuButton.classList.toggle(
+"is-active",
+tool === "camera"
+);
+
+cameraModeMenuButton.setAttribute(
+"aria-pressed",
+tool === "camera"
+? "true"
+: "false"
+);
+}
+
+
 penToolButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    currentTool = "pen";
-
-    penSize =
-      savedPenSize;
-
-    penSizeInput.value =
-      penSize;
-
-    penSizeValue.value =
-      penSize;
-
-
-    renderer.domElement.style.cursor =
-      "none";
-
-
-    penToolButton.classList.add(
-      "is-active"
-    );
-
-    eraserToolButton.classList.remove(
-      "is-active"
-    );
-
-    bucketToolButton.classList.remove(
-      "is-active"
-    );
-
-    eyedropperToolButton.classList.remove(
-      "is-active"
-    );
-  }
+selectDrawingTool(
+"pen"
+);
+}
 );
 
 
 eraserToolButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    currentTool = "eraser";
-
-    penSize =
-      savedEraserSize;
-
-    penSizeInput.value =
-      penSize;
-
-    penSizeValue.value =
-      penSize;
-
-
-    renderer.domElement.style.cursor =
-      "none";
-
-
-    eraserToolButton.classList.add(
-      "is-active"
-    );
-
-    penToolButton.classList.remove(
-      "is-active"
-    );
-
-    bucketToolButton.classList.remove(
-      "is-active"
-    );
-
-    eyedropperToolButton.classList.remove(
-      "is-active"
-    );
-  }
+selectDrawingTool(
+"eraser"
+);
+}
 );
 
 
 bucketToolButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    currentTool = "bucket";
-
-
-    /*
-      バケツでは円形カーソルを使わない
-    */
-
-    eraserCursor.visible = false;
-
-    renderer.domElement.style.cursor =
-      "crosshair";
-
-
-    bucketToolButton.classList.add(
-      "is-active"
-    );
-
-    penToolButton.classList.remove(
-      "is-active"
-    );
-
-    eraserToolButton.classList.remove(
-      "is-active"
-    );
-
-    eyedropperToolButton.classList.remove(
-      "is-active"
-    );
-  }
+selectDrawingTool(
+"bucket"
+);
+}
 );
 
 
-
 eyedropperToolButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    currentTool = "eyedropper";
-
-
-    /*
-      スポイトでは円形カーソルを使わない
-    */
-
-    eraserCursor.visible = false;
-
-    renderer.domElement.style.cursor =
-      "crosshair";
+selectDrawingTool(
+"eyedropper"
+);
+}
+);
 
 
-    eyedropperToolButton.classList.add(
-      "is-active"
-    );
+lookToolButton.addEventListener(
+"pointerdown",
+(event) => {
 
-    penToolButton.classList.remove(
-      "is-active"
-    );
+event.preventDefault();
+event.stopPropagation();
 
-    eraserToolButton.classList.remove(
-      "is-active"
-    );
+selectDrawingTool(
+"look"
+);
+}
+);
 
-    bucketToolButton.classList.remove(
-      "is-active"
-    );
-  }
+
+cameraToolButton.addEventListener(
+"click",
+() => {
+
+selectDrawingTool(
+"camera"
+);
+}
+);
+
+
+cameraCloseButton.addEventListener(
+"click",
+(event) => {
+
+event.preventDefault();
+event.stopPropagation();
+
+selectDrawingTool(
+toolBeforeCamera
+);
+}
+);
+
+
+let cameraCaptureMode =
+"photo";
+
+
+function setCameraCaptureMode(
+mode
+) {
+
+if (
+mode !== "photo" &&
+mode !== "video"
+) {
+return;
+}
+
+if (
+cameraVideoRecording &&
+mode !== "video"
+) {
+
+stopCameraVideo();
+}
+
+cameraCaptureMode =
+mode;
+
+cameraPhotoModeButton.classList.toggle(
+"is-active",
+mode === "photo"
+);
+
+cameraPhotoModeButton.setAttribute(
+"aria-pressed",
+mode === "photo"
+? "true"
+: "false"
+);
+
+cameraVideoModeButton.classList.toggle(
+"is-active",
+mode === "video"
+);
+
+cameraVideoModeButton.setAttribute(
+"aria-pressed",
+mode === "video"
+? "true"
+: "false"
+);
+
+cameraVideoAspectSwitch.hidden =
+mode !== "video";
+
+updateCameraViewfinder();
+}
+
+
+function setCameraVideoAspect(
+aspect,
+save = true
+) {
+
+if (
+aspect !== "square" &&
+aspect !== "vertical"
+) {
+return;
+}
+
+
+if (cameraVideoRecording) {
+
+stopCameraVideo();
+}
+
+
+cameraVideoAspect =
+aspect;
+
+
+cameraVideoSquareButton.classList.toggle(
+"is-active",
+aspect === "square"
+);
+
+cameraVideoSquareButton.setAttribute(
+"aria-pressed",
+aspect === "square"
+? "true"
+: "false"
+);
+
+
+cameraVideoVerticalButton.classList.toggle(
+"is-active",
+aspect === "vertical"
+);
+
+cameraVideoVerticalButton.setAttribute(
+"aria-pressed",
+aspect === "vertical"
+? "true"
+: "false"
+);
+
+
+if (save) {
+
+try {
+
+localStorage.setItem(
+CAMERA_VIDEO_ASPECT_STORAGE_KEY,
+cameraVideoAspect
+);
+
+} catch (error) {
+
+/*
+保存できない環境でも
+現在の選択はそのまま使用する
+*/
+}
+}
+
+
+updateCameraViewfinder();
+}
+
+
+cameraPhotoModeButton.addEventListener(
+"click",
+() => {
+
+setCameraCaptureMode(
+"photo"
+);
+}
+);
+
+
+cameraVideoModeButton.addEventListener(
+"click",
+() => {
+
+setCameraCaptureMode(
+"video"
+);
+}
+);
+
+
+cameraVideoSquareButton.addEventListener(
+"click",
+() => {
+
+setCameraVideoAspect(
+"square"
+);
+}
+);
+
+
+cameraVideoVerticalButton.addEventListener(
+"click",
+() => {
+
+setCameraVideoAspect(
+"vertical"
+);
+}
+);
+
+
+/*
+現在のファインダーと一致する
+撮影用の垂直画角を求める
+*/
+
+function getCameraCaptureFov(
+captureAspect
+) {
+
+const frameSize =
+getCameraCaptureFrameSize(
+captureAspect
+);
+
+const heightRatio =
+frameSize.height /
+Math.max(
+1,
+viewport.clientHeight
+);
+
+const verticalFov =
+THREE.MathUtils.degToRad(
+camera.fov
+);
+
+const captureVerticalFov =
+2 *
+Math.atan(
+Math.tan(
+verticalFov / 2
+) *
+heightRatio
+);
+
+return THREE.MathUtils.radToDeg(
+captureVerticalFov
+);
+}
+
+
+function getSquareCaptureFov() {
+
+return getCameraCaptureFov(
+1
+);
+}
+
+
+function getCameraVideoDimensions() {
+
+if (
+cameraVideoAspect === "vertical"
+) {
+
+return {
+width:
+VIDEO_CAPTURE_SIZE,
+
+height:
+VIDEO_CAPTURE_VERTICAL_HEIGHT
+};
+}
+
+return {
+width:
+VIDEO_CAPTURE_SIZE,
+
+height:
+VIDEO_CAPTURE_SIZE
+};
+}
+
+
+/*
+撮影ファイル名
+*/
+
+function getPhotoCaptureFilename() {
+
+const now =
+new Date();
+
+const pad =
+(value) =>
+String(value).padStart(
+2,
+"0"
+);
+
+return (
+"gururi-photo-" +
+now.getFullYear() +
+pad(now.getMonth() + 1) +
+pad(now.getDate()) +
+"-" +
+pad(now.getHours()) +
+pad(now.getMinutes()) +
+pad(now.getSeconds()) +
+".png"
+);
+}
+
+
+function takeCameraPhoto() {
+
+if (
+currentTool !== "camera" ||
+cameraCaptureMode !== "photo"
+) {
+return;
+}
+
+cameraViewfinder.classList.remove(
+"is-flashing"
+);
+
+void cameraViewfinder.offsetWidth;
+
+cameraViewfinder.classList.add(
+"is-flashing"
+);
+
+
+/*
+最新の描画内容を
+360°テクスチャへ反映する
+*/
+
+updatePaintCanvas();
+
+texture.needsUpdate =
+true;
+
+
+/*
+現在のカメラを複製して
+中央正方形の画角へ調整する
+*/
+
+const captureCamera =
+camera.clone();
+
+captureCamera.aspect =
+1;
+
+captureCamera.fov =
+getSquareCaptureFov();
+
+captureCamera.updateProjectionMatrix();
+
+
+photoCaptureRenderer.setSize(
+PHOTO_CAPTURE_SIZE,
+PHOTO_CAPTURE_SIZE,
+false
+);
+
+photoCaptureRenderer.render(
+scene,
+captureCamera
+);
+
+
+photoCaptureCanvas.toBlob(
+(blob) => {
+
+if (!blob) {
+
+alert(
+currentLanguage === "en"
+? "Could not create the image."
+: "画像を作成できませんでした。"
+);
+
+return;
+}
+
+
+const downloadUrl =
+URL.createObjectURL(
+blob
+);
+
+const link =
+document.createElement(
+"a"
+);
+
+link.href =
+downloadUrl;
+
+link.download =
+getPhotoCaptureFilename();
+
+link.click();
+
+
+window.setTimeout(
+() => {
+
+URL.revokeObjectURL(
+downloadUrl
+);
+},
+1000
+);
+},
+"image/png"
+);
+}
+
+
+let cameraMediaRecorder =
+null;
+
+let cameraVideoStream =
+null;
+
+let cameraVideoChunks =
+[];
+
+let cameraVideoRecording =
+false;
+
+let cameraVideoCountdownTimerId =
+null;
+
+
+setCameraVideoAspect(
+cameraVideoAspect,
+false
+);
+
+
+let cameraVideoStartedAt =
+0;
+
+let cameraVideoTimerId =
+null;
+
+let cameraVideoStopTimerId =
+null;
+
+
+function getCameraVideoMimeType() {
+
+if (
+typeof MediaRecorder === "undefined" ||
+typeof MediaRecorder.isTypeSupported !==
+"function"
+) {
+return "";
+}
+
+const mimeTypes = [
+"video/mp4;codecs=avc1.42E01E",
+"video/mp4;codecs=avc1.4D401E",
+"video/mp4",
+"video/webm;codecs=vp9",
+"video/webm;codecs=vp8",
+"video/webm"
+];
+
+for (const mimeType of mimeTypes) {
+
+if (
+MediaRecorder.isTypeSupported(
+mimeType
+)
+) {
+return mimeType;
+}
+}
+
+return "";
+}
+
+
+function getVideoCaptureFilename(
+mimeType
+) {
+
+const now =
+new Date();
+
+const pad =
+(value) =>
+String(value).padStart(
+2,
+"0"
+);
+
+const extension =
+String(
+mimeType
+)
+.toLowerCase()
+.includes(
+"mp4"
+)
+? ".mp4"
+: ".webm";
+
+return (
+"gururi-video-" +
+now.getFullYear() +
+pad(now.getMonth() + 1) +
+pad(now.getDate()) +
+"-" +
+pad(now.getHours()) +
+pad(now.getMinutes()) +
+pad(now.getSeconds()) +
+extension
+);
+}
+
+
+function updateCameraRecordingTime() {
+
+if (!cameraVideoRecording) {
+return;
+}
+
+const elapsedMilliseconds =
+Math.min(
+performance.now() -
+cameraVideoStartedAt,
+VIDEO_CAPTURE_MAX_DURATION
+);
+
+const elapsedSeconds =
+Math.floor(
+elapsedMilliseconds / 1000
+);
+
+const remainingRatio =
+Math.max(
+0,
+1 -
+elapsedMilliseconds /
+VIDEO_CAPTURE_MAX_DURATION
+);
+
+cameraRecordingTime.textContent =
+"00:" +
+String(elapsedSeconds).padStart(
+2,
+"0"
+);
+
+cameraCaptureUi.style.setProperty(
+"--camera-recording-progress",
+remainingRatio
+);
+}
+
+
+function clearCameraVideoCountdown() {
+
+if (
+cameraVideoCountdownTimerId !==
+null
+) {
+
+window.clearInterval(
+cameraVideoCountdownTimerId
+);
+
+cameraVideoCountdownTimerId =
+null;
+}
+
+cameraViewfinder.classList.remove(
+"is-counting-down"
+);
+
+cameraCaptureUi.classList.remove(
+"is-counting-down"
+);
+
+cameraShutterButton.classList.remove(
+"is-counting-down"
+);
+
+delete cameraViewfinder.dataset
+.videoCountdown;
+}
+
+
+function resetCameraVideoUi() {
+
+clearCameraVideoCountdown();
+
+cameraShutterButton.classList.remove(
+"is-recording"
+);
+
+cameraCaptureUi.classList.remove(
+"is-recording"
+);
+
+cameraCaptureUi.style.setProperty(
+"--camera-recording-progress",
+1
+);
+
+cameraRecordingTime.hidden =
+true;
+
+cameraRecordingTime.textContent =
+"00:00";
+}
+
+
+function downloadCameraVideo(
+chunks,
+mimeType
+) {
+
+if (chunks.length === 0) {
+
+alert(
+currentLanguage === "en"
+? "Could not create the video."
+: "動画を作成できませんでした。"
+);
+
+return;
+}
+
+const blob =
+new Blob(
+chunks,
+{
+type:
+mimeType || "video/webm"
+}
+);
+
+const downloadUrl =
+URL.createObjectURL(
+blob
+);
+
+const link =
+document.createElement(
+"a"
+);
+
+link.href =
+downloadUrl;
+
+link.download =
+getVideoCaptureFilename(
+mimeType
+);
+
+link.click();
+
+window.setTimeout(
+() => {
+
+URL.revokeObjectURL(
+downloadUrl
+);
+},
+1000
+);
+}
+
+
+function startCameraVideoCountdown() {
+
+if (
+currentTool !== "camera" ||
+cameraCaptureMode !== "video" ||
+cameraVideoRecording ||
+cameraVideoCountdownTimerId !== null
+) {
+return;
+}
+
+if (
+typeof MediaRecorder === "undefined" ||
+typeof videoCaptureCanvas.captureStream !==
+"function"
+) {
+
+alert(
+currentLanguage === "en"
+? "Video recording is not supported by this browser."
+: "このブラウザは動画撮影に対応していません。"
+);
+
+return;
+}
+
+if (!getCameraVideoMimeType()) {
+
+alert(
+currentLanguage === "en"
+? "Video recording is not supported by this browser."
+: "このブラウザは対応する形式の動画撮影を利用できません。"
+);
+
+return;
+}
+
+let countdownValue = 3;
+
+cameraViewfinder.dataset.videoCountdown =
+String(
+countdownValue
+);
+
+cameraViewfinder.classList.add(
+"is-counting-down"
+);
+
+cameraCaptureUi.classList.add(
+"is-counting-down"
+);
+
+cameraShutterButton.classList.add(
+"is-counting-down"
+);
+
+cameraVideoCountdownTimerId =
+window.setInterval(
+() => {
+
+countdownValue -= 1;
+
+if (countdownValue > 0) {
+
+cameraViewfinder.dataset.videoCountdown =
+String(
+countdownValue
+);
+
+return;
+}
+
+clearCameraVideoCountdown();
+
+startCameraVideo();
+},
+1000
+);
+}
+
+
+function startCameraVideo() {
+
+if (
+currentTool !== "camera" ||
+cameraCaptureMode !== "video" ||
+cameraVideoRecording
+) {
+return;
+}
+
+if (
+typeof MediaRecorder === "undefined" ||
+typeof videoCaptureCanvas.captureStream !==
+"function"
+) {
+
+alert(
+currentLanguage === "en"
+? "Video recording is not supported by this browser."
+: "このブラウザは動画撮影に対応していません。"
+);
+
+return;
+}
+
+const mimeType =
+getCameraVideoMimeType();
+
+if (!mimeType) {
+
+alert(
+currentLanguage === "en"
+? "WebM recording is not supported by this browser."
+: "このブラウザはWebM形式の動画撮影に対応していません。"
+);
+
+return;
+}
+
+try {
+
+const videoDimensions =
+getCameraVideoDimensions();
+
+videoCaptureRenderer.setSize(
+videoDimensions.width,
+videoDimensions.height,
+false
+);
+
+cameraVideoStream =
+videoCaptureCanvas.captureStream(
+VIDEO_CAPTURE_FPS
+);
+
+cameraVideoChunks = [];
+
+cameraMediaRecorder =
+new MediaRecorder(
+cameraVideoStream,
+{
+mimeType,
+videoBitsPerSecond: 8000000
+}
+);
+
+cameraMediaRecorder.addEventListener(
+"dataavailable",
+(event) => {
+
+if (
+event.data &&
+event.data.size > 0
+) {
+
+cameraVideoChunks.push(
+event.data
+);
+}
+}
+);
+
+cameraMediaRecorder.addEventListener(
+"stop",
+() => {
+
+const completedChunks =
+cameraVideoChunks.slice();
+
+const completedMimeType =
+cameraMediaRecorder?.mimeType ||
+mimeType;
+
+if (cameraVideoStream) {
+
+cameraVideoStream
+.getTracks()
+.forEach(
+(track) => {
+
+track.stop();
+}
+);
+}
+
+cameraMediaRecorder =
+null;
+
+cameraVideoStream =
+null;
+
+cameraVideoChunks = [];
+
+downloadCameraVideo(
+completedChunks,
+completedMimeType
+);
+},
+{
+once: true
+}
+);
+
+cameraMediaRecorder.addEventListener(
+"error",
+() => {
+
+stopCameraVideo();
+
+alert(
+currentLanguage === "en"
+? "An error occurred while recording the video."
+: "動画撮影中にエラーが発生しました。"
+);
+},
+{
+once: true
+}
+);
+
+cameraVideoRecording =
+true;
+
+cameraVideoStartedAt =
+performance.now();
+
+cameraRecordingTime.hidden =
+false;
+
+cameraRecordingTime.textContent =
+"00:00";
+
+cameraCaptureUi.style.setProperty(
+"--camera-recording-progress",
+1
+);
+
+cameraCaptureUi.classList.add(
+"is-recording"
+);
+
+cameraShutterButton.classList.add(
+"is-recording"
+);
+
+cameraMediaRecorder.start(
+100
+);
+
+cameraVideoTimerId =
+window.setInterval(
+updateCameraRecordingTime,
+100
+);
+
+cameraVideoStopTimerId =
+window.setTimeout(
+() => {
+
+stopCameraVideo();
+},
+VIDEO_CAPTURE_MAX_DURATION
+);
+
+} catch (error) {
+
+cameraVideoRecording =
+false;
+
+if (cameraVideoStream) {
+
+cameraVideoStream
+.getTracks()
+.forEach(
+(track) => {
+
+track.stop();
+}
+);
+}
+
+cameraMediaRecorder =
+null;
+
+cameraVideoStream =
+null;
+
+cameraVideoChunks = [];
+
+resetCameraVideoUi();
+
+alert(
+currentLanguage === "en"
+? "Could not start video recording."
+: "動画撮影を開始できませんでした。"
+);
+}
+}
+
+
+function stopCameraVideo() {
+
+if (
+cameraVideoCountdownTimerId !==
+null
+) {
+
+resetCameraVideoUi();
+
+return;
+}
+
+if (!cameraVideoRecording) {
+return;
+}
+
+cameraVideoRecording =
+false;
+
+if (cameraVideoTimerId !== null) {
+
+window.clearInterval(
+cameraVideoTimerId
+);
+
+cameraVideoTimerId =
+null;
+}
+
+if (cameraVideoStopTimerId !== null) {
+
+window.clearTimeout(
+cameraVideoStopTimerId
+);
+
+cameraVideoStopTimerId =
+null;
+}
+
+updateCameraRecordingTime();
+
+resetCameraVideoUi();
+
+if (
+cameraMediaRecorder &&
+cameraMediaRecorder.state !== "inactive"
+) {
+
+cameraMediaRecorder.stop();
+}
+}
+
+
+cameraShutterButton.addEventListener(
+"click",
+() => {
+
+if (cameraCaptureMode === "photo") {
+
+takeCameraPhoto();
+
+} else if (
+cameraVideoCountdownTimerId !==
+null
+) {
+
+stopCameraVideo();
+
+} else if (cameraVideoRecording) {
+
+stopCameraVideo();
+
+} else {
+
+startCameraVideoCountdown();
+}
+}
+);
+
+
+function saveToolPalette() {
+
+try {
+
+localStorage.setItem(
+TOOL_PALETTE_STORAGE_KEY,
+JSON.stringify(
+addedPaletteToolIds
+)
+);
+
+} catch (error) {
+
+return false;
+}
+
+return true;
+}
+
+
+function togglePaletteTool(
+toolId
+) {
+
+if (!TOOL_REGISTRY[toolId]) {
+return;
+}
+
+
+const isAdded =
+addedPaletteToolIds.includes(
+toolId
+);
+
+
+if (isAdded) {
+
+if (addedPaletteToolIds.length <= 1) {
+return;
+}
+
+addedPaletteToolIds =
+addedPaletteToolIds.filter(
+(addedToolId) =>
+addedToolId !== toolId
+);
+
+
+if (currentTool === toolId) {
+
+selectDrawingTool(
+addedPaletteToolIds[0]
+);
+}
+
+} else {
+
+addedPaletteToolIds.push(
+toolId
+);
+}
+
+
+saveToolPalette();
+updateToolPalette();
+}
+
+
+function renderToolLibrary() {
+
+toolLibraryList.replaceChildren();
+
+
+Object.values(
+TOOL_REGISTRY
+).forEach(
+(tool) => {
+
+if (
+tool.id === "camera" &&
+!isMobileToolPalette()
+) {
+return;
+}
+
+const isAdded =
+addedPaletteToolIds.includes(
+tool.id
+);
+
+const button =
+tool.button.cloneNode(
+true
+);
+
+button.removeAttribute(
+"id"
+);
+
+button.removeAttribute(
+"hidden"
+);
+
+button.classList.remove(
+"is-active"
+);
+
+button.classList.add(
+"tool-library-toggle-button"
+);
+
+button.classList.toggle(
+"is-selected",
+!isAdded
+);
+
+button.dataset.toolLibraryAction =
+tool.id;
+
+button.setAttribute(
+"aria-pressed",
+isAdded
+? "true"
+: "false"
+);
+
+button.disabled =
+isAdded &&
+addedPaletteToolIds.length <= 1;
+
+button.addEventListener(
+"click",
+() => {
+
+togglePaletteTool(
+tool.id
+);
+}
+);
+
+toolLibraryList.appendChild(
+button
+);
+}
+);
+}
+
+
+function applyToolPaletteOrder() {
+
+const allToolIds = [
+...addedPaletteToolIds,
+...Object.keys(
+TOOL_REGISTRY
+).filter(
+(toolId) =>
+!addedPaletteToolIds.includes(
+toolId
+)
+)
+];
+
+
+allToolIds.forEach(
+(toolId) => {
+
+drawingToolButtons.insertBefore(
+TOOL_REGISTRY[toolId].button,
+addToolButton
+);
+}
+);
+
+
+drawingToolButtons.appendChild(
+addToolButton
+);
+}
+
+
+function updateToolPalette() {
+
+Object.values(
+TOOL_REGISTRY
+).forEach(
+(tool) => {
+
+const shouldShow =
+addedPaletteToolIds.includes(
+tool.id
+) &&
+(
+tool.id !== "camera" ||
+isMobileToolPalette()
+);
+
+tool.button.hidden =
+!shouldShow;
+}
+);
+
+applyToolPaletteOrder();
+renderToolLibrary();
+
+document.documentElement.classList.add(
+"tool-palette-ready"
+);
+}
+
+
+function openToolLibrary() {
+
+updateToolPalette();
+
+toolLibraryPanel.classList.add(
+"is-open"
+);
+}
+
+
+function closeToolLibrary() {
+
+toolLibraryPanel.classList.remove(
+"is-open"
+);
+}
+
+
+addToolButton.addEventListener(
+"click",
+() => {
+
+openToolLibrary();
+}
+);
+
+
+const PALETTE_LONG_PRESS_DURATION =
+500;
+
+let draggedPaletteToolId =
+null;
+
+let draggedPalettePointerId =
+null;
+
+let draggedPalettePointerType =
+null;
+
+let paletteDragStartX =
+0;
+
+let paletteDragStartY =
+0;
+
+let paletteDragOffsetX =
+0;
+
+let paletteDragOffsetY =
+0;
+
+let paletteDragActive =
+false;
+
+let paletteLongPressTimerId =
+null;
+
+let paletteDragGhost =
+null;
+
+let suppressPaletteToolClick =
+false;
+
+
+function getPaletteToolIdFromButton(
+button
+) {
+
+const tool =
+Object.values(
+TOOL_REGISTRY
+).find(
+(toolItem) =>
+toolItem.button === button
+);
+
+return tool?.id || null;
+}
+
+
+function movePaletteDragGhost(
+clientX,
+clientY
+) {
+
+if (!paletteDragGhost) {
+return;
+}
+
+paletteDragGhost.style.left =
+`${clientX - paletteDragOffsetX}px`;
+
+paletteDragGhost.style.top =
+`${clientY - paletteDragOffsetY}px`;
+}
+
+
+function activatePaletteToolDrag(
+clientX,
+clientY
+) {
+
+if (
+paletteDragActive ||
+!draggedPaletteToolId
+) {
+return;
+}
+
+
+const button =
+TOOL_REGISTRY[
+draggedPaletteToolId
+].button;
+
+const rect =
+button.getBoundingClientRect();
+
+
+paletteDragActive =
+true;
+
+paletteDragOffsetX =
+paletteDragStartX -
+rect.left;
+
+paletteDragOffsetY =
+paletteDragStartY -
+rect.top;
+
+
+button.classList.add(
+"is-palette-placeholder"
+);
+
+
+paletteDragGhost =
+button.cloneNode(
+true
+);
+
+paletteDragGhost.removeAttribute(
+"id"
+);
+
+paletteDragGhost.classList.remove(
+"is-palette-placeholder"
+);
+
+paletteDragGhost.classList.add(
+"palette-drag-ghost"
+);
+
+paletteDragGhost.style.width =
+`${rect.width}px`;
+
+paletteDragGhost.style.height =
+`${rect.height}px`;
+
+document.body.appendChild(
+paletteDragGhost
+);
+
+
+movePaletteDragGhost(
+clientX,
+clientY
+);
+}
+
+
+function finishPaletteToolDrag(
+event
+) {
+
+if (
+draggedPalettePointerId === null ||
+(
+event &&
+event.pointerId !==
+draggedPalettePointerId
+)
+) {
+return;
+}
+
+
+if (paletteLongPressTimerId !== null) {
+
+window.clearTimeout(
+paletteLongPressTimerId
+);
+
+paletteLongPressTimerId =
+null;
+}
+
+
+const draggedPaletteButton =
+draggedPaletteToolId
+? TOOL_REGISTRY[
+draggedPaletteToolId
+]?.button
+: null;
+
+
+if (
+draggedPaletteButton &&
+draggedPaletteButton.hasPointerCapture(
+draggedPalettePointerId
+)
+) {
+
+draggedPaletteButton.releasePointerCapture(
+draggedPalettePointerId
+);
+}
+
+
+if (
+draggedPaletteToolId &&
+TOOL_REGISTRY[draggedPaletteToolId]
+) {
+
+TOOL_REGISTRY[
+draggedPaletteToolId
+].button.classList.remove(
+"is-palette-placeholder"
+);
+}
+
+
+if (paletteDragGhost) {
+
+paletteDragGhost.remove();
+
+paletteDragGhost =
+null;
+}
+
+
+if (paletteDragActive) {
+
+saveToolPalette();
+
+suppressPaletteToolClick =
+true;
+
+window.setTimeout(
+() => {
+
+suppressPaletteToolClick =
+false;
+},
+400
+);
+
+} else if (
+draggedPalettePointerType === "touch" &&
+event?.type !== "pointercancel" &&
+draggedPaletteToolId
+) {
+
+selectDrawingTool(
+draggedPaletteToolId
+);
+
+suppressPaletteToolClick =
+true;
+
+window.setTimeout(
+() => {
+
+suppressPaletteToolClick =
+false;
+},
+400
+);
+}
+
+
+draggedPaletteToolId =
+null;
+
+draggedPalettePointerId =
+null;
+
+draggedPalettePointerType =
+null;
+
+paletteDragActive =
+false;
+}
+
+
+drawingToolButtons.addEventListener(
+"pointerdown",
+(event) => {
+
+if (
+event.pointerType === "mouse" &&
+event.button !== 0
+) {
+return;
+}
+
+
+const button =
+event.target.closest(
+".drawing-tool-button"
+);
+
+
+if (
+!button ||
+button === addToolButton ||
+button.hidden
+) {
+return;
+}
+
+
+const toolId =
+getPaletteToolIdFromButton(
+button
+);
+
+
+if (!toolId) {
+return;
+}
+
+
+draggedPaletteToolId =
+toolId;
+
+draggedPalettePointerId =
+event.pointerId;
+
+draggedPalettePointerType =
+event.pointerType;
+
+paletteDragStartX =
+event.clientX;
+
+paletteDragStartY =
+event.clientY;
+
+paletteDragActive =
+false;
+
+
+button.setPointerCapture(
+event.pointerId
+);
+
+
+if (event.pointerType === "touch") {
+
+event.preventDefault();
+event.stopPropagation();
+
+paletteLongPressTimerId =
+window.setTimeout(
+() => {
+
+paletteLongPressTimerId =
+null;
+
+activatePaletteToolDrag(
+paletteDragStartX,
+paletteDragStartY
+);
+},
+PALETTE_LONG_PRESS_DURATION
+);
+}
+},
+true
+);
+
+
+drawingToolButtons.addEventListener(
+"pointermove",
+(event) => {
+
+if (
+draggedPalettePointerId === null ||
+event.pointerId !==
+draggedPalettePointerId
+) {
+return;
+}
+
+
+const movedDistance =
+Math.hypot(
+event.clientX -
+paletteDragStartX,
+event.clientY -
+paletteDragStartY
+);
+
+
+if (
+event.pointerType === "touch" &&
+!paletteDragActive
+) {
+
+if (
+movedDistance >= 8 &&
+paletteLongPressTimerId !== null
+) {
+
+window.clearTimeout(
+paletteLongPressTimerId
+);
+
+paletteLongPressTimerId =
+null;
+
+finishPaletteToolDrag(
+event
+);
+}
+
+return;
+}
+
+
+if (
+event.pointerType !== "touch" &&
+!paletteDragActive
+) {
+
+if (movedDistance < 8) {
+return;
+}
+
+activatePaletteToolDrag(
+event.clientX,
+event.clientY
+);
+}
+
+
+if (!paletteDragActive) {
+return;
+}
+
+
+event.preventDefault();
+
+
+movePaletteDragGhost(
+event.clientX,
+event.clientY
+);
+
+
+const dragGhostRect =
+paletteDragGhost.getBoundingClientRect();
+
+const dragCircleCenterX =
+dragGhostRect.left +
+dragGhostRect.width / 2;
+
+const dragCircleCenterY =
+dragGhostRect.top +
+dragGhostRect.height / 2;
+
+const dragCircleRadius =
+Math.min(
+dragGhostRect.width,
+dragGhostRect.height
+) *
+0.35;
+
+let targetToolId =
+null;
+
+let largestCircleOverlap =
+0;
+
+
+addedPaletteToolIds.forEach(
+(toolId) => {
+
+if (toolId === draggedPaletteToolId) {
+return;
+}
+
+
+const targetButton =
+TOOL_REGISTRY[toolId].button;
+
+const targetRect =
+targetButton.getBoundingClientRect();
+
+const targetCircleCenterX =
+targetRect.left +
+targetRect.width / 2;
+
+const targetCircleCenterY =
+targetRect.top +
+targetRect.height / 2;
+
+const targetCircleRadius =
+Math.min(
+targetRect.width,
+targetRect.height
+) *
+0.35;
+
+const centerDistance =
+Math.hypot(
+dragCircleCenterX -
+targetCircleCenterX,
+dragCircleCenterY -
+targetCircleCenterY
+);
+
+const circleOverlap =
+Math.max(
+0,
+dragCircleRadius +
+targetCircleRadius -
+centerDistance
+);
+
+
+if (
+circleOverlap >
+largestCircleOverlap
+) {
+
+largestCircleOverlap =
+circleOverlap;
+
+targetToolId =
+toolId;
+}
+}
+);
+
+
+if (!targetToolId) {
+return;
+}
+
+
+const draggedOriginalIndex =
+addedPaletteToolIds.indexOf(
+draggedPaletteToolId
+);
+
+const targetOriginalIndex =
+addedPaletteToolIds.indexOf(
+targetToolId
+);
+
+
+if (
+draggedOriginalIndex < 0 ||
+targetOriginalIndex < 0
+) {
+return;
+}
+
+
+const nextToolIds =
+addedPaletteToolIds.filter(
+(toolId) =>
+toolId !== draggedPaletteToolId
+);
+
+const targetIndex =
+nextToolIds.indexOf(
+targetToolId
+);
+
+
+if (targetIndex < 0) {
+return;
+}
+
+
+const insertionIndex =
+draggedOriginalIndex <
+targetOriginalIndex
+? targetIndex + 1
+: targetIndex;
+
+
+nextToolIds.splice(
+insertionIndex,
+0,
+draggedPaletteToolId
+);
+
+
+addedPaletteToolIds =
+nextToolIds;
+
+applyToolPaletteOrder();
+}
+);
+
+
+drawingToolButtons.addEventListener(
+"pointerup",
+finishPaletteToolDrag
+);
+
+drawingToolButtons.addEventListener(
+"pointercancel",
+finishPaletteToolDrag
+);
+
+
+drawingToolButtons.addEventListener(
+"click",
+(event) => {
+
+if (!suppressPaletteToolClick) {
+return;
+}
+
+event.preventDefault();
+event.stopImmediatePropagation();
+
+suppressPaletteToolClick =
+false;
+},
+true
+);
+
+
+toolPaletteResetButton.addEventListener(
+"click",
+() => {
+
+addedPaletteToolIds = [
+...DEFAULT_PALETTE_TOOL_IDS
+];
+
+saveToolPalette();
+updateToolPalette();
+}
+);
+
+
+toolLibraryCloseButton.addEventListener(
+"click",
+() => {
+
+closeToolLibrary();
+}
+);
+
+
+toolLibraryPanel.addEventListener(
+"click",
+(event) => {
+
+if (event.target === toolLibraryPanel) {
+
+closeToolLibrary();
+}
+}
+);
+
+
+document.addEventListener(
+"keydown",
+(event) => {
+
+if (
+event.key === "Escape" &&
+toolLibraryPanel.classList.contains(
+"is-open"
+)
+) {
+
+closeToolLibrary();
+}
+}
 );
 
 
 /* ================================
-   ストローク再描画
+ストローク再描画
 ================================ */
 
 function drawStroke(stroke) {
 
-  if (
-    !stroke ||
-    stroke.historyType
-  ) {
-    return;
-  }
+if (
+!stroke ||
+stroke.historyType
+) {
+return;
+}
 
 
-  const layer =
-    getLayerById(
-      stroke.layerId
-    );
+const layer =
+getLayerById(
+stroke.layerId
+);
 
 
-  /*
-    削除中のレイヤーに属する
-    描画履歴は再描画しない
-  */
+/*
+削除中のレイヤーに属する
+描画履歴は再描画しない
+*/
 
-  if (!layer) {
-    return;
-  }
+if (!layer) {
+return;
+}
 
 
-  const targetCanvas =
-    layer.canvas;
+const targetCanvas =
+layer.canvas;
 
-  const targetContext =
-    layer.context;
+const targetContext =
+layer.context;
 
 
-  /*
-    バケツ塗りを再現
-  */
+/*
+バケツ塗りを再現
+*/
 
-  if (stroke.tool === "bucket") {
+if (stroke.tool === "bucket") {
 
-    floodFill(
-      stroke.x,
-      stroke.y,
-      stroke.color,
-      layer.id
-    );
+floodFill(
+stroke.x,
+stroke.y,
+stroke.color,
+layer.id
+);
 
-    return;
-  }
+return;
+}
 
 
-  if (
-    !stroke.points ||
-    stroke.points.length === 0
-  ) {
-    return;
-  }
+if (
+!stroke.points ||
+stroke.points.length === 0
+) {
+return;
+}
 
 
-  /*
-    ペン／消しゴム設定
-  */
+/*
+ペン／消しゴム設定
+*/
 
-  if (stroke.tool === "eraser") {
+if (stroke.tool === "eraser") {
 
-    targetContext.globalCompositeOperation =
-      "destination-out";
+targetContext.globalCompositeOperation =
+"destination-out";
 
-  } else {
+} else {
 
-    targetContext.globalCompositeOperation =
-      "source-over";
-  }
+targetContext.globalCompositeOperation =
+"source-over";
+}
 
 
-  targetContext.strokeStyle =
-    stroke.color;
+targetContext.strokeStyle =
+stroke.color;
 
-  targetContext.fillStyle =
-    stroke.color;
+targetContext.fillStyle =
+stroke.color;
 
-  targetContext.lineWidth =
-    stroke.size;
+targetContext.lineWidth =
+stroke.size;
 
-  targetContext.lineCap =
-    "round";
+targetContext.lineCap =
+"round";
 
-  targetContext.lineJoin =
-    "round";
+targetContext.lineJoin =
+"round";
 
 
-  /*
-    最初の一点
-  */
+/*
+最初の一点
+*/
 
-  const firstPoint =
-    stroke.points[0];
+const firstPoint =
+stroke.points[0];
 
-  targetContext.beginPath();
+targetContext.beginPath();
 
-  targetContext.arc(
-    firstPoint.x,
-    firstPoint.y,
-    (
-      stroke.size *
-      drawScale
-    ) / 2,
-    0,
-    Math.PI * 2
-  );
+targetContext.arc(
+firstPoint.x,
+firstPoint.y,
+(
+stroke.size *
+drawScale
+) / 2,
+0,
+Math.PI * 2
+);
 
-  targetContext.fill();
+targetContext.fill();
 
 
-  /*
-    1点しかない場合は終了
-  */
+/*
+1点しかない場合は終了
+*/
 
-  if (stroke.points.length === 1) {
-    return;
-  }
+if (stroke.points.length === 1) {
+return;
+}
 
 
-  /*
-    曲線を再描画
-  */
+/*
+曲線を再描画
+*/
 
-  let previousX =
-    firstPoint.x;
+let previousX =
+firstPoint.x;
 
-  let previousY =
-    firstPoint.y;
+let previousY =
+firstPoint.y;
 
-  let previousMidX =
-    firstPoint.x;
+let previousMidX =
+firstPoint.x;
 
-  let previousMidY =
-    firstPoint.y;
+let previousMidY =
+firstPoint.y;
 
 
-  for (
-    let i = 1;
-    i < stroke.points.length;
-    i++
-  ) {
+for (
+let i = 1;
+i < stroke.points.length;
+i++
+) {
 
-    const point =
-      stroke.points[i];
+const point =
+stroke.points[i];
 
-    let adjustedX =
-      point.x;
+let adjustedX =
+point.x;
 
-    const deltaX =
-      adjustedX - previousX;
+const deltaX =
+adjustedX - previousX;
 
 
-    /*
-      360°の継ぎ目を補正
-    */
+/*
+360°の継ぎ目を補正
+*/
 
-    if (
-      deltaX <
-      -targetCanvas.width / 2
-    ) {
+if (
+deltaX <
+-targetCanvas.width / 2
+) {
 
-      adjustedX +=
-        targetCanvas.width;
+adjustedX +=
+targetCanvas.width;
 
-    } else if (
-      deltaX >
-      targetCanvas.width / 2
-    ) {
+} else if (
+deltaX >
+targetCanvas.width / 2
+) {
 
-      adjustedX -=
-        targetCanvas.width;
-    }
+adjustedX -=
+targetCanvas.width;
+}
 
 
-    const midX =
-      (
-        previousX +
-        adjustedX
-      ) / 2;
+const midX =
+(
+previousX +
+adjustedX
+) / 2;
 
-    const midY =
-      (
-        previousY +
-        point.y
-      ) / 2;
+const midY =
+(
+previousY +
+point.y
+) / 2;
 
 
-    /*
-      通常位置
-    */
+/*
+通常位置
+*/
 
-    targetContext.beginPath();
+targetContext.beginPath();
 
-    targetContext.moveTo(
-      previousMidX,
-      previousMidY
-    );
+targetContext.moveTo(
+previousMidX,
+previousMidY
+);
 
-    targetContext.quadraticCurveTo(
-      previousX,
-      previousY,
-      midX,
-      midY
-    );
+targetContext.quadraticCurveTo(
+previousX,
+previousY,
+midX,
+midY
+);
 
-    targetContext.stroke();
+targetContext.stroke();
 
 
-    /*
-      左側コピー
-    */
+/*
+左側コピー
+*/
 
-    targetContext.beginPath();
+targetContext.beginPath();
 
-    targetContext.moveTo(
-      previousMidX -
-        targetCanvas.width,
-      previousMidY
-    );
+targetContext.moveTo(
+previousMidX -
+targetCanvas.width,
+previousMidY
+);
 
-    targetContext.quadraticCurveTo(
-      previousX -
-        targetCanvas.width,
-      previousY,
-      midX -
-        targetCanvas.width,
-      midY
-    );
+targetContext.quadraticCurveTo(
+previousX -
+targetCanvas.width,
+previousY,
+midX -
+targetCanvas.width,
+midY
+);
 
-    targetContext.stroke();
+targetContext.stroke();
 
 
-    /*
-      右側コピー
-    */
+/*
+右側コピー
+*/
 
-    targetContext.beginPath();
+targetContext.beginPath();
 
-    targetContext.moveTo(
-      previousMidX +
-        targetCanvas.width,
-      previousMidY
-    );
+targetContext.moveTo(
+previousMidX +
+targetCanvas.width,
+previousMidY
+);
 
-    targetContext.quadraticCurveTo(
-      previousX +
-        targetCanvas.width,
-      previousY,
-      midX +
-        targetCanvas.width,
-      midY
-    );
+targetContext.quadraticCurveTo(
+previousX +
+targetCanvas.width,
+previousY,
+midX +
+targetCanvas.width,
+midY
+);
 
-    targetContext.stroke();
+targetContext.stroke();
 
 
-    previousMidX =
-      midX;
+previousMidX =
+midX;
 
-    previousMidY =
-      midY;
+previousMidY =
+midY;
 
-    previousX =
-      adjustedX;
+previousX =
+adjustedX;
 
-    previousY =
-      point.y;
+previousY =
+point.y;
 
 
-    /*
-      座標をCanvas範囲へ戻す
-    */
+/*
+座標をCanvas範囲へ戻す
+*/
 
-    if (previousX < 0) {
+if (previousX < 0) {
 
-      previousX +=
-        targetCanvas.width;
+previousX +=
+targetCanvas.width;
 
-      previousMidX +=
-        targetCanvas.width;
+previousMidX +=
+targetCanvas.width;
 
-    } else if (
-      previousX >=
-      targetCanvas.width
-    ) {
+} else if (
+previousX >=
+targetCanvas.width
+) {
 
-      previousX -=
-        targetCanvas.width;
+previousX -=
+targetCanvas.width;
 
-      previousMidX -=
-        targetCanvas.width;
-    }
-  }
+previousMidX -=
+targetCanvas.width;
+}
+}
 }
 
 
 /* ================================
-   描画レイヤーを再構築
+描画レイヤーを再構築
 ================================ */
 
 function rebuildDrawing() {
 
-  /*
-    すべての描画レイヤーを空にする
-  */
+/*
+すべての描画レイヤーを空にする
+*/
 
-  for (const layer of layers) {
+for (const layer of layers) {
 
-    layer.context.clearRect(
-      0,
-      0,
-      layer.canvas.width,
-      layer.canvas.height
-    );
-
-
-    /*
-      読み込み時の基準画像があれば、
-      まずそれを復元する
-    */
-
-    if (layer.baseCanvas) {
-
-      layer.context.drawImage(
-        layer.baseCanvas,
-        0,
-        0
-      );
-    }
-  }
+layer.context.clearRect(
+0,
+0,
+layer.canvas.width,
+layer.canvas.height
+);
 
 
-  /*
-    読み込み後に行った操作だけを
-    最初から順番に再描画する
-  */
+/*
+読み込み時の基準画像があれば、
+まずそれを復元する
+*/
 
-  for (
-    const stroke of strokeHistory
-  ) {
+if (layer.baseCanvas) {
 
-    drawStroke(stroke);
-  }
+layer.context.drawImage(
+layer.baseCanvas,
+0,
+0
+);
+}
+}
 
 
-  /*
-    球体へ反映
-  */
+/*
+読み込み後に行った操作だけを
+最初から順番に再描画する
+*/
 
-  updatePaintCanvas();
+for (
+const stroke of strokeHistory
+) {
+
+drawStroke(stroke);
+}
+
+
+/*
+球体へ反映
+*/
+
+updatePaintCanvas();
 }
 
 
 /* ================================
-   Undo
+Undo
 ================================ */
 
 function undo() {
 
-  if (strokeHistory.length === 0) {
-    return;
-  }
+if (strokeHistory.length === 0) {
+return;
+}
 
 
-  const action =
-    strokeHistory.pop();
+const action =
+strokeHistory.pop();
 
 
 redoStrokeHistory.push(
-    action
-  );
+action
+);
 
 
-  /*
-    新方式で記録された
-    ペン／消しゴムの場合は、
-    全履歴を再描画せず
-    変更タイルだけを戻す
-  */
+/*
+新方式で記録された
+ペン／消しゴムの場合は、
+全履歴を再描画せず
+変更タイルだけを戻す
+*/
 
-  if (
-    action.tileDiffs instanceof Map &&
-    action.tileDiffs.size > 0
-  ) {
+if (
+action.tileDiffs instanceof Map &&
+action.tileDiffs.size > 0
+) {
 
-    swapStrokeTiles(
-      action
-    );
+swapStrokeTiles(
+action
+);
 
-    requestPaintUpdate();
+requestPaintUpdate();
 
-    return;
-  }
-
-
-  /*
-    レイヤー追加を取り消す
-  */
-
-  if (
-    action.historyType ===
-      "layer-add"
-  ) {
-
-    const index =
-      layers.findIndex(
-        (layer) =>
-          layer.id ===
-            action.layer.id
-      );
+return;
+}
 
 
-    if (index >= 0) {
+/*
+レイヤー追加を取り消す
+*/
 
-      layers.splice(
-        index,
-        1
-      );
-    }
+if (
+action.historyType ===
+"layer-add"
+) {
 
-
-    let restoreLayerId =
-      action.previousActiveLayerId;
-
-
-    if (
-      !getLayerById(
-        restoreLayerId
-      )
-    ) {
-
-      restoreLayerId =
-        layers.length > 0
-          ? layers[
-              layers.length - 1
-            ].id
-          : null;
-    }
+const index =
+layers.findIndex(
+(layer) =>
+layer.id ===
+action.layer.id
+);
 
 
-    if (restoreLayerId !== null) {
+if (index >= 0) {
 
-      setActiveLayer(
-        restoreLayerId
-      );
-    }
-
-
-    requestPaintUpdate();
-
-    return;
-  }
+layers.splice(
+index,
+1
+);
+}
 
 
-  /*
-    レイヤー削除を取り消す
-  */
-
-  if (
-    action.historyType ===
-      "layer-delete"
-  ) {
-
-    const index =
-      Math.max(
-        0,
-        Math.min(
-          action.index,
-          layers.length
-        )
-      );
+let restoreLayerId =
+action.previousActiveLayerId;
 
 
-    if (
-      !getLayerById(
-        action.layer.id
-      )
-    ) {
+if (
+!getLayerById(
+restoreLayerId
+)
+) {
 
-      layers.splice(
-        index,
-        0,
-        action.layer
-      );
-    }
-
-
-    setActiveLayer(
-      action.layer.id
-    );
-
-    requestPaintUpdate();
-
-    return;
-  }
+restoreLayerId =
+layers.length > 0
+? layers[
+layers.length - 1
+].id
+: null;
+}
 
 
-  /*
-    描画操作を取り消す
-  */
+if (restoreLayerId !== null) {
 
-  rebuildDrawing();
+setActiveLayer(
+restoreLayerId
+);
+}
+
+
+requestPaintUpdate();
+
+return;
+}
+
+
+/*
+レイヤー削除を取り消す
+*/
+
+if (
+action.historyType ===
+"layer-delete"
+) {
+
+const index =
+Math.max(
+0,
+Math.min(
+action.index,
+layers.length
+)
+);
+
+
+if (
+!getLayerById(
+action.layer.id
+)
+) {
+
+layers.splice(
+index,
+0,
+action.layer
+);
+}
+
+
+setActiveLayer(
+action.layer.id
+);
+
+requestPaintUpdate();
+
+return;
+}
+
+
+/*
+描画操作を取り消す
+*/
+
+rebuildDrawing();
 }
 
 
 /* ================================
-   Redo
+Redo
 ================================ */
 
 function redo() {
 
-  if (
-    redoStrokeHistory.length === 0
-  ) {
-    return;
-  }
+if (
+redoStrokeHistory.length === 0
+) {
+return;
+}
 
 
 const action =
-    redoStrokeHistory.pop();
+redoStrokeHistory.pop();
 
 
-  /*
-    新方式のペン／消しゴムは
-    タイルをもう一度交換するだけで
-    Redoできる
-  */
+/*
+新方式のペン／消しゴムは
+タイルをもう一度交換するだけで
+Redoできる
+*/
 
-  if (
-    action.tileDiffs instanceof Map &&
-    action.tileDiffs.size > 0
-  ) {
+if (
+action.tileDiffs instanceof Map &&
+action.tileDiffs.size > 0
+) {
 
-    swapStrokeTiles(
-      action
-    );
-
-
-    strokeHistory.push(
-      action
-    );
+swapStrokeTiles(
+action
+);
 
 
-    requestPaintUpdate();
-
-    return;
-  }
-
-
-  /*
-    レイヤー追加をやり直す
-  */
-
-  if (
-    action.historyType ===
-      "layer-add"
-  ) {
-
-    const index =
-      Math.max(
-        0,
-        Math.min(
-          action.index,
-          layers.length
-        )
-      );
+strokeHistory.push(
+action
+);
 
 
-    if (
-      !getLayerById(
-        action.layer.id
-      )
-    ) {
+requestPaintUpdate();
 
-      layers.splice(
-        index,
-        0,
-        action.layer
-      );
-    }
+return;
+}
 
 
-    strokeHistory.push(
-      action
-    );
+/*
+レイヤー追加をやり直す
+*/
+
+if (
+action.historyType ===
+"layer-add"
+) {
+
+const index =
+Math.max(
+0,
+Math.min(
+action.index,
+layers.length
+)
+);
 
 
-    setActiveLayer(
-      action.layer.id
-    );
+if (
+!getLayerById(
+action.layer.id
+)
+) {
 
-    requestPaintUpdate();
-
-    return;
-  }
-
-
-  /*
-    レイヤー削除をやり直す
-  */
-
-  if (
-    action.historyType ===
-      "layer-delete"
-  ) {
-
-    const index =
-      layers.findIndex(
-        (layer) =>
-          layer.id ===
-            action.layer.id
-      );
+layers.splice(
+index,
+0,
+action.layer
+);
+}
 
 
-    if (index >= 0) {
-
-      layers.splice(
-        index,
-        1
-      );
-    }
+strokeHistory.push(
+action
+);
 
 
-    strokeHistory.push(
-      action
-    );
+setActiveLayer(
+action.layer.id
+);
+
+requestPaintUpdate();
+
+return;
+}
 
 
-    let nextActiveLayerId =
-      action.nextActiveLayerId;
+/*
+レイヤー削除をやり直す
+*/
+
+if (
+action.historyType ===
+"layer-delete"
+) {
+
+const index =
+layers.findIndex(
+(layer) =>
+layer.id ===
+action.layer.id
+);
 
 
-    if (
-      !getLayerById(
-        nextActiveLayerId
-      )
-    ) {
+if (index >= 0) {
 
-      const fallbackIndex =
-        Math.min(
-          action.index,
-          layers.length - 1
-        );
-
-      nextActiveLayerId =
-        layers[fallbackIndex].id;
-    }
+layers.splice(
+index,
+1
+);
+}
 
 
-    setActiveLayer(
-      nextActiveLayerId
-    );
-
-    requestPaintUpdate();
-
-    return;
-  }
+strokeHistory.push(
+action
+);
 
 
-  /*
-    描画操作をやり直す
-  */
+let nextActiveLayerId =
+action.nextActiveLayerId;
 
-  strokeHistory.push(
-    action
-  );
 
-  rebuildDrawing();
+if (
+!getLayerById(
+nextActiveLayerId
+)
+) {
+
+const fallbackIndex =
+Math.min(
+action.index,
+layers.length - 1
+);
+
+nextActiveLayerId =
+layers[fallbackIndex].id;
+}
+
+
+setActiveLayer(
+nextActiveLayerId
+);
+
+requestPaintUpdate();
+
+return;
+}
+
+
+/*
+描画操作をやり直す
+*/
+
+strokeHistory.push(
+action
+);
+
+rebuildDrawing();
 }
 
 
 /* ================================
-   プレビュー左端ハンドル
+プレビュー左端ハンドル
 ================================ */
 
 let isPreviewSeamDragging =
-  false;
+false;
 
 
 /*
-  今回のドラッグで
-  選択している位置
+今回のドラッグで
+選択している位置
 */
 
 let previewDragRatio = 0;
 
 
 /*
-  ポインター位置に
-  ▼を移動する
+ポインター位置に
+▼を移動する
 */
 
 function updatePreviewSeamHandle(
-  event
+event
 ) {
 
-  const rect =
-    previewCanvas
-      .getBoundingClientRect();
+const rect =
+previewCanvas
+.getBoundingClientRect();
 
 
-  if (
-    rect.width <= 0
-  ) {
-    return;
-  }
-
-
-  /*
-    Canvas左端を0として
-    ポインター位置を取得
-  */
-
-  let x =
-    event.clientX -
-    rect.left;
-
-
-  /*
-    画像の範囲内に制限
-  */
-
-  x =
-    Math.max(
-      0,
-      Math.min(
-        rect.width,
-        x
-      )
-    );
-
-
-  previewDragRatio =
-    x /
-    rect.width;
-
-
-  previewSeamHandle
-    .style
-    .left =
-      `${x}px`;
+if (
+rect.width <= 0
+) {
+return;
 }
 
 
 /*
-  ▼をつかむ
+Canvas左端を0として
+ポインター位置を取得
+*/
+
+let x =
+event.clientX -
+rect.left;
+
+
+/*
+画像の範囲内に制限
+*/
+
+x =
+Math.max(
+0,
+Math.min(
+rect.width,
+x
+)
+);
+
+
+previewDragRatio =
+x /
+rect.width;
+
+
+previewSeamHandle
+.style
+.left =
+`${x}px`;
+}
+
+
+/*
+▼をつかむ
 */
 
 previewSeamHandle.addEventListener(
-  "pointerdown",
-  (event) => {
+"pointerdown",
+(event) => {
 
-    if (
-      event.pointerType ===
-        "mouse" &&
-      event.button !== 0
-    ) {
-      return;
-    }
-
-
-    isPreviewSeamDragging =
-      true;
+if (
+event.pointerType ===
+"mouse" &&
+event.button !== 0
+) {
+return;
+}
 
 
-    previewDragRatio = 0;
+isPreviewSeamDragging =
+true;
 
 
-    previewSeamHandle
-      .setPointerCapture(
-        event.pointerId
-      );
+previewDragRatio = 0;
 
 
-    updatePreviewSeamHandle(
-      event
-    );
+previewSeamHandle
+.setPointerCapture(
+event.pointerId
+);
 
 
-    event.preventDefault();
+updatePreviewSeamHandle(
+event
+);
 
-    event.stopPropagation();
-  }
+
+event.preventDefault();
+
+event.stopPropagation();
+}
 );
 
 
 /*
-  ▼を横方向へ移動
+▼を横方向へ移動
 */
 
 previewSeamHandle.addEventListener(
-  "pointermove",
-  (event) => {
+"pointermove",
+(event) => {
 
-    if (
-      !isPreviewSeamDragging
-    ) {
-      return;
-    }
-
-
-    updatePreviewSeamHandle(
-      event
-    );
+if (
+!isPreviewSeamDragging
+) {
+return;
+}
 
 
-    event.preventDefault();
+updatePreviewSeamHandle(
+event
+);
 
-    event.stopPropagation();
-  }
+
+event.preventDefault();
+
+event.stopPropagation();
+}
 );
 
 
 /*
-  ▼を離した位置を
-  新しい画像左端にする
+▼を離した位置を
+新しい画像左端にする
 */
 
 function finishPreviewSeamDrag(
-  event
+event
 ) {
 
-  if (
-    !isPreviewSeamDragging
-  ) {
-    return;
-  }
+if (
+!isPreviewSeamDragging
+) {
+return;
+}
 
 
-  isPreviewSeamDragging =
-    false;
+isPreviewSeamDragging =
+false;
 
 
-  if (
-    previewSeamHandle
-      .hasPointerCapture(
-        event.pointerId
-      )
-  ) {
+if (
+previewSeamHandle
+.hasPointerCapture(
+event.pointerId
+)
+) {
 
-    previewSeamHandle
-      .releasePointerCapture(
-        event.pointerId
-      );
-  }
-
-
-  /*
-    現在の左端位置へ
-    今回選択した位置を加える
-  */
-
-  previewSeamRatio =
-    (
-      previewSeamRatio +
-      previewDragRatio
-    ) % 1;
+previewSeamHandle
+.releasePointerCapture(
+event.pointerId
+);
+}
 
 
-  /*
-    新しい左端で
-    プレビューを書き直す
-  */
+/*
+現在の左端位置へ
+今回選択した位置を加える
+*/
 
-  updatePreview();
-
-
-  /*
-    ▼自身は再び
-    新しい画像の左端へ戻す
-  */
-
-  previewDragRatio = 0;
+previewSeamRatio =
+(
+previewSeamRatio +
+previewDragRatio
+) % 1;
 
 
-  previewSeamHandle
-    .style
-    .left =
-      "0px";
+/*
+新しい左端で
+プレビューを書き直す
+*/
+
+updatePreview();
 
 
-  event.preventDefault();
+/*
+▼自身は再び
+新しい画像の左端へ戻す
+*/
 
-  event.stopPropagation();
+previewDragRatio = 0;
+
+
+previewSeamHandle
+.style
+.left =
+"0px";
+
+
+event.preventDefault();
+
+event.stopPropagation();
 }
 
 
 previewSeamHandle.addEventListener(
-  "pointerup",
-  finishPreviewSeamDrag
+"pointerup",
+finishPreviewSeamDrag
 );
 
 
 previewSeamHandle.addEventListener(
-  "pointercancel",
-  (event) => {
+"pointercancel",
+(event) => {
 
-    isPreviewSeamDragging =
-      false;
-
-
-    previewDragRatio = 0;
+isPreviewSeamDragging =
+false;
 
 
-    previewSeamHandle
-      .style
-      .left =
-        "0px";
+previewDragRatio = 0;
 
 
-    if (
-      previewSeamHandle
-        .hasPointerCapture(
-          event.pointerId
-        )
-    ) {
+previewSeamHandle
+.style
+.left =
+"0px";
 
-      previewSeamHandle
-        .releasePointerCapture(
-          event.pointerId
-        );
-    }
-  }
+
+if (
+previewSeamHandle
+.hasPointerCapture(
+event.pointerId
+)
+) {
+
+previewSeamHandle
+.releasePointerCapture(
+event.pointerId
+);
+}
+}
 );
 
 
 /* ================================
-   プレビューUI
+プレビューUI
 ================================ */
 
 previewButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    /*
-      念のため最新の描画内容を
-      表示用Canvasへ反映
-    */
+/*
+念のため最新の描画内容を
+表示用Canvasへ反映
+*/
 
-    updatePaintCanvas();
-
-
-    /*
-      プレビューを作成
-    */
-
-    updatePreview();
+updatePaintCanvas();
 
 
-    /*
-      オーバーレイを表示
-    */
+/*
+プレビューを作成
+*/
 
-    previewOverlay.classList.add(
-      "is-open"
-    );
-  }
+updatePreview();
+
+
+/*
+オーバーレイを表示
+*/
+
+previewOverlay.classList.add(
+"is-open"
+);
+}
 );
 
 
 previewCloseButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    previewOverlay.classList.remove(
-      "is-open"
-    );
-  }
+previewOverlay.classList.remove(
+"is-open"
+);
+}
+);
+
+
+previewDownloadButton.addEventListener(
+"click",
+() => {
+
+downloadPNG();
+
+trackGAEvent(
+"download_image"
+);
+}
 );
 
 /* ================================
@@ -9786,7 +14309,7 @@ const WELCOME_VERSION =
 "2";
 
 const WELCOME_STORAGE_KEY =
-"gururi-paint-welcome-version";
+"gururi-paint-dev-welcome-version";
 
 
 function markWelcomeAsSeen() {
@@ -9849,7 +14372,21 @@ currentLanguage
 
 helpButton.addEventListener(
 "click",
-() => {
+(event) => {
+
+if (
+window.matchMedia(
+"(max-width: 700px)"
+).matches
+) {
+
+event.stopPropagation();
+
+toggleMobileSettingsMenu();
+
+return;
+}
+
 
 helpPanel.classList.add(
 "is-open"
@@ -9863,6 +14400,83 @@ ui_language:
 currentLanguage
 }
 );
+}
+);
+
+
+document.addEventListener(
+"pointerdown",
+(event) => {
+
+if (
+!window.matchMedia(
+"(max-width: 700px)"
+).matches ||
+!settingsPanel?.classList.contains(
+"is-mobile-open"
+) ||
+settingsPanel.contains(
+event.target
+) ||
+helpButton.contains(
+event.target
+)
+) {
+return;
+}
+
+
+event.preventDefault();
+event.stopPropagation();
+
+closeMobileSettingsMenu();
+},
+true
+);
+
+
+document.addEventListener(
+"click",
+(event) => {
+
+if (
+!window.matchMedia(
+"(max-width: 700px)"
+).matches ||
+!settingsPanel?.classList.contains(
+"is-mobile-open"
+)
+) {
+return;
+}
+
+
+if (
+event.target.closest(
+".toolbar__tools .app-menu__item, " +
+".toolbar__tools > .tool-button"
+)
+) {
+
+closeMobileSettingsMenu();
+}
+}
+);
+
+
+window.addEventListener(
+"keydown",
+(event) => {
+
+if (
+event.key === "Escape" &&
+settingsPanel?.classList.contains(
+"is-mobile-open"
+)
+) {
+
+closeMobileSettingsMenu();
+}
 }
 );
 
@@ -9938,12 +14552,31 @@ currentLanguage
 );
 
 
-welcomeNoteLink.addEventListener(
+welcomeGuideLink.addEventListener(
 "click",
 () => {
 
 trackGAEvent(
-"welcome_note_click",
+"welcome_guide_click",
+{
+ui_language:
+currentLanguage
+}
+);
+}
+);
+
+
+bugReportLink.addEventListener(
+"click",
+() => {
+
+closeAllAppMenus();
+
+closeMobileSettingsMenu();
+
+trackGAEvent(
+"bug_report_click",
 {
 ui_language:
 currentLanguage
@@ -9962,33 +14595,6 @@ showWelcomeIfNeeded();
 
 
 /* ================================
-ページを離れる前の確認
-================================ */
-
-/*
-タブを閉じる、
-ページを再読み込みする、
-ブラウザバックする、
-別ページへ移動する場合に
-ブラウザ標準の確認を表示する。
-*/
-
-window.addEventListener(
-"beforeunload",
-(event) => {
-
-event.preventDefault();
-
-/*
-一部ブラウザとの互換性のために必要
-*/
-
-event.returnValue = "";
-}
-);
-
-
-/* ================================
 データ保存／読み込み
 ================================ */
 
@@ -10002,249 +14608,1383 @@ downloadProject();
 
 
 projectLoadButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    projectLoadInput.click();
-  }
+if (!autoSaveHasContent) {
+
+projectLoadInput.click();
+
+return;
+}
+
+
+showProjectReplacementConfirm(
+"import"
+);
+}
 );
 
 
 projectLoadInput.addEventListener(
-  "change",
-  async () => {
+"change",
+async () => {
 
-    const file =
-      projectLoadInput
-        .files?.[0];
-
-
-    if (!file) {
-      return;
-    }
+const file =
+projectLoadInput
+.files?.[0];
 
 
-    try {
-
-      await loadProject(
-        file
-      );
-
-    } catch (error) {
-
-      console.error(
-        error
-      );
+if (!file) {
+return;
+}
 
 
-      alert(
-        "データを読み込めませんでした。\n" +
-        "ぐるりペイントで保存したデータか確認してください。"
-      );
+try {
 
-    } finally {
+await loadProject(
+file
+);
 
-      /*
-        同じファイルをもう一度
-        選択できるようにする
-      */
+} catch (error) {
 
-      projectLoadInput.value =
-        "";
-    }
-  }
+console.error(
+error
+);
+
+
+alert(
+"データを読み込めませんでした。\n" +
+"ぐるりペイントで保存したデータか確認してください。"
+);
+
+} finally {
+
+/*
+同じファイルをもう一度
+選択できるようにする
+*/
+
+projectLoadInput.value =
+"";
+}
+}
 );
 
 
 /* ================================
-   PNG保存
+自動保存
+================================ */
+
+const AUTO_SAVE_DATABASE_NAME =
+"gururi-paint-dev-autosave";
+
+const AUTO_SAVE_STORE_NAME =
+"projects";
+
+const AUTO_SAVE_KEY =
+"current-project";
+
+const AUTO_SAVE_DELAY =
+1500;
+
+
+function useAutoSaveStore(
+mode,
+operation
+) {
+
+return new Promise(
+(
+resolve,
+reject
+) => {
+
+const openRequest =
+indexedDB.open(
+AUTO_SAVE_DATABASE_NAME,
+1
+);
+
+
+openRequest.onupgradeneeded =
+() => {
+
+const database =
+openRequest.result;
+
+if (
+!database.objectStoreNames.contains(
+AUTO_SAVE_STORE_NAME
+)
+) {
+
+database.createObjectStore(
+AUTO_SAVE_STORE_NAME
+);
+}
+};
+
+
+openRequest.onerror =
+() => {
+
+reject(
+openRequest.error
+);
+};
+
+
+openRequest.onsuccess =
+() => {
+
+const database =
+openRequest.result;
+
+const transaction =
+database.transaction(
+AUTO_SAVE_STORE_NAME,
+mode
+);
+
+const store =
+transaction.objectStore(
+AUTO_SAVE_STORE_NAME
+);
+
+const request =
+operation(
+store
+);
+
+
+request.onsuccess =
+() => {
+
+resolve(
+request.result ?? null
+);
+};
+
+
+request.onerror =
+() => {
+
+reject(
+request.error
+);
+};
+
+
+transaction.oncomplete =
+() => {
+
+database.close();
+};
+
+
+transaction.onabort =
+() => {
+
+database.close();
+
+reject(
+transaction.error
+);
+};
+};
+}
+);
+}
+
+
+function readAutoSave() {
+
+return useAutoSaveStore(
+"readonly",
+(store) =>
+store.get(
+AUTO_SAVE_KEY
+)
+);
+}
+
+
+function writeAutoSave(
+projectText
+) {
+
+return useAutoSaveStore(
+"readwrite",
+(store) =>
+store.put(
+projectText,
+AUTO_SAVE_KEY
+)
+);
+}
+
+
+function deleteAutoSave() {
+
+return useAutoSaveStore(
+"readwrite",
+(store) =>
+store.delete(
+AUTO_SAVE_KEY
+)
+);
+}
+
+
+function saveAutoSaveNow() {
+
+if (
+!autoSaveReady ||
+!autoSaveHasContent
+) {
+return;
+}
+
+
+if (autoSaveTimer) {
+
+clearTimeout(
+autoSaveTimer
+);
+
+autoSaveTimer = null;
+}
+
+
+let projectText = null;
+
+
+try {
+
+projectText =
+downloadProject(
+true
+);
+
+} catch (error) {
+
+console.warn(
+"Auto-save creation failed:",
+error
+);
+
+return;
+}
+
+
+autoSaveWriteQueue =
+autoSaveWriteQueue
+.then(
+() =>
+writeAutoSave(
+projectText
+)
+)
+.catch(
+(error) => {
+
+console.warn(
+"Auto-save failed:",
+error
+);
+}
+);
+}
+
+
+function scheduleAutoSave() {
+
+if (!autoSaveReady) {
+return;
+}
+
+
+autoSaveHasContent = true;
+
+
+if (autoSaveTimer) {
+
+clearTimeout(
+autoSaveTimer
+);
+}
+
+
+autoSaveTimer =
+setTimeout(
+saveAutoSaveNow,
+AUTO_SAVE_DELAY
+);
+}
+
+
+async function initializeAutoSave() {
+
+if (autoSaveInitialized) {
+return;
+}
+
+autoSaveInitialized = true;
+
+const panel =
+document.getElementById(
+"autoSaveRestorePanel"
+);
+
+const message =
+document.getElementById(
+"autoSaveRestoreMessage"
+);
+
+const yesButton =
+document.getElementById(
+"autoSaveRestoreYesButton"
+);
+
+const noButton =
+document.getElementById(
+"autoSaveRestoreNoButton"
+);
+
+
+if (!("indexedDB" in window)) {
+return;
+}
+
+
+let projectText = null;
+
+
+try {
+
+projectText =
+await readAutoSave();
+
+} catch (error) {
+
+console.warn(
+"Auto-save check failed:",
+error
+);
+
+return;
+}
+
+
+if (
+typeof projectText !== "string" ||
+!projectText
+) {
+
+autoSaveReady = true;
+
+return;
+}
+
+
+message.textContent =
+currentLanguage === "en"
+? "There is unfinished work. Do you want to reopen it?"
+: "制作中のデータがあります。もう一度開きますか？";
+
+yesButton.textContent =
+currentLanguage === "en"
+? "Yes"
+: "はい";
+
+noButton.textContent =
+currentLanguage === "en"
+? "No"
+: "いいえ";
+
+
+panel.classList.add(
+"is-open"
+);
+
+
+yesButton.addEventListener(
+"click",
+async () => {
+
+yesButton.disabled = true;
+noButton.disabled = true;
+
+
+try {
+
+const file =
+new File(
+[projectText],
+"autosave.gururi",
+{
+type:
+"application/json"
+}
+);
+
+
+await loadProject(
+file
+);
+
+autoSaveHasContent = true;
+autoSaveReady = true;
+
+panel.classList.remove(
+"is-open"
+);
+
+} catch (error) {
+
+console.error(
+error
+);
+
+
+alert(
+currentLanguage === "en"
+? "The auto-saved data could not be restored."
+: "自動保存データを復元できませんでした。"
+);
+
+
+await deleteAutoSave()
+.catch(
+() => {
+}
+);
+
+autoSaveReady = true;
+
+panel.classList.remove(
+"is-open"
+);
+
+} finally {
+
+yesButton.disabled = false;
+noButton.disabled = false;
+}
+}
+);
+
+
+noButton.addEventListener(
+"click",
+async () => {
+
+yesButton.disabled = true;
+noButton.disabled = true;
+
+
+await deleteAutoSave()
+.catch(
+(error) => {
+
+console.warn(
+"Auto-save deletion failed:",
+error
+);
+}
+);
+
+
+autoSaveHasContent = false;
+autoSaveReady = true;
+
+panel.classList.remove(
+"is-open"
+);
+
+yesButton.disabled = false;
+noButton.disabled = false;
+}
+);
+}
+
+
+document.addEventListener(
+"visibilitychange",
+() => {
+
+if (
+document.visibilityState ===
+"hidden"
+) {
+
+saveAutoSaveNow();
+}
+}
+);
+
+
+window.addEventListener(
+"pagehide",
+() => {
+
+saveAutoSaveNow();
+}
+);
+
+
+/* ================================
+新規作成
+================================ */
+
+const NEW_PROJECT_SESSION_KEY =
+"gururi-paint-start-new-project";
+
+const newProjectButton =
+document.getElementById(
+"newProjectButton"
+);
+
+const newProjectConfirmPanel =
+document.getElementById(
+"newProjectConfirmPanel"
+);
+
+const newProjectConfirmMessage =
+document.getElementById(
+"newProjectConfirmMessage"
+);
+
+const newProjectConfirmNoButton =
+document.getElementById(
+"newProjectConfirmNoButton"
+);
+
+const newProjectConfirmYesButton =
+document.getElementById(
+"newProjectConfirmYesButton"
+);
+
+
+let projectReplacementAction =
+"new";
+
+
+function showProjectReplacementConfirm(
+action
+) {
+
+projectReplacementAction =
+action;
+
+
+newProjectConfirmMessage.textContent =
+currentLanguage === "en"
+? "Your unfinished drawing will be deleted. Are you sure?"
+: "描きかけの絵が消えてしまいます。よろしいですか？";
+
+newProjectConfirmNoButton.textContent =
+currentLanguage === "en"
+? "No"
+: "いいえ";
+
+newProjectConfirmYesButton.textContent =
+currentLanguage === "en"
+? "Yes"
+: "はい";
+
+
+newProjectConfirmPanel.classList.add(
+"is-open"
+);
+}
+
+
+async function startNewProject() {
+
+newProjectConfirmYesButton.disabled =
+true;
+
+newProjectConfirmNoButton.disabled =
+true;
+
+
+try {
+
+if ("indexedDB" in window) {
+
+await deleteAutoSave();
+}
+
+} catch (error) {
+
+console.error(
+"Auto-save deletion failed:",
+error
+);
+
+
+alert(
+currentLanguage === "en"
+? "A new project could not be created."
+: "新規プロジェクトを作成できませんでした。"
+);
+
+
+newProjectConfirmYesButton.disabled =
+false;
+
+newProjectConfirmNoButton.disabled =
+false;
+
+return;
+}
+
+
+autoSaveHasContent =
+false;
+
+autoSaveReady =
+false;
+
+
+sessionStorage.setItem(
+NEW_PROJECT_SESSION_KEY,
+"1"
+);
+
+
+window.location.reload();
+}
+
+
+newProjectButton.addEventListener(
+"click",
+() => {
+
+if (!autoSaveHasContent) {
+
+startNewProject();
+
+return;
+}
+
+
+showProjectReplacementConfirm(
+"new"
+);
+}
+);
+
+
+newProjectConfirmNoButton.addEventListener(
+"click",
+() => {
+
+projectReplacementAction =
+"new";
+
+newProjectConfirmPanel.classList.remove(
+"is-open"
+);
+}
+);
+
+
+newProjectConfirmYesButton.addEventListener(
+"click",
+() => {
+
+if (
+projectReplacementAction ===
+"import"
+) {
+
+projectReplacementAction =
+"new";
+
+newProjectConfirmPanel.classList.remove(
+"is-open"
+);
+
+projectLoadInput.click();
+
+return;
+}
+
+
+startNewProject();
+}
+);
+
+
+/* ================================
+新規作成後の表示
+================================ */
+
+if (
+sessionStorage.getItem(
+NEW_PROJECT_SESSION_KEY
+) === "1"
+) {
+
+sessionStorage.removeItem(
+NEW_PROJECT_SESSION_KEY
+);
+
+homePage.classList.remove(
+"is-open"
+);
+
+initializeAutoSave();
+}
+
+
+/* ================================
+PNG保存
 ================================ */
 
 downloadButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-downloadPNG();
-
-trackGAEvent(
-"download_image"
-);
-  }
+previewButton.click();
+}
 );
 
 /* ================================
-   Undo / Redo ボタン
+Undo / Redo ボタン
 ================================ */
 
 undoButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    undo();
-  }
+undo();
+}
 );
 
 
 redoButton.addEventListener(
-  "click",
-  () => {
+"click",
+() => {
 
-    redo();
-  }
+redo();
+}
 );
 
 
-/* Spaceキー */
+/* ================================
+キーボードショートカット設定
+================================ */
+
+const SHORTCUT_STORAGE_KEY =
+"gururi-paint-dev-shortcuts";
+
+
+const DEFAULT_SHORTCUT_KEYS = {
+pen: "p",
+eraser: "e",
+bucket: "b",
+eyedropper: "s",
+look: "h",
+camera: "c",
+lookAround: "space",
+zoom: "z"
+};
+
+
+/*
+保存されたショートカットキーを
+安全な文字列へ変換する。
+*/
+
+function normalizeShortcutKey(
+value,
+fallback
+) {
+
+if (
+typeof value !== "string"
+) {
+return fallback;
+}
+
+
+const normalized =
+value
+.trim()
+.toLowerCase();
+
+
+if (!normalized) {
+return fallback;
+}
+
+
+return normalized;
+}
+
+
+/*
+localStorageから
+ショートカット設定を読み込む。
+*/
+
+function loadShortcutKeys() {
+
+let savedShortcutKeys = null;
+
+
+try {
+
+const savedValue =
+localStorage.getItem(
+SHORTCUT_STORAGE_KEY
+);
+
+
+if (savedValue) {
+
+savedShortcutKeys =
+JSON.parse(
+savedValue
+);
+}
+
+} catch (error) {
+
+savedShortcutKeys = null;
+}
+
+
+if (
+!savedShortcutKeys ||
+typeof savedShortcutKeys !== "object" ||
+Array.isArray(
+savedShortcutKeys
+)
+) {
+
+return {
+...DEFAULT_SHORTCUT_KEYS
+};
+}
+
+
+const loadedShortcutKeys = {};
+
+
+for (
+const [
+action,
+defaultKey
+] of Object.entries(
+DEFAULT_SHORTCUT_KEYS
+)
+) {
+
+loadedShortcutKeys[action] =
+normalizeShortcutKey(
+savedShortcutKeys[action],
+defaultKey
+);
+}
+
+
+return loadedShortcutKeys;
+}
+
+
+/*
+現在のショートカット設定を
+localStorageへ保存する。
+*/
+
+function saveShortcutKeys() {
+
+try {
+
+localStorage.setItem(
+SHORTCUT_STORAGE_KEY,
+JSON.stringify(
+shortcutKeys
+)
+);
+
+return true;
+
+} catch (error) {
+
+return false;
+}
+}
+
+
+/*
+ショートカット設定を
+初期状態へ戻す。
+*/
+
+function resetShortcutKeys() {
+
+shortcutKeys = {
+...DEFAULT_SHORTCUT_KEYS
+};
+
+saveShortcutKeys();
+}
+
+
+/*
+保存済み設定があれば使用し、
+なければ初期設定を使用する。
+*/
+
+let shortcutKeys =
+loadShortcutKeys();
+
+
+/* ================================
+見回し方向設定
+================================ */
+
+const LOOK_DIRECTION_HORIZONTAL_STORAGE_KEY =
+"gururi-paint-dev-look-direction-horizontal-v2";
+
+const LOOK_DIRECTION_VERTICAL_STORAGE_KEY =
+"gururi-paint-dev-look-direction-vertical-v2";
+
+const DEFAULT_LOOK_DIRECTION =
+"standard";
+
+
+function loadLookDirection(
+storageKey
+) {
+
+try {
+
+const savedValue =
+localStorage.getItem(
+storageKey
+);
+
+if (
+savedValue === "standard" ||
+savedValue === "reverse"
+) {
+return savedValue;
+}
+
+} catch (error) {
+
+/*
+保存データを読み込めない場合は
+初期設定を使用する。
+*/
+}
+
+
+return DEFAULT_LOOK_DIRECTION;
+}
+
+
+function saveLookDirections() {
+
+try {
+
+localStorage.setItem(
+LOOK_DIRECTION_HORIZONTAL_STORAGE_KEY,
+lookDirectionHorizontal
+);
+
+localStorage.setItem(
+LOOK_DIRECTION_VERTICAL_STORAGE_KEY,
+lookDirectionVertical
+);
+
+return true;
+
+} catch (error) {
+
+return false;
+}
+}
+
+
+function resetLookDirections() {
+
+lookDirectionHorizontal =
+DEFAULT_LOOK_DIRECTION;
+
+lookDirectionVertical =
+DEFAULT_LOOK_DIRECTION;
+
+saveLookDirections();
+}
+
+
+function getHorizontalLookDirectionMultiplier() {
+
+return lookDirectionHorizontal ===
+"reverse"
+? -1
+: 1;
+}
+
+
+function getVerticalLookDirectionMultiplier() {
+
+return lookDirectionVertical ===
+"reverse"
+? 1
+: -1;
+}
+
+
+let lookDirectionHorizontal =
+loadLookDirection(
+LOOK_DIRECTION_HORIZONTAL_STORAGE_KEY
+);
+
+let lookDirectionVertical =
+loadLookDirection(
+LOOK_DIRECTION_VERTICAL_STORAGE_KEY
+);
+
+
+/*
+KeyboardEventを
+ショートカット判定用の文字列へ変換する。
+
+文字キーはevent.keyを使用することで、
+QWERTY / AZERTYなどの
+キーボード配列に対応する。
+*/
+
+function getShortcutKey(
+event
+) {
+
+if (
+event.code === "Space"
+) {
+return "space";
+}
+
+return event.key.toLowerCase();
+}
+
+
+/*
+描画ツールに割り当てられている
+ショートカットから
+ツール名を取得する。
+*/
+
+function getDrawingToolFromShortcut(
+key
+) {
+
+const drawingTools = [
+"pen",
+"eraser",
+"bucket",
+"eyedropper",
+"look",
+"camera"
+];
+
+return (
+drawingTools.find(
+(tool) =>
+shortcutKeys[tool] === key
+) || null
+);
+}
+
 
 window.addEventListener(
-  "keydown",
-  (event) => {
+"keydown",
+(event) => {
 
-    /*
-      入力欄を操作している間は
-      描画用キーボードショートカットを
-      実行しない。
+/*
+入力欄を操作している間は
+描画用キーボードショートカットを
+実行しない。
 
-      レイヤー名はreadOnly時なら
-      通常のショートカットを使用できる。
-    */
+レイヤー名はreadOnly時なら
+通常のショートカットを使用できる。
+*/
 
-    const target =
-      event.target;
-
-
-    const isEditableInput =
-      target instanceof HTMLInputElement &&
-      (
-        !target.classList.contains(
-          "layer-name-input"
-        ) ||
-        !target.readOnly
-      );
+const target =
+event.target;
 
 
-    const isOtherEditableElement =
-      target instanceof HTMLTextAreaElement ||
-      target instanceof HTMLSelectElement ||
-      (
-        target instanceof HTMLElement &&
-        target.isContentEditable
-      );
+const isEditableInput =
+target instanceof HTMLInputElement &&
+(
+!target.classList.contains(
+"layer-name-input"
+) ||
+!target.readOnly
+);
 
 
-    if (
-      isEditableInput ||
-      isOtherEditableElement
-    ) {
-      return;
-    }
+const isOtherEditableElement =
+target instanceof HTMLTextAreaElement ||
+target instanceof HTMLSelectElement ||
+(
+target instanceof HTMLElement &&
+target.isContentEditable
+);
 
 
-    /*
-      Ctrl + Z
-      Undo
-    */
-
-    if (
-      event.ctrlKey &&
-      event.code === "KeyZ"
-    ) {
-
-      event.preventDefault();
-
-      undo();
-
-      return;
-    }
+if (
+isEditableInput ||
+isOtherEditableElement
+) {
+return;
+}
 
 
-    /*
-      Ctrl + Y
-      Redo
-    */
+/*
+ショートカット設定画面を
+開いている間は、
+通常の描画ショートカットを停止する。
+*/
 
-    if (
-      event.ctrlKey &&
-      event.code === "KeyY"
-    ) {
-
-      event.preventDefault();
-
-      redo();
-
-      return;
-    }
+if (
+shortcutPanel.classList.contains(
+"is-open"
+)
+) {
+return;
+}
 
 
-    /*
-      Space
-    */
+if (
+event.key === "Escape" &&
+currentTool === "camera"
+) {
 
-    if (event.code === "Space") {
-      isSpacePressed = true;
+event.preventDefault();
 
-      event.preventDefault();
-    }
+selectDrawingTool(
+toolBeforeCamera
+);
+
+return;
+}
 
 
-    /*
-      Z
-    */
+/*
+Undo / Redo
 
-    if (event.code === "KeyZ") {
-      isZPressed = true;
+Ctrl：
+Windows / Linux
 
-      event.preventDefault();
-    }
+Meta：
+macOSのCommand
 
-  }
+event.keyを使用することで、
+QWERTY / AZERTYなどの
+キーボード配列にも対応する。
+*/
+
+const shortcutModifierPressed =
+event.ctrlKey ||
+event.metaKey;
+
+const shortcutKey =
+getShortcutKey(
+event
+);
+
+
+/*
+Ctrl / Command + Z
+Undo
+*/
+
+if (
+shortcutModifierPressed &&
+!event.shiftKey &&
+shortcutKey === "z"
+) {
+
+event.preventDefault();
+
+undo();
+
+return;
+}
+
+
+/*
+Ctrl + Y
+または
+Ctrl / Command + Shift + Z
+Redo
+*/
+
+if (
+shortcutModifierPressed &&
+(
+shortcutKey === "y" ||
+(
+event.shiftKey &&
+shortcutKey === "z"
+)
+)
+) {
+
+event.preventDefault();
+
+redo();
+
+return;
+}
+
+
+/*
+描画ツールショートカット
+*/
+
+if (
+!event.ctrlKey &&
+!event.metaKey &&
+!event.altKey
+) {
+
+const shortcutTool =
+getDrawingToolFromShortcut(
+shortcutKey
+);
+
+if (shortcutTool) {
+
+event.preventDefault();
+
+
+if (
+shortcutTool === "camera" &&
+currentTool === "camera"
+) {
+
+selectDrawingTool(
+toolBeforeCamera
+);
+
+} else {
+
+selectDrawingTool(
+shortcutTool
+);
+}
+
+return;
+}
+}
+
+
+/*
+Space
+*/
+
+if (
+shortcutKey ===
+shortcutKeys.lookAround
+) {
+
+isSpacePressed = true;
+
+event.preventDefault();
+}
+
+
+/*
+Z
+
+event.codeではなく
+event.keyを使用することで、
+QWERTY / AZERTYなどの
+キーボード配列に関係なく、
+実際に入力された「Z」で判定する。
+*/
+
+if (
+shortcutKey ===
+shortcutKeys.zoom
+) {
+
+isZPressed = true;
+
+event.preventDefault();
+}
+
+}
 );
 
 
 window.addEventListener(
-  "keyup",
-  (event) => {
+"keyup",
+(event) => {
 
-    /*
-      Spaceを離した
-    */
+/*
+Spaceを離した
+*/
 
-    if (event.code === "Space") {
-      isSpacePressed = false;
-      isLooking = false;
+if (
+getShortcutKey(
+event
+) ===
+shortcutKeys.lookAround
+) {
 
-      viewport.classList.remove(
-        "is-looking"
-      );
-    }
+isSpacePressed = false;
+isLooking = false;
+
+viewport.classList.remove(
+"is-looking"
+);
+}
 
 
-    /*
-      Zを離した
-    */
+/*
+Zを離した
+*/
 
-    if (event.code === "KeyZ") {
-      isZPressed = false;
-      isZooming = false;
+if (
+getShortcutKey(
+event
+) ===
+shortcutKeys.zoom
+) {
 
-      viewport.classList.remove(
-        "is-zooming"
-      );
-    }
+isZPressed = false;
+isZooming = false;
 
-  }
+viewport.classList.remove(
+"is-zooming"
+);
+}
+
+}
 );
 
 /* ================================
-   スマートフォン
-   タッチ操作
+スマートフォン
+タッチ操作
 ================================ */
 
 const activeTouchPointers =
-  new Map();
+new Map();
 
 let touchNavigationActive =
-  false;
+false;
 
 let previousTouchCenterX = 0;
 let previousTouchCenterY = 0;
@@ -10253,1560 +15993,1799 @@ let previousTouchDistance = 0;
 
 
 /*
-  バケツ／スポイトは
-  pointerdownでは実行せず、
-  1本指のタップだと確定した
-  pointerup時に実行する
+バケツ／スポイトは
+pointerdownでは実行せず、
+1本指のタップだと確定した
+pointerup時に実行する
 */
 
 let pendingTouchTap = null;
 
 
+/* ================================
+パームリジェクション
+================================ */
+
+const activePenPointers =
+new Set();
+
+const PALM_REJECTION_DELAY =
+600;
+
+let palmRejectionUntil =
+0;
+
+
+function clearTouchInputForPen() {
+
+cancelCurrentTouchStroke();
+
+pendingTouchTap =
+null;
+
+
+for (
+const pointerId of
+activeTouchPointers.keys()
+) {
+
+if (
+renderer.domElement
+.hasPointerCapture(
+pointerId
+)
+) {
+
+renderer.domElement
+.releasePointerCapture(
+pointerId
+);
+}
+}
+
+
+activeTouchPointers.clear();
+
+touchNavigationActive =
+false;
+}
+
+
+function handlePalmRejectionEvent(
+event
+) {
+
+const now =
+performance.now();
+
+
+if (
+event.pointerType === "pen"
+) {
+
+if (
+event.type === "pointerdown"
+) {
+
+activePenPointers.add(
+event.pointerId
+);
+
+clearTouchInputForPen();
+}
+
+
+if (
+event.type === "pointerup" ||
+event.type === "pointercancel"
+) {
+
+activePenPointers.delete(
+event.pointerId
+);
+
+palmRejectionUntil =
+now +
+PALM_REJECTION_DELAY;
+
+
+if (
+event.type === "pointercancel"
+) {
+
+cancelCurrentTouchStroke();
+}
+}
+
+
+return;
+}
+
+
+if (
+event.pointerType !== "touch"
+) {
+return;
+}
+
+
+if (
+activePenPointers.size === 0 &&
+now >= palmRejectionUntil
+) {
+return;
+}
+
+
+event.preventDefault();
+
+event.stopImmediatePropagation();
+
+
+activeTouchPointers.delete(
+event.pointerId
+);
+
+
+if (
+pendingTouchTap &&
+pendingTouchTap.pointerId ===
+event.pointerId
+) {
+
+pendingTouchTap =
+null;
+}
+
+
+if (
+activeTouchPointers.size === 0
+) {
+
+touchNavigationActive =
+false;
+}
+
+
+releaseTouchPointer(
+event
+);
+}
+
+
+[
+"pointerdown",
+"pointermove",
+"pointerup",
+"pointercancel"
+].forEach(
+(eventName) => {
+
+document.addEventListener(
+eventName,
+handlePalmRejectionEvent,
+{
+capture: true,
+passive: false
+}
+);
+}
+);
+
+
 /*
-  現在のタッチ位置を保存
+現在のタッチ位置を保存
 */
 
 function updateTouchPointer(
-  event
+event
 ) {
 
-  activeTouchPointers.set(
-    event.pointerId,
-    {
-      x: event.clientX,
-      y: event.clientY
-    }
-  );
+activeTouchPointers.set(
+event.pointerId,
+{
+x: event.clientX,
+y: event.clientY
+}
+);
 }
 
 
 /*
-  2本指の中心位置と
-  指同士の距離を取得
+2本指の中心位置と
+指同士の距離を取得
 */
 
 function getTouchGestureState() {
 
-  const touches =
-    Array.from(
-      activeTouchPointers.values()
-    );
+const touches =
+Array.from(
+activeTouchPointers.values()
+);
 
 
-  if (touches.length < 2) {
-    return null;
-  }
+if (touches.length < 2) {
+return null;
+}
 
 
-  const first =
-    touches[0];
+const first =
+touches[0];
 
-  const second =
-    touches[1];
-
-
-  const centerX =
-    (
-      first.x +
-      second.x
-    ) / 2;
+const second =
+touches[1];
 
 
-  const centerY =
-    (
-      first.y +
-      second.y
-    ) / 2;
+const centerX =
+(
+first.x +
+second.x
+) / 2;
 
 
-  const distance =
-    Math.hypot(
-      second.x - first.x,
-      second.y - first.y
-    );
+const centerY =
+(
+first.y +
+second.y
+) / 2;
 
 
-  return {
-    centerX,
-    centerY,
-    distance
-  };
+const distance =
+Math.hypot(
+second.x - first.x,
+second.y - first.y
+);
+
+
+return {
+centerX,
+centerY,
+distance
+};
 }
 
 
 /*
-  1本目の指で描き始めたあと、
-  2本目の指が置かれた場合は
-  その描画を取り消す
+1本目の指で描き始めたあと、
+2本目の指が置かれた場合は
+その描画を取り消す
 */
 
 function cancelCurrentTouchStroke() {
 
-  if (!isDrawing) {
-    return;
-  }
-
-
-  /*
-    描きかけのストロークが
-    変更したタイルだけを
-    描画前状態へ戻す
-  */
-
-  if (currentStroke) {
-
-    swapStrokeTiles(
-      currentStroke
-    );
-  }
-
-
-  isDrawing = false;
-
-  currentStroke = null;
-
-  previousPaintX = null;
-  previousPaintY = null;
-
-  previousMidX = null;
-  previousMidY = null;
-
-
-  requestPaintUpdate();
+if (!isDrawing) {
+return;
 }
 
 
 /*
-  2本指操作開始
+描きかけのストロークが
+変更したタイルだけを
+描画前状態へ戻す
+*/
+
+if (currentStroke) {
+
+swapStrokeTiles(
+currentStroke
+);
+}
+
+
+isDrawing = false;
+
+currentStroke = null;
+
+previousPaintX = null;
+previousPaintY = null;
+
+previousMidX = null;
+previousMidY = null;
+
+
+requestPaintUpdate();
+}
+
+
+/*
+2本指操作開始
 */
 
 function startTouchNavigation() {
 
-  cancelCurrentTouchStroke();
+cancelCurrentTouchStroke();
 
-  pendingTouchTap = null;
-
-
-  const gesture =
-    getTouchGestureState();
+pendingTouchTap = null;
 
 
-  if (!gesture) {
-    return;
-  }
+const gesture =
+getTouchGestureState();
 
 
-  touchNavigationActive =
-    true;
+if (!gesture) {
+return;
+}
 
 
-  previousTouchCenterX =
-    gesture.centerX;
-
-  previousTouchCenterY =
-    gesture.centerY;
-
-  previousTouchDistance =
-    gesture.distance;
+touchNavigationActive =
+true;
 
 
-  eraserCursor.visible =
-    false;
+previousTouchCenterX =
+gesture.centerX;
+
+previousTouchCenterY =
+gesture.centerY;
+
+previousTouchDistance =
+gesture.distance;
+
+
+eraserCursor.visible =
+false;
 }
 
 
 /*
-  Pointer Captureを解除
+Pointer Captureを解除
 */
 
 function releaseTouchPointer(
-  event
+event
 ) {
 
-  if (
-    renderer.domElement
-      .hasPointerCapture(
-        event.pointerId
-      )
-  ) {
+if (
+renderer.domElement
+.hasPointerCapture(
+event.pointerId
+)
+) {
 
-    renderer.domElement
-      .releasePointerCapture(
-        event.pointerId
-      );
-  }
+renderer.domElement
+.releasePointerCapture(
+event.pointerId
+);
+}
 }
 
 
 /*
-  タッチ開始
+タッチ開始
 
-  trueを返した場合は
-  通常のpointerdown処理を
-  ここで終了する
+trueを返した場合は
+通常のpointerdown処理を
+ここで終了する
 */
 
 function handleTouchPointerDown(
-  event
+event
 ) {
 
-  if (
-    event.pointerType !== "touch"
-  ) {
-    return false;
-  }
+if (
+event.pointerType !== "touch"
+) {
+return false;
+}
 
 
-  event.preventDefault();
+event.preventDefault();
 
-  updateTouchPointer(
-    event
-  );
-
-
-  renderer.domElement
-    .setPointerCapture(
-      event.pointerId
-    );
+updateTouchPointer(
+event
+);
 
 
-  /*
-    2本以上になったら
-    視点操作へ切り替える
-  */
-
-  if (
-    activeTouchPointers.size >= 2
-  ) {
-
-    startTouchNavigation();
-
-    return true;
-  }
+renderer.domElement
+.setPointerCapture(
+event.pointerId
+);
 
 
-  /*
-    バケツ／スポイトは
-    2本目の指が来ないことを
-    確認してから実行する
-  */
+/*
+2本以上になったら
+視点操作へ切り替える
+*/
 
-  if (
-    currentTool === "bucket" ||
-    currentTool === "eyedropper"
-  ) {
+if (
+activeTouchPointers.size >= 2
+) {
 
-    pendingTouchTap = {
+startTouchNavigation();
 
-      pointerId:
-        event.pointerId,
-
-      startX:
-        event.clientX,
-
-      startY:
-        event.clientY,
-
-      moved:
-        false,
-
-      tool:
-        currentTool,
-
-      color:
-        penColor,
-
-      layerId:
-        activeLayerId
-    };
-
-
-    return true;
-  }
-
-
-  /*
-    ペン／消しゴムは
-    既存のpointerdown処理を使う
-  */
-
-  return false;
+return true;
 }
 
 
 /*
-  タッチ移動
+バケツ／スポイトは
+2本目の指が来ないことを
+確認してから実行する
+*/
+
+if (
+currentTool === "bucket" ||
+currentTool === "eyedropper"
+) {
+
+pendingTouchTap = {
+
+pointerId:
+event.pointerId,
+
+startX:
+event.clientX,
+
+startY:
+event.clientY,
+
+moved:
+false,
+
+tool:
+currentTool,
+
+color:
+penColor,
+
+layerId:
+activeLayerId
+};
+
+
+return true;
+}
+
+
+/*
+ペン／消しゴムは
+既存のpointerdown処理を使う
+*/
+
+return false;
+}
+
+
+/*
+タッチ移動
 */
 
 function handleTouchPointerMove(
-  event
+event
 ) {
 
-  if (
-    event.pointerType !== "touch"
-  ) {
-    return false;
-  }
+if (
+event.pointerType !== "touch"
+) {
+return false;
+}
 
 
-  if (
-    !activeTouchPointers.has(
-      event.pointerId
-    )
-  ) {
-    return false;
-  }
+if (
+!activeTouchPointers.has(
+event.pointerId
+)
+) {
+return false;
+}
 
 
-  event.preventDefault();
+event.preventDefault();
 
-  updateTouchPointer(
-    event
-  );
-
-
-  /*
-    2本指なら
-    見回し＋ピンチズーム
-  */
-
-  if (
-    activeTouchPointers.size >= 2
-  ) {
-
-    if (!touchNavigationActive) {
-
-      startTouchNavigation();
-    }
+updateTouchPointer(
+event
+);
 
 
-    const gesture =
-      getTouchGestureState();
+/*
+2本指なら
+見回し＋ピンチズーム
+*/
+
+if (
+activeTouchPointers.size >= 2
+) {
+
+if (!touchNavigationActive) {
+
+startTouchNavigation();
+}
 
 
-    if (!gesture) {
-      return true;
-    }
+const gesture =
+getTouchGestureState();
 
 
-    /*
-      2本指ドラッグ
-      → 視点回転
-    */
-
-    const deltaX =
-      gesture.centerX -
-      previousTouchCenterX;
-
-    const deltaY =
-      gesture.centerY -
-      previousTouchCenterY;
-
-
-    const lookSensitivity =
-      0.003;
-
-
-    yaw -=
-      deltaX *
-      lookSensitivity;
-
-    pitch -=
-      deltaY *
-      lookSensitivity;
-
-
-    const limit =
-      Math.PI / 2 -
-      0.01;
-
-
-    pitch =
-      Math.max(
-        -limit,
-        Math.min(
-          limit,
-          pitch
-        )
-      );
-
-
-    /*
-      ピンチ
-      指を広げる → ズームイン
-      指を狭める → ズームアウト
-    */
-
-    const distanceDelta =
-      gesture.distance -
-      previousTouchDistance;
-
-
-    const pinchSensitivity =
-      0.12;
-
-
-    camera.fov -=
-      distanceDelta *
-      pinchSensitivity;
-
-
-    camera.fov =
-      Math.max(
-        20,
-        Math.min(
-          120,
-          camera.fov
-        )
-      );
-
-
-    camera.updateProjectionMatrix();
-
-
-    previousTouchCenterX =
-      gesture.centerX;
-
-    previousTouchCenterY =
-      gesture.centerY;
-
-    previousTouchDistance =
-      gesture.distance;
-
-
-    return true;
-  }
-
-
-  /*
-    一度2本指操作になったら、
-    片方を離しても残った1本では
-    描画を開始しない
-  */
-
-  if (touchNavigationActive) {
-    return true;
-  }
-
-
-  /*
-    バケツ／スポイトの
-    タップ判定。
-
-    10px以上動いた場合は
-    タップとはみなさない。
-  */
-
-  if (
-    pendingTouchTap &&
-    pendingTouchTap.pointerId ===
-      event.pointerId
-  ) {
-
-    const movedDistance =
-      Math.hypot(
-        event.clientX -
-          pendingTouchTap.startX,
-
-        event.clientY -
-          pendingTouchTap.startY
-      );
-
-
-    if (movedDistance > 10) {
-
-      pendingTouchTap.moved =
-        true;
-    }
-
-
-    return true;
-  }
-
-
-  /*
-    ペン／消しゴムは
-    既存のpointermove処理を使う
-  */
-
-  return false;
+if (!gesture) {
+return true;
 }
 
 
 /*
-  タッチ終了
+2本指ドラッグ
+→ 視点回転
+*/
+
+const deltaX =
+gesture.centerX -
+previousTouchCenterX;
+
+const deltaY =
+gesture.centerY -
+previousTouchCenterY;
+
+
+const lookSensitivity =
+0.003;
+
+const horizontalLookDirectionMultiplier =
+getHorizontalLookDirectionMultiplier();
+
+const verticalLookDirectionMultiplier =
+getVerticalLookDirectionMultiplier();
+
+
+yaw -=
+deltaX *
+lookSensitivity *
+horizontalLookDirectionMultiplier;
+
+pitch -=
+deltaY *
+lookSensitivity *
+verticalLookDirectionMultiplier;
+
+
+const limit =
+Math.PI / 2 -
+0.01;
+
+
+pitch =
+Math.max(
+-limit,
+Math.min(
+limit,
+pitch
+)
+);
+
+
+/*
+ピンチ
+指を広げる → ズームイン
+指を狭める → ズームアウト
+*/
+
+const distanceDelta =
+gesture.distance -
+previousTouchDistance;
+
+
+const pinchSensitivity =
+0.12;
+
+
+camera.fov -=
+distanceDelta *
+pinchSensitivity;
+
+
+camera.fov =
+Math.max(
+20,
+Math.min(
+120,
+camera.fov
+)
+);
+
+
+camera.updateProjectionMatrix();
+
+
+previousTouchCenterX =
+gesture.centerX;
+
+previousTouchCenterY =
+gesture.centerY;
+
+previousTouchDistance =
+gesture.distance;
+
+
+return true;
+}
+
+
+/*
+一度2本指操作になったら、
+片方を離しても残った1本では
+描画を開始しない
+*/
+
+if (touchNavigationActive) {
+return true;
+}
+
+
+/*
+バケツ／スポイトの
+タップ判定。
+
+10px以上動いた場合は
+タップとはみなさない。
+*/
+
+if (
+pendingTouchTap &&
+pendingTouchTap.pointerId ===
+event.pointerId
+) {
+
+const movedDistance =
+Math.hypot(
+event.clientX -
+pendingTouchTap.startX,
+
+event.clientY -
+pendingTouchTap.startY
+);
+
+
+if (movedDistance > 10) {
+
+pendingTouchTap.moved =
+true;
+}
+
+
+return true;
+}
+
+
+/*
+ペン／消しゴムは
+既存のpointermove処理を使う
+*/
+
+return false;
+}
+
+
+/*
+タッチ終了
 */
 
 function handleTouchPointerEnd(
-  event,
-  canceled = false
+event,
+canceled = false
 ) {
 
-  if (
-    event.pointerType !== "touch"
-  ) {
-    return false;
-  }
+if (
+event.pointerType !== "touch"
+) {
+return false;
+}
 
 
-  event.preventDefault();
+event.preventDefault();
 
 
-  /*
-    2本指操作中
-  */
+/*
+2本指操作中
+*/
 
-  if (touchNavigationActive) {
+if (touchNavigationActive) {
 
-    activeTouchPointers.delete(
-      event.pointerId
-    );
+activeTouchPointers.delete(
+event.pointerId
+);
 
 
-    if (
-      activeTouchPointers.size >= 2
-    ) {
+if (
+activeTouchPointers.size >= 2
+) {
 
-      const gesture =
-        getTouchGestureState();
+const gesture =
+getTouchGestureState();
 
 
-      if (gesture) {
+if (gesture) {
 
-        previousTouchCenterX =
-          gesture.centerX;
+previousTouchCenterX =
+gesture.centerX;
 
-        previousTouchCenterY =
-          gesture.centerY;
+previousTouchCenterY =
+gesture.centerY;
 
-        previousTouchDistance =
-          gesture.distance;
-      }
-    }
+previousTouchDistance =
+gesture.distance;
+}
+}
 
 
-    /*
-      指がすべて離れるまでは
-      描画へ戻さない
-    */
+/*
+指がすべて離れるまでは
+描画へ戻さない
+*/
 
-    if (
-      activeTouchPointers.size === 0
-    ) {
+if (
+activeTouchPointers.size === 0
+) {
 
-      touchNavigationActive =
-        false;
-    }
+touchNavigationActive =
+false;
+}
 
 
-    releaseTouchPointer(
-      event
-    );
+releaseTouchPointer(
+event
+);
 
 
-    return true;
-  }
+return true;
+}
 
 
-  /*
-    バケツ／スポイトの
-    タップを確定
-  */
+/*
+バケツ／スポイトの
+タップを確定
+*/
 
-  if (
-    pendingTouchTap &&
-    pendingTouchTap.pointerId ===
-      event.pointerId
-  ) {
+if (
+pendingTouchTap &&
+pendingTouchTap.pointerId ===
+event.pointerId
+) {
 
-    const tap =
-      pendingTouchTap;
+const tap =
+pendingTouchTap;
 
 
-    pendingTouchTap = null;
+pendingTouchTap = null;
 
 
-    activeTouchPointers.delete(
-      event.pointerId
-    );
+activeTouchPointers.delete(
+event.pointerId
+);
 
 
-    releaseTouchPointer(
-      event
-    );
+releaseTouchPointer(
+event
+);
 
 
-    if (
-      canceled ||
-      tap.moved
-    ) {
-      return true;
-    }
+if (
+canceled ||
+tap.moved
+) {
+return true;
+}
 
 
-    const position =
-      getPaintPosition(
-        event
-      );
+const position =
+getPaintPosition(
+event
+);
 
 
-    if (!position) {
-      return true;
-    }
+if (!position) {
+return true;
+}
 
 
-    /*
-      スポイト
-    */
+/*
+スポイト
+*/
 
-    if (
-      tap.tool === "eyedropper"
-    ) {
+if (
+tap.tool === "eyedropper"
+) {
 
-      pickColorAt(
-        position.x,
-        position.y
-      );
+pickColorAt(
+position.x,
+position.y
+);
 
 
-      return true;
-    }
+return true;
+}
 
 
-    /*
-      バケツ
-    */
+/*
+バケツ
+*/
 
-    if (
-      tap.tool === "bucket"
-    ) {
+if (
+tap.tool === "bucket"
+) {
 
-      const bucketAction = {
-        tool: "bucket",
-        layerId: tap.layerId,
-        color: tap.color,
-        x: position.x,
-        y: position.y,
+const bucketAction = {
+tool: "bucket",
+layerId: tap.layerId,
+color: tap.color,
+x: position.x,
+y: position.y,
 
-        /*
-          差分Undo用
-        */
-        tileDiffs:
-          new Map()
-      };
+/*
+差分Undo用
+*/
+tileDiffs:
+new Map()
+};
 
 
-      const changed =
-        floodFill(
-          position.x,
-          position.y,
-          tap.color,
-          tap.layerId,
-          bucketAction
-        );
+const changed =
+floodFill(
+position.x,
+position.y,
+tap.color,
+tap.layerId,
+bucketAction
+);
 
-      if (!changed) {
-        return true;
-      }
+if (!changed) {
+return true;
+}
 
 
-      redoStrokeHistory.length =
-        0;
+redoStrokeHistory.length =
+0;
 
 
-      strokeHistory.push(
-        bucketAction
-      );
+strokeHistory.push(
+bucketAction
+);
 
 
-      rememberColor(
-        tap.color
-      );
+rememberColor(
+tap.color
+);
 
 
-      requestPaintUpdate();
+requestPaintUpdate();
 
 
-      return true;
-    }
+return true;
+}
 
 
-    return true;
-  }
+return true;
+}
 
 
-  /*
-    通常の1本指描画
-  */
+/*
+通常の1本指描画
+*/
 
-  activeTouchPointers.delete(
-    event.pointerId
-  );
+activeTouchPointers.delete(
+event.pointerId
+);
 
 
-  /*
-    OSなどによるキャンセル時は
-    描画中の線を破棄する
-  */
+/*
+OSなどによるキャンセル時は
+描画中の線を破棄する
+*/
 
-  if (canceled) {
+if (canceled) {
 
-    cancelCurrentTouchStroke();
+cancelCurrentTouchStroke();
 
-    releaseTouchPointer(
-      event
-    );
+releaseTouchPointer(
+event
+);
 
-    return true;
-  }
+return true;
+}
 
 
-  /*
-    通常のpointerup処理へ渡し、
-    ストロークを確定する
-  */
+/*
+通常のpointerup処理へ渡し、
+ストロークを確定する
+*/
 
-  return false;
+return false;
 }
 
 
 renderer.domElement.addEventListener(
-  "pointerleave",
-  () => {
+"pointerleave",
+() => {
 
-    eraserCursor.visible =
-      false;
-  }
+eraserCursor.visible =
+false;
+}
 );
 
 
 /* マウスを押す */
 
 renderer.domElement.addEventListener(
-  "pointerdown",
-  (event) => {
+"pointerdown",
+(event) => {
 
 if (event.button !== 0) {
-      return;
-    }
-
-
-    /*
-      スマートフォンの
-      タッチ開始処理
-    */
-
-    if (
-      handleTouchPointerDown(
-        event
-      )
-    ) {
-      return;
-    }
-
-
-    /*
-      Space + 左ドラッグ
-      視点回転
-    */
-
-    if (isSpacePressed) {
-
-      isLooking = true;
-
-      previousMouseX = event.clientX;
-      previousMouseY = event.clientY;
-
-      viewport.classList.add(
-        "is-looking"
-      );
-
-      renderer.domElement.setPointerCapture(
-        event.pointerId
-      );
-
-      return;
-    }
-
-
-    /*
-      Z + 左ドラッグ
-      ズーム
-    */
-
-    if (isZPressed) {
-
-      isZooming = true;
-
-      previousMouseY = event.clientY;
-
-      viewport.classList.add(
-        "is-zooming"
-      );
-
-      renderer.domElement.setPointerCapture(
-        event.pointerId
-      );
-
-      return;
-    }
-
-
-    /*
-      SpaceもZも押していない
-      → ペン描画
-    */
-
-    const position =
-      getPaintPosition(event);
-
-    if (!position) {
-      return;
-    }
-
-
-    /*
-      スポイト
-    */
-
-    if (currentTool === "eyedropper") {
-
-      pickColorAt(
-        position.x,
-        position.y
-      );
-
-      return;
-    }
-
-
-    /*
-      バケツ塗り
-    */
-
-    if (currentTool === "bucket") {
-
-const bucketAction = {
-        tool: "bucket",
-        layerId: activeLayerId,
-        color: penColor,
-        x: position.x,
-        y: position.y,
-
-        /*
-          差分Undo用
-        */
-        tileDiffs:
-          new Map()
-      };
-
-
-      const changed =
-        floodFill(
-          position.x,
-          position.y,
-          penColor,
-          activeLayerId,
-          bucketAction
-        );
-
-
-      if (!changed) {
-        return;
-      }
-
-
-      redoStrokeHistory.length = 0;
-
-
-strokeHistory.push(
-        bucketAction
-      );
-
-
-      rememberColor(
-        penColor
-      );
-
-
-      requestPaintUpdate();
-
-      return;
-    }
-
-
-    /*
-      ペンで実際に使った色を
-      最近使用した色へ記録
-    */
-
-    if (currentTool === "pen") {
-
-      rememberColor(
-        penColor
-      );
-    }
-
-
-    /*
-      新しいストロークを開始
-    */
-
-currentStroke = {
-      tool: currentTool,
-      layerId: activeLayerId,
-      color: penColor,
-      size: penSize,
-
-      /*
-        高速Undo用。
-        このストロークが変更する
-        タイルの描画前状態を保存する。
-      */
-
-      tileDiffs:
-        new Map(),
-
-      points: [
-        {
-          x: position.x,
-          y: position.y
-        }
-      ]
-    };
-
-
-    /*
-      新しく描画を始めたので
-      Redo履歴を破棄
-    */
-
-    redoStrokeHistory.length = 0;
-
-
-    /*
-      描画開始
-    */
-
-    isDrawing = true;
-
-    previousPaintX =
-      position.x;
-
-    previousPaintY =
-      position.y;
-
-    previousMidX =
-      position.x;
-
-    previousMidY =
-      position.y;
+return;
+}
 
 
 /*
-      クリックした最初の一点を描く
-    */
+スマートフォンの
+タッチ開始処理
+*/
 
-    const initialHistoryPadding =
-      (
-        penSize *
-        drawScale
-      ) / 2 + 2;
-
-
-    captureStrokeTiles(
-      currentStroke,
-
-      position.x -
-        initialHistoryPadding,
-
-      position.y -
-        initialHistoryPadding,
-
-      position.x +
-        initialHistoryPadding,
-
-      position.y +
-        initialHistoryPadding
-    );
+if (
+handleTouchPointerDown(
+event
+)
+) {
+return;
+}
 
 
-    if (currentTool === "eraser") {
+/*
+すでに別のポインターで
+描画中の場合は、
+新しい描画を開始しない
+*/
 
-      drawContext.globalCompositeOperation =
-        "destination-out";
-
-    } else {
-
-      drawContext.globalCompositeOperation =
-        "source-over";
-    }
-
-
-    drawContext.fillStyle =
-      penColor;
-
-    drawContext.beginPath();
-
-    drawContext.arc(
-      position.x,
-      position.y,
-      (
-        penSize *
-        drawScale
-      ) / 2,
-      0,
-      Math.PI * 2
-    );
-
-    drawContext.fill();
+if (
+isDrawing &&
+currentStroke
+) {
+return;
+}
 
 
-    /*
-      球体表示の更新を予約
-    */
+/*
+Z + 左ドラッグ
+ズーム
+*/
 
-    requestPaintUpdate();
+if (isZPressed) {
 
-    renderer.domElement.setPointerCapture(
-      event.pointerId
-    );
+isZooming = true;
 
-  }
+previousMouseY = event.clientY;
+
+viewport.classList.add(
+"is-zooming"
+);
+
+renderer.domElement.setPointerCapture(
+event.pointerId
+);
+
+return;
+}
+
+
+/*
+Space + 左ドラッグ
+または見回しツール
+→ 視点回転
+*/
+
+if (
+isSpacePressed ||
+currentTool === "look" ||
+currentTool === "camera"
+) {
+
+isLooking = true;
+
+previousMouseX = event.clientX;
+previousMouseY = event.clientY;
+
+viewport.classList.add(
+"is-looking"
+);
+
+renderer.domElement.setPointerCapture(
+event.pointerId
+);
+
+return;
+}
+
+
+/*
+SpaceもZも押していない
+→ ペン描画
+*/
+
+const position =
+getPaintPosition(event);
+
+if (!position) {
+return;
+}
+
+
+/*
+スポイト
+*/
+
+if (currentTool === "eyedropper") {
+
+pickColorAt(
+position.x,
+position.y
+);
+
+return;
+}
+
+
+/*
+バケツ塗り
+*/
+
+if (currentTool === "bucket") {
+
+const bucketAction = {
+tool: "bucket",
+layerId: activeLayerId,
+color: penColor,
+x: position.x,
+y: position.y,
+
+/*
+差分Undo用
+*/
+tileDiffs:
+new Map()
+};
+
+
+const changed =
+floodFill(
+position.x,
+position.y,
+penColor,
+activeLayerId,
+bucketAction
+);
+
+
+if (!changed) {
+return;
+}
+
+
+redoStrokeHistory.length = 0;
+
+
+strokeHistory.push(
+bucketAction
+);
+
+
+rememberColor(
+penColor
+);
+
+
+requestPaintUpdate();
+
+return;
+}
+
+
+/*
+ペンで実際に使った色を
+最近使用した色へ記録
+*/
+
+if (currentTool === "pen") {
+
+rememberColor(
+penColor
+);
+}
+
+
+/*
+新しいストロークを開始
+*/
+
+currentStroke = {
+tool: currentTool,
+layerId: activeLayerId,
+color: penColor,
+size: penSize,
+pointerId: event.pointerId,
+
+/*
+高速Undo用。
+このストロークが変更する
+タイルの描画前状態を保存する。
+*/
+
+tileDiffs:
+new Map(),
+
+points: [
+{
+x: position.x,
+y: position.y
+}
+]
+};
+
+
+/*
+新しく描画を始めたので
+Redo履歴を破棄
+*/
+
+redoStrokeHistory.length = 0;
+
+
+/*
+描画開始
+*/
+
+isDrawing = true;
+
+previousPaintX =
+position.x;
+
+previousPaintY =
+position.y;
+
+previousMidX =
+position.x;
+
+previousMidY =
+position.y;
+
+
+/*
+クリックした最初の一点を描く
+*/
+
+const initialHistoryPadding =
+(
+penSize *
+drawScale
+) / 2 + 2;
+
+
+captureStrokeTiles(
+currentStroke,
+
+position.x -
+initialHistoryPadding,
+
+position.y -
+initialHistoryPadding,
+
+position.x +
+initialHistoryPadding,
+
+position.y +
+initialHistoryPadding
+);
+
+
+if (currentTool === "eraser") {
+
+drawContext.globalCompositeOperation =
+"destination-out";
+
+} else {
+
+drawContext.globalCompositeOperation =
+"source-over";
+}
+
+
+drawContext.fillStyle =
+penColor;
+
+drawContext.beginPath();
+
+drawContext.arc(
+position.x,
+position.y,
+(
+penSize *
+drawScale
+) / 2,
+0,
+Math.PI * 2
+);
+
+drawContext.fill();
+
+
+/*
+球体表示の更新を予約
+*/
+
+requestPaintUpdate();
+
+renderer.domElement.setPointerCapture(
+event.pointerId
+);
+
+}
 );
 
 
 /* マウスを動かす */
 
 renderer.domElement.addEventListener(
-  "pointermove",
-  (event) => {
+"pointermove",
+(event) => {
 
-    /*
-      スマートフォンの
-      タッチ移動処理
-    */
+/*
+スマートフォンの
+タッチ移動処理
+*/
 
-    if (
-      handleTouchPointerMove(
-        event
-      )
-    ) {
-      return;
-    }
+if (
+handleTouchPointerMove(
+event
+)
+) {
+return;
+}
 
 
-    /*
-      ペン／消しゴムカーソルは
-      マウス使用時だけ表示する
-    */
+/*
+描画を開始したポインター以外の
+移動では線を描かない
+*/
 
-    if (
-      event.pointerType !== "touch"
-    ) {
+if (
+isDrawing &&
+currentStroke &&
+event.pointerId !==
+currentStroke.pointerId
+) {
+return;
+}
 
-      updateEraserCursor(
-        event
-      );
-    }
 
+/*
+ペン／消しゴムカーソルは
+マウス使用時だけ表示する
+*/
 
-    /*
-      視点回転
-    */
+if (
+event.pointerType !== "touch"
+) {
 
+updateEraserCursor(
+event
+);
+}
 
-    if (isLooking) {
 
-      const deltaX =
-        event.clientX - previousMouseX;
+/*
+視点回転
+*/
 
-      const deltaY =
-        event.clientY - previousMouseY;
 
-      previousMouseX = event.clientX;
-      previousMouseY = event.clientY;
+if (isLooking) {
 
-      const sensitivity = 0.003;
+const deltaX =
+event.clientX - previousMouseX;
 
-      yaw -=
-        deltaX * sensitivity;
+const deltaY =
+event.clientY - previousMouseY;
 
-      pitch -=
-        deltaY * sensitivity;
+previousMouseX = event.clientX;
+previousMouseY = event.clientY;
 
-      const limit =
-        Math.PI / 2 - 0.01;
+const sensitivity = 0.003;
 
-      pitch =
-        Math.max(
-          -limit,
-          Math.min(limit, pitch)
-        );
+const horizontalLookDirectionMultiplier =
+getHorizontalLookDirectionMultiplier();
 
-      return;
-    }
+const verticalLookDirectionMultiplier =
+getVerticalLookDirectionMultiplier();
 
+yaw -=
+deltaX *
+sensitivity *
+horizontalLookDirectionMultiplier;
 
-    /*
-      ズーム
-    */
+pitch -=
+deltaY *
+sensitivity *
+verticalLookDirectionMultiplier;
 
-    if (isZooming) {
+const limit =
+Math.PI / 2 - 0.01;
 
-      const deltaY =
-        event.clientY - previousMouseY;
+pitch =
+Math.max(
+-limit,
+Math.min(limit, pitch)
+);
 
-      previousMouseY =
-        event.clientY;
+return;
+}
 
 
-      /*
-        上へドラッグ
-        deltaY がマイナス
-        → FOVを小さくする
-        → ズームイン
+/*
+ズーム
+*/
 
-        下へドラッグ
-        deltaY がプラス
-        → FOVを大きくする
-        → ズームアウト
-      */
+if (isZooming) {
 
-      const zoomSensitivity = 0.15;
+const deltaY =
+event.clientY - previousMouseY;
 
-      camera.fov +=
-        deltaY * zoomSensitivity;
+previousMouseY =
+event.clientY;
 
 
-      /*
-        ズーム可能範囲
-      */
+/*
+上へドラッグ
+deltaY がマイナス
+→ FOVを小さくする
+→ ズームイン
 
-      camera.fov =
-        Math.max(
-          20,
-          Math.min(
-            120,
-            camera.fov
-          )
-        );
+下へドラッグ
+deltaY がプラス
+→ FOVを大きくする
+→ ズームアウト
+*/
 
+const zoomSensitivity = 0.15;
 
-      /*
-        FOVを変更したので
-        Projection Matrixを更新
-      */
+camera.fov +=
+deltaY * zoomSensitivity;
 
-      camera.updateProjectionMatrix();
 
-      return;
-    }
+/*
+ズーム可能範囲
+*/
 
+camera.fov =
+Math.max(
+20,
+Math.min(
+120,
+camera.fov
+)
+);
 
-    /*
-      ペン描画
-    */
 
-       if (isDrawing) {
+/*
+FOVを変更したので
+Projection Matrixを更新
+*/
 
-      const position =
-        getPaintPosition(event);
+camera.updateProjectionMatrix();
 
-      if (!position) {
-        return;
-      }
+return;
+}
 
 
-      /*
-        現在の座標を
-        ストローク履歴へ追加
-      */
+/*
+ペン描画
+*/
 
-      if (currentStroke) {
+if (isDrawing) {
 
-        currentStroke.points.push({
-          x: position.x,
-          y: position.y
-        });
-      }
+const position =
+getPaintPosition(event);
 
+if (!position) {
+return;
+}
 
-      /*
-        選択中ツールに応じて
-        描画方法を変更
-      */
 
-      if (currentTool === "eraser") {
+/*
+現在の座標を
+ストローク履歴へ追加
+*/
 
-        /*
-          既存ピクセルを透明化
-        */
+if (currentStroke) {
 
-        drawContext.globalCompositeOperation =
-          "destination-out";
+currentStroke.points.push({
+x: position.x,
+y: position.y
+});
+}
 
-      } else {
 
-        /*
-          通常描画
-        */
+/*
+選択中ツールに応じて
+描画方法を変更
+*/
 
-        drawContext.globalCompositeOperation =
-          "source-over";
-      }
+if (currentTool === "eraser") {
 
+/*
+既存ピクセルを透明化
+*/
 
-      drawContext.strokeStyle =
-        penColor;
+drawContext.globalCompositeOperation =
+"destination-out";
 
-      drawContext.lineWidth =
-        penSize * drawScale;
+} else {
 
-      drawContext.lineCap =
-        "round";
+/*
+通常描画
+*/
 
-      drawContext.lineJoin =
-        "round";
+drawContext.globalCompositeOperation =
+"source-over";
+}
 
 
-      /*
-        360°画像の左右端を
-        連続した座標として扱う
-      */
+drawContext.strokeStyle =
+penColor;
 
-      let adjustedX =
-        position.x;
+drawContext.lineWidth =
+penSize * drawScale;
 
-      const deltaX =
-        adjustedX - previousPaintX;
+drawContext.lineCap =
+"round";
 
+drawContext.lineJoin =
+"round";
 
-      /*
-        右端 → 左端
-      */
 
-      if (
-        deltaX <
-        -paintCanvas.width / 2
-      ) {
-        adjustedX +=
-          paintCanvas.width;
-      }
+/*
+360°画像の左右端を
+連続した座標として扱う
+*/
 
+let adjustedX =
+position.x;
 
-      /*
-        左端 → 右端
-      */
+const deltaX =
+adjustedX - previousPaintX;
 
-      else if (
-        deltaX >
-        paintCanvas.width / 2
-      ) {
-        adjustedX -=
-          paintCanvas.width;
-      }
 
+/*
+右端 → 左端
+*/
 
-      /*
-        中間点
-      */
+if (
+deltaX <
+-paintCanvas.width / 2
+) {
+adjustedX +=
+paintCanvas.width;
+}
 
-      const midX =
-        (
-          previousPaintX +
-          adjustedX
-        ) / 2;
+
+/*
+左端 → 右端
+*/
+
+else if (
+deltaX >
+paintCanvas.width / 2
+) {
+adjustedX -=
+paintCanvas.width;
+}
+
+
+/*
+中間点
+*/
+
+const midX =
+(
+previousPaintX +
+adjustedX
+) / 2;
 
 const midY =
-        (
-          previousPaintY +
-          position.y
-        ) / 2;
+(
+previousPaintY +
+position.y
+) / 2;
 
 
-      /*
-        この曲線が触れる範囲を
-        描画前に保存する。
+/*
+この曲線が触れる範囲を
+描画前に保存する。
 
-        quadraticCurveは
-        始点・制御点・終点の
-        範囲内に収まるため、
-        この3点から範囲を求める。
-      */
+quadraticCurveは
+始点・制御点・終点の
+範囲内に収まるため、
+この3点から範囲を求める。
+*/
 
-      const historyPadding =
-        (
-          penSize *
-          drawScale
-        ) / 2 + 2;
-
-
-      captureStrokeTiles(
-        currentStroke,
-
-        Math.min(
-          previousMidX,
-          previousPaintX,
-          midX
-        ) -
-          historyPadding,
-
-        Math.min(
-          previousMidY,
-          previousPaintY,
-          midY
-        ) -
-          historyPadding,
-
-        Math.max(
-          previousMidX,
-          previousPaintX,
-          midX
-        ) +
-          historyPadding,
-
-        Math.max(
-          previousMidY,
-          previousPaintY,
-          midY
-        ) +
-          historyPadding
-      );
+const historyPadding =
+(
+penSize *
+drawScale
+) / 2 + 2;
 
 
-      /*
-        通常位置に描画
-      */
+captureStrokeTiles(
+currentStroke,
 
-      drawContext.beginPath();
+Math.min(
+previousMidX,
+previousPaintX,
+midX
+) -
+historyPadding,
 
-      drawContext.moveTo(
-        previousMidX,
-        previousMidY
-      );
+Math.min(
+previousMidY,
+previousPaintY,
+midY
+) -
+historyPadding,
 
-      drawContext.quadraticCurveTo(
-        previousPaintX,
-        previousPaintY,
-        midX,
-        midY
-      );
+Math.max(
+previousMidX,
+previousPaintX,
+midX
+) +
+historyPadding,
 
-      drawContext.stroke();
-
-
-      /*
-        左側にも同じ線を描く
-      */
-
-      drawContext.beginPath();
-
-      drawContext.moveTo(
-        previousMidX -
-          paintCanvas.width,
-        previousMidY
-      );
-
-      drawContext.quadraticCurveTo(
-        previousPaintX -
-          paintCanvas.width,
-        previousPaintY,
-        midX -
-          paintCanvas.width,
-        midY
-      );
-
-      drawContext.stroke();
+Math.max(
+previousMidY,
+previousPaintY,
+midY
+) +
+historyPadding
+);
 
 
-      /*
-        右側にも同じ線を描く
-      */
+/*
+通常位置に描画
+*/
 
-      drawContext.beginPath();
+drawContext.beginPath();
 
-      drawContext.moveTo(
-        previousMidX +
-          paintCanvas.width,
-        previousMidY
-      );
+drawContext.moveTo(
+previousMidX,
+previousMidY
+);
 
-      drawContext.quadraticCurveTo(
-        previousPaintX +
-          paintCanvas.width,
-        previousPaintY,
-        midX +
-          paintCanvas.width,
-        midY
-      );
+drawContext.quadraticCurveTo(
+previousPaintX,
+previousPaintY,
+midX,
+midY
+);
 
-      drawContext.stroke();
-
-      /*
-        次回用の座標を保存
-      */
-
-      previousMidX =
-        midX;
-
-      previousMidY =
-        midY;
-
-      previousPaintX =
-        adjustedX;
-
-      previousPaintY =
-        position.y;
+drawContext.stroke();
 
 
-      /*
-        Canvas範囲外へ出た座標を
-        0～widthへ戻す
-      */
+/*
+左側にも同じ線を描く
+*/
 
-      if (
-        previousPaintX < 0
-      ) {
+drawContext.beginPath();
 
-        previousPaintX +=
-          paintCanvas.width;
+drawContext.moveTo(
+previousMidX -
+paintCanvas.width,
+previousMidY
+);
 
-        previousMidX +=
-          paintCanvas.width;
-      }
+drawContext.quadraticCurveTo(
+previousPaintX -
+paintCanvas.width,
+previousPaintY,
+midX -
+paintCanvas.width,
+midY
+);
 
-      else if (
-        previousPaintX >=
-        paintCanvas.width
-      ) {
-
-        previousPaintX -=
-          paintCanvas.width;
-
-        previousMidX -=
-          paintCanvas.width;
-      }
+drawContext.stroke();
 
 
-      /*
-        球体表示の更新を予約する
+/*
+右側にも同じ線を描く
+*/
 
-        実際の更新は
-        次の描画フレームで行う
-      */
+drawContext.beginPath();
 
-      requestPaintUpdate();
+drawContext.moveTo(
+previousMidX +
+paintCanvas.width,
+previousMidY
+);
 
-      return;
-    }
+drawContext.quadraticCurveTo(
+previousPaintX +
+paintCanvas.width,
+previousPaintY,
+midX +
+paintCanvas.width,
+midY
+);
 
-  }
+drawContext.stroke();
+
+/*
+次回用の座標を保存
+*/
+
+previousMidX =
+midX;
+
+previousMidY =
+midY;
+
+previousPaintX =
+adjustedX;
+
+previousPaintY =
+position.y;
+
+
+/*
+Canvas範囲外へ出た座標を
+0～widthへ戻す
+*/
+
+if (
+previousPaintX < 0
+) {
+
+previousPaintX +=
+paintCanvas.width;
+
+previousMidX +=
+paintCanvas.width;
+}
+
+else if (
+previousPaintX >=
+paintCanvas.width
+) {
+
+previousPaintX -=
+paintCanvas.width;
+
+previousMidX -=
+paintCanvas.width;
+}
+
+
+/*
+球体表示の更新を予約する
+
+実際の更新は
+次の描画フレームで行う
+*/
+
+requestPaintUpdate();
+
+return;
+}
+
+}
 );
 
 /* マウスを離す */
 
 renderer.domElement.addEventListener(
-  "pointerup",
-  (event) => {
+"pointerup",
+(event) => {
 
-    /*
-      スマートフォンの
-      タッチ終了処理
-    */
+/*
+スマートフォンの
+タッチ終了処理
+*/
 
-    if (
-      handleTouchPointerEnd(
-        event
-      )
-    ) {
-      return;
-    }
-
-
-    isLooking = false;
-    isZooming = false;
+if (
+handleTouchPointerEnd(
+event
+)
+) {
+return;
+}
 
 
-    /*
-      描画中だった場合は
-      ストロークを履歴へ登録
-    */
+/*
+描画を開始したポインター以外では
+ストロークを終了しない
+*/
 
-    if (
-      isDrawing &&
-      currentStroke
-    ) {
-
-      strokeHistory.push(
-        currentStroke
-      );
-
-      currentStroke = null;
-    }
+if (
+isDrawing &&
+currentStroke &&
+event.pointerId !==
+currentStroke.pointerId
+) {
+return;
+}
 
 
-    isDrawing = false;
-
-    previousPaintX = null;
-    previousPaintY = null;
-
-    previousMidX = null;
-    previousMidY = null;
-
-    viewport.classList.remove(
-      "is-looking"
-    );
-
-    viewport.classList.remove(
-      "is-zooming"
-    );
+isLooking = false;
+isZooming = false;
 
 
-    /*
-      Pointer Captureを先に解除する
-    */
+/*
+描画中だった場合は
+ストロークを履歴へ登録
+*/
 
-    if (
-      renderer.domElement.hasPointerCapture(
-        event.pointerId
-      )
-    ) {
+if (
+isDrawing &&
+currentStroke
+) {
 
-      renderer.domElement.releasePointerCapture(
-        event.pointerId
-      );
-    }
+strokeHistory.push(
+currentStroke
+);
+
+currentStroke = null;
+}
 
 
-    /*
-      Capture解除に伴うpointerleave等が
-      終わった次のフレームで
-      カーソルを復帰させる
-    */
+isDrawing = false;
 
-    const cursorEvent = {
-      clientX: event.clientX,
-      clientY: event.clientY
-    };
+previousPaintX = null;
+previousPaintY = null;
 
-    requestAnimationFrame(
-      () => {
+previousMidX = null;
+previousMidY = null;
 
-        updateEraserCursor(
-          cursorEvent
-        );
-      }
-    );
+viewport.classList.remove(
+"is-looking"
+);
 
-  }
+viewport.classList.remove(
+"is-zooming"
 );
 
 
 /*
-  スマートフォンで、
-  OSやブラウザによって
-  タッチが中断された場合
+Pointer Captureを先に解除する
+*/
+
+if (
+renderer.domElement.hasPointerCapture(
+event.pointerId
+)
+) {
+
+renderer.domElement.releasePointerCapture(
+event.pointerId
+);
+}
+
+
+/*
+Capture解除に伴うpointerleave等が
+終わった次のフレームで
+カーソルを復帰させる
+*/
+
+const cursorEvent = {
+clientX: event.clientX,
+clientY: event.clientY
+};
+
+requestAnimationFrame(
+() => {
+
+updateEraserCursor(
+cursorEvent
+);
+}
+);
+
+}
+);
+
+
+/*
+スマートフォンで、
+OSやブラウザによって
+タッチが中断された場合
 */
 
 renderer.domElement.addEventListener(
@@ -11829,89 +17808,146 @@ true
 
 
 /* ================================
-   カメラ方向更新
+カメラ方向更新
 ================================ */
 
 function updateCameraDirection() {
 
-  const direction =
-    new THREE.Vector3();
+const direction =
+new THREE.Vector3();
 
-  direction.x =
-    Math.sin(yaw) *
-    Math.cos(pitch);
+direction.x =
+Math.sin(yaw) *
+Math.cos(pitch);
 
-  direction.y =
-    Math.sin(pitch);
+direction.y =
+Math.sin(pitch);
 
-  direction.z =
-    -Math.cos(yaw) *
-    Math.cos(pitch);
+direction.z =
+-Math.cos(yaw) *
+Math.cos(pitch);
 
-  const target =
-    camera.position
-      .clone()
-      .add(direction);
+const target =
+camera.position
+.clone()
+.add(direction);
 
-  camera.lookAt(target);
+camera.lookAt(target);
 }
 
 
 /* ================================
-   リサイズ
+リサイズ
 ================================ */
 
 window.addEventListener(
-  "resize",
-  () => {
+"resize",
+() => {
 
-    updateMobileViewportSize();
-  }
+updateMobileViewportSize();
+}
 );
 
 
 /* ================================
-   描画ループ
+描画ループ
 ================================ */
 
 function animate() {
 
-  requestAnimationFrame(animate);
+requestAnimationFrame(animate);
 
 
-  /*
-    描画内容に変更があった場合だけ
-    360°テクスチャを更新する
-  */
+/*
+描画内容に変更があった場合だけ
+360°テクスチャを更新する
+*/
 
 const now =
-    performance.now();
+performance.now();
 
 
-  if (
-    paintUpdateRequested &&
-    (
-      paintUpdateInterval === 0 ||
-      now - lastPaintUpdateTime >=
-        paintUpdateInterval
-    )
-  ) {
+if (
+paintUpdateRequested &&
+(
+paintUpdateInterval === 0 ||
+now - lastPaintUpdateTime >=
+paintUpdateInterval
+)
+) {
 
-    updatePaintCanvas();
+updatePaintCanvas();
 
-    paintUpdateRequested = false;
+paintUpdateRequested = false;
 
-    lastPaintUpdateTime =
-      now;
-  }
-
-
-  updateCameraDirection();
-
-  renderer.render(
-    scene,
-    camera
-  );
+lastPaintUpdateTime =
+now;
 }
+
+
+updateCameraDirection();
+
+renderer.render(
+scene,
+camera
+);
+
+
+if (cameraVideoRecording) {
+
+videoCaptureCamera.position.copy(
+camera.position
+);
+
+videoCaptureCamera.quaternion.copy(
+camera.quaternion
+);
+
+const videoAspect =
+getCameraVideoAspectRatio();
+
+videoCaptureCamera.aspect =
+videoAspect;
+
+videoCaptureCamera.fov =
+getCameraCaptureFov(
+videoAspect
+);
+
+videoCaptureCamera.updateProjectionMatrix();
+
+videoCaptureRenderer.render(
+scene,
+videoCaptureCamera
+);
+}
+}
+
+if (
+"serviceWorker" in navigator
+) {
+
+window.addEventListener(
+"load",
+() => {
+
+navigator.serviceWorker.register(
+"./service-worker.js?v=2.0.1",
+{
+updateViaCache: "none"
+}
+).catch(
+(error) => {
+
+console.warn(
+"Service Worker registration failed:",
+error
+);
+}
+);
+}
+);
+}
+
 
 animate();

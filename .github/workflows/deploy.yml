@@ -1,4 +1,5 @@
 # GURURI_DEV_DEPLOY_READY
+# GURURI_RELEASE_DEPLOY_READY
 
 name: Deploy to Lolipop
 
@@ -7,6 +8,7 @@ on:
     branches:
       - main
       - gururi-paint-dev-deploy
+      - gururi-paint-release-deploy
 
 permissions:
   contents: read
@@ -82,6 +84,57 @@ jobs:
             **/.env*
             tools/gururi-paint-dev/home-content.json
             tools/gururi-paint-dev/home-thumbnails/**
+
+      - name: Prepare Gururi Paint release files
+        if: github.ref == 'refs/heads/gururi-paint-release-deploy'
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const source =
+          "dist/tools/gururi-paint";
+
+          const destination =
+          ".gururi-release-deploy/tools/gururi-paint";
+
+          if (!fs.existsSync(source + "/index.html")) {
+          throw new Error("公開版のindex.htmlが見つかりません。");
+          }
+
+          fs.mkdirSync(
+          ".gururi-release-deploy/tools",
+          { recursive: true }
+          );
+
+          fs.cpSync(
+          source,
+          destination,
+          { recursive: true }
+          );
+          NODE
+
+      - name: Upload Gururi Paint release by FTPS
+        if: github.ref == 'refs/heads/gururi-paint-release-deploy'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.LOLIPOP_FTP_SERVER }}
+          username: ${{ secrets.LOLIPOP_FTP_USERNAME }}
+          password: ${{ secrets.LOLIPOP_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./.gururi-release-deploy/
+          server-dir: /tools/
+          state-name: .ftp-deploy-gururi-release-state.json
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.admin-credentials.php
+            **/.htpasswd
+            **/.htaccess
+            **/.env*
+            tools/gururi-paint/home-content.json
+            tools/gururi-paint/home-thumbnails/**
 
       - name: Upload other tools by FTPS
         if: github.ref == 'refs/heads/main'
