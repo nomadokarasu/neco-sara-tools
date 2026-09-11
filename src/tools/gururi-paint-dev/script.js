@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.2-dev";
+"2.0.3-dev";
 
 
 const appVersionElements =
@@ -16925,6 +16925,20 @@ return;
 
 
 /*
+すでに別のポインターで
+描画中の場合は、
+新しい描画を開始しない
+*/
+
+if (
+isDrawing &&
+currentStroke
+) {
+return;
+}
+
+
+/*
 Z + 左ドラッグ
 ズーム
 */
@@ -17081,6 +17095,7 @@ tool: currentTool,
 layerId: activeLayerId,
 color: penColor,
 size: penSize,
+pointerId: event.pointerId,
 
 /*
 高速Undo用。
@@ -17215,6 +17230,21 @@ if (
 handleTouchPointerMove(
 event
 )
+) {
+return;
+}
+
+
+/*
+描画を開始したポインター以外の
+移動では線を描かない
+*/
+
+if (
+isDrawing &&
+currentStroke &&
+event.pointerId !==
+currentStroke.pointerId
 ) {
 return;
 }
@@ -17658,6 +17688,21 @@ return;
 }
 
 
+/*
+描画を開始したポインター以外では
+ストロークを終了しない
+*/
+
+if (
+isDrawing &&
+currentStroke &&
+event.pointerId !==
+currentStroke.pointerId
+) {
+return;
+}
+
+
 isLooking = false;
 isZooming = false;
 
@@ -17887,7 +17932,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.2-dev",
+"./service-worker.js?v=2.0.3-dev",
 {
 updateViaCache: "none"
 }
