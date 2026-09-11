@@ -5,5 +5,14 @@ src/tools/gururi-watch/data/worlds.json
 src/tools/gururi-watch/uploads/
 src/tools/gururi-watch/api/admin-config.php
 
+src/tools/gururi-paint/home-content.json
+src/tools/gururi-paint/home-thumbnails/
+src/tools/gururi-paint/.htaccess
+
+src/tools/gururi-paint-dev/home-content.json
+src/tools/gururi-paint-dev/home-thumbnails/
+src/tools/gururi-paint-dev/.htaccess
+
 **/.admin-credentials.php
 **/.htpasswd
+**/.env*
