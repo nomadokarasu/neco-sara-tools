@@ -173,13 +173,7 @@ gitRunRelease([
 ".gitignore",
 "scripts",
 ".github/workflows",
-"src/tools/gururi-paint",
-":(exclude,glob)**/.admin-credentials.php",
-":(exclude,glob)**/.htpasswd",
-":(exclude,glob)**/.htaccess",
-":(exclude,glob)**/.env*",
-":(exclude)src/tools/gururi-paint/home-content.json",
-":(exclude)src/tools/gururi-paint/home-thumbnails"
+"src/tools/gururi-paint"
 ]);
 
 
@@ -305,13 +299,7 @@ gitRun([
 ".gitignore",
 "scripts",
 ".github/workflows",
-"src/tools/gururi-paint-dev",
-":(exclude,glob)**/.admin-credentials.php",
-":(exclude,glob)**/.htpasswd",
-":(exclude,glob)**/.htaccess",
-":(exclude,glob)**/.env*",
-":(exclude)src/tools/gururi-paint-dev/home-content.json",
-":(exclude)src/tools/gururi-paint-dev/home-thumbnails"
+"src/tools/gururi-paint-dev"
 ]);
 
 const changes = gitRead([

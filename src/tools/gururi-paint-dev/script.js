@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.3-dev";
+"2.0.4-dev";
 
 
 const appVersionElements =
@@ -2729,6 +2729,40 @@ function getActiveLayer() {
 
 return getLayerById(
 activeLayerId
+);
+}
+
+
+function isLayerDrawingTool(
+tool
+) {
+
+return (
+tool === "pen" ||
+tool === "eraser" ||
+tool === "bucket"
+);
+}
+
+
+function canDrawOnActiveLayer() {
+
+const activeLayer =
+getActiveLayer();
+
+return Boolean(
+activeLayer &&
+activeLayer.visible
+);
+}
+
+
+function showHiddenLayerDialog() {
+
+alert(
+currentLanguage === "en"
+? "The drawing layer is hidden."
+: "描画レイヤーが非表示です"
 );
 }
 
@@ -6894,6 +6928,9 @@ eyedropper
 
 let currentTool = "pen";
 
+let mostRecentlyUsedPaintTool =
+"pen";
+
 
 /*
 ストローク履歴は
@@ -7342,7 +7379,7 @@ color
 
 
 selectDrawingTool(
-"bucket"
+mostRecentlyUsedPaintTool
 );
 }
 
@@ -9095,6 +9132,68 @@ item.classList.add(
 }
 
 
+function selectLayerItem() {
+
+if (
+layer.id === activeLayerId
+) {
+return;
+}
+
+
+setActiveLayerReference(
+layer.id
+);
+
+
+for (
+const otherItem of
+layerList.querySelectorAll(
+".layer-item"
+)
+) {
+
+otherItem.classList.remove(
+"is-active"
+);
+}
+
+
+item.classList.add(
+"is-active"
+);
+
+
+updateLayerActionButtons();
+}
+
+
+item.addEventListener(
+"pointerdown",
+(event) => {
+
+const target =
+event.target;
+
+
+if (
+target instanceof Element &&
+target.closest(
+".layer-visibility-button"
+)
+) {
+return;
+}
+
+
+selectLayerItem();
+},
+{
+capture: true
+}
+);
+
+
 const visibilityButton =
 document.createElement("button");
 
@@ -9402,35 +9501,7 @@ nameInput.addEventListener(
 "focus",
 () => {
 
-if (
-layer.id !== activeLayerId
-) {
-
-setActiveLayerReference(
-layer.id
-);
-
-
-for (
-const otherItem of
-layerList.querySelectorAll(
-".layer-item"
-)
-) {
-
-otherItem.classList.remove(
-"is-active"
-);
-}
-
-
-item.classList.add(
-"is-active"
-);
-
-
-updateLayerActionButtons();
-}
+selectLayerItem();
 }
 );
 
@@ -16001,6 +16072,9 @@ pointerup時に実行する
 
 let pendingTouchTap = null;
 
+let pendingHiddenLayerTouch =
+null;
+
 
 /* ================================
 パームリジェクション
@@ -16021,6 +16095,9 @@ function clearTouchInputForPen() {
 cancelCurrentTouchStroke();
 
 pendingTouchTap =
+null;
+
+pendingHiddenLayerTouch =
 null;
 
 
@@ -16134,6 +16211,17 @@ event.pointerId
 ) {
 
 pendingTouchTap =
+null;
+}
+
+
+if (
+pendingHiddenLayerTouch &&
+pendingHiddenLayerTouch.pointerId ===
+event.pointerId
+) {
+
+pendingHiddenLayerTouch =
 null;
 }
 
@@ -16297,6 +16385,9 @@ cancelCurrentTouchStroke();
 
 pendingTouchTap = null;
 
+pendingHiddenLayerTouch =
+null;
+
 
 const gesture =
 getTouchGestureState();
@@ -16391,6 +16482,23 @@ activeTouchPointers.size >= 2
 ) {
 
 startTouchNavigation();
+
+return true;
+}
+
+
+if (
+isLayerDrawingTool(
+currentTool
+) &&
+!canDrawOnActiveLayer()
+) {
+
+pendingHiddenLayerTouch = {
+pointerId:
+event.pointerId
+};
+
 
 return true;
 }
@@ -16608,6 +16716,16 @@ return true;
 }
 
 
+if (
+pendingHiddenLayerTouch &&
+pendingHiddenLayerTouch.pointerId ===
+event.pointerId
+) {
+
+return true;
+}
+
+
 /*
 バケツ／スポイトの
 タップ判定。
@@ -16727,6 +16845,36 @@ return true;
 }
 
 
+if (
+pendingHiddenLayerTouch &&
+pendingHiddenLayerTouch.pointerId ===
+event.pointerId
+) {
+
+pendingHiddenLayerTouch =
+null;
+
+
+activeTouchPointers.delete(
+event.pointerId
+);
+
+
+releaseTouchPointer(
+event
+);
+
+
+if (!canceled) {
+
+showHiddenLayerDialog();
+}
+
+
+return true;
+}
+
+
 /*
 バケツ／スポイトの
 タップを確定
@@ -16823,6 +16971,11 @@ tap.color,
 tap.layerId,
 bucketAction
 );
+
+
+mostRecentlyUsedPaintTool =
+"bucket";
+
 
 if (!changed) {
 return true;
@@ -16990,6 +17143,19 @@ return;
 }
 
 
+if (
+isLayerDrawingTool(
+currentTool
+) &&
+!canDrawOnActiveLayer()
+) {
+
+showHiddenLayerDialog();
+
+return;
+}
+
+
 /*
 SpaceもZも押していない
 → ペン描画
@@ -17047,6 +17213,10 @@ penColor,
 activeLayerId,
 bucketAction
 );
+
+
+mostRecentlyUsedPaintTool =
+"bucket";
 
 
 if (!changed) {
@@ -17717,6 +17887,15 @@ isDrawing &&
 currentStroke
 ) {
 
+if (
+currentStroke.tool === "pen"
+) {
+
+mostRecentlyUsedPaintTool =
+"pen";
+}
+
+
 strokeHistory.push(
 currentStroke
 );
@@ -17932,7 +18111,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.3-dev",
+"./service-worker.js?v=2.0.4-dev",
 {
 updateViaCache: "none"
 }
