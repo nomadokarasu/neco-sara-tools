@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.5-dev";
+"2.0.6-dev";
 
 
 const appVersionElements =
@@ -2759,12 +2759,7 @@ activeLayer.visible
 
 function showHiddenLayerDialog() {
 
-const previousCursor =
-renderer.domElement.style.cursor;
-
-
-renderer.domElement.style.cursor =
-"default";
+updateDrawingCursorStyle();
 
 
 void renderer.domElement.offsetWidth;
@@ -2775,10 +2770,6 @@ currentLanguage === "en"
 ? "The drawing layer is hidden."
 : "描画レイヤーが非表示です"
 );
-
-
-renderer.domElement.style.cursor =
-previousCursor;
 }
 
 
@@ -2801,6 +2792,9 @@ layer.canvas;
 
 drawContext =
 layer.context;
+
+
+updateDrawingCursorStyle();
 
 return true;
 }
@@ -6947,6 +6941,57 @@ let mostRecentlyUsedPaintTool =
 "pen";
 
 
+function updateDrawingCursorStyle() {
+
+if (
+isLayerDrawingTool(
+currentTool
+) &&
+!canDrawOnActiveLayer()
+) {
+
+eraserCursor.visible =
+false;
+
+renderer.domElement.style.cursor =
+"default";
+
+return;
+}
+
+
+if (
+currentTool === "pen" ||
+currentTool === "eraser"
+) {
+
+renderer.domElement.style.cursor =
+"none";
+
+return;
+}
+
+
+eraserCursor.visible =
+false;
+
+
+if (
+currentTool === "look" ||
+currentTool === "camera"
+) {
+
+renderer.domElement.style.cursor =
+"grab";
+
+} else {
+
+renderer.domElement.style.cursor =
+"crosshair";
+}
+}
+
+
 /*
 ストローク履歴は
 描画開始時と終了時に記録する
@@ -6958,6 +7003,28 @@ let mostRecentlyUsedPaintTool =
 
 
 function updateEraserCursor(event) {
+
+/*
+非表示レイヤーでは
+通常のマウスポインターを表示する
+*/
+
+if (
+isLayerDrawingTool(
+currentTool
+) &&
+!canDrawOnActiveLayer()
+) {
+
+eraserCursor.visible =
+false;
+
+renderer.domElement.style.cursor =
+"default";
+
+return;
+}
+
 
 /*
 視点回転・ズーム中は
@@ -9238,6 +9305,9 @@ event.stopPropagation();
 layer.visible =
 !layer.visible;
 
+
+updateDrawingCursorStyle();
+
 requestPaintUpdate();
 
 renderLayerPanel();
@@ -11308,28 +11378,10 @@ penSize;
 
 penSizeValue.value =
 penSize;
-
-renderer.domElement.style.cursor =
-"none";
-
-} else {
-
-eraserCursor.visible = false;
-
-if (
-tool === "look" ||
-tool === "camera"
-) {
-
-renderer.domElement.style.cursor =
-"grab";
-
-} else {
-
-renderer.domElement.style.cursor =
-"crosshair";
 }
-}
+
+
+updateDrawingCursorStyle();
 
 
 penToolButton.classList.toggle(
@@ -18126,7 +18178,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.5-dev",
+"./service-worker.js?v=2.0.6-dev",
 {
 updateViaCache: "none"
 }
