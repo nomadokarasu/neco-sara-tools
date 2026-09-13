@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.4-dev";
+"2.0.5-dev";
 
 
 const appVersionElements =
@@ -2759,11 +2759,26 @@ activeLayer.visible
 
 function showHiddenLayerDialog() {
 
+const previousCursor =
+renderer.domElement.style.cursor;
+
+
+renderer.domElement.style.cursor =
+"default";
+
+
+void renderer.domElement.offsetWidth;
+
+
 alert(
 currentLanguage === "en"
 ? "The drawing layer is hidden."
 : "描画レイヤーが非表示です"
 );
+
+
+renderer.domElement.style.cursor =
+previousCursor;
 }
 
 
@@ -18111,7 +18126,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.4-dev",
+"./service-worker.js?v=2.0.5-dev",
 {
 updateViaCache: "none"
 }
