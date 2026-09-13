@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.7-dev";
+"2.0.6-dev";
 
 
 const appVersionElements =
@@ -375,11 +375,6 @@ document.getElementById("layerDownButton");
 
 const deleteLayerButton =
 document.getElementById("deleteLayerButton");
-
-const layerPanelResizeHandle =
-document.getElementById(
-"layerPanelResizeHandle"
-);
 
 const penSizeInput =
 document.getElementById("penSize");
@@ -938,9 +933,6 @@ dragReorder:
 dragReorderAria:
 "レイヤーをドラッグして並び替え",
 
-resizeLayerPanel:
-"ドラッグしてレイヤーパネルの高さを変更",
-
 editLayerNameMobile:
 "長押しでレイヤー名を編集",
 
@@ -1205,9 +1197,6 @@ dragReorder:
 
 dragReorderAria:
 "Drag layer to reorder",
-
-resizeLayerPanel:
-"Drag to resize the layer panel",
 
 editLayerNameMobile:
 "Press and hold to edit layer name",
@@ -1812,15 +1801,6 @@ t("deleteLayer");
 
 deleteLayerButton.textContent =
 t("delete");
-
-
-layerPanelResizeHandle.title =
-t("resizeLayerPanel");
-
-layerPanelResizeHandle.setAttribute(
-"aria-label",
-t("resizeLayerPanel")
-);
 
 
 const mobileTabs =
@@ -8632,322 +8612,6 @@ document.querySelector(
 ".layer-panel"
 )
 );
-
-
-/* ================================
-レイヤーパネルの高さ変更
-================================ */
-
-const LAYER_PANEL_HEIGHT_STORAGE_KEY =
-"gururi-paint-testing-layer-panel-height";
-
-const LAYER_PANEL_MIN_HEIGHT =
-160;
-
-
-function initializeLayerPanelResize() {
-
-const panel =
-document.querySelector(
-".layer-panel"
-);
-
-
-if (
-!panel ||
-!layerPanelResizeHandle
-) {
-return;
-}
-
-
-const naturalHeight =
-panel.getBoundingClientRect()
-.height;
-
-
-panel.classList.add(
-"is-resizable"
-);
-
-
-function getMaximumHeight() {
-
-const rect =
-panel.getBoundingClientRect();
-
-return Math.max(
-LAYER_PANEL_MIN_HEIGHT,
-window.innerHeight -
-rect.top -
-8
-);
-}
-
-
-function applyLayerPanelHeight(
-height
-) {
-
-const maximumHeight =
-getMaximumHeight();
-
-const nextHeight =
-Math.max(
-LAYER_PANEL_MIN_HEIGHT,
-Math.min(
-maximumHeight,
-height
-)
-);
-
-
-panel.style.height =
-`${nextHeight}px`;
-
-return nextHeight;
-}
-
-
-let savedHeight =
-null;
-
-
-try {
-
-const storedHeight =
-Number(
-localStorage.getItem(
-LAYER_PANEL_HEIGHT_STORAGE_KEY
-)
-);
-
-
-if (
-Number.isFinite(
-storedHeight
-) &&
-storedHeight > 0
-) {
-
-savedHeight =
-storedHeight;
-}
-
-} catch (error) {
-
-savedHeight =
-null;
-}
-
-
-if (
-!window.matchMedia(
-"(max-width: 700px)"
-).matches
-) {
-
-applyLayerPanelHeight(
-savedHeight ??
-naturalHeight
-);
-}
-
-
-let isResizing =
-false;
-
-let resizePointerId =
-null;
-
-let startPointerY =
-0;
-
-let startHeight =
-0;
-
-
-layerPanelResizeHandle.addEventListener(
-"pointerdown",
-(event) => {
-
-if (
-window.matchMedia(
-"(max-width: 700px)"
-).matches
-) {
-return;
-}
-
-
-if (
-event.pointerType === "mouse" &&
-event.button !== 0
-) {
-return;
-}
-
-
-isResizing =
-true;
-
-resizePointerId =
-event.pointerId;
-
-startPointerY =
-event.clientY;
-
-startHeight =
-panel.getBoundingClientRect()
-.height;
-
-
-panel.classList.add(
-"is-resizing"
-);
-
-
-layerPanelResizeHandle
-.setPointerCapture(
-event.pointerId
-);
-
-
-document.body.style.userSelect =
-"none";
-
-
-event.preventDefault();
-event.stopPropagation();
-}
-);
-
-
-window.addEventListener(
-"pointermove",
-(event) => {
-
-if (
-!isResizing ||
-event.pointerId !==
-resizePointerId
-) {
-return;
-}
-
-
-const nextHeight =
-startHeight +
-event.clientY -
-startPointerY;
-
-
-applyLayerPanelHeight(
-nextHeight
-);
-
-
-event.preventDefault();
-}
-);
-
-
-function finishLayerPanelResize(
-event
-) {
-
-if (
-!isResizing ||
-event.pointerId !==
-resizePointerId
-) {
-return;
-}
-
-
-isResizing =
-false;
-
-
-if (
-layerPanelResizeHandle
-.hasPointerCapture(
-event.pointerId
-)
-) {
-
-layerPanelResizeHandle
-.releasePointerCapture(
-event.pointerId
-);
-}
-
-
-resizePointerId =
-null;
-
-
-panel.classList.remove(
-"is-resizing"
-);
-
-
-document.body.style.userSelect =
-"";
-
-
-try {
-
-localStorage.setItem(
-LAYER_PANEL_HEIGHT_STORAGE_KEY,
-String(
-panel.getBoundingClientRect()
-.height
-)
-);
-
-} catch (error) {
-
-return;
-}
-}
-
-
-window.addEventListener(
-"pointerup",
-finishLayerPanelResize
-);
-
-
-window.addEventListener(
-"pointercancel",
-finishLayerPanelResize
-);
-
-
-window.addEventListener(
-"resize",
-() => {
-
-if (
-window.matchMedia(
-"(max-width: 700px)"
-).matches
-) {
-return;
-}
-
-
-applyLayerPanelHeight(
-panel.getBoundingClientRect()
-.height
-);
-}
-);
-}
-
-
-initializeLayerPanelResize();
 
 
 /* ================================
@@ -18514,7 +18178,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.7-dev",
+"./service-worker.js?v=2.0.6-dev",
 {
 updateViaCache: "none"
 }
