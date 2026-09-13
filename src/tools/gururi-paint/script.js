@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.1";
+"2.0.2";
 
 
 const appVersionElements =
@@ -2733,6 +2733,46 @@ activeLayerId
 }
 
 
+function isLayerDrawingTool(
+tool
+) {
+
+return (
+tool === "pen" ||
+tool === "eraser" ||
+tool === "bucket"
+);
+}
+
+
+function canDrawOnActiveLayer() {
+
+const activeLayer =
+getActiveLayer();
+
+return Boolean(
+activeLayer &&
+activeLayer.visible
+);
+}
+
+
+function showHiddenLayerDialog() {
+
+updateDrawingCursorStyle();
+
+
+void renderer.domElement.offsetWidth;
+
+
+alert(
+currentLanguage === "en"
+? "The drawing layer is hidden."
+: "描画レイヤーが非表示です"
+);
+}
+
+
 function setActiveLayerReference(
 layerId
 ) {
@@ -2752,6 +2792,9 @@ layer.canvas;
 
 drawContext =
 layer.context;
+
+
+updateDrawingCursorStyle();
 
 return true;
 }
@@ -6894,6 +6937,60 @@ eyedropper
 
 let currentTool = "pen";
 
+let mostRecentlyUsedPaintTool =
+"pen";
+
+
+function updateDrawingCursorStyle() {
+
+if (
+isLayerDrawingTool(
+currentTool
+) &&
+!canDrawOnActiveLayer()
+) {
+
+eraserCursor.visible =
+false;
+
+renderer.domElement.style.cursor =
+"default";
+
+return;
+}
+
+
+if (
+currentTool === "pen" ||
+currentTool === "eraser"
+) {
+
+renderer.domElement.style.cursor =
+"none";
+
+return;
+}
+
+
+eraserCursor.visible =
+false;
+
+
+if (
+currentTool === "look" ||
+currentTool === "camera"
+) {
+
+renderer.domElement.style.cursor =
+"grab";
+
+} else {
+
+renderer.domElement.style.cursor =
+"crosshair";
+}
+}
+
 
 /*
 ストローク履歴は
@@ -6906,6 +7003,28 @@ let currentTool = "pen";
 
 
 function updateEraserCursor(event) {
+
+/*
+非表示レイヤーでは
+通常のマウスポインターを表示する
+*/
+
+if (
+isLayerDrawingTool(
+currentTool
+) &&
+!canDrawOnActiveLayer()
+) {
+
+eraserCursor.visible =
+false;
+
+renderer.domElement.style.cursor =
+"default";
+
+return;
+}
+
 
 /*
 視点回転・ズーム中は
@@ -7342,7 +7461,7 @@ color
 
 
 selectDrawingTool(
-"bucket"
+mostRecentlyUsedPaintTool
 );
 }
 
@@ -9095,6 +9214,68 @@ item.classList.add(
 }
 
 
+function selectLayerItem() {
+
+if (
+layer.id === activeLayerId
+) {
+return;
+}
+
+
+setActiveLayerReference(
+layer.id
+);
+
+
+for (
+const otherItem of
+layerList.querySelectorAll(
+".layer-item"
+)
+) {
+
+otherItem.classList.remove(
+"is-active"
+);
+}
+
+
+item.classList.add(
+"is-active"
+);
+
+
+updateLayerActionButtons();
+}
+
+
+item.addEventListener(
+"pointerdown",
+(event) => {
+
+const target =
+event.target;
+
+
+if (
+target instanceof Element &&
+target.closest(
+".layer-visibility-button"
+)
+) {
+return;
+}
+
+
+selectLayerItem();
+},
+{
+capture: true
+}
+);
+
+
 const visibilityButton =
 document.createElement("button");
 
@@ -9123,6 +9304,9 @@ event.stopPropagation();
 
 layer.visible =
 !layer.visible;
+
+
+updateDrawingCursorStyle();
 
 requestPaintUpdate();
 
@@ -9402,35 +9586,7 @@ nameInput.addEventListener(
 "focus",
 () => {
 
-if (
-layer.id !== activeLayerId
-) {
-
-setActiveLayerReference(
-layer.id
-);
-
-
-for (
-const otherItem of
-layerList.querySelectorAll(
-".layer-item"
-)
-) {
-
-otherItem.classList.remove(
-"is-active"
-);
-}
-
-
-item.classList.add(
-"is-active"
-);
-
-
-updateLayerActionButtons();
-}
+selectLayerItem();
 }
 );
 
@@ -11222,28 +11378,10 @@ penSize;
 
 penSizeValue.value =
 penSize;
-
-renderer.domElement.style.cursor =
-"none";
-
-} else {
-
-eraserCursor.visible = false;
-
-if (
-tool === "look" ||
-tool === "camera"
-) {
-
-renderer.domElement.style.cursor =
-"grab";
-
-} else {
-
-renderer.domElement.style.cursor =
-"crosshair";
 }
-}
+
+
+updateDrawingCursorStyle();
 
 
 penToolButton.classList.toggle(
@@ -16001,6 +16139,9 @@ pointerup時に実行する
 
 let pendingTouchTap = null;
 
+let pendingHiddenLayerTouch =
+null;
+
 
 /* ================================
 パームリジェクション
@@ -16021,6 +16162,9 @@ function clearTouchInputForPen() {
 cancelCurrentTouchStroke();
 
 pendingTouchTap =
+null;
+
+pendingHiddenLayerTouch =
 null;
 
 
@@ -16134,6 +16278,17 @@ event.pointerId
 ) {
 
 pendingTouchTap =
+null;
+}
+
+
+if (
+pendingHiddenLayerTouch &&
+pendingHiddenLayerTouch.pointerId ===
+event.pointerId
+) {
+
+pendingHiddenLayerTouch =
 null;
 }
 
@@ -16297,6 +16452,9 @@ cancelCurrentTouchStroke();
 
 pendingTouchTap = null;
 
+pendingHiddenLayerTouch =
+null;
+
 
 const gesture =
 getTouchGestureState();
@@ -16391,6 +16549,23 @@ activeTouchPointers.size >= 2
 ) {
 
 startTouchNavigation();
+
+return true;
+}
+
+
+if (
+isLayerDrawingTool(
+currentTool
+) &&
+!canDrawOnActiveLayer()
+) {
+
+pendingHiddenLayerTouch = {
+pointerId:
+event.pointerId
+};
+
 
 return true;
 }
@@ -16608,6 +16783,16 @@ return true;
 }
 
 
+if (
+pendingHiddenLayerTouch &&
+pendingHiddenLayerTouch.pointerId ===
+event.pointerId
+) {
+
+return true;
+}
+
+
 /*
 バケツ／スポイトの
 タップ判定。
@@ -16727,6 +16912,36 @@ return true;
 }
 
 
+if (
+pendingHiddenLayerTouch &&
+pendingHiddenLayerTouch.pointerId ===
+event.pointerId
+) {
+
+pendingHiddenLayerTouch =
+null;
+
+
+activeTouchPointers.delete(
+event.pointerId
+);
+
+
+releaseTouchPointer(
+event
+);
+
+
+if (!canceled) {
+
+showHiddenLayerDialog();
+}
+
+
+return true;
+}
+
+
 /*
 バケツ／スポイトの
 タップを確定
@@ -16823,6 +17038,11 @@ tap.color,
 tap.layerId,
 bucketAction
 );
+
+
+mostRecentlyUsedPaintTool =
+"bucket";
+
 
 if (!changed) {
 return true;
@@ -16990,6 +17210,19 @@ return;
 }
 
 
+if (
+isLayerDrawingTool(
+currentTool
+) &&
+!canDrawOnActiveLayer()
+) {
+
+showHiddenLayerDialog();
+
+return;
+}
+
+
 /*
 SpaceもZも押していない
 → ペン描画
@@ -17047,6 +17280,10 @@ penColor,
 activeLayerId,
 bucketAction
 );
+
+
+mostRecentlyUsedPaintTool =
+"bucket";
 
 
 if (!changed) {
@@ -17717,6 +17954,15 @@ isDrawing &&
 currentStroke
 ) {
 
+if (
+currentStroke.tool === "pen"
+) {
+
+mostRecentlyUsedPaintTool =
+"pen";
+}
+
+
 strokeHistory.push(
 currentStroke
 );
@@ -17932,7 +18178,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.1",
+"./service-worker.js?v=2.0.2",
 {
 updateViaCache: "none"
 }
