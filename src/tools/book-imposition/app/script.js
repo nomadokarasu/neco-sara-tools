@@ -246,6 +246,20 @@ uploadSection.classList.remove(
 // ページ番号設定
 // ========================================
 
+function updatePageNumberPreview() {
+
+if (
+!bookViewerSection.classList.contains(
+"hidden"
+)
+) {
+
+renderViewerPage();
+
+}
+
+}
+
 pageNumberEnabled.addEventListener(
 "change",
 function() {
@@ -253,7 +267,37 @@ function() {
 pageNumberSettings.disabled =
 !pageNumberEnabled.checked;
 
+updatePageNumberPreview();
+
 }
+);
+
+document.querySelectorAll(
+'input[name="pageNumberPosition"]'
+).forEach(
+function(input) {
+
+input.addEventListener(
+"change",
+updatePageNumberPreview
+);
+
+}
+);
+
+pageNumberFont.addEventListener(
+"change",
+updatePageNumberPreview
+);
+
+pageNumberFontSize.addEventListener(
+"input",
+updatePageNumberPreview
+);
+
+pageNumberColor.addEventListener(
+"input",
+updatePageNumberPreview
 );
 
 
@@ -2206,6 +2250,95 @@ wrapper.appendChild(
 canvas
 );
 
+if (pageNumberEnabled.checked) {
+
+const pageNumberElement =
+document.createElement(
+"div"
+);
+
+pageNumberElement.className =
+"viewer-page-number";
+
+pageNumberElement.textContent =
+pageNumber;
+
+const selectedFont =
+pageNumberFont.value;
+
+if (selectedFont === "sans") {
+
+pageNumberElement.style.fontFamily =
+'"Noto Sans JP", sans-serif';
+
+} else {
+
+pageNumberElement.style.fontFamily =
+'"Noto Serif JP", serif';
+
+}
+
+const fontSize =
+Number(
+pageNumberFontSize.value
+);
+
+pageNumberElement.style.fontSize =
+`${fontSize}px`;
+
+pageNumberElement.style.color =
+pageNumberColor.value;
+
+const selectedPosition =
+document.querySelector(
+'input[name="pageNumberPosition"]:checked'
+);
+
+if (
+selectedPosition &&
+selectedPosition.value === "outside"
+) {
+
+const isOddPage =
+pageNumber % 2 !== 0;
+
+const isLeftOutside =
+(
+currentBindingDirection === "右綴じ" &&
+isOddPage
+) ||
+(
+currentBindingDirection === "左綴じ" &&
+!isOddPage
+);
+
+if (isLeftOutside) {
+
+pageNumberElement.classList.add(
+"outside-left"
+);
+
+} else {
+
+pageNumberElement.classList.add(
+"outside-right"
+);
+
+}
+
+} else {
+
+pageNumberElement.classList.add(
+"bottom-center"
+);
+
+}
+
+wrapper.appendChild(
+pageNumberElement
+);
+
+}
 
 return wrapper;
 }
