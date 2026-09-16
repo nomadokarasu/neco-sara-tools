@@ -66,106 +66,101 @@
 </div>
 
 
-        <!-- ==============================
-             1. PDFアップロード
-        =============================== -->
+<!-- ==============================
+1. 綴じ方向
+=============================== -->
 
-        <section class="upload-area">
+<section id="bindingDirectionSection" class="setting-section">
+<h2>1. 綴じ方向を選択</h2>
+<p>右綴じか左綴じかを選択してください。</p>
 
-            <p class="how-to-link">
-    <a
-        href="https://neco-sara.com/2026/08/09/mendukeru/"
-        target="_blank"
-        rel="noopener noreferrer"
-    >
-        「めんづけーる」用PDFの作り方
-    </a>
+<div class="binding-direction-options">
+<label>
+<input type="radio" name="bindingDirection" value="右綴じ">
+右綴じ
+</label>
+
+<label>
+<input type="radio" name="bindingDirection" value="左綴じ">
+左綴じ
+</label>
+</div>
+</section>
+
+<!-- ==============================
+2. PDFアップロード
+=============================== -->
+
+<section id="uploadSection" class="upload-area hidden">
+
+<p class="how-to-link">
+<a href="https://neco-sara.com/2026/08/09/mendukeru/" target="_blank" rel="noopener noreferrer">
+「めんづけーる」用PDFの作り方
+</a>
 </p>
-            
-            
-            
-            <h2>1. PDFをアップロード</h2>
 
-            
+<h2>2. PDFをアップロード</h2>
 
-            <p>
-                見開きPDFを選択してください。
-            </p>
+<p>
+見開きPDFを選択してください。
+</p>
 
-            <input
-                type="file"
-                id="pdfInput"
-                accept="application/pdf"
-            >
+<input type="file" id="pdfInput" accept="application/pdf">
 
-            <div id="status"></div>
+<div id="status"></div>
 
-        </section>
+</section>
 
+<!-- ==============================
+3. ページ順指定
+=============================== -->
 
-        <!-- ==============================
-             2. プレビュー
-        =============================== -->
+<section id="previewSection" class="hidden">
 
-        <section
-            id="previewSection"
-            class="hidden"
-        >
+<h2>3. ページ順を指定</h2>
 
-            <h2>2. プレビュー</h2>
+<p id="pdfInfo"></p>
 
-            <p id="pdfInfo"></p>
+<div id="instruction" class="instruction">
+1ページ目にするページを選択してください。
+</div>
 
+<div class="page-order-controls">
+<button type="button" id="undoPageSelectionButton" disabled>
+直前の選択を取り消す
+</button>
+</div>
 
-            <div
-                id="instruction"
-                class="instruction"
-            >
-                最初のページを選択してください。
-            </div>
+<div id="spreads"></div>
 
+</section>
 
-            <div id="spreads"></div>
+<!-- ==============================
+4. 製本方法
+=============================== -->
 
-        </section>
+<section id="bindingSection" class="hidden">
 
-                <!-- ==============================
-             3. 製本方法
-        =============================== -->
+<h2>4. 製本方法</h2>
 
-        <section
-            id="bindingSection"
-            class="hidden"
-        >
+<div class="binding-method-box">
 
-            <h2>3. 製本方法</h2>
+<p class="binding-method-label">
+製本方法
+</p>
 
-            <div class="binding-method-box">
+<label>
+<input type="radio" name="bindingMethod" value="saddle-stitch" checked>
+中綴じ
+</label>
 
-                <p class="binding-method-label">
-                    製本方法
-                </p>
+</div>
 
-                <label>
-                    <input
-                        type="radio"
-                        name="bindingMethod"
-                        value="saddle-stitch"
-                        checked
-                    >
-                    中綴じ
-                </label>
+<button type="button" id="imposeButton">
+面付する
+</button>
 
-            </div>
-
-            <button
-                type="button"
-                id="imposeButton"
-            >
-                面付する
-            </button>
-
-        </section>
+</section>
 
 
         <!-- ==============================

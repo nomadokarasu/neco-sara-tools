@@ -11,10 +11,25 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 // ========================================
 
 const pdfInput =
-    document.getElementById("pdfInput");
+document.getElementById("pdfInput");
+
+const bindingDirectionInputs =
+document.querySelectorAll(
+'input[name="bindingDirection"]'
+);
+
+const uploadSection =
+document.getElementById(
+"uploadSection"
+);
+
+const undoPageSelectionButton =
+document.getElementById(
+"undoPageSelectionButton"
+);
 
 const status =
-    document.getElementById("status");
+document.getElementById("status");
 
 const previewSection =
     document.getElementById("previewSection");
@@ -152,6 +167,10 @@ printRangeInputs.forEach(
 
 let firstPageSelected = false;
 
+let selectedBookPages = [];
+
+let requiredBookPageCount = 0;
+
 // 個別PDF作成用に元PDFを保持する
 let originalPdfBytes = null;
 
@@ -174,12 +193,47 @@ let currentImposition = [];
 
 
 // ========================================
+// 綴じ方向
+// ========================================
+
+bindingDirectionInputs.forEach(
+function(input) {
+
+input.addEventListener(
+"change",
+function() {
+
+currentBindingDirection =
+input.value;
+
+uploadSection.classList.remove(
+"hidden"
+);
+
+}
+);
+
+}
+);
+
+
+// ========================================
 // PDF選択
 // ========================================
 
 pdfInput.addEventListener(
-    "change",
-    handlePDF
+"change",
+handlePDF
+);
+
+
+// ========================================
+// ページ選択を1つ戻す
+// ========================================
+
+undoPageSelectionButton.addEventListener(
+"click",
+undoLastPageSelection
 );
 
 
@@ -294,17 +348,18 @@ async function handlePDF(event) {
             "status-success";
 
 
-        pdfInfo.textContent =
-            `元PDF：${originalPageCount}ページ`;
+requiredBookPageCount =
+(originalPageCount * 2) - 2;
 
+pdfInfo.textContent =
+`元PDF：${originalPageCount}ページ / 選択するページ数：${requiredBookPageCount}ページ`;
 
-        instruction.textContent =
-            "最初のページを選択してください。";
+instruction.textContent =
+"1ページ目にするページを選択してください。";
 
-
-        previewSection.classList.remove(
-            "hidden"
-        );
+previewSection.classList.remove(
+"hidden"
+);
 
 
         // ========================================
@@ -497,13 +552,7 @@ async function createSpreadPreview(
     spreadItem.className =
         "spread-item";
 
-        // PDF 2ページ目以降は
-// 内部では作成するが画面には表示しない
-if (originalPageNumber !== 1) {
-
-    spreadItem.style.display =
-        "none";
-}
+// すべてのPDFページを表示する
 
 
     // ------------------------------------
@@ -619,20 +668,20 @@ function createHalfPage(
     );
 
 
-    // ------------------------------------
-    // 最初のページとして選択
-    // ------------------------------------
+ // ------------------------------------
+// 本のページとして順番に選択
+// ------------------------------------
 
-    half.addEventListener(
-        "click",
-        function () {
+half.addEventListener(
+"click",
+function () {
 
-            selectFirstPage(
-                half
-            );
+selectBookPageInOrder(
+half
+);
 
-        }
-    );
+}
+);
 
 
     return half;
@@ -947,14 +996,196 @@ bindingSection.scrollIntoView({
 
 
 // ========================================
+// クリックした順番で本のページとして設定
+// ========================================
+
+function selectBookPageInOrder(
+selectedHalf
+) {
+
+if (!requiredBookPageCount) {
+return;
+}
+
+if (
+selectedBookPages.length >=
+requiredBookPageCount
+) {
+return;
+}
+
+if (selectedHalf.dataset.bookPage) {
+return;
+}
+
+const pageNumber =
+selectedBookPages.length + 1;
+
+setBookPage(
+selectedHalf,
+pageNumber
+);
+
+selectedBookPages.push(
+selectedHalf
+);
+
+if (pageNumber === 1) {
+
+selectedHalf.classList.add(
+"first-page"
+);
+
+}
+
+undoPageSelectionButton.disabled =
+false;
+
+if (
+selectedBookPages.length ===
+requiredBookPageCount
+) {
+
+const allHalfPages =
+Array.from(
+document.querySelectorAll(
+".half-page"
+)
+);
+
+allHalfPages.forEach(
+function(half) {
+
+if (!half.dataset.bookPage) {
+
+half.classList.add(
+"excluded"
+);
+
+}
+
+}
+);
+
+instruction.innerHTML =
+`ページ順を設定しました。<br>` +
+`${currentBindingDirection} / ` +
+`全 ${requiredBookPageCount} ページ`;
+
+bindingSection.classList.remove(
+"hidden"
+);
+
+bindingSection.scrollIntoView({
+behavior: "smooth",
+block: "start"
+});
+
+return;
+
+}
+
+instruction.textContent =
+`${selectedBookPages.length + 1}ページ目にするページを選択してください。`;
+
+}
+
+
+// ========================================
+// 直前のページ選択を取り消す
+// ========================================
+
+function undoLastPageSelection() {
+
+if (selectedBookPages.length === 0) {
+return;
+}
+
+const lastHalf =
+selectedBookPages.pop();
+
+delete lastHalf.dataset.bookPage;
+
+lastHalf.classList.remove(
+"first-page"
+);
+
+const number =
+lastHalf.querySelector(
+".book-page-number"
+);
+
+if (number) {
+number.remove();
+}
+
+const allHalfPages =
+Array.from(
+document.querySelectorAll(
+".half-page"
+)
+);
+
+allHalfPages.forEach(
+function(half) {
+
+half.classList.remove(
+"excluded"
+);
+
+}
+);
+
+currentImposition =
+[];
+
+viewerPages =
+[];
+
+viewerSpreads =
+[];
+
+currentViewerSpreadIndex =
+0;
+
+bindingSection.classList.add(
+"hidden"
+);
+
+bookViewerSection.classList.add(
+"hidden"
+);
+
+printSection.classList.add(
+"hidden"
+);
+
+viewerPage.innerHTML =
+"";
+
+viewerPageCounter.textContent =
+"";
+
+viewerInfo.textContent =
+"";
+
+undoPageSelectionButton.disabled =
+selectedBookPages.length === 0;
+
+instruction.textContent =
+`${selectedBookPages.length + 1}ページ目にするページを選択してください。`;
+
+}
+
+
+// ========================================
 // 本のページとして設定
 // ========================================
 
 function setBookPage(
-    half,
-    pageNumber
+half,
+pageNumber
 ) {
-
     half.classList.remove(
         "excluded"
     );
@@ -1212,14 +1443,26 @@ imposeButton.addEventListener(
 
 function createImposition() {
 
-    if (!currentBindingDirection) {
+if (!currentBindingDirection) {
 
-        alert(
-            "最初のページを選択してください。"
-        );
+alert(
+"綴じ方向を選択してください。"
+);
 
-        return;
-    }
+return;
+}
+
+if (
+selectedBookPages.length !==
+requiredBookPageCount
+) {
+
+alert(
+"ページ順の指定を完了してください。"
+);
+
+return;
+}
 
 
     const selectedMethod =
@@ -3296,20 +3539,20 @@ async function createSingleBookPagePng(
 
 function resetTool() {
 
-    firstPageSelected =
-        false;
+firstPageSelected =
+false;
 
+selectedBookPages =
+[];
 
-    originalPdfBytes =
-        null;
+requiredBookPageCount =
+0;
 
+originalPdfBytes =
+null;
 
-    currentBindingDirection =
-        null;
-
-
-    currentBindingMethod =
-        "saddle-stitch";
+currentBindingMethod =
+"saddle-stitch";
 
 
     viewerPages =
@@ -3340,12 +3583,14 @@ currentViewerSpreadIndex =
         "";
 
 
-    instruction.textContent =
-        "最初のページを選択してください。";
+instruction.textContent =
+"1ページ目にするページを選択してください。";
 
+undoPageSelectionButton.disabled =
+true;
 
-    spreadsContainer.innerHTML =
-        "";
+spreadsContainer.innerHTML =
+"";
 
 
     previewSection.classList.add(
