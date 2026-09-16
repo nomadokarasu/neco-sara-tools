@@ -3059,6 +3059,25 @@ height:
 pageHeight
 }
 );
+
+await drawPageNumberOnPdfPage(
+outputPdf,
+outputPage,
+surface.left,
+0,
+halfWidth,
+pageHeight
+);
+
+await drawPageNumberOnPdfPage(
+outputPdf,
+outputPage,
+surface.right,
+halfWidth,
+halfWidth,
+pageHeight
+);
+
 }
 
 
@@ -3145,6 +3164,244 @@ halfWidth,
 height:
 cropBox.height
 };
+}
+
+
+// ========================================
+// PDF用ページ番号画像を作成
+// ========================================
+
+async function createPageNumberPdfImage(
+outputPdf,
+pageNumber
+) {
+
+if (
+!pageNumberEnabled.checked ||
+hiddenPageNumbers.has(
+pageNumber
+)
+) {
+
+return null;
+
+}
+
+const fontSize =
+Math.max(
+1,
+Number(
+pageNumberFontSize.value
+) || 10
+);
+
+const renderScale =
+4;
+
+const fontFamily =
+pageNumberFont.value === "sans"
+? '"Noto Sans JP"'
+: '"Noto Serif JP"';
+
+if (
+document.fonts &&
+document.fonts.load
+) {
+
+await document.fonts.load(
+`${fontSize * renderScale}px ${fontFamily}`,
+String(
+pageNumber
+)
+);
+
+}
+
+const canvas =
+document.createElement(
+"canvas"
+);
+
+const context =
+canvas.getContext(
+"2d"
+);
+
+context.font =
+`${fontSize * renderScale}px ${fontFamily}`;
+
+const metrics =
+context.measureText(
+String(
+pageNumber
+)
+);
+
+const horizontalPadding =
+fontSize * renderScale * 0.5;
+
+canvas.width =
+Math.ceil(
+metrics.width +
+horizontalPadding * 2
+);
+
+canvas.height =
+Math.ceil(
+fontSize *
+renderScale *
+1.6
+);
+
+context.font =
+`${fontSize * renderScale}px ${fontFamily}`;
+
+context.fillStyle =
+pageNumberColor.value;
+
+context.textAlign =
+"center";
+
+context.textBaseline =
+"middle";
+
+context.fillText(
+String(
+pageNumber
+),
+canvas.width / 2,
+canvas.height / 2
+);
+
+const pngData =
+canvas.toDataURL(
+"image/png"
+);
+
+const image =
+await outputPdf.embedPng(
+pngData
+);
+
+return {
+image:
+image,
+
+width:
+canvas.width /
+renderScale,
+
+height:
+canvas.height /
+renderScale
+};
+
+}
+
+
+// ========================================
+// PDFへページ番号を描画
+// ========================================
+
+async function drawPageNumberOnPdfPage(
+outputPdf,
+outputPage,
+pageNumber,
+pageOffsetX,
+pageWidth,
+pageHeight
+) {
+
+const numberData =
+await createPageNumberPdfImage(
+outputPdf,
+pageNumber
+);
+
+if (!numberData) {
+return;
+}
+
+// 約10mm
+const margin =
+28.35;
+
+let x;
+
+const selectedPosition =
+document.querySelector(
+'input[name="pageNumberPosition"]:checked'
+);
+
+if (
+selectedPosition &&
+selectedPosition.value === "outside"
+) {
+
+const isOddPage =
+pageNumber % 2 !== 0;
+
+const isLeftOutside =
+(
+currentBindingDirection === "右綴じ" &&
+isOddPage
+) ||
+(
+currentBindingDirection === "左綴じ" &&
+!isOddPage
+);
+
+if (isLeftOutside) {
+
+x =
+pageOffsetX +
+margin;
+
+} else {
+
+x =
+pageOffsetX +
+pageWidth -
+margin -
+numberData.width;
+
+}
+
+} else {
+
+x =
+pageOffsetX +
+(
+pageWidth -
+numberData.width
+) / 2;
+
+}
+
+const y =
+Math.max(
+0,
+margin -
+numberData.height / 2
+);
+
+outputPage.drawImage(
+numberData.image,
+{
+x:
+x,
+
+y:
+y,
+
+width:
+numberData.width,
+
+height:
+numberData.height
+}
+);
+
 }
 
 
