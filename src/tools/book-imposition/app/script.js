@@ -38,6 +38,36 @@ document.getElementById("instruction");
 const spreadsContainer =
 document.getElementById("spreads");
 
+const pageNumberSection =
+document.getElementById(
+"pageNumberSection"
+);
+
+const pageNumberEnabled =
+document.getElementById(
+"pageNumberEnabled"
+);
+
+const pageNumberSettings =
+document.getElementById(
+"pageNumberSettings"
+);
+
+const pageNumberFont =
+document.getElementById(
+"pageNumberFont"
+);
+
+const pageNumberFontSize =
+document.getElementById(
+"pageNumberFontSize"
+);
+
+const pageNumberColor =
+document.getElementById(
+"pageNumberColor"
+);
+
 const bindingSection =
 document.getElementById(
 "bindingSection"
@@ -207,6 +237,21 @@ uploadSection.classList.remove(
 
 }
 );
+
+}
+);
+
+
+// ========================================
+// ページ番号設定
+// ========================================
+
+pageNumberEnabled.addEventListener(
+"change",
+function() {
+
+pageNumberSettings.disabled =
+!pageNumberEnabled.checked;
 
 }
 );
@@ -1069,11 +1114,15 @@ instruction.innerHTML =
 `${currentBindingDirection} / ` +
 `全 ${requiredBookPageCount} ページ`;
 
+pageNumberSection.classList.remove(
+"hidden"
+);
+
 bindingSection.classList.remove(
 "hidden"
 );
 
-bindingSection.scrollIntoView({
+pageNumberSection.scrollIntoView({
 behavior: "smooth",
 block: "start"
 });
@@ -1144,6 +1193,10 @@ viewerSpreads =
 
 currentViewerSpreadIndex =
 0;
+
+pageNumberSection.classList.add(
+"hidden"
+);
 
 bindingSection.classList.add(
 "hidden"
@@ -3588,10 +3641,19 @@ previewSection.classList.add(
 "hidden"
 );
 
-bindingSection.classList.add(
+pageNumberSection.classList.add(
 "hidden"
 );
 
+pageNumberEnabled.checked =
+false;
+
+pageNumberSettings.disabled =
+true;
+
+bindingSection.classList.add(
+"hidden"
+);
 
 bookViewerSection.classList.add(
 "hidden"

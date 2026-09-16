@@ -130,12 +130,81 @@ PDFの作成環境や使用しているフォント・画像・カラー設定�
 </section>
 
 <!-- ==============================
-4. 製本方法
+4. ページ番号
+=============================== -->
+
+<section id="pageNumberSection" class="hidden">
+
+<h2>4. ページ番号</h2>
+
+<label>
+<input type="checkbox" id="pageNumberEnabled">
+ページ番号を追加する
+</label>
+
+<fieldset id="pageNumberSettings" disabled>
+
+<p>表示位置</p>
+
+<label>
+<input type="radio" name="pageNumberPosition" value="center" checked>
+下の真ん中
+</label>
+
+<label>
+<input type="radio" name="pageNumberPosition" value="outside">
+下の外側
+</label>
+
+<p>
+<label for="pageNumberFont">
+フォント
+</label>
+</p>
+
+<select id="pageNumberFont">
+<option value="serif">Noto Serif JP（明朝）</option>
+<option value="sans">Noto Sans JP（ゴシック）</option>
+</select>
+
+<p>
+<label for="pageNumberFontSize">
+フォントサイズ
+</label>
+</p>
+
+<input
+type="number"
+id="pageNumberFontSize"
+value="10"
+min="1"
+step="1"
+>
+<span>pt</span>
+
+<p>
+<label for="pageNumberColor">
+フォント色
+</label>
+</p>
+
+<input
+type="color"
+id="pageNumberColor"
+value="#000000"
+>
+
+</fieldset>
+
+</section>
+
+<!-- ==============================
+5. 製本方法
 =============================== -->
 
 <section id="bindingSection" class="hidden">
 
-<h2>4. 製本方法</h2>
+<h2>5. 製本方法</h2>
 
 <div class="binding-method-box">
 
@@ -158,7 +227,7 @@ PDFの作成環境や使用しているフォント・画像・カラー設定�
 
 
 <!-- ==============================
-4. 製本後プレビュー
+6. 製本後プレビュー
 =============================== -->
 
 <section
@@ -166,7 +235,7 @@ id="bookViewerSection"
 class="hidden"
 >
 
-<h2>4. ページ順を確認してください</h2>
+<h2>6. ページ順を確認してください</h2>
 
 <p id="viewerInfo"></p>
 
@@ -204,7 +273,7 @@ id="viewerRightButton"
 </section>
 
 <!-- ==============================
-5. ダウンロード
+7. ダウンロード
 =============================== -->
 
 <section
@@ -212,7 +281,7 @@ id="printSection"
 class="hidden"
 >
 
-<h2>5. ダウンロード</h2>
+<h2>7. ダウンロード</h2>
 
 
 <!-- ==============================
