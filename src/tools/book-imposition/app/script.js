@@ -3,7 +3,7 @@
 // ========================================
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 
 // ========================================
@@ -23,142 +23,137 @@ document.getElementById(
 "uploadSection"
 );
 
-const undoPageSelectionButton =
-document.getElementById(
-"undoPageSelectionButton"
-);
-
 const status =
 document.getElementById("status");
 
 const previewSection =
-    document.getElementById("previewSection");
+document.getElementById("previewSection");
 
 const pdfInfo =
-    document.getElementById("pdfInfo");
+document.getElementById("pdfInfo");
 
 const instruction =
-    document.getElementById("instruction");
+document.getElementById("instruction");
 
 const spreadsContainer =
-    document.getElementById("spreads");
+document.getElementById("spreads");
 
-    const bindingSection =
-    document.getElementById(
-        "bindingSection"
-    );
+const bindingSection =
+document.getElementById(
+"bindingSection"
+);
 
 const imposeButton =
-    document.getElementById(
-        "imposeButton"
-    );
+document.getElementById(
+"imposeButton"
+);
 
 const bookViewerSection =
-    document.getElementById(
-        "bookViewerSection"
-    );
+document.getElementById(
+"bookViewerSection"
+);
 
 const viewerInfo =
-    document.getElementById(
-        "viewerInfo"
-    );
+document.getElementById(
+"viewerInfo"
+);
 
 const viewerPageCounter =
-    document.getElementById(
-        "viewerPageCounter"
-    );
+document.getElementById(
+"viewerPageCounter"
+);
 
 const viewerPage =
-    document.getElementById(
-        "viewerPage"
-    );
+document.getElementById(
+"viewerPage"
+);
 
 const viewerLeftButton =
-    document.getElementById(
-        "viewerLeftButton"
-    );
+document.getElementById(
+"viewerLeftButton"
+);
 
 const viewerRightButton =
-    document.getElementById(
-        "viewerRightButton"
-    );
+document.getElementById(
+"viewerRightButton"
+);
 
-    const printSection =
-    document.getElementById(
-        "printSection"
-    );
+const printSection =
+document.getElementById(
+"printSection"
+);
 
 const downloadPrintPdfButton =
-    document.getElementById(
-        "downloadPrintPdfButton"
-    );
+document.getElementById(
+"downloadPrintPdfButton"
+);
 
 const printStatus =
-    document.getElementById(
-        "printStatus"
-    );
+document.getElementById(
+"printStatus"
+);
 
-    const printFileName =
-    document.getElementById(
-        "printFileName"
-    );
+const printFileName =
+document.getElementById(
+"printFileName"
+);
 
 
 
 const downloadPagesZipButton =
-    document.getElementById(
-        "downloadPagesZipButton"
-    );
+document.getElementById(
+"downloadPagesZipButton"
+);
 
 const pageZipStatus =
-    document.getElementById(
-        "pageZipStatus"
-    );
+document.getElementById(
+"pageZipStatus"
+);
 
-    const pageZipFileName =
-    document.getElementById(
-        "pageZipFileName"
-    );
+const pageZipFileName =
+document.getElementById(
+"pageZipFileName"
+);
 
 // ========================================
 // 印刷方法に応じてファイル名を変更
 // ========================================
 
 const printRangeInputs =
-    document.querySelectorAll(
-        'input[name="printRange"]'
-    );
+document.querySelectorAll(
+'input[name="printRange"]'
+);
 
 
 printRangeInputs.forEach(
-    function (input) {
+function (input) {
 
-        input.addEventListener(
-            "change",
-            function () {
+input.addEventListener(
+"change",
+function () {
 
-                if (input.value === "all") {
+if (input.value === "all") {
 
-                    printFileName.value =
-                        "全部";
+printFileName.value =
+"全部";
 
-                } else if (
-                    input.value === "even"
-                ) {
+} else if (
+input.value === "even"
+) {
 
-                    printFileName.value =
-                        "先印刷";
+printFileName.value =
+"先印刷";
 
-                } else if (
-                    input.value === "odd"
-                ) {
+} else if (
+input.value === "odd"
+) {
 
-                    printFileName.value =
-                        "後印刷";
-                }
-            }
-        );
-    }
+printFileName.value =
+"後印刷";
+}
+}
+);
+}
 );
 
 // ========================================
@@ -179,7 +174,7 @@ let currentBindingDirection = null;
 
 // 製本方法
 let currentBindingMethod =
-    "saddle-stitch";
+"saddle-stitch";
 
 // 製本後プレビュー
 let viewerPages = [];
@@ -228,124 +223,114 @@ handlePDF
 
 
 // ========================================
-// ページ選択を1つ戻す
-// ========================================
-
-undoPageSelectionButton.addEventListener(
-"click",
-undoLastPageSelection
-);
-
-
-// ========================================
 // PDFを読み込む
 // ========================================
 
 async function handlePDF(event) {
 
-    const file =
-        event.target.files[0];
+const file =
+event.target.files[0];
 
 
-    if (!file) {
-        return;
-    }
+if (!file) {
+return;
+}
 
 
-    // ------------------------------------
-    // 前回の状態をリセット
-    // ------------------------------------
+// ------------------------------------
+// 前回の状態をリセット
+// ------------------------------------
 
-    resetTool();
-
-
-    // ------------------------------------
-    // PDFか確認
-    // ------------------------------------
-
-    if (file.type !== "application/pdf") {
-
-        showError(
-            "PDFファイルを選択してください。"
-        );
-
-        pdfInput.value = "";
-
-        return;
-    }
+resetTool();
 
 
-    try {
+// ------------------------------------
+// PDFか確認
+// ------------------------------------
 
-        const arrayBuffer =
-            await file.arrayBuffer();
+if (file.type !== "application/pdf") {
 
+showError(
+"PDFファイルを選択してください。"
+);
 
-        // ========================================
-        // 元PDFを保持
-        // ========================================
+pdfInput.value = "";
 
-        originalPdfBytes =
-            arrayBuffer.slice(0);
-
-
-        const pdf =
-    await pdfjsLib
-        .getDocument({
-            data: arrayBuffer,
-
-            cMapUrl:
-    new URL(
-        "./cmaps/",
-        window.location.href
-    ).href,
-
-            cMapPacked:
-                true,
-
-            standardFontDataUrl:
-    new URL(
-        "./standard_fonts/",
-        window.location.href
-    ).href
-        })
-        .promise;
+return;
+}
 
 
-        const originalPageCount =
-            pdf.numPages;
+try {
+
+const arrayBuffer =
+await file.arrayBuffer();
 
 
-        // ========================================
-        // 奇数ページか確認
-        // ========================================
+// ========================================
+// 元PDFを保持
+// ========================================
 
-        if (originalPageCount % 2 === 0) {
-
-            showError(
-                `このPDFは使用できません。` +
-                `PDFは ${originalPageCount} ページです。` +
-                `奇数ページのPDFをアップロードしてください。`
-            );
-
-            originalPdfBytes =
-                null;
-
-            pdfInput.value = "";
-
-            return;
-        }
+originalPdfBytes =
+arrayBuffer.slice(0);
 
 
-        // ========================================
-        // 読み込み成功
-        // ========================================
+const pdf =
+await pdfjsLib
+.getDocument({
+data: arrayBuffer,
 
-        status.textContent =
-            "PDFを読み込みました。";
+cMapUrl:
+new URL(
+"./cmaps/",
+window.location.href
+).href,
 
-        status.className =
-            "status-success";
+cMapPacked:
+true,
+
+standardFontDataUrl:
+new URL(
+"./standard_fonts/",
+window.location.href
+).href
+})
+.promise;
+
+
+const originalPageCount =
+pdf.numPages;
+
+
+// ========================================
+// 奇数ページか確認
+// ========================================
+
+if (originalPageCount % 2 === 0) {
+
+showError(
+`このPDFは使用できません。` +
+`PDFは ${originalPageCount} ページです。` +
+`奇数ページのPDFをアップロードしてください。`
+);
+
+originalPdfBytes =
+null;
+
+pdfInput.value = "";
+
+return;
+}
+
+
+// ========================================
+// 読み込み成功
+// ========================================
+
+status.textContent =
+"PDFを読み込みました。";
+
+status.className =
+"status-success";
 
 
 requiredBookPageCount =
@@ -362,45 +347,45 @@ previewSection.classList.remove(
 );
 
 
-        // ========================================
-        // 元PDFを上から順番に表示
-        // ========================================
+// ========================================
+// 元PDFを上から順番に表示
+// ========================================
 
-        for (
-            let pageNumber = 1;
-            pageNumber <= originalPageCount;
-            pageNumber++
-        ) {
+for (
+let pageNumber = 1;
+pageNumber <= originalPageCount;
+pageNumber++
+) {
 
-            const page =
-                await pdf.getPage(
-                    pageNumber
-                );
-
-
-            await createSpreadPreview(
-                page,
-                pageNumber
-            );
-        }
+const page =
+await pdf.getPage(
+pageNumber
+);
 
 
-    } catch (error) {
-
-        console.error(error);
-
-
-        showError(
-            "PDFの読み込みに失敗しました。"
-        );
+await createSpreadPreview(
+page,
+pageNumber
+);
+}
 
 
-        originalPdfBytes =
-            null;
+} catch (error) {
+
+console.error(error);
 
 
-        pdfInput.value = "";
-    }
+showError(
+"PDFの読み込みに失敗しました。"
+);
+
+
+originalPdfBytes =
+null;
+
+
+pdfInput.value = "";
+}
 }
 
 
@@ -409,231 +394,231 @@ previewSection.classList.remove(
 // ========================================
 
 async function createSpreadPreview(
-    page,
-    originalPageNumber
+page,
+originalPageNumber
 ) {
 
-    const scale = 1.5;
+const scale = 1.5;
 
 
-    const viewport =
-        page.getViewport({
-            scale: scale
-        });
+const viewport =
+page.getViewport({
+scale: scale
+});
 
 
-    // ------------------------------------
-    // PDFページ全体をCanvasへ描画
-    // ------------------------------------
+// ------------------------------------
+// PDFページ全体をCanvasへ描画
+// ------------------------------------
 
-    const fullCanvas =
-        document.createElement("canvas");
-
-
-    const fullContext =
-        fullCanvas.getContext("2d");
+const fullCanvas =
+document.createElement("canvas");
 
 
-    fullCanvas.width =
-        Math.ceil(viewport.width);
+const fullContext =
+fullCanvas.getContext("2d");
 
 
-    fullCanvas.height =
-        Math.ceil(viewport.height);
+fullCanvas.width =
+Math.ceil(viewport.width);
 
 
-    await page.render({
-
-        canvasContext:
-            fullContext,
-
-        viewport:
-            viewport
-
-    }).promise;
+fullCanvas.height =
+Math.ceil(viewport.height);
 
 
-    // ------------------------------------
-    // 左右の幅
-    // ------------------------------------
+await page.render({
 
-    const halfWidth =
-        Math.floor(
-            fullCanvas.width / 2
-        );
+canvasContext:
+fullContext,
 
+viewport:
+viewport
 
-    // ========================================
-    // 左半分
-    // ========================================
-
-    const leftCanvas =
-        document.createElement("canvas");
+}).promise;
 
 
-    leftCanvas.width =
-        halfWidth;
+// ------------------------------------
+// 左右の幅
+// ------------------------------------
+
+const halfWidth =
+Math.floor(
+fullCanvas.width / 2
+);
 
 
-    leftCanvas.height =
-        fullCanvas.height;
+// ========================================
+// 左半分
+// ========================================
+
+const leftCanvas =
+document.createElement("canvas");
 
 
-    const leftContext =
-        leftCanvas.getContext("2d");
+leftCanvas.width =
+halfWidth;
 
 
-    leftContext.drawImage(
-
-        fullCanvas,
-
-        0,
-        0,
-
-        halfWidth,
-        fullCanvas.height,
-
-        0,
-        0,
-
-        halfWidth,
-        fullCanvas.height
-
-    );
+leftCanvas.height =
+fullCanvas.height;
 
 
-    // ========================================
-    // 右半分
-    // ========================================
-
-    const rightCanvas =
-        document.createElement("canvas");
+const leftContext =
+leftCanvas.getContext("2d");
 
 
-    rightCanvas.width =
-        fullCanvas.width - halfWidth;
+leftContext.drawImage(
+
+fullCanvas,
+
+0,
+0,
+
+halfWidth,
+fullCanvas.height,
+
+0,
+0,
+
+halfWidth,
+fullCanvas.height
+
+);
 
 
-    rightCanvas.height =
-        fullCanvas.height;
+// ========================================
+// 右半分
+// ========================================
+
+const rightCanvas =
+document.createElement("canvas");
 
 
-    const rightContext =
-        rightCanvas.getContext("2d");
+rightCanvas.width =
+fullCanvas.width - halfWidth;
 
 
-    rightContext.drawImage(
-
-        fullCanvas,
-
-        halfWidth,
-        0,
-
-        fullCanvas.width - halfWidth,
-        fullCanvas.height,
-
-        0,
-        0,
-
-        fullCanvas.width - halfWidth,
-        fullCanvas.height
-
-    );
+rightCanvas.height =
+fullCanvas.height;
 
 
-    // ========================================
-    // 見開き要素
-    // ========================================
-
-    const spreadItem =
-        document.createElement("div");
+const rightContext =
+rightCanvas.getContext("2d");
 
 
-    spreadItem.className =
-        "spread-item";
+rightContext.drawImage(
+
+fullCanvas,
+
+halfWidth,
+0,
+
+fullCanvas.width - halfWidth,
+fullCanvas.height,
+
+0,
+0,
+
+fullCanvas.width - halfWidth,
+fullCanvas.height
+
+);
+
+
+// ========================================
+// 見開き要素
+// ========================================
+
+const spreadItem =
+document.createElement("div");
+
+
+spreadItem.className =
+"spread-item";
 
 // すべてのPDFページを表示する
 
 
-    // ------------------------------------
-    // 元PDFのページ番号
-    // ------------------------------------
+// ------------------------------------
+// 元PDFのページ番号
+// ------------------------------------
 
-    const originalNumber =
-        document.createElement("div");
-
-
-    originalNumber.className =
-        "original-page-number";
+const originalNumber =
+document.createElement("div");
 
 
-    originalNumber.textContent =
-        `PDF ${originalPageNumber}ページ目`;
+originalNumber.className =
+"original-page-number";
 
 
-    // ------------------------------------
-    // 見開き
-    // ------------------------------------
-
-    const spread =
-        document.createElement("div");
+originalNumber.textContent =
+`PDF ${originalPageNumber}ページ目`;
 
 
-    spread.className =
-        "spread";
+// ------------------------------------
+// 見開き
+// ------------------------------------
+
+const spread =
+document.createElement("div");
 
 
-    // ========================================
-    // 左半ページ
-    // ========================================
-
-    const leftHalf =
-        createHalfPage(
-            leftCanvas,
-            originalPageNumber,
-            "left"
-        );
+spread.className =
+"spread";
 
 
-    // ========================================
-    // 右半ページ
-    // ========================================
+// ========================================
+// 左半ページ
+// ========================================
 
-    const rightHalf =
-        createHalfPage(
-            rightCanvas,
-            originalPageNumber,
-            "right"
-        );
-
-
-    // ------------------------------------
-    // 組み立て
-    // ------------------------------------
-
-    spread.appendChild(
-        leftHalf
-    );
+const leftHalf =
+createHalfPage(
+leftCanvas,
+originalPageNumber,
+"left"
+);
 
 
-    spread.appendChild(
-        rightHalf
-    );
+// ========================================
+// 右半ページ
+// ========================================
+
+const rightHalf =
+createHalfPage(
+rightCanvas,
+originalPageNumber,
+"right"
+);
 
 
-    spreadItem.appendChild(
-        originalNumber
-    );
+// ------------------------------------
+// 組み立て
+// ------------------------------------
+
+spread.appendChild(
+leftHalf
+);
 
 
-    spreadItem.appendChild(
-        spread
-    );
+spread.appendChild(
+rightHalf
+);
 
 
-    spreadsContainer.appendChild(
-        spreadItem
-    );
+spreadItem.appendChild(
+originalNumber
+);
+
+
+spreadItem.appendChild(
+spread
+);
+
+
+spreadsContainer.appendChild(
+spreadItem
+);
 }
 
 
@@ -642,33 +627,33 @@ async function createSpreadPreview(
 // ========================================
 
 function createHalfPage(
-    canvas,
-    originalPageNumber,
-    side
+canvas,
+originalPageNumber,
+side
 ) {
 
-    const half =
-        document.createElement("div");
+const half =
+document.createElement("div");
 
 
-    half.className =
-        "half-page";
+half.className =
+"half-page";
 
 
-    half.dataset.originalPage =
-        originalPageNumber;
+half.dataset.originalPage =
+originalPageNumber;
 
 
-    half.dataset.side =
-        side;
+half.dataset.side =
+side;
 
 
-    half.appendChild(
-        canvas
-    );
+half.appendChild(
+canvas
+);
 
 
- // ------------------------------------
+// ------------------------------------
 // 本のページとして順番に選択
 // ------------------------------------
 
@@ -684,7 +669,7 @@ half
 );
 
 
-    return half;
+return half;
 }
 
 
@@ -693,304 +678,304 @@ half
 // ========================================
 
 function selectFirstPage(
-    selectedHalf
+selectedHalf
 ) {
 
-    if (firstPageSelected) {
-        return;
-    }
+if (firstPageSelected) {
+return;
+}
 
 
-    firstPageSelected =
-        true;
+firstPageSelected =
+true;
 
 
-    // ========================================
-    // クリックされた側
-    // ========================================
+// ========================================
+// クリックされた側
+// ========================================
 
-    const firstSide =
-        selectedHalf.dataset.side;
+const firstSide =
+selectedHalf.dataset.side;
 
 
-    /*
-        このツールでの定義
+/*
+このツールでの定義
 
-        左側を1ページ目として選択
-        → 右綴じ
+左側を1ページ目として選択
+→ 右綴じ
 
-        右側を1ページ目として選択
-        → 左綴じ
-    */
+右側を1ページ目として選択
+→ 左綴じ
+*/
 
-    const bindingDirection =
-        firstSide === "left"
-            ? "右綴じ"
-            : "左綴じ";
+const bindingDirection =
+firstSide === "left"
+? "右綴じ"
+: "左綴じ";
 
-            currentBindingDirection =
-    bindingDirection;
+currentBindingDirection =
+bindingDirection;
 
 
-    // ========================================
-    // 見開きを取得
-    // ========================================
+// ========================================
+// 見開きを取得
+// ========================================
 
-    const spreads =
-        Array.from(
-            document.querySelectorAll(
-                ".spread"
-            )
-        );
+const spreads =
+Array.from(
+document.querySelectorAll(
+".spread"
+)
+);
 
 
-    // ========================================
-    // すべての半ページを一度除外
-    // ========================================
+// ========================================
+// すべての半ページを一度除外
+// ========================================
 
-    const allHalfPages =
-        Array.from(
-            document.querySelectorAll(
-                ".half-page"
-            )
-        );
+const allHalfPages =
+Array.from(
+document.querySelectorAll(
+".half-page"
+)
+);
 
 
-    allHalfPages.forEach(
-        function (half) {
+allHalfPages.forEach(
+function (half) {
 
-            half.classList.add(
-                "excluded"
-            );
+half.classList.add(
+"excluded"
+);
 
 
-            half.classList.remove(
-                "first-page"
-            );
+half.classList.remove(
+"first-page"
+);
 
 
-            delete half.dataset.bookPage;
+delete half.dataset.bookPage;
 
 
-            const oldNumber =
-                half.querySelector(
-                    ".book-page-number"
-                );
+const oldNumber =
+half.querySelector(
+".book-page-number"
+);
 
 
-            if (oldNumber) {
-                oldNumber.remove();
-            }
+if (oldNumber) {
+oldNumber.remove();
+}
 
 
-            const oldButton =
-                half.querySelector(
-                    ".page-download-button"
-                );
+const oldButton =
+half.querySelector(
+".page-download-button"
+);
 
 
-            if (oldButton) {
-                oldButton.remove();
-            }
+if (oldButton) {
+oldButton.remove();
+}
 
-        }
-    );
+}
+);
 
 
-    // ========================================
-    // ページ番号
-    // ========================================
+// ========================================
+// ページ番号
+// ========================================
 
-    let pageNumber = 1;
+let pageNumber = 1;
 
 
-    // ========================================
-    // 最初の見開き
-    // ========================================
+// ========================================
+// 最初の見開き
+// ========================================
 
-    const firstSpread =
-        spreads[0];
+const firstSpread =
+spreads[0];
 
 
-    const firstPage =
-        firstSpread.querySelector(
-            `.half-page[data-side="${firstSide}"]`
-        );
+const firstPage =
+firstSpread.querySelector(
+`.half-page[data-side="${firstSide}"]`
+);
 
 
-    setBookPage(
-        firstPage,
-        pageNumber
-    );
+setBookPage(
+firstPage,
+pageNumber
+);
 
 
-    pageNumber++;
+pageNumber++;
 
 
-    // ========================================
-    // 中間の見開き
-    // ========================================
+// ========================================
+// 中間の見開き
+// ========================================
 
-    for (
-        let i = 1;
-        i < spreads.length - 1;
-        i++
-    ) {
+for (
+let i = 1;
+i < spreads.length - 1;
+i++
+) {
 
-        const spread =
-            spreads[i];
+const spread =
+spreads[i];
 
 
-        const left =
-            spread.querySelector(
-                '.half-page[data-side="left"]'
-            );
+const left =
+spread.querySelector(
+'.half-page[data-side="left"]'
+);
 
 
-        const right =
-            spread.querySelector(
-                '.half-page[data-side="right"]'
-            );
+const right =
+spread.querySelector(
+'.half-page[data-side="right"]'
+);
 
 
-        // ====================================
-        // 右綴じ
-        //
-        // 3 | 2
-        // 5 | 4
-        // 7 | 6
-        // ====================================
+// ====================================
+// 右綴じ
+//
+// 3 | 2
+// 5 | 4
+// 7 | 6
+// ====================================
 
-        if (bindingDirection === "右綴じ") {
+if (bindingDirection === "右綴じ") {
 
-            setBookPage(
-                right,
-                pageNumber
-            );
+setBookPage(
+right,
+pageNumber
+);
 
 
-            pageNumber++;
+pageNumber++;
 
 
-            setBookPage(
-                left,
-                pageNumber
-            );
+setBookPage(
+left,
+pageNumber
+);
 
 
-            pageNumber++;
+pageNumber++;
 
-        }
+}
 
 
-        // ====================================
-        // 左綴じ
-        //
-        // 2 | 3
-        // 4 | 5
-        // 6 | 7
-        // ====================================
+// ====================================
+// 左綴じ
+//
+// 2 | 3
+// 4 | 5
+// 6 | 7
+// ====================================
 
-        else {
+else {
 
-            setBookPage(
-                left,
-                pageNumber
-            );
+setBookPage(
+left,
+pageNumber
+);
 
 
-            pageNumber++;
+pageNumber++;
 
 
-            setBookPage(
-                right,
-                pageNumber
-            );
+setBookPage(
+right,
+pageNumber
+);
 
 
-            pageNumber++;
+pageNumber++;
 
-        }
+}
 
-    }
+}
 
 
-    // ========================================
-    // 最後の見開き
-    // ========================================
+// ========================================
+// 最後の見開き
+// ========================================
 
-    const lastSpread =
-        spreads[
-            spreads.length - 1
-        ];
+const lastSpread =
+spreads[
+spreads.length - 1
+];
 
 
-    let lastPage;
+let lastPage;
 
 
-    // ----------------------------------------
-    // 右綴じ
-    //
-    // 白紙 | 8
-    // ----------------------------------------
+// ----------------------------------------
+// 右綴じ
+//
+// 白紙 | 8
+// ----------------------------------------
 
-    if (bindingDirection === "右綴じ") {
+if (bindingDirection === "右綴じ") {
 
-        lastPage =
-            lastSpread.querySelector(
-                '.half-page[data-side="right"]'
-            );
+lastPage =
+lastSpread.querySelector(
+'.half-page[data-side="right"]'
+);
 
-    }
+}
 
 
-    // ----------------------------------------
-    // 左綴じ
-    //
-    // 8 | 白紙
-    // ----------------------------------------
+// ----------------------------------------
+// 左綴じ
+//
+// 8 | 白紙
+// ----------------------------------------
 
-    else {
+else {
 
-        lastPage =
-            lastSpread.querySelector(
-                '.half-page[data-side="left"]'
-            );
+lastPage =
+lastSpread.querySelector(
+'.half-page[data-side="left"]'
+);
 
-    }
+}
 
 
-    setBookPage(
-        lastPage,
-        pageNumber
-    );
+setBookPage(
+lastPage,
+pageNumber
+);
 
 
-    // ========================================
-    // 最初のページを強調
-    // ========================================
+// ========================================
+// 最初のページを強調
+// ========================================
 
-    firstPage.classList.add(
-        "first-page"
-    );
+firstPage.classList.add(
+"first-page"
+);
 
 
-    // ========================================
-    // 表示更新
-    // ========================================
+// ========================================
+// 表示更新
+// ========================================
 
-    instruction.innerHTML =
-        `最初のページを設定しました。` +
-        `<br>` +
-        `${bindingDirection} / ` +
-        `全 ${pageNumber} ページ`;
-        bindingSection.classList.remove(
-    "hidden"
+instruction.innerHTML =
+`最初のページを設定しました。` +
+`<br>` +
+`${bindingDirection} / ` +
+`全 ${pageNumber} ページ`;
+bindingSection.classList.remove(
+"hidden"
 );
 
 bindingSection.scrollIntoView({
-    behavior: "smooth",
-    block: "start"
+behavior: "smooth",
+block: "start"
 });
 }
 
@@ -1007,14 +992,29 @@ if (!requiredBookPageCount) {
 return;
 }
 
+const lastSelectedHalf =
+selectedBookPages[
+selectedBookPages.length - 1
+];
+
 if (
-selectedBookPages.length >=
-requiredBookPageCount
+selectedHalf.dataset.bookPage &&
+selectedHalf === lastSelectedHalf
 ) {
+
+undoLastPageSelection();
+
 return;
 }
 
 if (selectedHalf.dataset.bookPage) {
+return;
+}
+
+if (
+selectedBookPages.length >=
+requiredBookPageCount
+) {
 return;
 }
 
@@ -1037,9 +1037,6 @@ selectedHalf.classList.add(
 );
 
 }
-
-undoPageSelectionButton.disabled =
-false;
 
 if (
 selectedBookPages.length ===
@@ -1169,9 +1166,6 @@ viewerPageCounter.textContent =
 viewerInfo.textContent =
 "";
 
-undoPageSelectionButton.disabled =
-selectedBookPages.length === 0;
-
 instruction.textContent =
 `${selectedBookPages.length + 1}ページ目にするページを選択してください。`;
 
@@ -1186,39 +1180,39 @@ function setBookPage(
 half,
 pageNumber
 ) {
-    half.classList.remove(
-        "excluded"
-    );
+half.classList.remove(
+"excluded"
+);
 
 
-    half.dataset.bookPage =
-        pageNumber;
+half.dataset.bookPage =
+pageNumber;
 
 
-    // ========================================
-    // ページ番号
-    // ========================================
+// ========================================
+// ページ番号
+// ========================================
 
-    const number =
-        document.createElement(
-            "div"
-        );
-
-
-    number.className =
-        "book-page-number";
+const number =
+document.createElement(
+"div"
+);
 
 
-    number.textContent =
-        pageNumber;
+number.className =
+"book-page-number";
 
 
-    half.appendChild(
-        number
-    );
+number.textContent =
+pageNumber;
 
 
-    
+half.appendChild(
+number
+);
+
+
+
 }
 
 
@@ -1227,204 +1221,204 @@ pageNumber
 // ========================================
 
 async function downloadSinglePage(
-    half,
-    bookPageNumber
+half,
+bookPageNumber
 ) {
 
-    if (!originalPdfBytes) {
+if (!originalPdfBytes) {
 
-        alert(
-            "元PDFのデータが見つかりません。"
-        );
+alert(
+"元PDFのデータが見つかりません。"
+);
 
-        return;
-    }
+return;
+}
 
 
-    if (typeof PDFLib === "undefined") {
+if (typeof PDFLib === "undefined") {
 
-        alert(
-            "PDF作成ライブラリを読み込めませんでした。"
-        );
+alert(
+"PDF作成ライブラリを読み込めませんでした。"
+);
 
-        return;
-    }
+return;
+}
 
 
-    try {
+try {
 
-        // ========================================
-        // 元PDFを読み込む
-        // ========================================
+// ========================================
+// 元PDFを読み込む
+// ========================================
 
-        const sourcePdf =
-            await PDFLib.PDFDocument.load(
-                originalPdfBytes
-            );
+const sourcePdf =
+await PDFLib.PDFDocument.load(
+originalPdfBytes
+);
 
 
-        const originalPageNumber =
-            Number(
-                half.dataset.originalPage
-            );
+const originalPageNumber =
+Number(
+half.dataset.originalPage
+);
 
 
-        const side =
-            half.dataset.side;
+const side =
+half.dataset.side;
 
 
-        // ========================================
-        // 対象ページを新しいPDFへコピー
-        // ========================================
+// ========================================
+// 対象ページを新しいPDFへコピー
+// ========================================
 
-        const outputPdf =
-            await PDFLib.PDFDocument.create();
+const outputPdf =
+await PDFLib.PDFDocument.create();
 
 
-        const [copiedPage] =
-            await outputPdf.copyPages(
-                sourcePdf,
-                [
-                    originalPageNumber - 1
-                ]
-            );
+const [copiedPage] =
+await outputPdf.copyPages(
+sourcePdf,
+[
+originalPageNumber - 1
+]
+);
 
 
-        // ========================================
-        // 元ページの実際のCropBoxを取得
-        // ========================================
+// ========================================
+// 元ページの実際のCropBoxを取得
+// ========================================
 
-        const cropBox =
-            copiedPage.getCropBox();
+const cropBox =
+copiedPage.getCropBox();
 
 
-        const halfWidth =
-            cropBox.width / 2;
+const halfWidth =
+cropBox.width / 2;
 
 
-        // ========================================
-        // 左右どちらを残すか
-        // ========================================
+// ========================================
+// 左右どちらを残すか
+// ========================================
 
-        let cropX;
+let cropX;
 
 
-        if (side === "left") {
+if (side === "left") {
 
-            cropX =
-                cropBox.x;
+cropX =
+cropBox.x;
 
-        } else {
+} else {
 
-            cropX =
-                cropBox.x + halfWidth;
+cropX =
+cropBox.x + halfWidth;
 
-        }
+}
 
 
-        // ========================================
-        // CropBoxを半分にする
-        // ========================================
+// ========================================
+// CropBoxを半分にする
+// ========================================
 
-        copiedPage.setCropBox(
-            cropX,
-            cropBox.y,
-            halfWidth,
-            cropBox.height
-        );
+copiedPage.setCropBox(
+cropX,
+cropBox.y,
+halfWidth,
+cropBox.height
+);
 
 
-        // ========================================
-        // MediaBoxも半ページサイズにする
-        // ========================================
+// ========================================
+// MediaBoxも半ページサイズにする
+// ========================================
 
-        copiedPage.setMediaBox(
-            cropX,
-            cropBox.y,
-            halfWidth,
-            cropBox.height
-        );
+copiedPage.setMediaBox(
+cropX,
+cropBox.y,
+halfWidth,
+cropBox.height
+);
 
 
-        // ========================================
-        // PDFへ追加
-        // ========================================
+// ========================================
+// PDFへ追加
+// ========================================
 
-        outputPdf.addPage(
-            copiedPage
-        );
+outputPdf.addPage(
+copiedPage
+);
 
 
-        // ========================================
-        // 保存
-        // ========================================
+// ========================================
+// 保存
+// ========================================
 
-        const pdfBytes =
-            await outputPdf.save();
+const pdfBytes =
+await outputPdf.save();
 
 
-        const blob =
-            new Blob(
-                [pdfBytes],
-                {
-                    type: "application/pdf"
-                }
-            );
+const blob =
+new Blob(
+[pdfBytes],
+{
+type: "application/pdf"
+}
+);
 
 
-        const url =
-            URL.createObjectURL(
-                blob
-            );
+const url =
+URL.createObjectURL(
+blob
+);
 
 
-        const link =
-            document.createElement(
-                "a"
-            );
+const link =
+document.createElement(
+"a"
+);
 
 
-        link.href =
-            url;
+link.href =
+url;
 
 
-        link.download =
-            `page-${bookPageNumber}.pdf`;
+link.download =
+`page-${bookPageNumber}.pdf`;
 
 
-        document.body.appendChild(
-            link
-        );
+document.body.appendChild(
+link
+);
 
 
-        link.click();
+link.click();
 
 
-        link.remove();
+link.remove();
 
 
-        setTimeout(
-            function () {
+setTimeout(
+function () {
 
-                URL.revokeObjectURL(
-                    url
-                );
+URL.revokeObjectURL(
+url
+);
 
-            },
-            1000
-        );
+},
+1000
+);
 
 
-    } catch (error) {
+} catch (error) {
 
-        console.error(error);
+console.error(error);
 
 
-        alert(
-            "PDFの作成に失敗しました。"
-        );
+alert(
+"PDFの作成に失敗しました。"
+);
 
-    }
+}
 }
 
 // ========================================
@@ -1432,8 +1426,8 @@ async function downloadSinglePage(
 // ========================================
 
 imposeButton.addEventListener(
-    "click",
-    createImposition
+"click",
+createImposition
 );
 
 
@@ -1465,47 +1459,47 @@ return;
 }
 
 
-    const selectedMethod =
-        document.querySelector(
-            'input[name="bindingMethod"]:checked'
-        );
+const selectedMethod =
+document.querySelector(
+'input[name="bindingMethod"]:checked'
+);
 
 
-    if (!selectedMethod) {
+if (!selectedMethod) {
 
-        alert(
-            "製本方法を選択してください。"
-        );
+alert(
+"製本方法を選択してください。"
+);
 
-        return;
-    }
-
-
-    currentBindingMethod =
-        selectedMethod.value;
+return;
+}
 
 
-    switch (currentBindingMethod) {
-
-        case "saddle-stitch":
-
-            currentImposition =
-                createSaddleStitchImposition();
-
-            break;
+currentBindingMethod =
+selectedMethod.value;
 
 
-        default:
+switch (currentBindingMethod) {
 
-            alert(
-                "この製本方法にはまだ対応していません。"
-            );
+case "saddle-stitch":
 
-            return;
-    }
+currentImposition =
+createSaddleStitchImposition();
+
+break;
 
 
-    createBookViewer();
+default:
+
+alert(
+"この製本方法にはまだ対応していません。"
+);
+
+return;
+}
+
+
+createBookViewer();
 
 }
 
@@ -1516,55 +1510,55 @@ return;
 
 function createViewerSpreads() {
 
-    const spreads = [];
+const spreads = [];
 
-    const totalPages =
-        viewerPages.length;
-
-
-    // ========================================
-    // 表紙
-    // ========================================
-
-    spreads.push({
-        pages: [1]
-    });
+const totalPages =
+viewerPages.length;
 
 
-    // ========================================
-    // 本文
-    //
-    // 2-3
-    // 4-5
-    // 6-7
-    // ...
-    // ========================================
+// ========================================
+// 表紙
+// ========================================
 
-    for (
-        let pageNumber = 2;
-        pageNumber < totalPages;
-        pageNumber += 2
-    ) {
-
-        spreads.push({
-            pages: [
-                pageNumber,
-                pageNumber + 1
-            ]
-        });
-    }
+spreads.push({
+pages: [1]
+});
 
 
-    // ========================================
-    // 裏表紙
-    // ========================================
+// ========================================
+// 本文
+//
+// 2-3
+// 4-5
+// 6-7
+// ...
+// ========================================
 
-    spreads.push({
-        pages: [totalPages]
-    });
+for (
+let pageNumber = 2;
+pageNumber < totalPages;
+pageNumber += 2
+) {
+
+spreads.push({
+pages: [
+pageNumber,
+pageNumber + 1
+]
+});
+}
 
 
-    return spreads;
+// ========================================
+// 裏表紙
+// ========================================
+
+spreads.push({
+pages: [totalPages]
+});
+
+
+return spreads;
 }
 
 
@@ -1574,102 +1568,102 @@ function createViewerSpreads() {
 
 function createSaddleStitchImposition() {
 
-    const bookPages =
-        getBookPages();
+const bookPages =
+getBookPages();
 
 
-    const totalPages =
-        bookPages.length;
+const totalPages =
+bookPages.length;
 
 
-    if (totalPages % 4 !== 0) {
+if (totalPages % 4 !== 0) {
 
-        alert(
-            "中綴じ製本ではページ数が4の倍数である必要があります。"
-        );
+alert(
+"中綴じ製本ではページ数が4の倍数である必要があります。"
+);
 
-        return [];
-    }
-
-
-    const imposedSurfaces = [];
+return [];
+}
 
 
-    let low =
-        1;
+const imposedSurfaces = [];
 
 
-    let high =
-        totalPages;
+let low =
+1;
 
 
-    while (low < high) {
-
-        // ========================================
-        // 右綴じ
-        // ========================================
-
-        if (
-            currentBindingDirection ===
-            "右綴じ"
-        ) {
-
-            // 表
-            imposedSurfaces.push({
-                left: low,
-                right: high
-            });
+let high =
+totalPages;
 
 
-            low++;
-            high--;
+while (low < high) {
+
+// ========================================
+// 右綴じ
+// ========================================
+
+if (
+currentBindingDirection ===
+"右綴じ"
+) {
+
+// 表
+imposedSurfaces.push({
+left: low,
+right: high
+});
 
 
-            // 裏
-            imposedSurfaces.push({
-                left: high,
-                right: low
-            });
+low++;
+high--;
 
 
-            low++;
-            high--;
-
-        }
-
-
-        // ========================================
-        // 左綴じ
-        // ========================================
-
-        else {
-
-            // 表
-            imposedSurfaces.push({
-                left: high,
-                right: low
-            });
+// 裏
+imposedSurfaces.push({
+left: high,
+right: low
+});
 
 
-            low++;
-            high--;
+low++;
+high--;
+
+}
 
 
-            // 裏
-            imposedSurfaces.push({
-                left: low,
-                right: high
-            });
+// ========================================
+// 左綴じ
+// ========================================
+
+else {
+
+// 表
+imposedSurfaces.push({
+left: high,
+right: low
+});
 
 
-            low++;
-            high--;
-
-        }
-    }
+low++;
+high--;
 
 
-    return imposedSurfaces;
+// 裏
+imposedSurfaces.push({
+left: low,
+right: high
+});
+
+
+low++;
+high--;
+
+}
+}
+
+
+return imposedSurfaces;
 }
 
 
@@ -1679,31 +1673,31 @@ function createSaddleStitchImposition() {
 
 function getBookPages() {
 
-    const pages =
-        Array.from(
-            document.querySelectorAll(
-                '.half-page[data-book-page]'
-            )
-        );
+const pages =
+Array.from(
+document.querySelectorAll(
+'.half-page[data-book-page]'
+)
+);
 
 
-    pages.sort(
-        function (a, b) {
+pages.sort(
+function (a, b) {
 
-            return (
-                Number(
-                    a.dataset.bookPage
-                ) -
-                Number(
-                    b.dataset.bookPage
-                )
-            );
+return (
+Number(
+a.dataset.bookPage
+) -
+Number(
+b.dataset.bookPage
+)
+);
 
-        }
-    );
+}
+);
 
 
-    return pages;
+return pages;
 }
 
 
@@ -1713,53 +1707,53 @@ function getBookPages() {
 
 function createBookViewer() {
 
-    viewerPages =
-        getBookPages();
+viewerPages =
+getBookPages();
 
 
-    if (
-        currentImposition.length === 0 ||
-        viewerPages.length === 0
-    ) {
+if (
+currentImposition.length === 0 ||
+viewerPages.length === 0
+) {
 
-        return;
-    }
-
-
-    // ========================================
-    // 製本後の見開きを作成
-    // ========================================
-
-    viewerSpreads =
-        createViewerSpreads();
+return;
+}
 
 
-    currentViewerSpreadIndex =
-        0;
+// ========================================
+// 製本後の見開きを作成
+// ========================================
+
+viewerSpreads =
+createViewerSpreads();
 
 
-    viewerInfo.textContent =
-        `${getBindingMethodName()} / ` +
-        `${currentBindingDirection}`;
+currentViewerSpreadIndex =
+0;
 
 
-    bookViewerSection.classList.remove(
-        "hidden"
-    );
+viewerInfo.textContent =
+`${getBindingMethodName()} / ` +
+`${currentBindingDirection}`;
 
 
-    printSection.classList.remove(
-        "hidden"
-    );
+bookViewerSection.classList.remove(
+"hidden"
+);
 
 
-    renderViewerPage();
+printSection.classList.remove(
+"hidden"
+);
 
 
-    bookViewerSection.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-    });
+renderViewerPage();
+
+
+bookViewerSection.scrollIntoView({
+behavior: "smooth",
+block: "start"
+});
 }
 
 
@@ -1769,14 +1763,14 @@ function createBookViewer() {
 
 function getBindingMethodName() {
 
-    switch (currentBindingMethod) {
+switch (currentBindingMethod) {
 
-        case "saddle-stitch":
-            return "中綴じ";
+case "saddle-stitch":
+return "中綴じ";
 
-        default:
-            return "不明";
-    }
+default:
+return "不明";
+}
 }
 
 
@@ -1786,180 +1780,180 @@ function getBindingMethodName() {
 
 function renderViewerPage() {
 
-    if (viewerSpreads.length === 0) {
-        return;
-    }
+if (viewerSpreads.length === 0) {
+return;
+}
 
 
-    viewerPage.innerHTML =
-        "";
+viewerPage.innerHTML =
+"";
 
 
-    const spread =
-        viewerSpreads[
-            currentViewerSpreadIndex
-        ];
+const spread =
+viewerSpreads[
+currentViewerSpreadIndex
+];
 
 
-    const spreadContainer =
-        document.createElement(
-            "div"
-        );
+const spreadContainer =
+document.createElement(
+"div"
+);
 
 
-    spreadContainer.className =
-        "viewer-spread";
+spreadContainer.className =
+"viewer-spread";
 
 
-    // ========================================
-    // 表紙・裏表紙
-    // ========================================
+// ========================================
+// 表紙・裏表紙
+// ========================================
 
-    if (spread.pages.length === 1) {
+if (spread.pages.length === 1) {
 
-        const pageNumber =
-            spread.pages[0];
-
-
-        const pageElement =
-            createViewerPageCanvas(
-                pageNumber
-            );
+const pageNumber =
+spread.pages[0];
 
 
-        spreadContainer.classList.add(
-            "single-page"
-        );
+const pageElement =
+createViewerPageCanvas(
+pageNumber
+);
 
 
-        // 右綴じ
-        if (
-            currentBindingDirection ===
-            "右綴じ"
-        ) {
-
-            if (pageNumber === 1) {
-
-                spreadContainer.classList.add(
-                    "single-right"
-                );
-
-            } else {
-
-                spreadContainer.classList.add(
-                    "single-left"
-                );
-            }
-
-        }
-
-        // 左綴じ
-        else {
-
-            if (pageNumber === 1) {
-
-                spreadContainer.classList.add(
-                    "single-left"
-                );
-
-            } else {
-
-                spreadContainer.classList.add(
-                    "single-right"
-                );
-            }
-        }
+spreadContainer.classList.add(
+"single-page"
+);
 
 
-        spreadContainer.appendChild(
-            pageElement
-        );
+// 右綴じ
+if (
+currentBindingDirection ===
+"右綴じ"
+) {
+
+if (pageNumber === 1) {
+
+spreadContainer.classList.add(
+"single-right"
+);
+
+} else {
+
+spreadContainer.classList.add(
+"single-left"
+);
+}
+
+}
+
+// 左綴じ
+else {
+
+if (pageNumber === 1) {
+
+spreadContainer.classList.add(
+"single-left"
+);
+
+} else {
+
+spreadContainer.classList.add(
+"single-right"
+);
+}
+}
 
 
-        viewerPageCounter.textContent =
-            `${pageNumber} / ${viewerPages.length}`;
-    }
+spreadContainer.appendChild(
+pageElement
+);
 
 
-    // ========================================
-    // 見開き
-    // ========================================
-
-    else {
-
-        const firstPageNumber =
-            spread.pages[0];
+viewerPageCounter.textContent =
+`${pageNumber} / ${viewerPages.length}`;
+}
 
 
-        const secondPageNumber =
-            spread.pages[1];
+// ========================================
+// 見開き
+// ========================================
+
+else {
+
+const firstPageNumber =
+spread.pages[0];
 
 
-        let leftPageNumber;
-        let rightPageNumber;
+const secondPageNumber =
+spread.pages[1];
 
 
-        // 右綴じ
-        //
-        // 3 | 2
-        // 5 | 4
-        // ========================================
-
-        if (
-            currentBindingDirection ===
-            "右綴じ"
-        ) {
-
-            leftPageNumber =
-                secondPageNumber;
-
-            rightPageNumber =
-                firstPageNumber;
-
-        }
+let leftPageNumber;
+let rightPageNumber;
 
 
-        // 左綴じ
-        //
-        // 2 | 3
-        // 4 | 5
-        // ========================================
+// 右綴じ
+//
+// 3 | 2
+// 5 | 4
+// ========================================
 
-        else {
+if (
+currentBindingDirection ===
+"右綴じ"
+) {
 
-            leftPageNumber =
-                firstPageNumber;
+leftPageNumber =
+secondPageNumber;
 
-            rightPageNumber =
-                secondPageNumber;
-        }
+rightPageNumber =
+firstPageNumber;
 
-
-        spreadContainer.appendChild(
-            createViewerPageCanvas(
-                leftPageNumber
-            )
-        );
+}
 
 
-        spreadContainer.appendChild(
-            createViewerPageCanvas(
-                rightPageNumber
-            )
-        );
+// 左綴じ
+//
+// 2 | 3
+// 4 | 5
+// ========================================
+
+else {
+
+leftPageNumber =
+firstPageNumber;
+
+rightPageNumber =
+secondPageNumber;
+}
 
 
-        viewerPageCounter.textContent =
-            `${firstPageNumber}–${secondPageNumber} / ${viewerPages.length}`;
-    }
+spreadContainer.appendChild(
+createViewerPageCanvas(
+leftPageNumber
+)
+);
 
 
-    viewerPage.appendChild(
-        spreadContainer
-    );
+spreadContainer.appendChild(
+createViewerPageCanvas(
+rightPageNumber
+)
+);
 
 
-    updateViewerButtons();
+viewerPageCounter.textContent =
+`${firstPageNumber}–${secondPageNumber} / ${viewerPages.length}`;
+}
+
+
+viewerPage.appendChild(
+spreadContainer
+);
+
+
+updateViewerButtons();
 }
 
 
@@ -1969,69 +1963,69 @@ function renderViewerPage() {
 
 function updateViewerButtons() {
 
-    const isFirst =
-    currentViewerSpreadIndex === 0;
+const isFirst =
+currentViewerSpreadIndex === 0;
 
 
 const isLast =
-    currentViewerSpreadIndex ===
-    viewerSpreads.length - 1;
+currentViewerSpreadIndex ===
+viewerSpreads.length - 1;
 
 
-    // ========================================
-    // 右綴じ
-    //
-    // 左：次へ
-    // 右：前へ
-    // ========================================
+// ========================================
+// 右綴じ
+//
+// 左：次へ
+// 右：前へ
+// ========================================
 
-    if (
-        currentBindingDirection ===
-        "右綴じ"
-    ) {
+if (
+currentBindingDirection ===
+"右綴じ"
+) {
 
-        viewerLeftButton.textContent =
-            "← 次へ";
-
-
-        viewerRightButton.textContent =
-            "前へ →";
+viewerLeftButton.textContent =
+"← 次へ";
 
 
-        viewerLeftButton.disabled =
-            isLast;
+viewerRightButton.textContent =
+"前へ →";
 
 
-        viewerRightButton.disabled =
-            isFirst;
-
-    }
+viewerLeftButton.disabled =
+isLast;
 
 
-    // ========================================
-    // 左綴じ
-    //
-    // 左：前へ
-    // 右：次へ
-    // ========================================
+viewerRightButton.disabled =
+isFirst;
 
-    else {
-
-        viewerLeftButton.textContent =
-            "← 前へ";
+}
 
 
-        viewerRightButton.textContent =
-            "次へ →";
+// ========================================
+// 左綴じ
+//
+// 左：前へ
+// 右：次へ
+// ========================================
+
+else {
+
+viewerLeftButton.textContent =
+"← 前へ";
 
 
-        viewerLeftButton.disabled =
-            isFirst;
+viewerRightButton.textContent =
+"次へ →";
 
 
-        viewerRightButton.disabled =
-            isLast;
-    }
+viewerLeftButton.disabled =
+isFirst;
+
+
+viewerRightButton.disabled =
+isLast;
+}
 }
 
 
@@ -2040,21 +2034,21 @@ const isLast =
 // ========================================
 
 viewerLeftButton.addEventListener(
-    "click",
-    function () {
+"click",
+function () {
 
-        if (
-            currentBindingDirection ===
-            "右綴じ"
-        ) {
+if (
+currentBindingDirection ===
+"右綴じ"
+) {
 
-            goToNextViewerPage();
+goToNextViewerPage();
 
-        } else {
+} else {
 
-            goToPreviousViewerPage();
-        }
-    }
+goToPreviousViewerPage();
+}
+}
 );
 
 
@@ -2063,21 +2057,21 @@ viewerLeftButton.addEventListener(
 // ========================================
 
 viewerRightButton.addEventListener(
-    "click",
-    function () {
+"click",
+function () {
 
-        if (
-            currentBindingDirection ===
-            "右綴じ"
-        ) {
+if (
+currentBindingDirection ===
+"右綴じ"
+) {
 
-            goToPreviousViewerPage();
+goToPreviousViewerPage();
 
-        } else {
+} else {
 
-            goToNextViewerPage();
-        }
-    }
+goToNextViewerPage();
+}
+}
 );
 
 
@@ -2087,80 +2081,80 @@ viewerRightButton.addEventListener(
 
 function goToNextViewerPage() {
 
-    if (
-        currentViewerSpreadIndex >=
-        viewerSpreads.length - 1
-    ) {
+if (
+currentViewerSpreadIndex >=
+viewerSpreads.length - 1
+) {
 
-        return;
-    }
-
-
-    currentViewerSpreadIndex++;
+return;
+}
 
 
-    renderViewerPage();
+currentViewerSpreadIndex++;
+
+
+renderViewerPage();
 }
 
 function createViewerPageCanvas(
-    pageNumber
+pageNumber
 ) {
 
-    const sourceHalf =
-        viewerPages[
-            pageNumber - 1
-        ];
+const sourceHalf =
+viewerPages[
+pageNumber - 1
+];
 
 
-    const sourceCanvas =
-        sourceHalf.querySelector(
-            "canvas"
-        );
+const sourceCanvas =
+sourceHalf.querySelector(
+"canvas"
+);
 
 
-    const wrapper =
-        document.createElement(
-            "div"
-        );
+const wrapper =
+document.createElement(
+"div"
+);
 
 
-    wrapper.className =
-        "viewer-book-page";
+wrapper.className =
+"viewer-book-page";
 
 
-    const canvas =
-        document.createElement(
-            "canvas"
-        );
+const canvas =
+document.createElement(
+"canvas"
+);
 
 
-    canvas.width =
-        sourceCanvas.width;
+canvas.width =
+sourceCanvas.width;
 
 
-    canvas.height =
-        sourceCanvas.height;
+canvas.height =
+sourceCanvas.height;
 
 
-    const context =
-        canvas.getContext(
-            "2d"
-        );
+const context =
+canvas.getContext(
+"2d"
+);
 
 
-    context.drawImage(
-        sourceCanvas,
-        0,
-        0
-    );
+context.drawImage(
+sourceCanvas,
+0,
+0
+);
 
 
-    wrapper.appendChild(
-        canvas
-    );
+wrapper.appendChild(
+canvas
+);
 
 
-    return wrapper;
+return wrapper;
 }
 
 
@@ -2170,18 +2164,18 @@ function createViewerPageCanvas(
 
 function goToPreviousViewerPage() {
 
-    if (
-        currentViewerSpreadIndex <= 0
-    ) {
+if (
+currentViewerSpreadIndex <= 0
+) {
 
-        return;
-    }
-
-
-    currentViewerSpreadIndex--;
+return;
+}
 
 
-    renderViewerPage();
+currentViewerSpreadIndex--;
+
+
+renderViewerPage();
 }
 
 
@@ -2190,74 +2184,74 @@ function goToPreviousViewerPage() {
 // ========================================
 
 document.addEventListener(
-    "keydown",
-    function (event) {
+"keydown",
+function (event) {
 
-        if (
-            bookViewerSection.classList.contains(
-                "hidden"
-            )
-        ) {
+if (
+bookViewerSection.classList.contains(
+"hidden"
+)
+) {
 
-            return;
-        }
-
-
-        // ========================================
-        // 右綴じ
-        // ========================================
-
-        if (
-            currentBindingDirection ===
-            "右綴じ"
-        ) {
-
-            if (
-                event.key ===
-                "ArrowLeft"
-            ) {
-
-                goToNextViewerPage();
-
-            }
+return;
+}
 
 
-            if (
-                event.key ===
-                "ArrowRight"
-            ) {
+// ========================================
+// 右綴じ
+// ========================================
 
-                goToPreviousViewerPage();
-            }
+if (
+currentBindingDirection ===
+"右綴じ"
+) {
 
-        }
+if (
+event.key ===
+"ArrowLeft"
+) {
 
+goToNextViewerPage();
 
-        // ========================================
-        // 左綴じ
-        // ========================================
-
-        else {
-
-            if (
-                event.key ===
-                "ArrowRight"
-            ) {
-
-                goToNextViewerPage();
-
-            }
+}
 
 
-            if (
-                event.key ===
-                "ArrowLeft"
-            ) {
+if (
+event.key ===
+"ArrowRight"
+) {
 
-                goToPreviousViewerPage();
-            }
-        }
-    }
+goToPreviousViewerPage();
+}
+
+}
+
+
+// ========================================
+// 左綴じ
+// ========================================
+
+else {
+
+if (
+event.key ===
+"ArrowRight"
+) {
+
+goToNextViewerPage();
+
+}
+
+
+if (
+event.key ===
+"ArrowLeft"
+) {
+
+goToPreviousViewerPage();
+}
+}
+}
 );
 
 
@@ -2266,101 +2260,101 @@ document.addEventListener(
 // ========================================
 
 let viewerTouchStartX =
-    null;
+null;
 
 
 viewerPage.addEventListener(
-    "touchstart",
-    function (event) {
+"touchstart",
+function (event) {
 
-        viewerTouchStartX =
-            event.changedTouches[0].clientX;
+viewerTouchStartX =
+event.changedTouches[0].clientX;
 
-    },
-    {
-        passive: true
-    }
+},
+{
+passive: true
+}
 );
 
 
 viewerPage.addEventListener(
-    "touchend",
-    function (event) {
+"touchend",
+function (event) {
 
-        if (
-            viewerTouchStartX === null
-        ) {
+if (
+viewerTouchStartX === null
+) {
 
-            return;
-        }
-
-
-        const touchEndX =
-            event.changedTouches[0].clientX;
+return;
+}
 
 
-        const difference =
-            touchEndX -
-            viewerTouchStartX;
+const touchEndX =
+event.changedTouches[0].clientX;
 
 
-        viewerTouchStartX =
-            null;
+const difference =
+touchEndX -
+viewerTouchStartX;
 
 
-        // 小さな移動は無視
-        if (
-            Math.abs(difference) < 50
-        ) {
-
-            return;
-        }
+viewerTouchStartX =
+null;
 
 
-        // ========================================
-        // 右綴じ
-        //
-        // 左へスワイプ → 次へ
-        // ========================================
+// 小さな移動は無視
+if (
+Math.abs(difference) < 50
+) {
 
-        if (
-            currentBindingDirection ===
-            "右綴じ"
-        ) {
-
-            if (difference < 0) {
-
-                goToNextViewerPage();
-
-            } else {
-
-                goToPreviousViewerPage();
-            }
-
-        }
+return;
+}
 
 
-        // ========================================
-        // 左綴じ
-        //
-        // 右へスワイプ → 次へ
-        // ========================================
+// ========================================
+// 右綴じ
+//
+// 左へスワイプ → 次へ
+// ========================================
 
-        else {
+if (
+currentBindingDirection ===
+"右綴じ"
+) {
 
-            if (difference > 0) {
+if (difference < 0) {
 
-                goToNextViewerPage();
+goToNextViewerPage();
 
-            } else {
+} else {
 
-                goToPreviousViewerPage();
-            }
-        }
-    },
-    {
-        passive: true
-    }
+goToPreviousViewerPage();
+}
+
+}
+
+
+// ========================================
+// 左綴じ
+//
+// 右へスワイプ → 次へ
+// ========================================
+
+else {
+
+if (difference > 0) {
+
+goToNextViewerPage();
+
+} else {
+
+goToPreviousViewerPage();
+}
+}
+},
+{
+passive: true
+}
 );
 
 // ========================================
@@ -2368,8 +2362,8 @@ viewerPage.addEventListener(
 // ========================================
 
 downloadPrintPdfButton.addEventListener(
-    "click",
-    downloadPrintPdf
+"click",
+downloadPrintPdf
 );
 
 
@@ -2379,237 +2373,237 @@ downloadPrintPdfButton.addEventListener(
 
 async function downloadPrintPdf() {
 
-    if (!originalPdfBytes) {
+if (!originalPdfBytes) {
 
-        alert(
-            "元PDFのデータが見つかりません。"
-        );
+alert(
+"元PDFのデータが見つかりません。"
+);
 
-        return;
-    }
+return;
+}
 
 
-    if (
-        !currentImposition ||
-        currentImposition.length === 0
-    ) {
+if (
+!currentImposition ||
+currentImposition.length === 0
+) {
 
-        alert(
-            "先に面付を行ってください。"
-        );
+alert(
+"先に面付を行ってください。"
+);
 
-        return;
-    }
+return;
+}
 
 
-    if (typeof PDFLib === "undefined") {
+if (typeof PDFLib === "undefined") {
 
-        alert(
-            "PDF作成ライブラリを読み込めませんでした。"
-        );
+alert(
+"PDF作成ライブラリを読み込めませんでした。"
+);
 
-        return;
-    }
+return;
+}
 
 
-    // ========================================
-    // 出力範囲
-    // ========================================
+// ========================================
+// 出力範囲
+// ========================================
 
-    const selectedRange =
-        document.querySelector(
-            'input[name="printRange"]:checked'
-        );
+const selectedRange =
+document.querySelector(
+'input[name="printRange"]:checked'
+);
 
 
-    if (!selectedRange) {
+if (!selectedRange) {
 
-        alert(
-            "ダウンロードする印刷面を選択してください。"
-        );
+alert(
+"ダウンロードする印刷面を選択してください。"
+);
 
-        return;
-    }
+return;
+}
 
 
-    const printRange =
-        selectedRange.value;
+const printRange =
+selectedRange.value;
 
 
-    try {
+try {
 
-        downloadPrintPdfButton.disabled =
-            true;
+downloadPrintPdfButton.disabled =
+true;
 
 
-        printStatus.textContent =
-            "印刷用PDFを作成しています…";
+printStatus.textContent =
+"印刷用PDFを作成しています…";
 
 
-        // ========================================
-        // 元PDF
-        // ========================================
+// ========================================
+// 元PDF
+// ========================================
 
-        const sourcePdf =
-            await PDFLib.PDFDocument.load(
-                originalPdfBytes
-            );
+const sourcePdf =
+await PDFLib.PDFDocument.load(
+originalPdfBytes
+);
 
 
-        // ========================================
-        // 出力PDF
-        // ========================================
+// ========================================
+// 出力PDF
+// ========================================
 
-        const outputPdf =
-            await PDFLib.PDFDocument.create();
+const outputPdf =
+await PDFLib.PDFDocument.create();
 
 
-        // ========================================
-        // 本ページ → 元PDF位置
-        // ========================================
+// ========================================
+// 本ページ → 元PDF位置
+// ========================================
 
-        const pageMap =
-            createBookPageSourceMap();
+const pageMap =
+createBookPageSourceMap();
 
 
-        // ========================================
-        // 面を順番に処理
-        // ========================================
+// ========================================
+// 面を順番に処理
+// ========================================
 
-        for (
-            let i = 0;
-            i < currentImposition.length;
-            i++
-        ) {
+for (
+let i = 0;
+i < currentImposition.length;
+i++
+) {
 
-            const surfaceNumber =
-                i + 1;
+const surfaceNumber =
+i + 1;
 
 
-            // ------------------------------------
-            // 奇数面のみ
-            // ------------------------------------
+// ------------------------------------
+// 奇数面のみ
+// ------------------------------------
 
-            if (
-                printRange === "odd" &&
-                surfaceNumber % 2 === 0
-            ) {
+if (
+printRange === "odd" &&
+surfaceNumber % 2 === 0
+) {
 
-                continue;
-            }
+continue;
+}
 
 
-            // ------------------------------------
-            // 偶数面のみ
-            // ------------------------------------
+// ------------------------------------
+// 偶数面のみ
+// ------------------------------------
 
-            if (
-                printRange === "even" &&
-                surfaceNumber % 2 !== 0
-            ) {
+if (
+printRange === "even" &&
+surfaceNumber % 2 !== 0
+) {
 
-                continue;
-            }
+continue;
+}
 
 
-            const surface =
-                currentImposition[i];
+const surface =
+currentImposition[i];
 
 
-            await addImposedSurfaceToPdf(
-                sourcePdf,
-                outputPdf,
-                pageMap,
-                surface
-            );
-        }
+await addImposedSurfaceToPdf(
+sourcePdf,
+outputPdf,
+pageMap,
+surface
+);
+}
 
 
-        // ========================================
-        // PDF保存
-        // ========================================
+// ========================================
+// PDF保存
+// ========================================
 
-        const pdfBytes =
-            await outputPdf.save();
+const pdfBytes =
+await outputPdf.save();
 
 
-        const blob =
-            new Blob(
-                [pdfBytes],
-                {
-                    type: "application/pdf"
-                }
-            );
+const blob =
+new Blob(
+[pdfBytes],
+{
+type: "application/pdf"
+}
+);
 
 
-        const url =
-            URL.createObjectURL(
-                blob
-            );
+const url =
+URL.createObjectURL(
+blob
+);
 
 
-        const link =
-            document.createElement(
-                "a"
-            );
+const link =
+document.createElement(
+"a"
+);
 
 
-        link.href =
-            url;
+link.href =
+url;
 
 
-        link.download =
-            createPrintPdfFileName(
-                printRange
-            );
+link.download =
+createPrintPdfFileName(
+printRange
+);
 
 
-        document.body.appendChild(
-            link
-        );
+document.body.appendChild(
+link
+);
 
 
-        link.click();
+link.click();
 
 
-        link.remove();
+link.remove();
 
 
-        setTimeout(
-            function () {
+setTimeout(
+function () {
 
-                URL.revokeObjectURL(
-                    url
-                );
+URL.revokeObjectURL(
+url
+);
 
-            },
-            1000
-        );
+},
+1000
+);
 
 
-        printStatus.textContent =
-            "印刷用PDFを作成しました。";
+printStatus.textContent =
+"印刷用PDFを作成しました。";
 
 
-    } catch (error) {
+} catch (error) {
 
-        console.error(error);
+console.error(error);
 
 
-        printStatus.textContent =
-            "";
+printStatus.textContent =
+"";
 
 
-        alert(
-            "印刷用PDFの作成に失敗しました。"
-        );
+alert(
+"印刷用PDFの作成に失敗しました。"
+);
 
 
-    } finally {
+} finally {
 
-        downloadPrintPdfButton.disabled =
-            false;
-    }
+downloadPrintPdfButton.disabled =
+false;
+}
 }
 
 
@@ -2619,50 +2613,50 @@ async function downloadPrintPdf() {
 
 function createBookPageSourceMap() {
 
-    const pageMap =
-        new Map();
+const pageMap =
+new Map();
 
 
-    const bookPages =
-        document.querySelectorAll(
-            '.half-page[data-book-page]'
-        );
+const bookPages =
+document.querySelectorAll(
+'.half-page[data-book-page]'
+);
 
 
-    bookPages.forEach(
-        function (half) {
+bookPages.forEach(
+function (half) {
 
-            const bookPageNumber =
-                Number(
-                    half.dataset.bookPage
-                );
-
-
-            const originalPageNumber =
-                Number(
-                    half.dataset.originalPage
-                );
+const bookPageNumber =
+Number(
+half.dataset.bookPage
+);
 
 
-            const side =
-                half.dataset.side;
+const originalPageNumber =
+Number(
+half.dataset.originalPage
+);
 
 
-            pageMap.set(
-                bookPageNumber,
-                {
-                    originalPageNumber:
-                        originalPageNumber,
-
-                    side:
-                        side
-                }
-            );
-        }
-    );
+const side =
+half.dataset.side;
 
 
-    return pageMap;
+pageMap.set(
+bookPageNumber,
+{
+originalPageNumber:
+originalPageNumber,
+
+side:
+side
+}
+);
+}
+);
+
+
+return pageMap;
 }
 
 
@@ -2671,137 +2665,137 @@ function createBookPageSourceMap() {
 // ========================================
 
 async function addImposedSurfaceToPdf(
-    sourcePdf,
-    outputPdf,
-    pageMap,
-    surface
+sourcePdf,
+outputPdf,
+pageMap,
+surface
 ) {
 
-    const leftSource =
-        pageMap.get(
-            surface.left
-        );
+const leftSource =
+pageMap.get(
+surface.left
+);
 
 
-    const rightSource =
-        pageMap.get(
-            surface.right
-        );
+const rightSource =
+pageMap.get(
+surface.right
+);
 
 
-    if (
-        !leftSource ||
-        !rightSource
-    ) {
+if (
+!leftSource ||
+!rightSource
+) {
 
-        throw new Error(
-            "面付するページが見つかりません。"
-        );
-    }
-
-
-    // ========================================
-    // 左右ページを埋め込み用に取得
-    // ========================================
-
-    const leftData =
-        await embedBookPage(
-            sourcePdf,
-            outputPdf,
-            leftSource
-        );
+throw new Error(
+"面付するページが見つかりません。"
+);
+}
 
 
-    const rightData =
-        await embedBookPage(
-            sourcePdf,
-            outputPdf,
-            rightSource
-        );
+// ========================================
+// 左右ページを埋め込み用に取得
+// ========================================
+
+const leftData =
+await embedBookPage(
+sourcePdf,
+outputPdf,
+leftSource
+);
 
 
-    // ========================================
-    // ページサイズが一致しているか確認
-    // ========================================
-
-    const tolerance =
-        0.01;
-
-
-    if (
-        Math.abs(
-            leftData.width -
-            rightData.width
-        ) > tolerance ||
-        Math.abs(
-            leftData.height -
-            rightData.height
-        ) > tolerance
-    ) {
-
-        throw new Error(
-            "左右ページのサイズが一致していません。"
-        );
-    }
+const rightData =
+await embedBookPage(
+sourcePdf,
+outputPdf,
+rightSource
+);
 
 
-    const halfWidth =
-        leftData.width;
+// ========================================
+// ページサイズが一致しているか確認
+// ========================================
+
+const tolerance =
+0.01;
 
 
-    const pageHeight =
-        leftData.height;
+if (
+Math.abs(
+leftData.width -
+rightData.width
+) > tolerance ||
+Math.abs(
+leftData.height -
+rightData.height
+) > tolerance
+) {
+
+throw new Error(
+"左右ページのサイズが一致していません。"
+);
+}
 
 
-    // ========================================
-    // 元の見開きサイズで印刷面を作成
-    // ========================================
-
-    const outputPage =
-        outputPdf.addPage(
-            [
-                halfWidth * 2,
-                pageHeight
-            ]
-        );
+const halfWidth =
+leftData.width;
 
 
-    // ========================================
-    // 左ページ
-    // ========================================
-
-    outputPage.drawPage(
-        leftData.embeddedPage,
-        {
-            x: 0,
-            y: 0,
-
-            width:
-                halfWidth,
-
-            height:
-                pageHeight
-        }
-    );
+const pageHeight =
+leftData.height;
 
 
-    // ========================================
-    // 右ページ
-    // ========================================
+// ========================================
+// 元の見開きサイズで印刷面を作成
+// ========================================
 
-    outputPage.drawPage(
-        rightData.embeddedPage,
-        {
-            x: halfWidth,
-            y: 0,
+const outputPage =
+outputPdf.addPage(
+[
+halfWidth * 2,
+pageHeight
+]
+);
 
-            width:
-                halfWidth,
 
-            height:
-                pageHeight
-        }
-    );
+// ========================================
+// 左ページ
+// ========================================
+
+outputPage.drawPage(
+leftData.embeddedPage,
+{
+x: 0,
+y: 0,
+
+width:
+halfWidth,
+
+height:
+pageHeight
+}
+);
+
+
+// ========================================
+// 右ページ
+// ========================================
+
+outputPage.drawPage(
+rightData.embeddedPage,
+{
+x: halfWidth,
+y: 0,
+
+width:
+halfWidth,
+
+height:
+pageHeight
+}
+);
 }
 
 
@@ -2810,84 +2804,84 @@ async function addImposedSurfaceToPdf(
 // ========================================
 
 async function embedBookPage(
-    sourcePdf,
-    outputPdf,
-    source
+sourcePdf,
+outputPdf,
+source
 ) {
 
-    const sourcePage =
-        sourcePdf.getPage(
-            source.originalPageNumber - 1
-        );
+const sourcePage =
+sourcePdf.getPage(
+source.originalPageNumber - 1
+);
 
 
-    const cropBox =
-        sourcePage.getCropBox();
+const cropBox =
+sourcePage.getCropBox();
 
 
-    const halfWidth =
-        cropBox.width / 2;
+const halfWidth =
+cropBox.width / 2;
 
 
-    let left;
-    let right;
+let left;
+let right;
 
 
-    if (
-        source.side ===
-        "left"
-    ) {
+if (
+source.side ===
+"left"
+) {
 
-        left =
-            cropBox.x;
-
-
-        right =
-            cropBox.x +
-            halfWidth;
-
-    } else {
-
-        left =
-            cropBox.x +
-            halfWidth;
+left =
+cropBox.x;
 
 
-        right =
-            cropBox.x +
-            cropBox.width;
-    }
+right =
+cropBox.x +
+halfWidth;
+
+} else {
+
+left =
+cropBox.x +
+halfWidth;
 
 
-    /*
-        元PDFページを画像化せず、
-        必要な半分だけを直接埋め込む。
-    */
-
-    const embeddedPage =
-        await outputPdf.embedPage(
-            sourcePage,
-            {
-                left: left,
-                bottom: cropBox.y,
-                right: right,
-                top:
-                    cropBox.y +
-                    cropBox.height
-            }
-        );
+right =
+cropBox.x +
+cropBox.width;
+}
 
 
-    return {
-        embeddedPage:
-            embeddedPage,
+/*
+元PDFページを画像化せず、
+必要な半分だけを直接埋め込む。
+*/
 
-        width:
-            halfWidth,
+const embeddedPage =
+await outputPdf.embedPage(
+sourcePage,
+{
+left: left,
+bottom: cropBox.y,
+right: right,
+top:
+cropBox.y +
+cropBox.height
+}
+);
 
-        height:
-            cropBox.height
-    };
+
+return {
+embeddedPage:
+embeddedPage,
+
+width:
+halfWidth,
+
+height:
+cropBox.height
+};
 }
 
 
@@ -2897,38 +2891,38 @@ async function embedBookPage(
 
 function createPrintPdfFileName() {
 
-    let fileName =
-        printFileName.value.trim();
+let fileName =
+printFileName.value.trim();
 
 
-    // 未入力の場合
-    if (!fileName) {
+// 未入力の場合
+if (!fileName) {
 
-        fileName =
-            "全部";
-    }
-
-
-    // .pdfまで入力された場合は取り除く
-    fileName =
-        fileName.replace(
-            /\.pdf$/i,
-            ""
-        );
+fileName =
+"全部";
+}
 
 
-    // ファイル名に使用できない文字を置換
-    fileName =
-        fileName.replace(
-            /[\\/:*?"<>|]/g,
-            "_"
-        );
+// .pdfまで入力された場合は取り除く
+fileName =
+fileName.replace(
+/\.pdf$/i,
+""
+);
 
 
-    return (
-        fileName +
-        ".pdf"
-    );
+// ファイル名に使用できない文字を置換
+fileName =
+fileName.replace(
+/[\\/:*?"<>|]/g,
+"_"
+);
+
+
+return (
+fileName +
+".pdf"
+);
 }
 
 // ========================================
@@ -2936,8 +2930,8 @@ function createPrintPdfFileName() {
 // ========================================
 
 downloadPagesZipButton.addEventListener(
-    "click",
-    downloadPagesZip
+"click",
+downloadPagesZip
 );
 
 
@@ -2947,318 +2941,318 @@ downloadPagesZipButton.addEventListener(
 
 async function downloadPagesZip() {
 
-    if (!originalPdfBytes) {
+if (!originalPdfBytes) {
 
-        alert(
-            "元PDFのデータが見つかりません。"
-        );
+alert(
+"元PDFのデータが見つかりません。"
+);
 
-        return;
-    }
+return;
+}
 
 
-    if (typeof JSZip === "undefined") {
+if (typeof JSZip === "undefined") {
 
-        alert(
-            "ZIP作成ライブラリを読み込めませんでした。"
-        );
+alert(
+"ZIP作成ライブラリを読み込めませんでした。"
+);
 
-        return;
-    }
+return;
+}
 
 
-    // ========================================
-    // ファイル形式
-    // ========================================
+// ========================================
+// ファイル形式
+// ========================================
 
-    const selectedFormat =
-        document.querySelector(
-            'input[name="pageFormat"]:checked'
-        );
+const selectedFormat =
+document.querySelector(
+'input[name="pageFormat"]:checked'
+);
 
 
-    if (!selectedFormat) {
+if (!selectedFormat) {
 
-        alert(
-            "ファイル形式を選択してください。"
-        );
+alert(
+"ファイル形式を選択してください。"
+);
 
-        return;
-    }
+return;
+}
 
 
-    const pageFormat =
-        selectedFormat.value;
+const pageFormat =
+selectedFormat.value;
 
 
-    try {
+try {
 
-        downloadPagesZipButton.disabled =
-            true;
+downloadPagesZipButton.disabled =
+true;
 
 
-        pageZipStatus.textContent =
-            "ページごとのデータを作成しています…";
+pageZipStatus.textContent =
+"ページごとのデータを作成しています…";
 
 
-        // ========================================
-        // 本ページと元PDF位置の対応
-        // ========================================
+// ========================================
+// 本ページと元PDF位置の対応
+// ========================================
 
-        const pageMap =
-            createBookPageSourceMap();
+const pageMap =
+createBookPageSourceMap();
 
 
-        const totalPages =
-            pageMap.size;
+const totalPages =
+pageMap.size;
 
 
-        const zip =
-            new JSZip();
+const zip =
+new JSZip();
 
 
-        // ========================================
-        // PDFの場合
-        // ========================================
+// ========================================
+// PDFの場合
+// ========================================
 
-        if (pageFormat === "pdf") {
+if (pageFormat === "pdf") {
 
-            if (typeof PDFLib === "undefined") {
+if (typeof PDFLib === "undefined") {
 
-                throw new Error(
-                    "PDF作成ライブラリを読み込めませんでした。"
-                );
-            }
+throw new Error(
+"PDF作成ライブラリを読み込めませんでした。"
+);
+}
 
 
-            const sourcePdf =
-                await PDFLib.PDFDocument.load(
-                    originalPdfBytes
-                );
+const sourcePdf =
+await PDFLib.PDFDocument.load(
+originalPdfBytes
+);
 
 
-            for (
-                let pageNumber = 1;
-                pageNumber <= totalPages;
-                pageNumber++
-            ) {
+for (
+let pageNumber = 1;
+pageNumber <= totalPages;
+pageNumber++
+) {
 
-                const source =
-                    pageMap.get(
-                        pageNumber
-                    );
+const source =
+pageMap.get(
+pageNumber
+);
 
 
-                if (!source) {
+if (!source) {
 
-                    throw new Error(
-                        `ページ${pageNumber}が見つかりません。`
-                    );
-                }
+throw new Error(
+`ページ${pageNumber}が見つかりません。`
+);
+}
 
 
-                const pdfBytes =
-                    await createSingleBookPagePdf(
-                        sourcePdf,
-                        source
-                    );
+const pdfBytes =
+await createSingleBookPagePdf(
+sourcePdf,
+source
+);
 
 
-                const numberText =
-                    String(
-                        pageNumber
-                    ).padStart(
-                        2,
-                        "0"
-                    );
+const numberText =
+String(
+pageNumber
+).padStart(
+2,
+"0"
+);
 
 
-                zip.file(
-                    `page${numberText}.pdf`,
-                    pdfBytes
-                );
+zip.file(
+`page${numberText}.pdf`,
+pdfBytes
+);
 
 
-                pageZipStatus.textContent =
-                    `${pageNumber} / ${totalPages} ページを作成中…`;
-            }
-        }
+pageZipStatus.textContent =
+`${pageNumber} / ${totalPages} ページを作成中…`;
+}
+}
 
 
-        // ========================================
-        // PNGの場合
-        // ========================================
+// ========================================
+// PNGの場合
+// ========================================
 
-        if (pageFormat === "png") {
+if (pageFormat === "png") {
 
-            const pdfData =
-                originalPdfBytes.slice(0);
+const pdfData =
+originalPdfBytes.slice(0);
 
 
-            const pdf =
-                await pdfjsLib
-                    .getDocument({
-                        data: pdfData
-                    })
-                    .promise;
+const pdf =
+await pdfjsLib
+.getDocument({
+data: pdfData
+})
+.promise;
 
 
-            for (
-                let pageNumber = 1;
-                pageNumber <= totalPages;
-                pageNumber++
-            ) {
+for (
+let pageNumber = 1;
+pageNumber <= totalPages;
+pageNumber++
+) {
 
-                const source =
-                    pageMap.get(
-                        pageNumber
-                    );
+const source =
+pageMap.get(
+pageNumber
+);
 
 
-                if (!source) {
+if (!source) {
 
-                    throw new Error(
-                        `ページ${pageNumber}が見つかりません。`
-                    );
-                }
+throw new Error(
+`ページ${pageNumber}が見つかりません。`
+);
+}
 
 
-                const pngBlob =
-                    await createSingleBookPagePng(
-                        pdf,
-                        source
-                    );
+const pngBlob =
+await createSingleBookPagePng(
+pdf,
+source
+);
 
 
-                const numberText =
-                    String(
-                        pageNumber
-                    ).padStart(
-                        2,
-                        "0"
-                    );
+const numberText =
+String(
+pageNumber
+).padStart(
+2,
+"0"
+);
 
 
-                zip.file(
-                    `page${numberText}.png`,
-                    pngBlob
-                );
+zip.file(
+`page${numberText}.png`,
+pngBlob
+);
 
 
-                pageZipStatus.textContent =
-                    `${pageNumber} / ${totalPages} ページを作成中…`;
-            }
-        }
+pageZipStatus.textContent =
+`${pageNumber} / ${totalPages} ページを作成中…`;
+}
+}
 
 
-        // ========================================
-        // ZIP生成
-        // ========================================
+// ========================================
+// ZIP生成
+// ========================================
 
-        pageZipStatus.textContent =
-            "ZIPファイルを作成しています…";
+pageZipStatus.textContent =
+"ZIPファイルを作成しています…";
 
 
-        const zipBlob =
-            await zip.generateAsync({
-                type: "blob"
-            });
+const zipBlob =
+await zip.generateAsync({
+type: "blob"
+});
 
 
-        const url =
-            URL.createObjectURL(
-                zipBlob
-            );
+const url =
+URL.createObjectURL(
+zipBlob
+);
 
 
-        const link =
-            document.createElement(
-                "a"
-            );
+const link =
+document.createElement(
+"a"
+);
 
 
-        link.href =
-            url;
+link.href =
+url;
 
 
-        let zipFileName =
-    pageZipFileName.value.trim();
+let zipFileName =
+pageZipFileName.value.trim();
 
 
 if (!zipFileName) {
 
-    zipFileName =
-        "pages";
+zipFileName =
+"pages";
 }
 
 
 // .zipまで入力されていた場合は取り除く
 zipFileName =
-    zipFileName.replace(
-        /\.zip$/i,
-        ""
-    );
+zipFileName.replace(
+/\.zip$/i,
+""
+);
 
 
 // ファイル名に使用できない文字を置換
 zipFileName =
-    zipFileName.replace(
-        /[\\/:*?"<>|]/g,
-        "_"
-    );
+zipFileName.replace(
+/[\\/:*?"<>|]/g,
+"_"
+);
 
 
 link.download =
-    zipFileName +
-    ".zip";
+zipFileName +
+".zip";
 
 
-        document.body.appendChild(
-            link
-        );
+document.body.appendChild(
+link
+);
 
 
-        link.click();
+link.click();
 
 
-        link.remove();
+link.remove();
 
 
-        setTimeout(
-            function () {
+setTimeout(
+function () {
 
-                URL.revokeObjectURL(
-                    url
-                );
+URL.revokeObjectURL(
+url
+);
 
-            },
-            1000
-        );
-
-
-        pageZipStatus.textContent =
-            `${totalPages}ページのデータをZIPにまとめました。`;
+},
+1000
+);
 
 
-    } catch (error) {
-
-        console.error(error);
-
-
-        pageZipStatus.textContent =
-            "";
+pageZipStatus.textContent =
+`${totalPages}ページのデータをZIPにまとめました。`;
 
 
-        alert(
-            "ページごとのデータの作成に失敗しました。"
-        );
+} catch (error) {
+
+console.error(error);
 
 
-    } finally {
+pageZipStatus.textContent =
+"";
 
-        downloadPagesZipButton.disabled =
-            false;
-    }
+
+alert(
+"ページごとのデータの作成に失敗しました。"
+);
+
+
+} finally {
+
+downloadPagesZipButton.disabled =
+false;
+}
 }
 
 
@@ -3267,96 +3261,96 @@ link.download =
 // ========================================
 
 async function createSingleBookPagePdf(
-    sourcePdf,
-    source
+sourcePdf,
+source
 ) {
 
-    const outputPdf =
-        await PDFLib.PDFDocument.create();
+const outputPdf =
+await PDFLib.PDFDocument.create();
 
 
-    // ========================================
-    // 元ページをコピー
-    // ========================================
+// ========================================
+// 元ページをコピー
+// ========================================
 
-    const [copiedPage] =
-        await outputPdf.copyPages(
-            sourcePdf,
-            [
-                source.originalPageNumber - 1
-            ]
-        );
-
-
-    // ========================================
-    // 元ページのCropBox
-    // ========================================
-
-    const cropBox =
-        copiedPage.getCropBox();
+const [copiedPage] =
+await outputPdf.copyPages(
+sourcePdf,
+[
+source.originalPageNumber - 1
+]
+);
 
 
-    const halfWidth =
-        cropBox.width / 2;
+// ========================================
+// 元ページのCropBox
+// ========================================
+
+const cropBox =
+copiedPage.getCropBox();
 
 
-    // ========================================
-    // 左右どちらを残すか
-    // ========================================
-
-    let cropX;
+const halfWidth =
+cropBox.width / 2;
 
 
-    if (
-        source.side ===
-        "left"
-    ) {
+// ========================================
+// 左右どちらを残すか
+// ========================================
 
-        cropX =
-            cropBox.x;
-
-    } else {
-
-        cropX =
-            cropBox.x +
-            halfWidth;
-    }
+let cropX;
 
 
-    // ========================================
-    // 半ページに切り出す
-    // ========================================
+if (
+source.side ===
+"left"
+) {
 
-    copiedPage.setCropBox(
-        cropX,
-        cropBox.y,
-        halfWidth,
-        cropBox.height
-    );
+cropX =
+cropBox.x;
 
+} else {
 
-    copiedPage.setMediaBox(
-        cropX,
-        cropBox.y,
-        halfWidth,
-        cropBox.height
-    );
+cropX =
+cropBox.x +
+halfWidth;
+}
 
 
-    // ========================================
-    // PDFへ追加
-    // ========================================
+// ========================================
+// 半ページに切り出す
+// ========================================
 
-    outputPdf.addPage(
-        copiedPage
-    );
+copiedPage.setCropBox(
+cropX,
+cropBox.y,
+halfWidth,
+cropBox.height
+);
 
 
-    // ========================================
-    // PDFデータを返す
-    // ========================================
+copiedPage.setMediaBox(
+cropX,
+cropBox.y,
+halfWidth,
+cropBox.height
+);
 
-    return await outputPdf.save();
+
+// ========================================
+// PDFへ追加
+// ========================================
+
+outputPdf.addPage(
+copiedPage
+);
+
+
+// ========================================
+// PDFデータを返す
+// ========================================
+
+return await outputPdf.save();
 }
 
 // ========================================
@@ -3365,172 +3359,172 @@ async function createSingleBookPagePdf(
 // ========================================
 
 async function createSingleBookPagePng(
-    pdf,
-    source
+pdf,
+source
 ) {
 
-    const page =
-        await pdf.getPage(
-            source.originalPageNumber
-        );
+const page =
+await pdf.getPage(
+source.originalPageNumber
+);
 
 
-    /*
-        PDFの標準単位は72dpi基準。
+/*
+PDFの標準単位は72dpi基準。
 
-        300 / 72 にすることで
-        300dpi相当のピクセル数で描画する。
-    */
+300 / 72 にすることで
+300dpi相当のピクセル数で描画する。
+*/
 
-    const scale =
-        300 / 72;
-
-
-    const viewport =
-        page.getViewport({
-            scale: scale
-        });
+const scale =
+300 / 72;
 
 
-    // ========================================
-    // 見開き全体を高解像度レンダリング
-    // ========================================
-
-    const fullCanvas =
-        document.createElement(
-            "canvas"
-        );
+const viewport =
+page.getViewport({
+scale: scale
+});
 
 
-    fullCanvas.width =
-        Math.ceil(
-            viewport.width
-        );
+// ========================================
+// 見開き全体を高解像度レンダリング
+// ========================================
+
+const fullCanvas =
+document.createElement(
+"canvas"
+);
 
 
-    fullCanvas.height =
-        Math.ceil(
-            viewport.height
-        );
+fullCanvas.width =
+Math.ceil(
+viewport.width
+);
 
 
-    const fullContext =
-        fullCanvas.getContext(
-            "2d"
-        );
+fullCanvas.height =
+Math.ceil(
+viewport.height
+);
 
 
-    await page.render({
-        canvasContext:
-            fullContext,
-
-        viewport:
-            viewport
-    }).promise;
+const fullContext =
+fullCanvas.getContext(
+"2d"
+);
 
 
-    // ========================================
-    // 半ページサイズ
-    // ========================================
+await page.render({
+canvasContext:
+fullContext,
 
-    const halfWidth =
-        Math.floor(
-            fullCanvas.width / 2
-        );
-
-
-    const outputCanvas =
-        document.createElement(
-            "canvas"
-        );
+viewport:
+viewport
+}).promise;
 
 
-    outputCanvas.width =
-        halfWidth;
+// ========================================
+// 半ページサイズ
+// ========================================
+
+const halfWidth =
+Math.floor(
+fullCanvas.width / 2
+);
 
 
-    outputCanvas.height =
-        fullCanvas.height;
+const outputCanvas =
+document.createElement(
+"canvas"
+);
 
 
-    const outputContext =
-        outputCanvas.getContext(
-            "2d"
-        );
+outputCanvas.width =
+halfWidth;
 
 
-    // ========================================
-    // 左右どちらを切り出すか
-    // ========================================
-
-    let sourceX;
+outputCanvas.height =
+fullCanvas.height;
 
 
-    if (
-        source.side ===
-        "left"
-    ) {
-
-        sourceX =
-            0;
-
-    } else {
-
-        sourceX =
-            fullCanvas.width -
-            halfWidth;
-    }
+const outputContext =
+outputCanvas.getContext(
+"2d"
+);
 
 
-    outputContext.drawImage(
-        fullCanvas,
+// ========================================
+// 左右どちらを切り出すか
+// ========================================
 
-        sourceX,
-        0,
-        halfWidth,
-        fullCanvas.height,
-
-        0,
-        0,
-        halfWidth,
-        fullCanvas.height
-    );
+let sourceX;
 
 
-    // ========================================
-    // PNG Blob
-    // ========================================
+if (
+source.side ===
+"left"
+) {
 
-    return await new Promise(
-        function (
-            resolve,
-            reject
-        ) {
+sourceX =
+0;
 
-            outputCanvas.toBlob(
-                function (blob) {
+} else {
 
-                    if (!blob) {
-
-                        reject(
-                            new Error(
-                                "PNGの作成に失敗しました。"
-                            )
-                        );
-
-                        return;
-                    }
+sourceX =
+fullCanvas.width -
+halfWidth;
+}
 
 
-                    resolve(
-                        blob
-                    );
+outputContext.drawImage(
+fullCanvas,
 
-                },
-                "image/png"
-            );
-        }
-    );
+sourceX,
+0,
+halfWidth,
+fullCanvas.height,
+
+0,
+0,
+halfWidth,
+fullCanvas.height
+);
+
+
+// ========================================
+// PNG Blob
+// ========================================
+
+return await new Promise(
+function (
+resolve,
+reject
+) {
+
+outputCanvas.toBlob(
+function (blob) {
+
+if (!blob) {
+
+reject(
+new Error(
+"PNGの作成に失敗しました。"
+)
+);
+
+return;
+}
+
+
+resolve(
+blob
+);
+
+},
+"image/png"
+);
+}
+);
 }
 
 // ========================================
@@ -3555,80 +3549,77 @@ currentBindingMethod =
 "saddle-stitch";
 
 
-    viewerPages =
-        [];
+viewerPages =
+[];
 
 
-    viewerSpreads =
-    [];
+viewerSpreads =
+[];
 
 
 currentViewerSpreadIndex =
-    0;
+0;
 
 
-    currentImposition =
-        [];
+currentImposition =
+[];
 
 
-    status.textContent =
-        "";
+status.textContent =
+"";
 
 
-    status.className =
-        "";
+status.className =
+"";
 
 
-    pdfInfo.textContent =
-        "";
+pdfInfo.textContent =
+"";
 
 
 instruction.textContent =
 "1ページ目にするページを選択してください。";
 
-undoPageSelectionButton.disabled =
-true;
-
 spreadsContainer.innerHTML =
 "";
 
 
-    previewSection.classList.add(
-        "hidden"
-    );
+previewSection.classList.add(
+"hidden"
+);
 
-    bindingSection.classList.add(
-    "hidden"
+bindingSection.classList.add(
+"hidden"
 );
 
 
 bookViewerSection.classList.add(
-    "hidden"
+"hidden"
 );
 
 printSection.classList.add(
-    "hidden"
+"hidden"
 );
 
 
 pageZipStatus.textContent =
-    "";
+"";
 
 
 printStatus.textContent =
-    "";
+"";
 
 
 viewerPage.innerHTML =
-    "";
+"";
 
 
 viewerPageCounter.textContent =
-    "";
+"";
 
 
 viewerInfo.textContent =
-    "";
+"";
 }
 
 
@@ -3637,13 +3628,13 @@ viewerInfo.textContent =
 // ========================================
 
 function showError(
-    message
+message
 ) {
 
-    status.textContent =
-        message;
+status.textContent =
+message;
 
 
-    status.className =
-        "status-error";
+status.className =
+"status-error";
 }
