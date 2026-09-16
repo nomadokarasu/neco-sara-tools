@@ -216,6 +216,10 @@ let currentViewerSpreadIndex = 0;
 // 中綴じ面付結果
 let currentImposition = [];
 
+// ページ番号を非表示にする本ページ
+let hiddenPageNumbers =
+new Set();
+
 
 // ========================================
 // 綴じ方向
@@ -2250,7 +2254,12 @@ wrapper.appendChild(
 canvas
 );
 
-if (pageNumberEnabled.checked) {
+if (
+pageNumberEnabled.checked &&
+!hiddenPageNumbers.has(
+pageNumber
+)
+) {
 
 const pageNumberElement =
 document.createElement(
@@ -2336,6 +2345,74 @@ pageNumberElement.classList.add(
 
 wrapper.appendChild(
 pageNumberElement
+);
+
+}
+
+if (pageNumberEnabled.checked) {
+
+const visibilityControl =
+document.createElement(
+"label"
+);
+
+visibilityControl.className =
+"page-number-visibility-control";
+
+const visibilityCheckbox =
+document.createElement(
+"input"
+);
+
+visibilityCheckbox.type =
+"checkbox";
+
+visibilityCheckbox.checked =
+hiddenPageNumbers.has(
+pageNumber
+);
+
+const visibilityText =
+document.createElement(
+"span"
+);
+
+visibilityText.textContent =
+"ページ番号を非表示にする";
+
+visibilityCheckbox.addEventListener(
+"change",
+function() {
+
+if (visibilityCheckbox.checked) {
+
+hiddenPageNumbers.add(
+pageNumber
+);
+
+} else {
+
+hiddenPageNumbers.delete(
+pageNumber
+);
+
+}
+
+renderViewerPage();
+
+}
+);
+
+visibilityControl.appendChild(
+visibilityCheckbox
+);
+
+visibilityControl.appendChild(
+visibilityText
+);
+
+wrapper.appendChild(
+visibilityControl
 );
 
 }
@@ -3750,6 +3827,8 @@ currentViewerSpreadIndex =
 currentImposition =
 [];
 
+hiddenPageNumbers =
+new Set();
 
 status.textContent =
 "";
