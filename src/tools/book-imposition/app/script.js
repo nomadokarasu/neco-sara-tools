@@ -3574,7 +3574,8 @@ throw new Error(
 const pdfBytes =
 await createSingleBookPagePdf(
 sourcePdf,
-source
+source,
+pageNumber
 );
 
 
@@ -3782,7 +3783,8 @@ false;
 
 async function createSingleBookPagePdf(
 sourcePdf,
-source
+source,
+pageNumber
 ) {
 
 const outputPdf =
@@ -3790,79 +3792,60 @@ await PDFLib.PDFDocument.create();
 
 
 // ========================================
-// 元ページをコピー
+// 元PDFの半ページを取得
 // ========================================
 
-const [copiedPage] =
-await outputPdf.copyPages(
+const pageData =
+await embedBookPage(
 sourcePdf,
+outputPdf,
+source
+);
+
+
+// ========================================
+// 半ページサイズのPDFページを作成
+// ========================================
+
+const outputPage =
+outputPdf.addPage(
 [
-source.originalPageNumber - 1
+pageData.width,
+pageData.height
 ]
 );
 
 
 // ========================================
-// 元ページのCropBox
+// 元ページを配置
 // ========================================
 
-const cropBox =
-copiedPage.getCropBox();
+outputPage.drawPage(
+pageData.embeddedPage,
+{
+x: 0,
+y: 0,
 
+width:
+pageData.width,
 
-const halfWidth =
-cropBox.width / 2;
-
-
-// ========================================
-// 左右どちらを残すか
-// ========================================
-
-let cropX;
-
-
-if (
-source.side ===
-"left"
-) {
-
-cropX =
-cropBox.x;
-
-} else {
-
-cropX =
-cropBox.x +
-halfWidth;
+height:
+pageData.height
 }
-
-
-// ========================================
-// 半ページに切り出す
-// ========================================
-
-copiedPage.setCropBox(
-cropX,
-cropBox.y,
-halfWidth,
-cropBox.height
-);
-
-
-copiedPage.setMediaBox(
-cropX,
-cropBox.y,
-halfWidth,
-cropBox.height
 );
 
 
 // ========================================
-// PDFへ追加
+// ページ番号を追加
 // ========================================
 
-outputPdf.addPage(
-copiedPage
+await drawPageNumberOnPdfPage(
+outputPdf,
+outputPage,
+pageNumber,
+0,
+pageData.width,
+pageData.height
 );
 
 
