@@ -1,67 +1,67 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
 
-    <title>めんづけーる｜手製本用 面付ツール</title>
+<title>めんづけーる｜手製本用 面付ツール</title>
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+<link
+rel="stylesheet"
+href="style.css"
+>
 
-    <!-- PDF.js -->
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
-    ></script>
-
-    <script
-    src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"
+<!-- PDF.js -->
+<script
+src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
 ></script>
 
 <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"
+></script>
+
+<script
+src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
 ></script>
 
 </head>
 
 <body>
 
-    <main>
+<main>
 
-        <h1>めんづけーる｜手製本用 面付ツール</h1>
+<h1>めんづけーる｜手製本用 面付ツール</h1>
 
-        <p>
-            見開きPDFから、中綴じ製本用の印刷データを作成します。
-        </p>
+<p>
+見開きPDFから、中綴じ製本用の印刷データを作成します。
+</p>
 
-        <div class="notice-box">
+<div class="notice-box">
 
-    <h2 class="notice-box__title">
-        ご利用前にご確認ください
-    </h2>
+<h2 class="notice-box__title">
+ご利用前にご確認ください
+</h2>
 
-    <p>
-        めんづけーるは、ブラウザ上で簡単に面付けするためのツールです。<br>
-        PDFの作成環境や使用しているフォント・画像・カラー設定などによっては、
-        元データと表示・出力結果に差異が生じる可能性があります。
-    </p>
+<p>
+めんづけーるは、ブラウザ上で簡単に面付けするためのツールです。<br>
+PDFの作成環境や使用しているフォント・画像・カラー設定などによっては、
+元データと表示・出力結果に差異が生じる可能性があります。
+</p>
 
-    <p>
-        印刷前に、ダウンロードしたPDFのページ順・文字・画像・色味・
-        レイアウトなどに問題がないことを必ずご確認ください。
-    </p>
+<p>
+印刷前に、ダウンロードしたPDFのページ順・文字・画像・色味・
+レイアウトなどに問題がないことを必ずご確認ください。
+</p>
 
-    <p>
-        印刷所への入稿など、厳密な印刷管理が必要な用途については、
-        各印刷所の入稿規定をご確認のうえ、
-        専門のDTP・面付けソフトをご利用ください。
-    </p>
+<p>
+印刷所への入稿など、厳密な印刷管理が必要な用途については、
+各印刷所の入稿規定をご確認のうえ、
+専門のDTP・面付けソフトをご利用ください。
+</p>
 
 </div>
 
@@ -163,272 +163,272 @@
 </section>
 
 
-        <!-- ==============================
-             4. 製本後プレビュー
-        =============================== -->
-
-        <section
-            id="bookViewerSection"
-            class="hidden"
-        >
-
-            <h2>4. ページ順を確認してください</h2>
-
-            <p id="viewerInfo"></p>
-
-            <div class="book-viewer">
-
-                <div
-                    id="viewerPageCounter"
-                    class="viewer-page-counter"
-                ></div>
-
-                <div
-                    id="viewerPage"
-                    class="viewer-page"
-                ></div>
-
-                <div
-                    id="viewerControls"
-                    class="viewer-controls"
-                >
-
-                    <button
-                        type="button"
-                        id="viewerLeftButton"
-                    ></button>
-
-                    <button
-                        type="button"
-                        id="viewerRightButton"
-                    ></button>
-
-                </div>
-
-            </div>
-
-        </section>
-
-                <!-- ==============================
-     5. ダウンロード
+<!-- ==============================
+4. 製本後プレビュー
 =============================== -->
 
 <section
-    id="printSection"
-    class="hidden"
+id="bookViewerSection"
+class="hidden"
 >
 
-    <h2>5. ダウンロード</h2>
+<h2>4. ページ順を確認してください</h2>
 
+<p id="viewerInfo"></p>
 
-    <!-- ==============================
-         印刷用PDF
-    =============================== -->
+<div class="book-viewer">
 
-    <div class="download-block">
+<div
+id="viewerPageCounter"
+class="viewer-page-counter"
+></div>
 
-        <h3>印刷用PDF</h3>
+<div
+id="viewerPage"
+class="viewer-page"
+></div>
 
-        <p>
-            印刷方法を選択してください。
-        </p>
-
-
-        <div class="print-options">
-
-            <div class="print-option-group">
-
-                <h4>自動両面印刷用</h4>
-
-                <label class="print-option">
-
-                    <input
-                        type="radio"
-                        name="printRange"
-                        value="all"
-                        checked
-                    >
-
-                    <span>
-                        <strong>全部</strong>
-                        <small>
-                            自動両面印刷におすすめ
-                        </small>
-                    </span>
-
-                </label>
-
-            </div>
-
-
-            <div class="print-option-group">
-
-                <h4>片面ずつ印刷用</h4>
-
-                <label class="print-option">
-
-                    <input
-                        type="radio"
-                        name="printRange"
-                        value="even"
-                    >
-
-                    <span>
-                        <strong>
-                            先印刷（偶数面のみ）
-                        </strong>
-                    </span>
-
-                </label>
-
-
-                <label class="print-option">
-
-                    <input
-                        type="radio"
-                        name="printRange"
-                        value="odd"
-                    >
-
-                    <span>
-                        <strong>
-                            後印刷（奇数面のみ）
-                        </strong>
-                    </span>
-
-                </label>
-
-            </div>
-
-        </div>
-
-
-        <div class="file-name-setting">
-
-            <label
-                for="printFileName"
-                class="file-name-label"
-            >
-                ファイル名
-            </label>
-
-            <div class="file-name-input-row">
-
-                <input
-    type="text"
-    id="printFileName"
-    value="全部"
-    autocomplete="off"
+<div
+id="viewerControls"
+class="viewer-controls"
 >
 
-                <span>.pdf</span>
+<button
+type="button"
+id="viewerLeftButton"
+></button>
 
-            </div>
+<button
+type="button"
+id="viewerRightButton"
+></button>
 
-        </div>
+</div>
 
+</div>
 
-        <button
-            type="button"
-            id="downloadPrintPdfButton"
-        >
-            印刷用PDFをダウンロード
-        </button>
+</section>
 
-        <div
-            id="printStatus"
-            class="print-status"
-        ></div>
+<!-- ==============================
+5. ダウンロード
+=============================== -->
 
-    </div>
+<section
+id="printSection"
+class="hidden"
+>
 
-
-    <!-- ==============================
-         ページごとのデータ
-    =============================== -->
-
-    <div class="download-block">
-
-        <h3>ページごとのデータ</h3>
-
-        <p>
-            各ページを個別のファイルにして、
-            ZIPでまとめてダウンロードします。
-        </p>
+<h2>5. ダウンロード</h2>
 
 
-        <div class="page-format-options">
+<!-- ==============================
+印刷用PDF
+=============================== -->
 
-            <p class="page-format-label">
-                ファイル形式
-            </p>
+<div class="download-block">
 
-            <label>
-                <input
-                    type="radio"
-                    name="pageFormat"
-                    value="pdf"
-                    checked
-                >
-                PDF
-            </label>
+<h3>印刷用PDF</h3>
 
-            <label>
-                <input
-                    type="radio"
-                    name="pageFormat"
-                    value="png"
-                >
-                PNG
-            </label>
+<p>
+印刷方法を選択してください。
+</p>
 
-        </div>
 
-        <div class="file-name-setting">
+<div class="print-options">
 
-    <label
-        for="pageZipFileName"
-        class="file-name-label"
-    >
-        ファイル名
-    </label>
+<div class="print-option-group">
 
-    <div class="file-name-input-row">
+<h4>自動両面印刷用</h4>
 
-        <input
-            type="text"
-            id="pageZipFileName"
-            value="pages"
-            autocomplete="off"
-        >
+<label class="print-option">
 
-        <span>.zip</span>
+<input
+type="radio"
+name="printRange"
+value="all"
+checked
+>
 
-    </div>
+<span>
+<strong>全部</strong>
+<small>
+自動両面印刷におすすめ
+</small>
+</span>
+
+</label>
 
 </div>
 
 
-        <button
-            type="button"
-            id="downloadPagesZipButton"
-        >
-            ページごとのデータをZIPでダウンロード
-        </button>
+<div class="print-option-group">
 
-        <div
-            id="pageZipStatus"
-            class="print-status"
-        ></div>
+<h4>片面ずつ印刷用</h4>
 
-    </div>
+<label class="print-option">
+
+<input
+type="radio"
+name="printRange"
+value="even"
+>
+
+<span>
+<strong>
+先印刷（偶数面のみ）
+</strong>
+</span>
+
+</label>
+
+
+<label class="print-option">
+
+<input
+type="radio"
+name="printRange"
+value="odd"
+>
+
+<span>
+<strong>
+後印刷（奇数面のみ）
+</strong>
+</span>
+
+</label>
+
+</div>
+
+</div>
+
+
+<div class="file-name-setting">
+
+<label
+for="printFileName"
+class="file-name-label"
+>
+ファイル名
+</label>
+
+<div class="file-name-input-row">
+
+<input
+type="text"
+id="printFileName"
+value="全部"
+autocomplete="off"
+>
+
+<span>.pdf</span>
+
+</div>
+
+</div>
+
+
+<button
+type="button"
+id="downloadPrintPdfButton"
+>
+印刷用PDFをダウンロード
+</button>
+
+<div
+id="printStatus"
+class="print-status"
+></div>
+
+</div>
+
+
+<!-- ==============================
+ページごとのデータ
+=============================== -->
+
+<div class="download-block">
+
+<h3>ページごとのデータ</h3>
+
+<p>
+各ページを個別のファイルにして、
+ZIPでまとめてダウンロードします。
+</p>
+
+
+<div class="page-format-options">
+
+<p class="page-format-label">
+ファイル形式
+</p>
+
+<label>
+<input
+type="radio"
+name="pageFormat"
+value="pdf"
+checked
+>
+PDF
+</label>
+
+<label>
+<input
+type="radio"
+name="pageFormat"
+value="png"
+>
+PNG
+</label>
+
+</div>
+
+<div class="file-name-setting">
+
+<label
+for="pageZipFileName"
+class="file-name-label"
+>
+ファイル名
+</label>
+
+<div class="file-name-input-row">
+
+<input
+type="text"
+id="pageZipFileName"
+value="pages"
+autocomplete="off"
+>
+
+<span>.zip</span>
+
+</div>
+
+</div>
+
+
+<button
+type="button"
+id="downloadPagesZipButton"
+>
+ページごとのデータをZIPでダウンロード
+</button>
+
+<div
+id="pageZipStatus"
+class="print-status"
+></div>
+
+</div>
 
 </section>
 
-    </main>
+</main>
 
 
-    <script src="script.js"></script>
+<script src="script.js"></script>
 
 </body>
 </html>
