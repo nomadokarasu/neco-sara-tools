@@ -3641,7 +3641,8 @@ throw new Error(
 const pngBlob =
 await createSingleBookPagePng(
 pdf,
-source
+source,
+pageNumber
 );
 
 
@@ -3863,7 +3864,8 @@ return await outputPdf.save();
 
 async function createSingleBookPagePng(
 pdf,
-source
+source,
+pageNumber
 ) {
 
 const page =
@@ -3992,6 +3994,130 @@ fullCanvas.height,
 halfWidth,
 fullCanvas.height
 );
+
+
+// ========================================
+// ページ番号を描画
+// ========================================
+
+if (
+pageNumberEnabled.checked &&
+!hiddenPageNumbers.has(
+pageNumber
+)
+) {
+
+const fontSize =
+Math.max(
+1,
+Number(
+pageNumberFontSize.value
+) || 10
+);
+
+const fontSizePx =
+fontSize * scale;
+
+const fontFamily =
+pageNumberFont.value === "sans"
+? '"Noto Sans JP"'
+: '"Noto Serif JP"';
+
+if (
+document.fonts &&
+document.fonts.load
+) {
+
+await document.fonts.load(
+`${fontSizePx}px ${fontFamily}`,
+String(
+pageNumber
+)
+);
+
+}
+
+outputContext.font =
+`${fontSizePx}px ${fontFamily}`;
+
+outputContext.fillStyle =
+pageNumberColor.value;
+
+outputContext.textBaseline =
+"middle";
+
+
+// 約10mm
+const marginPx =
+28.35 * scale;
+
+let numberX;
+
+const selectedPosition =
+document.querySelector(
+'input[name="pageNumberPosition"]:checked'
+);
+
+if (
+selectedPosition &&
+selectedPosition.value === "outside"
+) {
+
+const isOddPage =
+pageNumber % 2 !== 0;
+
+const isLeftOutside =
+(
+currentBindingDirection === "右綴じ" &&
+isOddPage
+) ||
+(
+currentBindingDirection === "左綴じ" &&
+!isOddPage
+);
+
+if (isLeftOutside) {
+
+outputContext.textAlign =
+"left";
+
+numberX =
+marginPx;
+
+} else {
+
+outputContext.textAlign =
+"right";
+
+numberX =
+outputCanvas.width -
+marginPx;
+
+}
+
+} else {
+
+outputContext.textAlign =
+"center";
+
+numberX =
+outputCanvas.width / 2;
+
+}
+
+const numberY =
+outputCanvas.height -
+marginPx;
+
+outputContext.fillText(
+String(
+pageNumber
+),
+numberX,
+numberY
+);
+
+}
 
 
 // ========================================
