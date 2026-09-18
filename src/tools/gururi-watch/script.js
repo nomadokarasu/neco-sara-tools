@@ -57,7 +57,6 @@ postPreviewTitle: "最初に表示される位置を設定してください",
 postPreviewDescription: "ドラッグして向きを、ホイールまたはピンチで表示範囲を調整してください。",
 postPreviewBack: "戻る",
 postPreviewSubmit: "投稿する",
-eyeHeight: "目線",
 postCompleteTitle: "投稿しました！",
 postCompleteText: "この世界の共有URLです。",
 copyUrl: "URLをコピー",
@@ -124,7 +123,6 @@ postPreviewTitle: "Set the starting view",
 postPreviewDescription: "Drag to change direction. Use the mouse wheel or pinch to adjust the field of view.",
 postPreviewBack: "Back",
 postPreviewSubmit: "Post",
-eyeHeight: "Eye height",
 postCompleteTitle: "Posted!",
 postCompleteText: "Here is the share URL for this world.",
 copyUrl: "Copy URL",
@@ -314,11 +312,6 @@ document.getElementById(
 const postPreviewSubmitButton =
 document.getElementById(
 "postPreviewSubmitButton"
-);
-
-const postPreviewEyeHeight =
-document.getElementById(
-"postPreviewEyeHeight"
 );
 
 const postPreviewTitle =
@@ -598,9 +591,6 @@ postPreviewSubmitButton.textContent =
 t("postPreviewSubmit");
 
 }
-
-postPreviewEyeHeight.textContent =
-`${t("eyeHeight")}：${postPreviewEyeHeightValue.toFixed(1)}${currentLanguage === "ja" ? "m" : " m"}`;
 
 postCompletePanel.querySelector(
 ".modal-title"
@@ -898,11 +888,6 @@ eyeHeightData.eyeHeight;
 
 postPreviewProjectionMode =
 eyeHeightData.projectionMode;
-
-postPreviewEyeHeight.textContent =
-currentLanguage === "ja"
-? `目線：${postPreviewEyeHeightValue.toFixed(1)}m`
-: `Eye height: ${postPreviewEyeHeightValue.toFixed(1)} m`;
 
 postPreviewLongitude =
 0;
