@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.2";
+"2.0.7";
 
 
 const appVersionElements =
@@ -2434,7 +2434,23 @@ viewport.clientWidth / viewport.clientHeight,
 1000
 );
 
-camera.position.set(0, 1.5, 0);
+camera.position.set(0, 0, 0);
+
+
+/*
+目線方式
+
+standard:
+新方式。
+カメラは球体中心に固定し、
+地面・補助線を目線高に応じて移動する。
+
+legacy:
+旧.gururiとの互換方式。
+eyeHeightに応じてカメラを移動する。
+*/
+let projectionMode =
+"standard";
 
 
 /* ================================
@@ -3302,7 +3318,9 @@ return chunk;
 
 function addGururiEyeHeightToPng(
 pngBuffer,
-eyeHeight
+eyeHeight,
+metadataKey =
+"gururiEyeHeight"
 ) {
 
 const source =
@@ -3359,7 +3377,7 @@ throw new Error(
 
 const metadataChunk =
 createPngTextChunk(
-"gururiEyeHeight",
+metadataKey,
 numericEyeHeight.toFixed(1)
 );
 
@@ -3702,7 +3720,11 @@ await blob.arrayBuffer();
 const pngWithMetadata =
 addGururiEyeHeightToPng(
 pngBuffer,
-camera.position.y
+Number(eyeHeightInput.value),
+projectionMode ===
+"legacy"
+? "gururiEyeHeight"
+: "gururiVirtualEyeHeight"
 );
 
 downloadBlob =
@@ -3810,8 +3832,18 @@ outputHeight
 
 view: {
 
+...(
+projectionMode ===
+"legacy"
+? {
 eyeHeight:
-camera.position.y,
+Number(eyeHeightInput.value)
+}
+: {
+virtualEyeHeight:
+Number(eyeHeightInput.value)
+}
+),
 
 yaw,
 
@@ -4594,20 +4626,37 @@ false;
 
 /*
 目線
+
+旧.gururiにeyeHeightが存在する場合は
+旧方式で表示する。
+
+新方式ではvirtualEyeHeightを使用する。
 */
+
+const hasLegacyEyeHeight =
+Object.prototype.hasOwnProperty.call(
+projectData.view || {},
+"eyeHeight"
+);
+
+
+projectionMode =
+hasLegacyEyeHeight
+? "legacy"
+: "standard";
+
 
 const eyeHeight =
 clampProjectNumber(
-projectData.view
-?.eyeHeight,
+hasLegacyEyeHeight
+? projectData.view
+?.eyeHeight
+: projectData.view
+?.virtualEyeHeight,
 0.5,
 30,
 1.5
 );
-
-
-camera.position.y =
-eyeHeight;
 
 
 eyeHeightInput.value =
@@ -4621,7 +4670,7 @@ updateGroundGridSize(
 eyeHeight
 );
 
-updateHorizontalGuideHeight(
+applyEyeHeight(
 eyeHeight
 );
 
@@ -5091,7 +5140,9 @@ gridSize;
 */
 
 updateGroundGridSize(
-camera.position.y
+Number(
+eyeHeightInput.value
+)
 );
 
 
@@ -5253,21 +5304,65 @@ horizontalGuides.rotation.x =
 
 
 /*
-水平グリッドは
-常に目線より30m上へ配置する
+目線高を表示へ反映する。
+
+legacy:
+旧方式。
+カメラそのものをeyeHeightまで上げる。
+
+standard:
+新方式。
+カメラは原点に固定し、
+地面側をeyeHeightぶん下げる。
 */
 
-function updateHorizontalGuideHeight(
+function applyEyeHeight(
 eyeHeight
 ) {
 
+if (
+projectionMode ===
+"legacy"
+) {
+
+camera.position.set(
+0,
+eyeHeight,
+0
+);
+
+groundGrid.position.y =
+0;
+
+verticalGuides.position.y =
+0;
+
 horizontalGuides.position.y =
 eyeHeight + 30;
+
+return;
 }
 
 
-updateHorizontalGuideHeight(
-camera.position.y
+camera.position.set(
+0,
+0,
+0
+);
+
+groundGrid.position.y =
+-eyeHeight;
+
+verticalGuides.position.y =
+-eyeHeight;
+
+horizontalGuides.position.y =
+30;
+}
+
+
+applyEyeHeight(
+Number(eyeHeightInput.value)
 );
 
 
@@ -8160,14 +8255,11 @@ Number(
 eyeHeightInput.value
 );
 
-camera.position.y =
-eyeHeight;
-
 updateGroundGridSize(
 eyeHeight
 );
 
-updateHorizontalGuideHeight(
+applyEyeHeight(
 eyeHeight
 );
 
@@ -8202,14 +8294,11 @@ eyeHeight
 );
 
 
-camera.position.y =
-eyeHeight;
-
 updateGroundGridSize(
 eyeHeight
 );
 
-updateHorizontalGuideHeight(
+applyEyeHeight(
 eyeHeight
 );
 
@@ -8224,7 +8313,9 @@ eyeHeightValue.addEventListener(
 () => {
 
 eyeHeightValue.value =
-camera.position.y;
+Number(
+eyeHeightInput.value
+).toFixed(1);
 }
 );
 
@@ -8269,14 +8360,11 @@ Number(
 eyeHeight.toFixed(1)
 );
 
-camera.position.y =
-eyeHeight;
-
 updateGroundGridSize(
 eyeHeight
 );
 
-updateHorizontalGuideHeight(
+applyEyeHeight(
 eyeHeight
 );
 
@@ -8313,14 +8401,11 @@ Number(
 eyeHeight.toFixed(1)
 );
 
-camera.position.y =
-eyeHeight;
-
 updateGroundGridSize(
 eyeHeight
 );
 
-updateHorizontalGuideHeight(
+applyEyeHeight(
 eyeHeight
 );
 
@@ -18178,7 +18263,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.2",
+"./service-worker.js?v=2.0.7",
 {
 updateViaCache: "none"
 }
