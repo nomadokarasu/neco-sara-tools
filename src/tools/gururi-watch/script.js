@@ -817,6 +817,9 @@ let postPreviewTargetLatitude =
 let postPreviewEyeHeightValue =
 1.5;
 
+let postPreviewProjectionMode =
+"standard";
+
 let postPreviewDragging =
 false;
 
@@ -885,10 +888,16 @@ return;
 
 }
 
-postPreviewEyeHeightValue =
+const eyeHeightData =
 await readGururiEyeHeight(
 panoramaFile
 );
+
+postPreviewEyeHeightValue =
+eyeHeightData.eyeHeight;
+
+postPreviewProjectionMode =
+eyeHeightData.projectionMode;
 
 postPreviewEyeHeight.textContent =
 currentLanguage === "ja"
@@ -910,11 +919,26 @@ postPreviewTargetLatitude =
 postPreviewCamera.fov =
 85;
 
+if (
+postPreviewProjectionMode ===
+"legacy"
+) {
+
 postPreviewCamera.position.set(
 0,
 postPreviewEyeHeightValue * 10,
 0
 );
+
+} else {
+
+postPreviewCamera.position.set(
+0,
+0,
+0
+);
+
+}
 
 postPreviewCamera
 .updateProjectionMatrix();
@@ -1076,6 +1100,11 @@ pendingPostFormData.set(
 String(
 postPreviewEyeHeightValue
 )
+);
+
+pendingPostFormData.set(
+"initialProjectionMode",
+postPreviewProjectionMode
 );
 
 try {
@@ -1609,9 +1638,18 @@ Number(
 initialView?.fov
 );
 
+const hasLegacyEyeHeight =
+initialView &&
+Object.prototype.hasOwnProperty.call(
+initialView,
+"eyeHeight"
+);
+
 const savedEyeHeight =
 Number(
-initialView?.eyeHeight
+hasLegacyEyeHeight
+? initialView?.eyeHeight
+: initialView?.virtualEyeHeight
 );
 
 longitude =
@@ -1666,11 +1704,25 @@ savedEyeHeight
 )
 : 1.5;
 
+if (
+hasLegacyEyeHeight
+) {
+
 camera.position.set(
 0,
 eyeHeight * 10,
 0
 );
+
+} else {
+
+camera.position.set(
+0,
+0,
+0
+);
+
+}
 
 camera.updateProjectionMatrix();
 
@@ -2483,15 +2535,17 @@ async function readGururiEyeHeight(
 file
 ) {
 
-const fallbackEyeHeight =
-1.5;
+const fallbackResult = {
+eyeHeight: 1.5,
+projectionMode: "standard"
+};
 
 if (
 !file ||
 file.type !== "image/png"
 ) {
 
-return fallbackEyeHeight;
+return fallbackResult;
 
 }
 
@@ -2521,7 +2575,7 @@ bytes.length <
 pngSignature.length
 ) {
 
-return fallbackEyeHeight;
+return fallbackResult;
 
 }
 
@@ -2536,7 +2590,7 @@ bytes[i] !==
 pngSignature[i]
 ) {
 
-return fallbackEyeHeight;
+return fallbackResult;
 
 }
 
@@ -2617,7 +2671,9 @@ separatorIndex
 
 if (
 keyword ===
-"gururiEyeHeight"
+"gururiEyeHeight" ||
+keyword ===
+"gururiVirtualEyeHeight"
 ) {
 
 const valueText =
@@ -2638,13 +2694,21 @@ value
 )
 ) {
 
-return Math.max(
+return {
+eyeHeight:
+Math.max(
 0.5,
 Math.min(
 30,
 value
 )
-);
+),
+projectionMode:
+keyword ===
+"gururiEyeHeight"
+? "legacy"
+: "standard"
+};
 
 }
 
@@ -2676,7 +2740,7 @@ error
 
 }
 
-return fallbackEyeHeight;
+return fallbackResult;
 
 }
 

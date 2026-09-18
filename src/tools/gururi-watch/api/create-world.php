@@ -138,6 +138,16 @@ $initialEyeHeight = is_numeric($_POST["initialEyeHeight"] ?? null)
 ? (float)$_POST["initialEyeHeight"]
 : 1.5;
 
+$initialProjectionMode =
+(string)($_POST["initialProjectionMode"] ?? "standard");
+
+if (
+$initialProjectionMode !== "legacy" &&
+$initialProjectionMode !== "standard"
+) {
+$initialProjectionMode = "standard";
+}
+
 if (!is_finite($initialLongitude)) {
 $initialLongitude = 0.0;
 }
@@ -271,12 +281,20 @@ $world = [
 "externalUrl" => $externalUrl,
 "thumbnail" => "./uploads/" . $worldId . "/" . $thumbnailFilename,
 "panorama" => "./uploads/" . $worldId . "/" . $panoramaFilename,
-"initialView" => [
+"initialView" => array_merge(
+[
 "longitude" => $initialLongitude,
 "latitude" => $initialLatitude,
-"fov" => $initialFov,
-"eyeHeight" => $initialEyeHeight
+"fov" => $initialFov
 ],
+$initialProjectionMode === "legacy"
+? [
+"eyeHeight" => $initialEyeHeight
+]
+: [
+"virtualEyeHeight" => $initialEyeHeight
+]
+),
 "status" => "published",
 "reportCount" => 0,
 "deleteKey" => $deleteKey,
