@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.7-dev";
+"2.0.8-dev";
 
 
 const appVersionElements =
@@ -15948,6 +15948,8 @@ event.target;
 
 const isEditableInput =
 target instanceof HTMLInputElement &&
+target.type !== "range" &&
+target.type !== "checkbox" &&
 (
 !target.classList.contains(
 "layer-name-input"
@@ -18263,7 +18265,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.7-dev",
+"./service-worker.js?v=2.0.8-dev",
 {
 updateViaCache: "none"
 }
