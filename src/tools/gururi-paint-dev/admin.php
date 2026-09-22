@@ -255,6 +255,35 @@ return trim(
 );
 }
 
+function postedTargets(
+array $source
+): array
+{
+if (!isset($source['targetsConfigured'])) {
+return [
+'web',
+'app'
+];
+}
+
+$targets = [];
+
+if (
+isset($source['targets']) &&
+is_array($source['targets'])
+) {
+if (isset($source['targets']['web'])) {
+$targets[] = 'web';
+}
+
+if (isset($source['targets']['app'])) {
+$targets[] = 'app';
+}
+}
+
+return $targets;
+}
+
 function saveThumbnail(
 array $file,
 string $thumbnailDirectory
@@ -687,7 +716,11 @@ $enPost,
 'visible' =>
 isset($noticePost['visible']),
 'newTab' =>
-isset($noticePost['newTab'])
+isset($noticePost['newTab']),
+'targets' =>
+postedTargets(
+$noticePost
+)
 ];
 }
 }
@@ -826,7 +859,11 @@ $enPost,
 'visible' =>
 isset($pagePost['visible']),
 'newTab' =>
-isset($pagePost['newTab'])
+isset($pagePost['newTab']),
+'targets' =>
+postedTargets(
+$pagePost
+)
 ];
 }
 }
@@ -1511,6 +1548,36 @@ name="notices[<?= (int) $index ?>][newTab]"
 
 </label>
 
+<input
+type="hidden"
+name="notices[<?= (int) $index ?>][targetsConfigured]"
+value="1"
+>
+
+<label>
+
+<input
+type="checkbox"
+name="notices[<?= (int) $index ?>][targets][web]"
+<?= !isset($notice['targets']) || in_array('web', (array) $notice['targets'], true) ? 'checked' : '' ?>
+>
+
+Web版
+
+</label>
+
+<label>
+
+<input
+type="checkbox"
+name="notices[<?= (int) $index ?>][targets][app]"
+<?= !isset($notice['targets']) || in_array('app', (array) $notice['targets'], true) ? 'checked' : '' ?>
+>
+
+アプリ版
+
+</label>
+
 </div>
 
 </div>
@@ -1717,6 +1784,39 @@ data-related-page-field="newTab"
 
 </label>
 
+<input
+type="hidden"
+name="relatedPages[<?= (int) $index ?>][targetsConfigured]"
+data-related-page-field="targetsConfigured"
+value="1"
+>
+
+<label>
+
+<input
+type="checkbox"
+name="relatedPages[<?= (int) $index ?>][targets][web]"
+data-related-page-field="targets][web"
+<?= !isset($page['targets']) || in_array('web', (array) $page['targets'], true) ? 'checked' : '' ?>
+>
+
+Web版
+
+</label>
+
+<label>
+
+<input
+type="checkbox"
+name="relatedPages[<?= (int) $index ?>][targets][app]"
+data-related-page-field="targets][app"
+<?= !isset($page['targets']) || in_array('app', (array) $page['targets'], true) ? 'checked' : '' ?>
+>
+
+アプリ版
+
+</label>
+
 </div>
 
 </div>
@@ -1881,6 +1981,36 @@ data-notice-field="newTab"
 >
 
 新しいタブで開く
+
+</label>
+
+<input
+type="hidden"
+data-notice-field="targetsConfigured"
+value="1"
+>
+
+<label>
+
+<input
+type="checkbox"
+data-notice-field="targets][web"
+checked
+>
+
+Web版
+
+</label>
+
+<label>
+
+<input
+type="checkbox"
+data-notice-field="targets][app"
+checked
+>
+
+アプリ版
 
 </label>
 
@@ -2074,6 +2204,36 @@ data-related-page-field="newTab"
 >
 
 新しいタブで開く
+
+</label>
+
+<input
+type="hidden"
+data-related-page-field="targetsConfigured"
+value="1"
+>
+
+<label>
+
+<input
+type="checkbox"
+data-related-page-field="targets][web"
+checked
+>
+
+Web版
+
+</label>
+
+<label>
+
+<input
+type="checkbox"
+data-related-page-field="targets][app"
+checked
+>
+
+アプリ版
 
 </label>
 
