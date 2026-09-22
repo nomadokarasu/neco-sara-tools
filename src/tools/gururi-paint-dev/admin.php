@@ -36,7 +36,9 @@ $defaultContent = [
 'title' => 'ぐるりペイント',
 'description' => 'カメラをぐるぐる回しながらお絵描きできます。',
 'startButton' => 'はじめる',
+'importantHeading' => '重要なお知らせ',
 'noticeHeading' => 'お知らせ',
+'productsHeading' => '製品情報',
 'linksHeading' => '関連ページ',
 'footer' => '© JUNOTA'
 ],
@@ -44,9 +46,57 @@ $defaultContent = [
 'title' => 'Gururi Paint',
 'description' => 'You can draw while spinning the camera around.',
 'startButton' => 'START',
+'importantHeading' => 'Important',
 'noticeHeading' => 'News',
+'productsHeading' => 'Products',
 'linksHeading' => 'Links',
 'footer' => '© JUNOTA'
+]
+],
+'importantNotices' => [
+[
+'ja' => [
+'title' => '重要なお知らせ',
+'description' => '',
+'url' => ''
+],
+'en' => [
+'title' => 'Important notice',
+'description' => '',
+'url' => ''
+],
+'visible' => false,
+'newTab' => false
+]
+],
+'products' => [
+[
+'ja' => [
+'title' => '買い切り版',
+'description' => 'より多くの機能を利用できる買い切り版です。',
+'url' => ''
+],
+'en' => [
+'title' => 'Product',
+'description' => 'Unlock additional features with a one-time purchase.',
+'url' => ''
+],
+'visible' => true,
+'newTab' => true
+],
+[
+'ja' => [
+'title' => 'premium',
+'description' => 'さらに高度な機能を利用できるサブスクリプション版です。',
+'url' => ''
+],
+'en' => [
+'title' => 'premium',
+'description' => 'Access advanced features with a subscription.',
+'url' => ''
+],
+'visible' => true,
+'newTab' => true
 ]
 ],
 'notices' => [
@@ -511,6 +561,14 @@ $_SERVER['REQUEST_METHOD'] === 'POST' &&
 ) {
 $newContent = [
 'languages' => [],
+'importantNotices' =>
+is_array($content['importantNotices'] ?? null)
+? $content['importantNotices']
+: [],
+'products' =>
+is_array($content['products'] ?? null)
+? $content['products']
+: [],
 'notices' => [],
 'relatedPages' => []
 ];
@@ -536,9 +594,17 @@ $languagePost,
 $languagePost,
 'startButton'
 ),
+'importantHeading' => postedText(
+$languagePost,
+'importantHeading'
+),
 'noticeHeading' => postedText(
 $languagePost,
 'noticeHeading'
+),
+'productsHeading' => postedText(
+$languagePost,
+'productsHeading'
 ),
 'linksHeading' => postedText(
 $languagePost,
@@ -1281,7 +1347,9 @@ $basicFields = [
 'title' => 'タイトル',
 'description' => '紹介文',
 'startButton' => '開始ボタン',
+'importantHeading' => '重要なお知らせ見出し',
 'noticeHeading' => 'お知らせ見出し',
+'productsHeading' => '製品情報見出し',
 'linksHeading' => '関連ページ見出し',
 'footer' => 'フッター'
 ];
