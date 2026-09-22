@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.8";
+"2.0.9";
 
 
 const appVersionElements =
@@ -1987,6 +1987,21 @@ document.getElementById(
 "homeDescription"
 );
 
+const homeImportantHeading =
+document.getElementById(
+"homeImportantHeading"
+);
+
+const homeImportantSection =
+document.getElementById(
+"homeImportantSection"
+);
+
+const homeImportantList =
+document.getElementById(
+"homeImportantList"
+);
+
 const homeNoticeHeading =
 document.getElementById(
 "homeNoticeHeading"
@@ -2000,6 +2015,21 @@ document.getElementById(
 const homeNoticeList =
 document.getElementById(
 "homeNoticeList"
+);
+
+const homeProductsHeading =
+document.getElementById(
+"homeProductsHeading"
+);
+
+const homeProductsSection =
+document.getElementById(
+"homeProductsSection"
+);
+
+const homeProductsList =
+document.getElementById(
+"homeProductsList"
 );
 
 const homeLinksHeading =
@@ -2026,6 +2056,89 @@ const homeLinks =
 document.getElementById(
 "homeLinks"
 );
+
+
+function isHomeContentTargetVisible(
+item,
+target
+) {
+
+if (
+!item ||
+!Array.isArray(
+item.targets
+)
+) {
+return true;
+}
+
+return item.targets.includes(
+target
+);
+}
+
+
+function createHomeSimpleCard(
+item
+) {
+
+const itemContent =
+item[currentLanguage];
+
+const link =
+document.createElement(
+"a"
+);
+
+link.className =
+"home-page__simple-card";
+
+setHomeLinkTarget(
+link,
+itemContent.url || "",
+item.newTab === true
+);
+
+
+const title =
+document.createElement(
+"span"
+);
+
+title.className =
+"home-page__simple-card-title";
+
+title.textContent =
+itemContent.title || "";
+
+
+const description =
+document.createElement(
+"span"
+);
+
+description.className =
+"home-page__simple-card-description";
+
+description.textContent =
+itemContent.description || "";
+
+
+link.appendChild(
+title
+);
+
+if (
+itemContent.description
+) {
+
+link.appendChild(
+description
+);
+}
+
+return link;
+}
 
 
 function setHomeLinkTarget(
@@ -2149,14 +2262,56 @@ languageContent.description || "";
 homeStartButton.textContent =
 languageContent.startButton || "";
 
+homeImportantHeading.textContent =
+languageContent.importantHeading || "";
+
 homeNoticeHeading.textContent =
 languageContent.noticeHeading || "";
+
+homeProductsHeading.textContent =
+languageContent.productsHeading || "";
 
 homeLinksHeading.textContent =
 languageContent.linksHeading || "";
 
 homeFooter.textContent =
 languageContent.footer || "";
+
+
+homeImportantList.replaceChildren();
+
+
+const visibleImportantNotices =
+Array.isArray(
+homeContent.importantNotices
+)
+? homeContent.importantNotices.filter(
+(item) =>
+item &&
+item.visible !== false &&
+isHomeContentTargetVisible(
+item,
+"web"
+) &&
+item[currentLanguage]?.title
+)
+: [];
+
+
+visibleImportantNotices.forEach(
+(item) => {
+
+homeImportantList.appendChild(
+createHomeSimpleCard(
+item
+)
+);
+}
+);
+
+
+homeImportantSection.hidden =
+visibleImportantNotices.length === 0;
 
 
 homeNoticeList.replaceChildren();
@@ -2170,6 +2325,10 @@ homeContent.notices
 (notice) =>
 notice &&
 notice.visible !== false &&
+isHomeContentTargetVisible(
+notice,
+"web"
+) &&
 notice[currentLanguage]?.text
 )
 : [];
@@ -2209,6 +2368,42 @@ homeNoticeSection.hidden =
 visibleNotices.length === 0;
 
 
+homeProductsList.replaceChildren();
+
+
+const visibleProducts =
+Array.isArray(
+homeContent.products
+)
+? homeContent.products.filter(
+(item) =>
+item &&
+item.visible !== false &&
+isHomeContentTargetVisible(
+item,
+"web"
+) &&
+item[currentLanguage]?.title
+)
+: [];
+
+
+visibleProducts.forEach(
+(item) => {
+
+homeProductsList.appendChild(
+createHomeSimpleCard(
+item
+)
+);
+}
+);
+
+
+homeProductsSection.hidden =
+visibleProducts.length === 0;
+
+
 homeLinks.replaceChildren();
 
 
@@ -2220,6 +2415,10 @@ homeContent.relatedPages
 (page) =>
 page &&
 page.visible !== false &&
+isHomeContentTargetVisible(
+page,
+"web"
+) &&
 page[currentLanguage]?.title
 )
 : [];
@@ -18265,7 +18464,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.8",
+"./service-worker.js?v=2.0.9",
 {
 updateViaCache: "none"
 }

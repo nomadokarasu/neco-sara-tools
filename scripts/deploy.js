@@ -106,6 +106,12 @@ fs.readFileSync(
 "utf8"
 );
 
+const releaseAdmin =
+fs.readFileSync(
+"src/tools/gururi-paint/admin.php",
+"utf8"
+);
+
 
 const releaseVersionMatch =
 releaseScript.match(
@@ -142,6 +148,15 @@ releaseScript.includes(
 ) ||
 releaseServiceWorker.includes(
 "gururi-paint-testing-"
+) ||
+releaseAdmin.includes(
+"gururi_paint_testing_admin"
+) ||
+releaseAdmin.includes(
+"/tools/gururi-paint-dev/"
+) ||
+!releaseAdmin.includes(
+"'path' => '/'"
 )
 ) {
 

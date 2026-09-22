@@ -86,7 +86,8 @@ const targetFiles = [
 "index.html",
 "script.js",
 "service-worker.js",
-"style.css"
+"style.css",
+"admin.php"
 ];
 
 
@@ -207,6 +208,12 @@ developmentDirectory,
 "style.css"
 );
 
+const developmentAdminPath =
+path.join(
+developmentDirectory,
+"admin.php"
+);
+
 
 const releaseIndexPath =
 path.join(
@@ -232,6 +239,12 @@ releaseDirectory,
 "style.css"
 );
 
+const releaseAdminPath =
+path.join(
+releaseDirectory,
+"admin.php"
+);
+
 
 const developmentIndex =
 fs.readFileSync(
@@ -254,6 +267,12 @@ developmentServiceWorkerPath,
 const developmentStyle =
 fs.readFileSync(
 developmentStylePath,
+"utf8"
+);
+
+const developmentAdmin =
+fs.readFileSync(
+developmentAdminPath,
 "utf8"
 );
 
@@ -408,6 +427,67 @@ nextServiceWorker.replace(
 
 
 if (
+!developmentAdmin.includes(
+"session_name('gururi_paint_testing_admin');"
+) ||
+!developmentAdmin.includes(
+"'path' => '/tools/gururi-paint-dev/'"
+)
+) {
+
+console.error(
+"エラー：開発版admin.phpのセッション設定を確認できません。"
+);
+
+process.exit(1);
+}
+
+
+let nextAdmin =
+developmentAdmin.replace(
+/session_name\('gururi_paint_testing_admin'\);\r?\n\r?\n/,
+""
+);
+
+nextAdmin =
+nextAdmin.replace(
+"'path' => '/tools/gururi-paint-dev/'",
+"'path' => '/'"
+);
+
+
+if (
+nextAdmin.includes(
+"gururi_paint_testing_admin"
+) ||
+nextAdmin.includes(
+"/tools/gururi-paint-dev/"
+)
+) {
+
+console.error(
+"エラー：公開版admin.phpに開発版専用設定が残っています。"
+);
+
+process.exit(1);
+}
+
+
+if (
+!nextAdmin.includes(
+"'path' => '/'"
+)
+) {
+
+console.error(
+"エラー：公開版admin.phpのCookieパスを確認できません。"
+);
+
+process.exit(1);
+}
+
+
+if (
 nextIndex.includes(
 "noindex"
 ) ||
@@ -513,6 +593,12 @@ nextServiceWorker,
 fs.writeFileSync(
 releaseStylePath,
 developmentStyle,
+"utf8"
+);
+
+fs.writeFileSync(
+releaseAdminPath,
+nextAdmin,
 "utf8"
 );
 
