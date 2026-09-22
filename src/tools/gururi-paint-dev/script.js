@@ -2028,6 +2028,26 @@ document.getElementById(
 );
 
 
+function isHomeContentTargetVisible(
+item,
+target
+) {
+
+if (
+!item ||
+!Array.isArray(
+item.targets
+)
+) {
+return true;
+}
+
+return item.targets.includes(
+target
+);
+}
+
+
 function setHomeLinkTarget(
 element,
 url,
@@ -2170,6 +2190,10 @@ homeContent.notices
 (notice) =>
 notice &&
 notice.visible !== false &&
+isHomeContentTargetVisible(
+notice,
+"web"
+) &&
 notice[currentLanguage]?.text
 )
 : [];
@@ -2220,6 +2244,10 @@ homeContent.relatedPages
 (page) =>
 page &&
 page.visible !== false &&
+isHomeContentTargetVisible(
+page,
+"web"
+) &&
 page[currentLanguage]?.title
 )
 : [];
