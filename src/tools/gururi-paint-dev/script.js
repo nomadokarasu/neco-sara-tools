@@ -2078,26 +2078,6 @@ target
 }
 
 
-function isHomeContentTargetVisible(
-item,
-target
-) {
-
-if (
-!item ||
-!Array.isArray(
-item.targets
-)
-) {
-return true;
-}
-
-return item.targets.includes(
-target
-);
-}
-
-
 function createHomeSimpleCard(
 item
 ) {
