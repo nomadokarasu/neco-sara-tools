@@ -3807,6 +3807,10 @@ padding: 40px 0;
 border-bottom: 1px solid #bcbcb7;
 }
 
+.home-page__section[hidden] {
+display: none;
+}
+
 .home-page__section-title {
 margin: 0;
 font-size: 14px;
