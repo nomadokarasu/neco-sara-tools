@@ -284,6 +284,100 @@ $targets[] = 'app';
 return $targets;
 }
 
+function buildSimpleItems(
+array $postedItems,
+string $label,
+string &$error
+): array
+{
+$result = [];
+
+if (count($postedItems) > 50) {
+$error =
+$label .
+'は50件以内にしてください。';
+
+return [];
+}
+
+foreach (
+$postedItems as $itemIndex => $itemPost
+) {
+if (!is_array($itemPost)) {
+continue;
+}
+
+$jaPost =
+is_array($itemPost['ja'] ?? null)
+? $itemPost['ja']
+: [];
+
+$enPost =
+is_array($itemPost['en'] ?? null)
+? $itemPost['en']
+: [];
+
+$jaUrl =
+postedText(
+$jaPost,
+'url'
+);
+
+$enUrl =
+postedText(
+$enPost,
+'url'
+);
+
+if (
+!validPublicUrl($jaUrl) ||
+!validPublicUrl($enUrl)
+) {
+$error =
+$label .
+($itemIndex + 1) .
+'のURLが正しくありません。';
+
+break;
+}
+
+$result[] = [
+'ja' => [
+'title' => postedText(
+$jaPost,
+'title'
+),
+'description' => postedText(
+$jaPost,
+'description'
+),
+'url' => $jaUrl
+],
+'en' => [
+'title' => postedText(
+$enPost,
+'title'
+),
+'description' => postedText(
+$enPost,
+'description'
+),
+'url' => $enUrl
+],
+'visible' =>
+isset($itemPost['visible']),
+'newTab' =>
+isset($itemPost['newTab']),
+'targets' =>
+postedTargets(
+$itemPost
+)
+];
+}
+
+return $result;
+}
+
 function saveThumbnail(
 array $file,
 string $thumbnailDirectory
@@ -590,14 +684,8 @@ $_SERVER['REQUEST_METHOD'] === 'POST' &&
 ) {
 $newContent = [
 'languages' => [],
-'importantNotices' =>
-is_array($content['importantNotices'] ?? null)
-? $content['importantNotices']
-: [],
-'products' =>
-is_array($content['products'] ?? null)
-? $content['products']
-: [],
+'importantNotices' => [],
+'products' => [],
 'notices' => [],
 'relatedPages' => []
 ];
@@ -644,6 +732,40 @@ $languagePost,
 'footer'
 )
 ];
+}
+
+$postedImportantNotices =
+is_array(
+$_POST['importantNotices'] ?? null
+)
+? array_values(
+$_POST['importantNotices']
+)
+: [];
+
+$newContent['importantNotices'] =
+buildSimpleItems(
+$postedImportantNotices,
+'重要なお知らせ',
+$error
+);
+
+if ($error === '') {
+$postedProducts =
+is_array(
+$_POST['products'] ?? null
+)
+? array_values(
+$_POST['products']
+)
+: [];
+
+$newContent['products'] =
+buildSimpleItems(
+$postedProducts,
+'製品情報',
+$error
+);
 }
 
 $postedNotices =
@@ -1437,6 +1559,193 @@ value="<?= escapeHtml($value) ?>"
 <section class="admin__section">
 
 <h2 class="admin__section-title">
+重要なお知らせ
+</h2>
+
+<div id="importantNoticeList">
+
+<?php foreach (($content['importantNotices'] ?? []) as $index => $item): ?>
+
+<div
+class="admin__item"
+data-important-notice-item
+>
+
+<div class="admin__item-actions">
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-important-notice-up
+>
+上へ
+</button>
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-important-notice-down
+>
+下へ
+</button>
+
+<button
+class="admin__button admin__button--danger admin__button--small"
+type="button"
+data-important-notice-delete
+>
+削除
+</button>
+
+</div>
+
+<div class="admin__language-grid">
+
+<?php foreach (['ja' => '日本語', 'en' => 'English'] as $language => $languageLabel): ?>
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+<?= escapeHtml($languageLabel) ?>
+</h3>
+
+<label class="admin__field">
+
+<span class="admin__label">
+タイトル
+</span>
+
+<input
+class="admin__input"
+type="text"
+name="importantNotices[<?= (int) $index ?>][<?= escapeHtml($language) ?>][title]"
+data-important-notice-field="<?= escapeHtml($language) ?>][title"
+value="<?= escapeHtml((string) ($item[$language]['title'] ?? '')) ?>"
+>
+
+</label>
+
+<label class="admin__field">
+
+<span class="admin__label">
+紹介文
+</span>
+
+<input
+class="admin__input"
+type="text"
+name="importantNotices[<?= (int) $index ?>][<?= escapeHtml($language) ?>][description]"
+data-important-notice-field="<?= escapeHtml($language) ?>][description"
+value="<?= escapeHtml((string) ($item[$language]['description'] ?? '')) ?>"
+>
+
+</label>
+
+<label class="admin__field">
+
+<span class="admin__label">
+リンク先URL
+</span>
+
+<input
+class="admin__input"
+type="url"
+name="importantNotices[<?= (int) $index ?>][<?= escapeHtml($language) ?>][url]"
+data-important-notice-field="<?= escapeHtml($language) ?>][url"
+value="<?= escapeHtml((string) ($item[$language]['url'] ?? '')) ?>"
+placeholder="https://"
+>
+
+</label>
+
+</div>
+
+<?php endforeach; ?>
+
+</div>
+
+<div class="admin__checks">
+
+<label>
+
+<input
+type="checkbox"
+name="importantNotices[<?= (int) $index ?>][visible]"
+data-important-notice-field="visible"
+<?= !empty($item['visible']) ? 'checked' : '' ?>
+>
+
+表示する
+
+</label>
+
+<label>
+
+<input
+type="checkbox"
+name="importantNotices[<?= (int) $index ?>][newTab]"
+data-important-notice-field="newTab"
+<?= !empty($item['newTab']) ? 'checked' : '' ?>
+>
+
+新しいタブで開く
+
+</label>
+
+<input
+type="hidden"
+name="importantNotices[<?= (int) $index ?>][targetsConfigured]"
+data-important-notice-field="targetsConfigured"
+value="1"
+>
+
+<label>
+
+<input
+type="checkbox"
+name="importantNotices[<?= (int) $index ?>][targets][web]"
+data-important-notice-field="targets][web"
+<?= !isset($item['targets']) || in_array('web', (array) $item['targets'], true) ? 'checked' : '' ?>
+>
+
+Web版
+
+</label>
+
+<label>
+
+<input
+type="checkbox"
+name="importantNotices[<?= (int) $index ?>][targets][app]"
+data-important-notice-field="targets][app"
+<?= !isset($item['targets']) || in_array('app', (array) $item['targets'], true) ? 'checked' : '' ?>
+>
+
+アプリ版
+
+</label>
+
+</div>
+
+</div>
+
+<?php endforeach; ?>
+
+</div>
+
+<button
+id="addImportantNoticeButton"
+class="admin__button admin__button--secondary"
+type="button"
+>
+重要なお知らせを追加
+</button>
+
+</section>
+
+<section class="admin__section">
+
+<h2 class="admin__section-title">
 お知らせ
 </h2>
 
@@ -1592,6 +1901,193 @@ class="admin__button admin__button--secondary"
 type="button"
 >
 お知らせを追加
+</button>
+
+</section>
+
+<section class="admin__section">
+
+<h2 class="admin__section-title">
+製品情報
+</h2>
+
+<div id="productList">
+
+<?php foreach (($content['products'] ?? []) as $index => $item): ?>
+
+<div
+class="admin__item"
+data-product-item
+>
+
+<div class="admin__item-actions">
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-product-up
+>
+上へ
+</button>
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-product-down
+>
+下へ
+</button>
+
+<button
+class="admin__button admin__button--danger admin__button--small"
+type="button"
+data-product-delete
+>
+削除
+</button>
+
+</div>
+
+<div class="admin__language-grid">
+
+<?php foreach (['ja' => '日本語', 'en' => 'English'] as $language => $languageLabel): ?>
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+<?= escapeHtml($languageLabel) ?>
+</h3>
+
+<label class="admin__field">
+
+<span class="admin__label">
+タイトル
+</span>
+
+<input
+class="admin__input"
+type="text"
+name="products[<?= (int) $index ?>][<?= escapeHtml($language) ?>][title]"
+data-product-field="<?= escapeHtml($language) ?>][title"
+value="<?= escapeHtml((string) ($item[$language]['title'] ?? '')) ?>"
+>
+
+</label>
+
+<label class="admin__field">
+
+<span class="admin__label">
+紹介文
+</span>
+
+<input
+class="admin__input"
+type="text"
+name="products[<?= (int) $index ?>][<?= escapeHtml($language) ?>][description]"
+data-product-field="<?= escapeHtml($language) ?>][description"
+value="<?= escapeHtml((string) ($item[$language]['description'] ?? '')) ?>"
+>
+
+</label>
+
+<label class="admin__field">
+
+<span class="admin__label">
+リンク先URL
+</span>
+
+<input
+class="admin__input"
+type="url"
+name="products[<?= (int) $index ?>][<?= escapeHtml($language) ?>][url]"
+data-product-field="<?= escapeHtml($language) ?>][url"
+value="<?= escapeHtml((string) ($item[$language]['url'] ?? '')) ?>"
+placeholder="https://"
+>
+
+</label>
+
+</div>
+
+<?php endforeach; ?>
+
+</div>
+
+<div class="admin__checks">
+
+<label>
+
+<input
+type="checkbox"
+name="products[<?= (int) $index ?>][visible]"
+data-product-field="visible"
+<?= !empty($item['visible']) ? 'checked' : '' ?>
+>
+
+表示する
+
+</label>
+
+<label>
+
+<input
+type="checkbox"
+name="products[<?= (int) $index ?>][newTab]"
+data-product-field="newTab"
+<?= !empty($item['newTab']) ? 'checked' : '' ?>
+>
+
+新しいタブで開く
+
+</label>
+
+<input
+type="hidden"
+name="products[<?= (int) $index ?>][targetsConfigured]"
+data-product-field="targetsConfigured"
+value="1"
+>
+
+<label>
+
+<input
+type="checkbox"
+name="products[<?= (int) $index ?>][targets][web]"
+data-product-field="targets][web"
+<?= !isset($item['targets']) || in_array('web', (array) $item['targets'], true) ? 'checked' : '' ?>
+>
+
+Web版
+
+</label>
+
+<label>
+
+<input
+type="checkbox"
+name="products[<?= (int) $index ?>][targets][app]"
+data-product-field="targets][app"
+<?= !isset($item['targets']) || in_array('app', (array) $item['targets'], true) ? 'checked' : '' ?>
+>
+
+アプリ版
+
+</label>
+
+</div>
+
+</div>
+
+<?php endforeach; ?>
+
+</div>
+
+<button
+id="addProductButton"
+class="admin__button admin__button--secondary"
+type="button"
+>
+製品情報を追加
 </button>
 
 </section>
@@ -1847,6 +2343,244 @@ type="submit"
 </div>
 
 </form>
+
+<template id="importantNoticeTemplate">
+
+<div
+class="admin__item"
+data-important-notice-item
+>
+
+<div class="admin__item-actions">
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-important-notice-up
+>
+上へ
+</button>
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-important-notice-down
+>
+下へ
+</button>
+
+<button
+class="admin__button admin__button--danger admin__button--small"
+type="button"
+data-important-notice-delete
+>
+削除
+</button>
+
+</div>
+
+<div class="admin__language-grid">
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+日本語
+</h3>
+
+<label class="admin__field">
+<span class="admin__label">タイトル</span>
+<input class="admin__input" type="text" data-important-notice-field="ja][title">
+</label>
+
+<label class="admin__field">
+<span class="admin__label">紹介文</span>
+<input class="admin__input" type="text" data-important-notice-field="ja][description">
+</label>
+
+<label class="admin__field">
+<span class="admin__label">リンク先URL</span>
+<input class="admin__input" type="url" data-important-notice-field="ja][url" placeholder="https://">
+</label>
+
+</div>
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+English
+</h3>
+
+<label class="admin__field">
+<span class="admin__label">タイトル</span>
+<input class="admin__input" type="text" data-important-notice-field="en][title">
+</label>
+
+<label class="admin__field">
+<span class="admin__label">紹介文</span>
+<input class="admin__input" type="text" data-important-notice-field="en][description">
+</label>
+
+<label class="admin__field">
+<span class="admin__label">リンク先URL</span>
+<input class="admin__input" type="url" data-important-notice-field="en][url" placeholder="https://">
+</label>
+
+</div>
+
+</div>
+
+<div class="admin__checks">
+
+<label>
+<input type="checkbox" data-important-notice-field="visible" checked>
+表示する
+</label>
+
+<label>
+<input type="checkbox" data-important-notice-field="newTab">
+新しいタブで開く
+</label>
+
+<input
+type="hidden"
+data-important-notice-field="targetsConfigured"
+value="1"
+>
+
+<label>
+<input type="checkbox" data-important-notice-field="targets][web" checked>
+Web版
+</label>
+
+<label>
+<input type="checkbox" data-important-notice-field="targets][app" checked>
+アプリ版
+</label>
+
+</div>
+
+</div>
+
+</template>
+
+<template id="productTemplate">
+
+<div
+class="admin__item"
+data-product-item
+>
+
+<div class="admin__item-actions">
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-product-up
+>
+上へ
+</button>
+
+<button
+class="admin__button admin__button--secondary admin__button--small"
+type="button"
+data-product-down
+>
+下へ
+</button>
+
+<button
+class="admin__button admin__button--danger admin__button--small"
+type="button"
+data-product-delete
+>
+削除
+</button>
+
+</div>
+
+<div class="admin__language-grid">
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+日本語
+</h3>
+
+<label class="admin__field">
+<span class="admin__label">タイトル</span>
+<input class="admin__input" type="text" data-product-field="ja][title">
+</label>
+
+<label class="admin__field">
+<span class="admin__label">紹介文</span>
+<input class="admin__input" type="text" data-product-field="ja][description">
+</label>
+
+<label class="admin__field">
+<span class="admin__label">リンク先URL</span>
+<input class="admin__input" type="url" data-product-field="ja][url" placeholder="https://">
+</label>
+
+</div>
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+English
+</h3>
+
+<label class="admin__field">
+<span class="admin__label">タイトル</span>
+<input class="admin__input" type="text" data-product-field="en][title">
+</label>
+
+<label class="admin__field">
+<span class="admin__label">紹介文</span>
+<input class="admin__input" type="text" data-product-field="en][description">
+</label>
+
+<label class="admin__field">
+<span class="admin__label">リンク先URL</span>
+<input class="admin__input" type="url" data-product-field="en][url" placeholder="https://">
+</label>
+
+</div>
+
+</div>
+
+<div class="admin__checks">
+
+<label>
+<input type="checkbox" data-product-field="visible" checked>
+表示する
+</label>
+
+<label>
+<input type="checkbox" data-product-field="newTab">
+新しいタブで開く
+</label>
+
+<input
+type="hidden"
+data-product-field="targetsConfigured"
+value="1"
+>
+
+<label>
+<input type="checkbox" data-product-field="targets][web" checked>
+Web版
+</label>
+
+<label>
+<input type="checkbox" data-product-field="targets][app" checked>
+アプリ版
+</label>
+
+</div>
+
+</div>
+
+</template>
 
 <template id="noticeTemplate">
 
@@ -2244,6 +2978,217 @@ checked
 </template>
 
 <script>
+function setupSimpleAdminCollection({
+listId,
+addButtonId,
+templateId,
+itemSelector,
+fieldSelector,
+fieldDatasetKey,
+collectionName,
+deleteSelector,
+upSelector,
+downSelector
+}) {
+
+const list =
+document.getElementById(
+listId
+);
+
+const addButton =
+document.getElementById(
+addButtonId
+);
+
+const template =
+document.getElementById(
+templateId
+);
+
+function reindex() {
+
+const items =
+list.querySelectorAll(
+itemSelector
+);
+
+items.forEach(
+(item, index) => {
+
+const fields =
+item.querySelectorAll(
+fieldSelector
+);
+
+fields.forEach(
+(field) => {
+
+field.name =
+`${collectionName}[${index}][${field.dataset[fieldDatasetKey]}]`;
+}
+);
+}
+);
+}
+
+list.addEventListener(
+"click",
+(event) => {
+
+const item =
+event.target.closest(
+itemSelector
+);
+
+if (!item) {
+return;
+}
+
+if (
+event.target.closest(
+deleteSelector
+)
+) {
+
+item.remove();
+
+reindex();
+
+return;
+}
+
+if (
+event.target.closest(
+upSelector
+)
+) {
+
+const previousItem =
+item.previousElementSibling;
+
+if (previousItem) {
+
+list.insertBefore(
+item,
+previousItem
+);
+}
+
+reindex();
+
+return;
+}
+
+if (
+event.target.closest(
+downSelector
+)
+) {
+
+const nextItem =
+item.nextElementSibling;
+
+if (nextItem) {
+
+list.insertBefore(
+nextItem,
+item
+);
+}
+
+reindex();
+}
+}
+);
+
+addButton.addEventListener(
+"click",
+() => {
+
+const fragment =
+template.content.cloneNode(
+true
+);
+
+list.appendChild(
+fragment
+);
+
+reindex();
+}
+);
+
+reindex();
+}
+
+
+setupSimpleAdminCollection({
+listId:
+"importantNoticeList",
+
+addButtonId:
+"addImportantNoticeButton",
+
+templateId:
+"importantNoticeTemplate",
+
+itemSelector:
+"[data-important-notice-item]",
+
+fieldSelector:
+"[data-important-notice-field]",
+
+fieldDatasetKey:
+"importantNoticeField",
+
+collectionName:
+"importantNotices",
+
+deleteSelector:
+"[data-important-notice-delete]",
+
+upSelector:
+"[data-important-notice-up]",
+
+downSelector:
+"[data-important-notice-down]"
+});
+
+
+setupSimpleAdminCollection({
+listId:
+"productList",
+
+addButtonId:
+"addProductButton",
+
+templateId:
+"productTemplate",
+
+itemSelector:
+"[data-product-item]",
+
+fieldSelector:
+"[data-product-field]",
+
+fieldDatasetKey:
+"productField",
+
+collectionName:
+"products",
+
+deleteSelector:
+"[data-product-delete]",
+
+upSelector:
+"[data-product-up]",
+
+downSelector:
+"[data-product-down]"
+});
+
+
 const noticeList =
 document.getElementById(
 "noticeList"
