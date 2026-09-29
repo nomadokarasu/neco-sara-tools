@@ -810,8 +810,9 @@ display: none;
 
 @media (max-width: 700px) {
 
-html:not(.tool-palette-ready) #lookTool {
-display: none;
+#lookTool,
+#addToolButton {
+display: none !important;
 }
 
 html:not(.tool-palette-ready) #cameraTool {

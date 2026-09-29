@@ -2,7 +2,7 @@ const CACHE_PREFIX =
 "gururi-paint-dev-";
 
 const CACHE_VERSION =
-"2.0.9";
+"2.0.10";
 
 const CACHE_NAME =
 `${CACHE_PREFIX}${CACHE_VERSION}`;
@@ -11,8 +11,8 @@ const STATIC_RESOURCES = [
 "./",
 "./index.html",
 "./home-content.json",
-"./style.css?v=2.0.9",
-"./script.js?v=2.0.9",
+"./style.css?v=2.0.10",
+"./script.js?v=2.0.10",
 "./images/gururi-paint-hero.png",
 "./images/home-title-ja.png",
 "./images/home-title-en.png",

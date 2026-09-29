@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.9";
+"2.0.10";
 
 
 const appVersionElements =
@@ -2885,6 +2885,257 @@ false;
 
 
 /* ================================
+アンチエイリアスなしペン
+================================ */
+
+function stampHardPen(
+x,
+y,
+size,
+color
+) {
+
+const diameter =
+Math.max(
+1,
+Math.round(
+size *
+drawScale
+)
+);
+
+
+const radius =
+diameter /
+2;
+
+
+const centerX =
+Math.round(
+x
+);
+
+
+const centerY =
+Math.round(
+y
+);
+
+
+const [
+red,
+green,
+blue
+] =
+hexToRgba(
+color
+);
+
+
+const minY =
+Math.max(
+0,
+Math.floor(
+centerY -
+radius
+)
+);
+
+
+const maxY =
+Math.min(
+drawCanvas.height - 1,
+Math.ceil(
+centerY +
+radius
+)
+);
+
+
+for (
+let pixelY =
+minY;
+pixelY <=
+maxY;
+pixelY++
+) {
+
+const dy =
+pixelY -
+centerY;
+
+
+for (
+let dx =
+-Math.ceil(
+radius
+);
+dx <=
+Math.ceil(
+radius
+);
+dx++
+) {
+
+if (
+dx *
+dx +
+dy *
+dy >
+radius *
+radius
+) {
+
+continue;
+}
+
+
+let pixelX =
+centerX +
+dx;
+
+
+pixelX =
+(
+(
+pixelX %
+drawCanvas.width
+) +
+drawCanvas.width
+) %
+drawCanvas.width;
+
+
+if (
+currentStroke &&
+currentStroke.tool ===
+"eraser"
+) {
+
+drawContext.clearRect(
+pixelX,
+pixelY,
+1,
+1
+);
+
+} else {
+
+drawContext.fillStyle =
+`rgb(${red}, ${green}, ${blue})`;
+
+drawContext.fillRect(
+pixelX,
+pixelY,
+1,
+1
+);
+}
+}
+}
+}
+
+
+function drawHardPenQuadratic(
+startX,
+startY,
+controlX,
+controlY,
+endX,
+endY,
+size,
+color
+) {
+
+const approximateLength =
+Math.hypot(
+controlX -
+startX,
+controlY -
+startY
+) +
+Math.hypot(
+endX -
+controlX,
+endY -
+controlY
+);
+
+
+const stepLength =
+Math.max(
+0.5,
+Math.min(
+2,
+size *
+0.25
+)
+);
+
+
+const steps =
+Math.max(
+1,
+Math.ceil(
+approximateLength /
+stepLength
+)
+);
+
+
+for (
+let i = 1;
+i <= steps;
+i++
+) {
+
+const t =
+i /
+steps;
+
+
+const inverseT =
+1 -
+t;
+
+
+const x =
+inverseT *
+inverseT *
+startX +
+2 *
+inverseT *
+t *
+controlX +
+t *
+t *
+endX;
+
+
+const y =
+inverseT *
+inverseT *
+startY +
+2 *
+inverseT *
+t *
+controlY +
+t *
+t *
+endY;
+
+
+stampHardPen(
+x,
+y,
+size,
+color
+);
+}
+}
+
+
+/* ================================
 レイヤー
 ================================ */
 
@@ -5381,6 +5632,9 @@ const verticalGuideMaxDistance =
 
 const verticalGuideHeight = 80;
 
+const verticalGuideUpperHeight =
+120;
+
 
 for (
 let distance =
@@ -5418,14 +5672,14 @@ distance;
 
 
 /*
-地面から上方向へ
-垂直線を伸ばす
+原点を中心に
+上下方向へ垂直線を伸ばす
 */
 
 verticalGuidePoints.push(
 new THREE.Vector3(
 x,
-0,
+-verticalGuideHeight,
 z
 )
 );
@@ -5433,7 +5687,7 @@ z
 verticalGuidePoints.push(
 new THREE.Vector3(
 x,
-verticalGuideHeight,
+verticalGuideUpperHeight,
 z
 )
 );
@@ -5451,7 +5705,7 @@ verticalGuidePoints
 const verticalGuideMaterial =
 new THREE.LineBasicMaterial({
 
-color: 0x6699ff,
+color: 0xff6600,
 
 transparent: true,
 
@@ -8125,6 +8379,9 @@ width * height
 function paintUnderEdge(
 pixelIndex
 ) {
+
+return;
+
 
 /*
 本来の塗り領域は
@@ -12395,7 +12652,478 @@ cameraRecordingTime.textContent =
 }
 
 
-function downloadCameraVideo(
+function getMp4BoxType(
+view,
+offset
+) {
+
+return String.fromCharCode(
+view.getUint8(
+offset + 4
+),
+view.getUint8(
+offset + 5
+),
+view.getUint8(
+offset + 6
+),
+view.getUint8(
+offset + 7
+)
+);
+}
+
+
+function getMp4BoxSize(
+view,
+offset
+) {
+
+const size =
+view.getUint32(
+offset
+);
+
+if (
+size ===
+1
+) {
+
+const high =
+view.getUint32(
+offset + 8
+);
+
+const low =
+view.getUint32(
+offset + 12
+);
+
+return (
+high *
+4294967296 +
+low
+);
+}
+
+
+return size;
+}
+
+
+function readMp4Uint64(
+view,
+offset
+) {
+
+const high =
+view.getUint32(
+offset
+);
+
+const low =
+view.getUint32(
+offset + 4
+);
+
+return (
+high *
+4294967296 +
+low
+);
+}
+
+
+function writeMp4Uint64(
+view,
+offset,
+value
+) {
+
+const high =
+Math.floor(
+value /
+4294967296
+);
+
+const low =
+value %
+4294967296;
+
+
+view.setUint32(
+offset,
+high
+);
+
+view.setUint32(
+offset + 4,
+low
+);
+}
+
+
+function findMp4Box(
+view,
+start,
+end,
+type
+) {
+
+let offset =
+start;
+
+
+while (
+offset + 8 <=
+end
+) {
+
+const size =
+getMp4BoxSize(
+view,
+offset
+);
+
+
+if (
+!Number.isFinite(
+size
+) ||
+size < 8 ||
+offset + size >
+end
+) {
+
+break;
+}
+
+
+if (
+getMp4BoxType(
+view,
+offset
+) ===
+type
+) {
+
+return {
+offset,
+size
+};
+}
+
+
+offset +=
+size;
+}
+
+
+return null;
+}
+
+
+async function fixMp4DurationMetadata(
+blob
+) {
+
+try {
+
+const buffer =
+await blob.arrayBuffer();
+
+
+const view =
+new DataView(
+buffer
+);
+
+
+const moov =
+findMp4Box(
+view,
+0,
+buffer.byteLength,
+"moov"
+);
+
+
+if (!moov) {
+
+return blob;
+}
+
+
+const moovStart =
+moov.offset + 8;
+
+const moovEnd =
+moov.offset +
+moov.size;
+
+
+const mvhd =
+findMp4Box(
+view,
+moovStart,
+moovEnd,
+"mvhd"
+);
+
+
+if (!mvhd) {
+
+return blob;
+}
+
+
+const mvhdVersion =
+view.getUint8(
+mvhd.offset + 8
+);
+
+
+let movieTimescale;
+let movieDuration;
+
+
+if (
+mvhdVersion ===
+1
+) {
+
+movieTimescale =
+view.getUint32(
+mvhd.offset + 28
+);
+
+movieDuration =
+readMp4Uint64(
+view,
+mvhd.offset + 32
+);
+
+} else {
+
+movieTimescale =
+view.getUint32(
+mvhd.offset + 20
+);
+
+movieDuration =
+view.getUint32(
+mvhd.offset + 24
+);
+}
+
+
+if (
+!movieTimescale ||
+!movieDuration
+) {
+
+return blob;
+}
+
+
+let offset =
+moovStart;
+
+
+while (
+offset + 8 <=
+moovEnd
+) {
+
+const size =
+getMp4BoxSize(
+view,
+offset
+);
+
+
+if (
+!Number.isFinite(
+size
+) ||
+size < 8 ||
+offset + size >
+moovEnd
+) {
+
+break;
+}
+
+
+if (
+getMp4BoxType(
+view,
+offset
+) ===
+"trak"
+) {
+
+const trakStart =
+offset + 8;
+
+const trakEnd =
+offset +
+size;
+
+
+const tkhd =
+findMp4Box(
+view,
+trakStart,
+trakEnd,
+"tkhd"
+);
+
+
+if (tkhd) {
+
+const tkhdVersion =
+view.getUint8(
+tkhd.offset + 8
+);
+
+
+if (
+tkhdVersion ===
+1
+) {
+
+writeMp4Uint64(
+view,
+tkhd.offset + 36,
+movieDuration
+);
+
+} else {
+
+view.setUint32(
+tkhd.offset + 28,
+movieDuration
+);
+}
+}
+
+
+const mdia =
+findMp4Box(
+view,
+trakStart,
+trakEnd,
+"mdia"
+);
+
+
+if (mdia) {
+
+const mdhd =
+findMp4Box(
+view,
+mdia.offset + 8,
+mdia.offset +
+mdia.size,
+"mdhd"
+);
+
+
+if (mdhd) {
+
+const mdhdVersion =
+view.getUint8(
+mdhd.offset + 8
+);
+
+
+let mediaTimescale;
+
+
+if (
+mdhdVersion ===
+1
+) {
+
+mediaTimescale =
+view.getUint32(
+mdhd.offset + 28
+);
+
+} else {
+
+mediaTimescale =
+view.getUint32(
+mdhd.offset + 20
+);
+}
+
+
+if (mediaTimescale) {
+
+const correctedDuration =
+Math.round(
+movieDuration *
+mediaTimescale /
+movieTimescale
+);
+
+
+if (
+mdhdVersion ===
+1
+) {
+
+writeMp4Uint64(
+view,
+mdhd.offset + 32,
+correctedDuration
+);
+
+} else {
+
+view.setUint32(
+mdhd.offset + 24,
+correctedDuration
+);
+}
+}
+}
+}
+}
+
+
+offset +=
+size;
+}
+
+
+return new Blob(
+[
+buffer
+],
+{
+type:
+blob.type ||
+"video/mp4"
+}
+);
+
+} catch (error) {
+
+console.warn(
+"MP4 duration metadata correction failed:",
+error
+);
+
+
+return blob;
+}
+}
+
+
+async function downloadCameraVideo(
 chunks,
 mimeType
 ) {
@@ -12411,7 +13139,7 @@ currentLanguage === "en"
 return;
 }
 
-const blob =
+let blob =
 new Blob(
 chunks,
 {
@@ -12419,6 +13147,24 @@ type:
 mimeType || "video/webm"
 }
 );
+
+
+if (
+String(
+mimeType
+)
+.toLowerCase()
+.includes(
+"mp4"
+)
+) {
+
+blob =
+await fixMp4DurationMetadata(
+blob
+);
+}
+
 
 const downloadUrl =
 URL.createObjectURL(
@@ -12698,9 +13444,7 @@ cameraShutterButton.classList.add(
 "is-recording"
 );
 
-cameraMediaRecorder.start(
-100
-);
+cameraMediaRecorder.start();
 
 cameraVideoTimerId =
 window.setInterval(
@@ -17705,23 +18449,15 @@ drawContext.globalCompositeOperation =
 }
 
 
-drawContext.fillStyle =
-penColor;
-
-drawContext.beginPath();
-
-drawContext.arc(
+stampHardPen(
 position.x,
 position.y,
-(
-penSize *
-drawScale
-) / 2,
-0,
-Math.PI * 2
+penSize,
+currentTool ===
+"eraser"
+? "#000000"
+: penColor
 );
-
-drawContext.fill();
 
 
 /*
@@ -18062,73 +18798,19 @@ historyPadding
 );
 
 
-/*
-通常位置に描画
-*/
-
-drawContext.beginPath();
-
-drawContext.moveTo(
+drawHardPenQuadratic(
 previousMidX,
-previousMidY
-);
-
-drawContext.quadraticCurveTo(
+previousMidY,
 previousPaintX,
 previousPaintY,
 midX,
-midY
+midY,
+penSize,
+currentTool ===
+"eraser"
+? "#000000"
+: penColor
 );
-
-drawContext.stroke();
-
-
-/*
-左側にも同じ線を描く
-*/
-
-drawContext.beginPath();
-
-drawContext.moveTo(
-previousMidX -
-paintCanvas.width,
-previousMidY
-);
-
-drawContext.quadraticCurveTo(
-previousPaintX -
-paintCanvas.width,
-previousPaintY,
-midX -
-paintCanvas.width,
-midY
-);
-
-drawContext.stroke();
-
-
-/*
-右側にも同じ線を描く
-*/
-
-drawContext.beginPath();
-
-drawContext.moveTo(
-previousMidX +
-paintCanvas.width,
-previousMidY
-);
-
-drawContext.quadraticCurveTo(
-previousPaintX +
-paintCanvas.width,
-previousPaintY,
-midX +
-paintCanvas.width,
-midY
-);
-
-drawContext.stroke();
 
 /*
 次回用の座標を保存
@@ -18464,7 +19146,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.9",
+"./service-worker.js?v=2.0.10",
 {
 updateViaCache: "none"
 }
