@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.10-dev";
+"2.0.11-dev";
 
 
 const appVersionElements =
@@ -12955,9 +12955,7 @@ cameraShutterButton.classList.add(
 "is-recording"
 );
 
-cameraMediaRecorder.start(
-100
-);
+cameraMediaRecorder.start();
 
 cameraVideoTimerId =
 window.setInterval(
@@ -18659,7 +18657,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.10-dev",
+"./service-worker.js?v=2.0.11-dev",
 {
 updateViaCache: "none"
 }
