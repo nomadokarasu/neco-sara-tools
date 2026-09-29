@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.9-dev";
+"2.0.10-dev";
 
 
 const appVersionElements =
@@ -2885,6 +2885,257 @@ false;
 
 
 /* ================================
+アンチエイリアスなしペン
+================================ */
+
+function stampHardPen(
+x,
+y,
+size,
+color
+) {
+
+const diameter =
+Math.max(
+1,
+Math.round(
+size *
+drawScale
+)
+);
+
+
+const radius =
+diameter /
+2;
+
+
+const centerX =
+Math.round(
+x
+);
+
+
+const centerY =
+Math.round(
+y
+);
+
+
+const [
+red,
+green,
+blue
+] =
+hexToRgba(
+color
+);
+
+
+const minY =
+Math.max(
+0,
+Math.floor(
+centerY -
+radius
+)
+);
+
+
+const maxY =
+Math.min(
+drawCanvas.height - 1,
+Math.ceil(
+centerY +
+radius
+)
+);
+
+
+for (
+let pixelY =
+minY;
+pixelY <=
+maxY;
+pixelY++
+) {
+
+const dy =
+pixelY -
+centerY;
+
+
+for (
+let dx =
+-Math.ceil(
+radius
+);
+dx <=
+Math.ceil(
+radius
+);
+dx++
+) {
+
+if (
+dx *
+dx +
+dy *
+dy >
+radius *
+radius
+) {
+
+continue;
+}
+
+
+let pixelX =
+centerX +
+dx;
+
+
+pixelX =
+(
+(
+pixelX %
+drawCanvas.width
+) +
+drawCanvas.width
+) %
+drawCanvas.width;
+
+
+if (
+currentStroke &&
+currentStroke.tool ===
+"eraser"
+) {
+
+drawContext.clearRect(
+pixelX,
+pixelY,
+1,
+1
+);
+
+} else {
+
+drawContext.fillStyle =
+`rgb(${red}, ${green}, ${blue})`;
+
+drawContext.fillRect(
+pixelX,
+pixelY,
+1,
+1
+);
+}
+}
+}
+}
+
+
+function drawHardPenQuadratic(
+startX,
+startY,
+controlX,
+controlY,
+endX,
+endY,
+size,
+color
+) {
+
+const approximateLength =
+Math.hypot(
+controlX -
+startX,
+controlY -
+startY
+) +
+Math.hypot(
+endX -
+controlX,
+endY -
+controlY
+);
+
+
+const stepLength =
+Math.max(
+0.5,
+Math.min(
+2,
+size *
+0.25
+)
+);
+
+
+const steps =
+Math.max(
+1,
+Math.ceil(
+approximateLength /
+stepLength
+)
+);
+
+
+for (
+let i = 1;
+i <= steps;
+i++
+) {
+
+const t =
+i /
+steps;
+
+
+const inverseT =
+1 -
+t;
+
+
+const x =
+inverseT *
+inverseT *
+startX +
+2 *
+inverseT *
+t *
+controlX +
+t *
+t *
+endX;
+
+
+const y =
+inverseT *
+inverseT *
+startY +
+2 *
+inverseT *
+t *
+controlY +
+t *
+t *
+endY;
+
+
+stampHardPen(
+x,
+y,
+size,
+color
+);
+}
+}
+
+
+/* ================================
 レイヤー
 ================================ */
 
@@ -5381,6 +5632,9 @@ const verticalGuideMaxDistance =
 
 const verticalGuideHeight = 80;
 
+const verticalGuideUpperHeight =
+120;
+
 
 for (
 let distance =
@@ -5418,14 +5672,14 @@ distance;
 
 
 /*
-地面から上方向へ
-垂直線を伸ばす
+原点を中心に
+上下方向へ垂直線を伸ばす
 */
 
 verticalGuidePoints.push(
 new THREE.Vector3(
 x,
-0,
+-verticalGuideHeight,
 z
 )
 );
@@ -5433,7 +5687,7 @@ z
 verticalGuidePoints.push(
 new THREE.Vector3(
 x,
-verticalGuideHeight,
+verticalGuideUpperHeight,
 z
 )
 );
@@ -5451,7 +5705,7 @@ verticalGuidePoints
 const verticalGuideMaterial =
 new THREE.LineBasicMaterial({
 
-color: 0x6699ff,
+color: 0xff6600,
 
 transparent: true,
 
@@ -8125,6 +8379,9 @@ width * height
 function paintUnderEdge(
 pixelIndex
 ) {
+
+return;
+
 
 /*
 本来の塗り領域は
@@ -17705,23 +17962,15 @@ drawContext.globalCompositeOperation =
 }
 
 
-drawContext.fillStyle =
-penColor;
-
-drawContext.beginPath();
-
-drawContext.arc(
+stampHardPen(
 position.x,
 position.y,
-(
-penSize *
-drawScale
-) / 2,
-0,
-Math.PI * 2
+penSize,
+currentTool ===
+"eraser"
+? "#000000"
+: penColor
 );
-
-drawContext.fill();
 
 
 /*
@@ -18062,73 +18311,19 @@ historyPadding
 );
 
 
-/*
-通常位置に描画
-*/
-
-drawContext.beginPath();
-
-drawContext.moveTo(
+drawHardPenQuadratic(
 previousMidX,
-previousMidY
-);
-
-drawContext.quadraticCurveTo(
+previousMidY,
 previousPaintX,
 previousPaintY,
 midX,
-midY
+midY,
+penSize,
+currentTool ===
+"eraser"
+? "#000000"
+: penColor
 );
-
-drawContext.stroke();
-
-
-/*
-左側にも同じ線を描く
-*/
-
-drawContext.beginPath();
-
-drawContext.moveTo(
-previousMidX -
-paintCanvas.width,
-previousMidY
-);
-
-drawContext.quadraticCurveTo(
-previousPaintX -
-paintCanvas.width,
-previousPaintY,
-midX -
-paintCanvas.width,
-midY
-);
-
-drawContext.stroke();
-
-
-/*
-右側にも同じ線を描く
-*/
-
-drawContext.beginPath();
-
-drawContext.moveTo(
-previousMidX +
-paintCanvas.width,
-previousMidY
-);
-
-drawContext.quadraticCurveTo(
-previousPaintX +
-paintCanvas.width,
-previousPaintY,
-midX +
-paintCanvas.width,
-midY
-);
-
-drawContext.stroke();
 
 /*
 次回用の座標を保存
@@ -18464,7 +18659,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.9-dev",
+"./service-worker.js?v=2.0.10-dev",
 {
 updateViaCache: "none"
 }
