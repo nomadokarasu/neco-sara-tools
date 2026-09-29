@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.11-dev";
+"2.0.12-dev";
 
 
 const appVersionElements =
@@ -12652,7 +12652,478 @@ cameraRecordingTime.textContent =
 }
 
 
-function downloadCameraVideo(
+function getMp4BoxType(
+view,
+offset
+) {
+
+return String.fromCharCode(
+view.getUint8(
+offset + 4
+),
+view.getUint8(
+offset + 5
+),
+view.getUint8(
+offset + 6
+),
+view.getUint8(
+offset + 7
+)
+);
+}
+
+
+function getMp4BoxSize(
+view,
+offset
+) {
+
+const size =
+view.getUint32(
+offset
+);
+
+if (
+size ===
+1
+) {
+
+const high =
+view.getUint32(
+offset + 8
+);
+
+const low =
+view.getUint32(
+offset + 12
+);
+
+return (
+high *
+4294967296 +
+low
+);
+}
+
+
+return size;
+}
+
+
+function readMp4Uint64(
+view,
+offset
+) {
+
+const high =
+view.getUint32(
+offset
+);
+
+const low =
+view.getUint32(
+offset + 4
+);
+
+return (
+high *
+4294967296 +
+low
+);
+}
+
+
+function writeMp4Uint64(
+view,
+offset,
+value
+) {
+
+const high =
+Math.floor(
+value /
+4294967296
+);
+
+const low =
+value %
+4294967296;
+
+
+view.setUint32(
+offset,
+high
+);
+
+view.setUint32(
+offset + 4,
+low
+);
+}
+
+
+function findMp4Box(
+view,
+start,
+end,
+type
+) {
+
+let offset =
+start;
+
+
+while (
+offset + 8 <=
+end
+) {
+
+const size =
+getMp4BoxSize(
+view,
+offset
+);
+
+
+if (
+!Number.isFinite(
+size
+) ||
+size < 8 ||
+offset + size >
+end
+) {
+
+break;
+}
+
+
+if (
+getMp4BoxType(
+view,
+offset
+) ===
+type
+) {
+
+return {
+offset,
+size
+};
+}
+
+
+offset +=
+size;
+}
+
+
+return null;
+}
+
+
+async function fixMp4DurationMetadata(
+blob
+) {
+
+try {
+
+const buffer =
+await blob.arrayBuffer();
+
+
+const view =
+new DataView(
+buffer
+);
+
+
+const moov =
+findMp4Box(
+view,
+0,
+buffer.byteLength,
+"moov"
+);
+
+
+if (!moov) {
+
+return blob;
+}
+
+
+const moovStart =
+moov.offset + 8;
+
+const moovEnd =
+moov.offset +
+moov.size;
+
+
+const mvhd =
+findMp4Box(
+view,
+moovStart,
+moovEnd,
+"mvhd"
+);
+
+
+if (!mvhd) {
+
+return blob;
+}
+
+
+const mvhdVersion =
+view.getUint8(
+mvhd.offset + 8
+);
+
+
+let movieTimescale;
+let movieDuration;
+
+
+if (
+mvhdVersion ===
+1
+) {
+
+movieTimescale =
+view.getUint32(
+mvhd.offset + 28
+);
+
+movieDuration =
+readMp4Uint64(
+view,
+mvhd.offset + 32
+);
+
+} else {
+
+movieTimescale =
+view.getUint32(
+mvhd.offset + 20
+);
+
+movieDuration =
+view.getUint32(
+mvhd.offset + 24
+);
+}
+
+
+if (
+!movieTimescale ||
+!movieDuration
+) {
+
+return blob;
+}
+
+
+let offset =
+moovStart;
+
+
+while (
+offset + 8 <=
+moovEnd
+) {
+
+const size =
+getMp4BoxSize(
+view,
+offset
+);
+
+
+if (
+!Number.isFinite(
+size
+) ||
+size < 8 ||
+offset + size >
+moovEnd
+) {
+
+break;
+}
+
+
+if (
+getMp4BoxType(
+view,
+offset
+) ===
+"trak"
+) {
+
+const trakStart =
+offset + 8;
+
+const trakEnd =
+offset +
+size;
+
+
+const tkhd =
+findMp4Box(
+view,
+trakStart,
+trakEnd,
+"tkhd"
+);
+
+
+if (tkhd) {
+
+const tkhdVersion =
+view.getUint8(
+tkhd.offset + 8
+);
+
+
+if (
+tkhdVersion ===
+1
+) {
+
+writeMp4Uint64(
+view,
+tkhd.offset + 36,
+movieDuration
+);
+
+} else {
+
+view.setUint32(
+tkhd.offset + 28,
+movieDuration
+);
+}
+}
+
+
+const mdia =
+findMp4Box(
+view,
+trakStart,
+trakEnd,
+"mdia"
+);
+
+
+if (mdia) {
+
+const mdhd =
+findMp4Box(
+view,
+mdia.offset + 8,
+mdia.offset +
+mdia.size,
+"mdhd"
+);
+
+
+if (mdhd) {
+
+const mdhdVersion =
+view.getUint8(
+mdhd.offset + 8
+);
+
+
+let mediaTimescale;
+
+
+if (
+mdhdVersion ===
+1
+) {
+
+mediaTimescale =
+view.getUint32(
+mdhd.offset + 28
+);
+
+} else {
+
+mediaTimescale =
+view.getUint32(
+mdhd.offset + 20
+);
+}
+
+
+if (mediaTimescale) {
+
+const correctedDuration =
+Math.round(
+movieDuration *
+mediaTimescale /
+movieTimescale
+);
+
+
+if (
+mdhdVersion ===
+1
+) {
+
+writeMp4Uint64(
+view,
+mdhd.offset + 32,
+correctedDuration
+);
+
+} else {
+
+view.setUint32(
+mdhd.offset + 24,
+correctedDuration
+);
+}
+}
+}
+}
+}
+
+
+offset +=
+size;
+}
+
+
+return new Blob(
+[
+buffer
+],
+{
+type:
+blob.type ||
+"video/mp4"
+}
+);
+
+} catch (error) {
+
+console.warn(
+"MP4 duration metadata correction failed:",
+error
+);
+
+
+return blob;
+}
+}
+
+
+async function downloadCameraVideo(
 chunks,
 mimeType
 ) {
@@ -12668,7 +13139,7 @@ currentLanguage === "en"
 return;
 }
 
-const blob =
+let blob =
 new Blob(
 chunks,
 {
@@ -12676,6 +13147,24 @@ type:
 mimeType || "video/webm"
 }
 );
+
+
+if (
+String(
+mimeType
+)
+.toLowerCase()
+.includes(
+"mp4"
+)
+) {
+
+blob =
+await fixMp4DurationMetadata(
+blob
+);
+}
+
 
 const downloadUrl =
 URL.createObjectURL(
@@ -18657,7 +19146,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.11-dev",
+"./service-worker.js?v=2.0.12-dev",
 {
 updateViaCache: "none"
 }
