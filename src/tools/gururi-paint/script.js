@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.10";
+"2.0.11";
 
 
 const appVersionElements =
@@ -2888,9 +2888,21 @@ false;
 アンチエイリアスなしペン
 ================================ */
 
-function stampHardPen(
-x,
-y,
+const hardPenStampCanvas =
+document.createElement(
+"canvas"
+);
+
+const hardPenStampContext =
+hardPenStampCanvas.getContext(
+"2d"
+);
+
+let hardPenStampKey =
+"";
+
+
+function getHardPenStamp(
 size,
 color
 ) {
@@ -2904,134 +2916,224 @@ drawScale
 )
 );
 
+const stampSize =
+diameter %
+2 === 0
+? diameter + 1
+: diameter;
 
-const radius =
-diameter /
-2;
+const key =
+`${diameter}:${color}`;
 
 
-const centerX =
-Math.round(
-x
+if (
+hardPenStampKey ===
+key
+) {
+
+return hardPenStampCanvas;
+}
+
+
+hardPenStampKey =
+key;
+
+
+hardPenStampCanvas.width =
+stampSize;
+
+hardPenStampCanvas.height =
+stampSize;
+
+
+const imageData =
+hardPenStampContext.createImageData(
+stampSize,
+stampSize
 );
 
 
-const centerY =
-Math.round(
-y
-);
-
-
-const [
-red,
-green,
-blue
-] =
+const rgba =
 hexToRgba(
 color
 );
 
 
-const minY =
-Math.max(
-0,
-Math.floor(
-centerY -
-radius
-)
-);
+const center =
+(
+stampSize -
+1
+) / 2;
 
 
-const maxY =
-Math.min(
-drawCanvas.height - 1,
-Math.ceil(
-centerY +
-radius
-)
-);
+const radius =
+diameter / 2;
+
+
+const radiusSquared =
+radius *
+radius;
 
 
 for (
-let pixelY =
-minY;
-pixelY <=
-maxY;
-pixelY++
+let y = 0;
+y < stampSize;
+y++
 ) {
+
+for (
+let x = 0;
+x < stampSize;
+x++
+) {
+
+const dx =
+x -
+center;
 
 const dy =
-pixelY -
-centerY;
+y -
+center;
 
-
-for (
-let dx =
--Math.ceil(
-radius
-);
-dx <=
-Math.ceil(
-radius
-);
-dx++
-) {
 
 if (
-dx *
-dx +
-dy *
-dy >
-radius *
-radius
+dx * dx +
+dy * dy >
+radiusSquared
 ) {
 
 continue;
 }
 
 
-let pixelX =
-centerX +
-dx;
+const index =
+(
+y *
+stampSize +
+x
+) * 4;
 
 
-pixelX =
+imageData.data[
+index
+] =
+rgba[0];
+
+imageData.data[
+index + 1
+] =
+rgba[1];
+
+imageData.data[
+index + 2
+] =
+rgba[2];
+
+imageData.data[
+index + 3
+] =
+255;
+}
+}
+
+
+hardPenStampContext.putImageData(
+imageData,
+0,
+0
+);
+
+
+return hardPenStampCanvas;
+}
+
+
+function stampHardPen(
+x,
+y,
+size,
+color
+) {
+
+const stamp =
+getHardPenStamp(
+size,
+color
+);
+
+const centerX =
+Math.round(
+x
+);
+
+const centerY =
+Math.round(
+y
+);
+
+const wrappedCenterX =
 (
 (
-pixelX %
+centerX %
 drawCanvas.width
 ) +
 drawCanvas.width
 ) %
 drawCanvas.width;
 
+const halfWidth =
+(
+stamp.width -
+1
+) / 2;
+
+const halfHeight =
+(
+stamp.height -
+1
+) / 2;
+
+const left =
+wrappedCenterX -
+halfWidth;
+
+const top =
+centerY -
+halfHeight;
+
+drawContext.imageSmoothingEnabled =
+false;
+
+drawContext.drawImage(
+stamp,
+left,
+top
+);
 
 if (
-currentStroke &&
-currentStroke.tool ===
-"eraser"
+left < 0
 ) {
 
-drawContext.clearRect(
-pixelX,
-pixelY,
-1,
-1
-);
-
-} else {
-
-drawContext.fillStyle =
-`rgb(${red}, ${green}, ${blue})`;
-
-drawContext.fillRect(
-pixelX,
-pixelY,
-1,
-1
+drawContext.drawImage(
+stamp,
+left +
+drawCanvas.width,
+top
 );
 }
-}
+
+if (
+left +
+stamp.width >
+drawCanvas.width
+) {
+
+drawContext.drawImage(
+stamp,
+left -
+drawCanvas.width,
+top
+);
 }
 }
 
@@ -14843,6 +14945,12 @@ Undo
 
 function undo() {
 
+if (
+isDrawing
+) {
+return;
+}
+
 if (strokeHistory.length === 0) {
 return;
 }
@@ -14994,6 +15102,12 @@ Redo
 ================================ */
 
 function redo() {
+
+if (
+isDrawing
+) {
+return;
+}
 
 if (
 redoStrokeHistory.length === 0
@@ -19146,7 +19260,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.10",
+"./service-worker.js?v=2.0.11",
 {
 updateViaCache: "none"
 }
