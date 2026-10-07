@@ -2,7 +2,7 @@ import * as THREE from
 "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
 import iro from
-"https://cdn.jsdelivr.net/npm/@jaames/iro@5/dist/iro.es.js";
+"https://cdn.jsdelivr.net/npm/@jaames/iro@5.5.2/dist/iro.es.js";
 
 /* ================================
 基本設定
@@ -64,7 +64,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.11";
+"2.0.14";
 
 
 const appVersionElements =
@@ -513,6 +513,27 @@ document.getElementById(
 );
 
 
+const openSourceLicensesPanel =
+document.getElementById(
+"openSourceLicensesPanel"
+);
+
+const openSourceLicensesCloseButton =
+document.getElementById(
+"openSourceLicensesCloseButton"
+);
+
+const openSourceLicensesPanelTitle =
+document.getElementById(
+"openSourceLicensesPanelTitle"
+);
+
+const openSourceLicensesFrame =
+document.getElementById(
+"openSourceLicensesFrame"
+);
+
+
 const shortcutSettingsButton =
 document.getElementById(
 "shortcutSettingsButton"
@@ -577,6 +598,11 @@ document.getElementById(
 const desktopHelpMenuButton =
 document.getElementById(
 "desktopHelpMenuButton"
+);
+
+const openSourceLicensesMenuButton =
+document.getElementById(
+"openSourceLicensesMenuButton"
 );
 
 const bugReportLink =
@@ -1537,6 +1563,30 @@ desktopHelpMenuButton.textContent =
 currentLanguage === "en"
 ? "How to use"
 : "使い方";
+
+
+openSourceLicensesMenuButton.textContent =
+currentLanguage === "en"
+? "Open Source Licenses"
+: "オープンソースライセンス";
+
+openSourceLicensesPanelTitle.textContent =
+currentLanguage === "en"
+? "Open Source Licenses"
+: "オープンソースライセンス";
+
+openSourceLicensesCloseButton.setAttribute(
+"aria-label",
+currentLanguage === "en"
+? "Close"
+: "閉じる"
+);
+
+openSourceLicensesFrame.title =
+currentLanguage === "en"
+? "Open Source Licenses"
+: "オープンソースライセンス";
+
 
 bugReportLink.textContent =
 currentLanguage === "en"
@@ -11760,6 +11810,53 @@ currentLanguage
 );
 
 
+function closeOpenSourceLicenses() {
+
+openSourceLicensesPanel.classList.remove(
+"is-open"
+);
+}
+
+
+openSourceLicensesMenuButton.addEventListener(
+"click",
+() => {
+
+closeAllAppMenus();
+
+closeMobileSettingsMenu();
+
+openSourceLicensesPanel.classList.add(
+"is-open"
+);
+}
+);
+
+
+openSourceLicensesCloseButton.addEventListener(
+"click",
+() => {
+
+closeOpenSourceLicenses();
+}
+);
+
+
+openSourceLicensesPanel.addEventListener(
+"click",
+(event) => {
+
+if (
+event.target ===
+openSourceLicensesPanel
+) {
+
+closeOpenSourceLicenses();
+}
+}
+);
+
+
 /* ================================
 ツール切り替え
 ================================ */
@@ -19260,7 +19357,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.11",
+"./service-worker.js?v=2.0.14",
 {
 updateViaCache: "none"
 }

@@ -42,7 +42,7 @@ href="https://tools.neco-sara.com/tools/gururi-paint/"
 
 <title>ぐるりペイント｜無料の360°お絵描きツール</title>
 
-<link rel="stylesheet" href="./style.css?v=2.0.11">
+<link rel="stylesheet" href="./style.css?v=2.0.14">
 </head>
 
 <body>
@@ -417,6 +417,14 @@ class="tool-button app-menu__item"
 type="button"
 >
 使い方
+</button>
+
+<button
+id="openSourceLicensesMenuButton"
+class="tool-button app-menu__item"
+type="button"
+>
+オープンソースライセンス
 </button>
 
 <a
@@ -1323,6 +1331,52 @@ Xをフォロー
 
 
 <!-- =============================
+オープンソースライセンス
+============================== -->
+
+<div
+id="openSourceLicensesPanel"
+class="welcome-overlay"
+role="dialog"
+aria-modal="true"
+aria-labelledby="openSourceLicensesPanelTitle"
+>
+
+<div class="welcome-panel">
+
+<div class="welcome-panel__header">
+
+<strong id="openSourceLicensesPanelTitle">
+オープンソースライセンス
+</strong>
+
+<button
+id="openSourceLicensesCloseButton"
+class="welcome-close-button"
+type="button"
+aria-label="閉じる"
+>
+×
+</button>
+
+</div>
+
+<div id="openSourceLicensesContent">
+
+<iframe
+id="openSourceLicensesFrame"
+src="./oss/open-source-licenses.html"
+title="オープンソースライセンス"
+></iframe>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =============================
 ツールを追加
 ============================== -->
 
@@ -1936,7 +1990,7 @@ type="button"
 
 <script
 type="module"
-src="./script.js?v=2.0.11"
+src="./script.js?v=2.0.14"
 ></script>
 
 </body>

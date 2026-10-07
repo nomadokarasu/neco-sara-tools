@@ -90,6 +90,38 @@ const targetFiles = [
 "admin.php"
 ];
 
+const targetDirectories = [
+"oss"
+];
+
+
+for (
+const directoryName of targetDirectories
+) {
+
+const developmentTargetDirectory =
+path.join(
+developmentDirectory,
+directoryName
+);
+
+if (
+!fs.existsSync(
+developmentTargetDirectory
+) ||
+!fs.statSync(
+developmentTargetDirectory
+).isDirectory()
+) {
+
+console.error(
+`エラー：開発版の${directoryName}フォルダが見つかりません。`
+);
+
+process.exit(1);
+}
+}
+
 
 for (
 const fileName of targetFiles
@@ -175,6 +207,37 @@ path.join(
 backupDirectory,
 fileName
 )
+);
+}
+
+
+for (
+const directoryName of targetDirectories
+) {
+
+const releaseTargetDirectory =
+path.join(
+releaseDirectory,
+directoryName
+);
+
+if (
+!fs.existsSync(
+releaseTargetDirectory
+)
+) {
+continue;
+}
+
+fs.cpSync(
+releaseTargetDirectory,
+path.join(
+backupDirectory,
+directoryName
+),
+{
+recursive: true
+}
 );
 }
 
@@ -601,6 +664,40 @@ releaseAdminPath,
 nextAdmin,
 "utf8"
 );
+
+
+for (
+const directoryName of targetDirectories
+) {
+
+const developmentTargetDirectory =
+path.join(
+developmentDirectory,
+directoryName
+);
+
+const releaseTargetDirectory =
+path.join(
+releaseDirectory,
+directoryName
+);
+
+fs.rmSync(
+releaseTargetDirectory,
+{
+recursive: true,
+force: true
+}
+);
+
+fs.cpSync(
+developmentTargetDirectory,
+releaseTargetDirectory,
+{
+recursive: true
+}
+);
+}
 
 
 console.log(
