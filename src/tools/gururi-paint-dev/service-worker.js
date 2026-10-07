@@ -2,7 +2,7 @@ const CACHE_PREFIX =
 "gururi-paint-testing-";
 
 const CACHE_VERSION =
-"2.0.13-dev";
+"2.0.14-dev";
 
 const CACHE_NAME =
 `${CACHE_PREFIX}${CACHE_VERSION}`;
@@ -11,13 +11,14 @@ const STATIC_RESOURCES = [
 "./",
 "./index.html",
 "./home-content.json",
-"./style.css?v=2.0.13-dev",
-"./script.js?v=2.0.13-dev",
+"./style.css?v=2.0.14-dev",
+"./script.js?v=2.0.14-dev",
+"./oss/open-source-licenses.html",
 "./images/gururi-paint-hero.png",
 "./images/home-title-ja.png",
 "./images/home-title-en.png",
 "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-"https://cdn.jsdelivr.net/npm/@jaames/iro@5/dist/iro.es.js"
+"https://cdn.jsdelivr.net/npm/@jaames/iro@5.5.2/dist/iro.es.js"
 ];
 
 

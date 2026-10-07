@@ -1848,6 +1848,70 @@ opacity: 0.86;
 
 
 /* ================================
+オープンソースライセンス
+================================ */
+
+#openSourceLicensesPanel {
+padding: 24px;
+}
+
+#openSourceLicensesPanel
+> .welcome-panel {
+display: flex;
+flex-direction: column;
+width: min(1000px, calc(100vw - 48px)) !important;
+height: min(760px, calc(100dvh - 72px)) !important;
+max-width: none !important;
+max-height: none !important;
+overflow: hidden;
+}
+
+#openSourceLicensesPanel
+> .welcome-panel
+> .welcome-panel__header {
+flex: 0 0 auto;
+}
+
+#openSourceLicensesContent {
+display: flex;
+flex: 1 1 auto;
+width: 100%;
+min-width: 0;
+min-height: 0;
+padding: 0;
+overflow: hidden;
+}
+
+#openSourceLicensesFrame {
+display: block;
+flex: 1 1 auto;
+width: 100% !important;
+height: 100% !important;
+min-width: 0;
+min-height: 0;
+margin: 0;
+padding: 0;
+border: 0;
+background: #272522;
+}
+
+@media (max-width: 700px) {
+
+#openSourceLicensesPanel {
+padding: 10px;
+}
+
+#openSourceLicensesPanel
+> .welcome-panel {
+width: 100% !important;
+height: 100% !important;
+border-radius: 6px;
+}
+
+}
+
+
+/* ================================
 カメラ撮影
 ================================ */
 
