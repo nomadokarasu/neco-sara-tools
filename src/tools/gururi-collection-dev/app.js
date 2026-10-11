@@ -724,6 +724,8 @@ item.sourceFileName ||
 "artwork.gart",
 thumbnailBlob:
 parsed.thumbnailBlob,
+playback:
+manifest.playback || null,
 camera:
 item.camera ||
 manifest.initialView || {
@@ -735,7 +737,7 @@ fov: 75
 
 await saveArtworkToDatabase(
 work,
-parsed.artworkBlob,
+parsed.sourceBlob,
 gartBlob
 );
 
