@@ -196,7 +196,15 @@
 <h2>パスワードの設定</h2>
 <p>ぐるりコレクションには、起動時にパスワードを要求する機能があります。</p>
 <p>パスワード情報はブラウザ・PWAの保存領域に保持します。バックアップには含まれず、別のブラウザや端末には引き継がれません。</p>
-<p>パスワードを忘れた場合の通常の再設定手段はありません。サイトデータの消去では作品データも失われる可能性があるため、データ消去による解除は行わないでください。</p>
+<p>パスワードを忘れた場合、再設定手段はありません。<button id="guide-site-data-toggle" class="guide-site-data-link" type="button" aria-expanded="false" aria-controls="guide-site-data-content">サイトデータのを消去</button>を行うと作品データも失われる可能性があります。</p>
+<div id="guide-site-data-content" class="guide-site-data-content" hidden>
+<ol>
+<li>ChromeやEdgeの設定から「サイトデータを削除」する：特定のサイトに保存されたデータを削除する操作です。</li>
+<li>「閲覧履歴データを削除」でCookieやサイトデータを削除する：設定によっては、複数のサイトの保存データが消えます。</li>
+<li>PWAのアンインストール時に関連データも削除する：端末やブラウザの仕様、削除時の選択肢によっては保存データも消えます。</li>
+<li>ブラウザの設定を初期化したり、保存データを消去したりする：操作内容によっては作品データが消える場合があります。</li>
+</ol>
+</div>
 <div class="collection-guide-final-actions">
 <button id="collection-guide-set-password" type="button">設定する</button>
 <button id="collection-guide-skip-password" type="button">設定しない</button>

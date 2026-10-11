@@ -2350,6 +2350,8 @@ function showCollectionGuide(initial = false) {
 collectionGuideInitial = initial;
 collectionGuideAwaitingPassword = false;
 collectionGuidePage = 0;
+guideSiteDataContent.hidden = true;
+guideSiteDataToggle.setAttribute("aria-expanded", "false");
 renderCollectionGuide();
 collectionGuideOverlay.hidden = false;
 collectionGuideNext.focus();
@@ -2401,6 +2403,15 @@ openPasswordSettings("set");
 collectionGuideButton.addEventListener("click", () => {
 closeCollectionMenu();
 showCollectionGuide(false);
+});
+
+const guideSiteDataToggle = document.querySelector("#guide-site-data-toggle");
+const guideSiteDataContent = document.querySelector("#guide-site-data-content");
+
+guideSiteDataToggle.addEventListener("click", () => {
+const willOpen = guideSiteDataContent.hidden;
+guideSiteDataContent.hidden = !willOpen;
+guideSiteDataToggle.setAttribute("aria-expanded", String(willOpen));
 });
 
 function bytesToHex(bytes) {

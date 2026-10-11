@@ -89,6 +89,49 @@ font-size: 14px;
 line-height: 1.85;
 }
 
+.guide-site-data-link {
+display: inline;
+padding: 0;
+border: 0;
+background: transparent;
+color: #2563eb;
+font: inherit;
+text-decoration: underline;
+text-underline-offset: 3px;
+cursor: pointer;
+}
+
+.guide-site-data-link:hover {
+color: #1d4ed8;
+}
+
+.guide-site-data-link:focus-visible {
+outline: 2px solid #2563eb;
+outline-offset: 3px;
+}
+
+.guide-site-data-content {
+margin: 0 0 20px;
+padding: 14px 16px;
+border: 1px solid var(--border);
+border-radius: 10px;
+font-size: 13px;
+line-height: 1.75;
+}
+
+.guide-site-data-content[hidden] {
+display: none !important;
+}
+
+.guide-site-data-content ol {
+margin: 0;
+padding-left: 22px;
+}
+
+.guide-site-data-content li + li {
+margin-top: 10px;
+}
+
 .collection-guide-navigation,
 .collection-guide-final-actions {
 display: flex;
