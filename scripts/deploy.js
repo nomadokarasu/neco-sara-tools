@@ -6,6 +6,108 @@ execFileSync
 const fs = require("node:fs");
 const path = require("node:path");
 
+if (process.argv.includes("--collection-release")) {
+try {
+process.chdir(path.resolve(__dirname, ".."));
+
+const workflow = fs.readFileSync(
+".github/workflows/deploy.yml",
+"utf8"
+);
+
+if (!workflow.includes("# COLLECTION_RELEASE_DEPLOY_READY")) {
+throw new Error("ぐるりコレクション公開版の配信設定が未完成です。");
+}
+
+const sourceDirectory = "src/tools/gururi-collection";
+
+const requiredFiles = [
+"index.html",
+"app.js",
+"styles.css",
+"sw.js",
+"manifest.webmanifest",
+"icon-192.png",
+"icon-512.png"
+];
+
+for (const name of requiredFiles) {
+if (!fs.existsSync(path.join(sourceDirectory, name))) {
+throw new Error(`公開版のファイルが見つかりません：${name}`);
+}
+}
+
+const index = fs.readFileSync(
+path.join(sourceDirectory, "index.html"),
+"utf8"
+);
+
+const worker = fs.readFileSync(
+path.join(sourceDirectory, "sw.js"),
+"utf8"
+);
+
+if (
+!index.includes("Version 0.0.9") ||
+index.includes("noindex") ||
+index.includes("gururi-collection-dev") ||
+worker.includes("gururi-collection-dev") ||
+!worker.includes("gururi-collection-release-shell-")
+) {
+throw new Error("公開版の設定を確認できません。配信を停止しました。");
+}
+
+function gitRead(args) {
+return execFileSync("git", args, {encoding: "utf8"}).trim();
+}
+
+function gitRun(args) {
+execFileSync("git", args, {stdio: "inherit"});
+}
+
+if (gitRead(["diff", "--cached", "--name-only"])) {
+throw new Error("Gitに追加済みの変更があります。配信を停止しました。");
+}
+
+execFileSync(process.execPath, ["scripts/build.js"], {
+stdio: "inherit"
+});
+
+gitRun([
+"add",
+"--",
+"package.json",
+"scripts/promote-collection.js",
+"scripts/deploy.js",
+".github/workflows/deploy.yml",
+sourceDirectory
+]);
+
+if (gitRead(["diff", "--cached", "--name-only"])) {
+gitRun([
+"commit",
+"-m",
+"Release Gururi Collection 0.0.9"
+]);
+}
+
+gitRun([
+"push",
+"origin",
+"HEAD:gururi-collection-release-deploy"
+]);
+
+console.log("ぐるりコレクション Version 0.0.9 の公開版を送信しました。");
+console.log("GitHub Actionsで配信結果を確認してください。");
+process.exit(0);
+
+} catch (error) {
+console.error("ぐるりコレクション公開版の配信を停止しました。");
+console.error(error.message);
+process.exit(1);
+}
+}
+
 if (process.argv.includes("--collection-dev")) {
 try {
 process.chdir(path.resolve(__dirname, ".."));

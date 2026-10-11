@@ -9,7 +9,9 @@
 "deploy:gururi-dev": "node scripts/deploy.js --gururi-dev",
 "promote:gururi": "node scripts/build.js --promote-gururi",
 "deploy:gururi-release": "node scripts/deploy.js --gururi-release",
-"deploy:collection-dev": "node scripts/deploy.js --collection-dev"
+"deploy:collection-dev": "node scripts/deploy.js --collection-dev",
+"promote:collection": "node scripts/promote-collection.js",
+"deploy:collection-release": "node scripts/deploy.js --collection-release"
 },
   "devDependencies": {
     "serve": "^14.2.6"

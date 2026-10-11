@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<meta name="theme-color" content="#ffffff">
+
+<link rel="manifest" href="./manifest.webmanifest">
+
+<title>ぐるりコレクション</title>
+
+<link rel="stylesheet" href="./styles.css">
+
+</head>
+
+<body class="lock-pending">
+
+<div class="app-shell">
+
+<header class="app-header">
+
+<div class="brand">
+
+<button class="install-trigger" id="install-button" type="button">
+
+<span aria-hidden="true">↓</span> アプリとして使う
+
+</button>
+
+<div class="install-modal" id="install-modal" hidden>
+
+<div class="install-modal-panel" role="dialog" aria-modal="true" aria-labelledby="install-modal-title">
+
+<div class="install-modal-header">
+
+<h2 id="install-modal-title">アプリとして使う</h2>
+
+<button class="install-modal-close" id="install-modal-close" type="button" aria-label="閉じる">×</button>
+
+</div>
+
+<p class="install-modal-description">ぐるりコレクションをホーム画面に追加すると、アプリのように起動できます。</p>
+
+<div class="install-device-tabs" role="group" aria-label="端末を選択">
+
+<button type="button" class="install-device-tab" data-install-device="ios">iPhone・iPad</button>
+
+<button type="button" class="install-device-tab" data-install-device="android">Android</button>
+
+<button type="button" class="install-device-tab" data-install-device="pc">PC</button>
+
+</div>
+
+<section class="install-guide" data-install-guide="ios" hidden>
+<h3>iPhone・iPadに追加する</h3>
+<p>Safariでぐるりコレクションを開いてください。</p>
+<div class="install-step">
+<div class="install-step-number">1</div>
+<div class="install-step-content">
+<strong>共有メニューを開く</strong>
+<p>Safariの共有ボタン（四角から上向きの矢印が出ているマーク）を押します。見当たらない場合はページメニューから「共有」を選択してください。</p>
+</div>
+</div>
+<div class="install-step">
+<div class="install-step-number">2</div>
+<div class="install-step-content">
+<strong>ホーム画面に追加する</strong>
+<p>「ホーム画面に追加」を選び、「追加」を押してください。「Webアプリとして開く」が表示される場合はオンにします。</p>
+</div>
+</div>
+</section>
+
+<section class="install-guide" data-install-guide="android" hidden>
+<h3>Androidにインストールする</h3>
+<p>Google Chromeなどの対応ブラウザで開いてください。</p>
+<button class="install-native-button" id="install-native-button" type="button" hidden>この端末にインストール</button>
+<div class="install-step">
+<div class="install-step-number">1</div>
+<div class="install-step-content">
+<strong>ブラウザのメニューを開く</strong>
+<p>Chromeの画面右上にある「⋮」をタップします。</p>
+</div>
+</div>
+<div class="install-step">
+<div class="install-step-number">2</div>
+<div class="install-step-content">
+<strong>アプリをインストールする</strong>
+<p>「アプリをインストール」または「ホーム画面に追加」を選び、確認画面の案内に従ってください。</p>
+</div>
+</div>
+</section>
+
+<section class="install-guide" data-install-guide="pc" hidden>
+<h3>PCにインストールする</h3>
+<p>Microsoft EdgeまたはGoogle Chromeで開いてください。</p>
+<button class="install-native-button" id="install-pc-button" type="button" hidden>このPCにインストール</button>
+<div class="install-step">
+<div class="install-step-number">1</div>
+<div class="install-step-content">
+<strong>ブラウザのメニューを開く</strong>
+<p>画面右上の「…」（Edge）または「⋮」（Chrome）をクリックします。アドレスバーにインストール用アイコンがある場合は、そこから直接進めます。</p>
+</div>
+</div>
+<div class="install-step">
+<div class="install-step-number">2</div>
+<div class="install-step-content">
+<strong>アプリをインストールする</strong>
+<p><strong>Edge：</strong>「アプリ」→「このサイトをアプリとしてインストール」</p>
+<p><strong>Chrome：</strong>「キャスト、保存、共有」→「ページをアプリとしてインストール」など</p>
+<p>確認画面が表示されたら「インストール」を押してください。</p>
+</div>
+</div>
+</section>
+
+</div>
+
+</div>
+
+<p class="collection-version">Version 0.0.9</p>
+
+<h1>ぐるりコレクション</h1>
+
+<p>360°作品を集めて、いつでも楽しめるコレクション</p>
+
+<button class="privacy-trigger" id="privacy-button" type="button" aria-haspopup="dialog">
+
+作品データのプライバシーについて ›
+
+</button>
+
+</div>
+
+<div class="collection-menu">
+
+<button id="collection-menu-button" class="collection-menu-button" type="button" aria-label="メニューを開く" aria-expanded="false" aria-controls="collection-menu-panel">☰</button>
+
+<div id="collection-menu-panel" class="collection-menu-panel" hidden>
+
+<button id="collection-guide-button" type="button">ガイドを見る</button>
+
+<button id="password-settings-button" type="button">パスワード設定</button>
+
+<button id="password-change-button" type="button">パスワード変更</button>
+
+<button id="password-menu-remove-button" type="button">パスワード解除</button>
+
+</div>
+
+</div>
+
+</header>
+
+<div class="collection-guide-overlay" id="collection-guide-overlay" hidden>
+
+<div class="collection-guide-panel" role="dialog" aria-modal="true" aria-labelledby="collection-guide-title">
+
+<p class="collection-guide-counter" id="collection-guide-counter">1 / 4</p>
+
+<section class="collection-guide-page" data-guide-page="0">
+
+<h2 id="collection-guide-title">ぐるりコレクションへようこそ</h2>
+
+<p>ぐるりコレクションは、<strong>360度アートを楽しむためのビューワー</strong>です。</p>
+
+<p>ぐるりペイントで書き出したZIP形式の作品を追加して、360度の世界を自由に鑑賞できます。</p>
+
+</section>
+
+<section class="collection-guide-page" data-guide-page="1" hidden>
+
+<h2>作品データの保存について</h2>
+
+<p>追加した作品データは、この<strong>端末のブラウザ・アプリ内</strong>に保存されます。</p>
+
+<p>作品データや作品名を当サイトの<strong>サーバーへ送信したり、第三者に公開したりしません</strong>。ただし、Webサイトへのアクセス情報はサーバーログに残る場合があります。</p>
+
+<p>ブラウザのデータ消去やアプリの削除などによって、保存した作品が失われる場合があります。</p>
+
+</section>
+
+<section class="collection-guide-page" data-guide-page="2" hidden>
+
+<h2>作品データを安全に保管するために</h2>
+
+<p><strong>人に見られたくない作品</strong>を閲覧する場合は、<strong>作品の追加後、元のZIPファイルを安全な場所に保管し、必要に応じて端末上の元ファイルを削除</strong>することをおすすめします。</p>
+
+<p>作品を追加したら、<strong>バックアップ機能を使って</strong>コレクション全体を保存し、元の<strong>ZIPファイルと一緒に保管</strong>してください。</p>
+
+<p>バックアップファイルにも作品データが含まれるため、安全な場所に保存してください。</p>
+
+</section>
+
+<section class="collection-guide-page" data-guide-page="3" hidden>
+
+<h2>パスワードの設定</h2>
+
+<p>ぐるりコレクションには、起動時に<strong>パスワード</strong>を要求する機能があります。</p>
+
+<p>パスワード情報はブラウザ・PWAの保存領域に保持します。バックアップには含まれず、別のブラウザや端末には引き継がれません。</p>
+
+<p>パスワードを忘れた場合、再設定手段はありません。<button id="guide-site-data-toggle" class="guide-site-data-link" type="button" aria-expanded="false" aria-controls="guide-site-data-content">サイトデータのを消去</button>を行うと作品データも失われる可能性があります。</p>
+
+<div id="guide-site-data-content" class="guide-site-data-content" hidden>
+
+<ol>
+
+<li>ChromeやEdgeの設定から「サイトデータを削除」する：特定のサイトに保存されたデータを削除する操作です。</li>
+
+<li>「閲覧履歴データを削除」でCookieやサイトデータを削除する：設定によっては、複数のサイトの保存データが消えます。</li>
+
+<li>PWAのアンインストール時に関連データも削除する：端末やブラウザの仕様、削除時の選択肢によっては保存データも消えます。</li>
+
+<li>ブラウザの設定を初期化したり、保存データを消去したりする：操作内容によっては作品データが消える場合があります。</li>
+
+</ol>
+
+</div>
+
+<p class="guide-backup-warning"><strong>それらの操作を行う場合は、バックアップデータを必ず作成してください。</strong></p>
+
+<div class="collection-guide-final-actions">
+
+<button id="collection-guide-set-password" type="button">設定する</button>
+
+<button id="collection-guide-skip-password" type="button">設定しない</button>
+
+</div>
+
+</section>
+
+<div class="collection-guide-navigation">
+
+<button id="collection-guide-back" type="button" hidden>戻る</button>
+
+<button id="collection-guide-next" type="button">次へ</button>
+
+<button id="collection-guide-finish" type="button" hidden>閉じる</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="password-overlay" id="password-overlay">
+
+<div class="password-panel">
+
+<h2>ぐるりコレクション</h2>
+
+<p>パスワードを入力してください</p>
+
+<form id="password-unlock-form">
+
+<input id="password-unlock-input" type="password" placeholder="パスワード" autocomplete="current-password" required>
+
+<button type="submit">ロックを解除</button>
+
+</form>
+
+<p class="password-message" id="password-unlock-message" role="status"></p>
+
+</div>
+
+</div>
+
+<div class="password-overlay" id="password-settings-overlay" hidden>
+
+<div class="password-panel">
+
+<h2 id="password-settings-title">パスワード設定</h2>
+
+<p id="password-settings-description"></p>
+
+<form id="password-settings-form">
+
+<label id="password-current-label" hidden>
+
+現在のパスワード
+
+<input id="password-current-input" type="password" autocomplete="current-password">
+
+</label>
+
+<label id="password-new-label">
+
+新しいパスワード
+
+<input id="password-new-input" type="password" autocomplete="new-password" minlength="8">
+
+</label>
+
+<label id="password-confirm-label">
+
+新しいパスワード（確認）
+
+<input id="password-confirm-input" type="password" autocomplete="new-password" minlength="8">
+
+</label>
+
+<p class="password-message" id="password-settings-message" role="status"></p>
+
+<button id="password-save-button" type="submit">設定する</button>
+
+</form>
+
+<div class="password-settings-controls">
+
+<button id="password-settings-close" type="button">閉じる</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="privacy-modal" id="privacy-modal" hidden>
+
+<div class="privacy-modal-panel" role="dialog" aria-modal="true" aria-labelledby="privacy-modal-title">
+
+<div class="privacy-modal-header">
+
+<h2 id="privacy-modal-title">作品データのプライバシーについて</h2>
+
+<button class="privacy-modal-close" id="privacy-modal-close" type="button" aria-label="閉じる">×</button>
+
+</div>
+
+<div class="privacy-modal-content">
+
+<p>※追加した作品はこの端末内で読み込み・保存します。<br>
+
+※作品データや作品名を当サイトのサーバーへ送信したり、第三者に公開したりしません。
+
+ただし、Webサイトへのアクセス情報はサーバーログに残る場合があります。</p>
+
+<p>※ブラウザのデータを削除すると保存済み作品が失われることがあります。<br>
+
+購入したZIPファイルとバックアップは別途、安全な場所に保管してください。</p>
+
+</div>
+
+</div>
+
+</div>
+
+<main class="main-content">
+
+<section class="section recommended-section" aria-labelledby="recommended-title" hidden>
+
+<div class="section-heading">
+
+<div>
+
+<h2 id="recommended-title">おすすめ作品</h2>
+
+<p>ぐるり作品を見つける</p>
+
+</div>
+
+<div class="recommended-nav" aria-label="おすすめ作品の移動">
+
+<button class="icon-button" id="recommended-prev" type="button" aria-label="前へ">←</button>
+
+<button class="icon-button" id="recommended-next" type="button" aria-label="次へ">→</button>
+
+</div>
+
+</div>
+
+<div class="recommended-track" id="recommended-track"></div>
+
+</section>
+
+<section class="library-section" aria-labelledby="library-title">
+
+<div class="library-toolbar">
+
+<div class="toolbar-top">
+
+<div>
+
+<h2 id="library-title">作品一覧</h2>
+
+<p id="library-count">0作品</p>
+
+</div>
+
+<div class="library-actions">
+
+<button class="secondary-action-button" id="backup-button" type="button">バックアップ</button>
+
+<button class="secondary-action-button" id="restore-button" type="button">復元</button>
+
+<button class="add-button" id="add-artwork-button" type="button">
+
+<span class="add-button-mark">＋</span>
+
+<span>作品を追加</span>
+
+</button>
+
+</div>
+
+<input id="artwork-file-input" type="file" accept=".zip,application/zip" hidden>
+
+<input id="restore-file-input" type="file" accept=".gururicollection" hidden>
+
+</div>
+
+<div class="filters-row">
+
+<div class="category-tabs" role="tablist" aria-label="作品カテゴリー">
+
+<button class="category-tab is-active" type="button" data-category="all" role="tab" aria-selected="true">すべて</button>
+
+<button class="category-tab" type="button" data-category="illustration" role="tab" aria-selected="false">画像</button>
+
+<button class="category-tab" type="button" data-category="animation" role="tab" aria-selected="false">動画</button>
+
+<button class="category-tab" type="button" data-category="game" role="tab" aria-selected="false">ゲーム</button>
+
+</div>
+
+<label class="search-box">
+
+<span class="search-icon" aria-hidden="true">⌕</span>
+
+<input id="search-input" type="search" placeholder="作品名・作者名で検索" autocomplete="off">
+
+</label>
+
+</div>
+
+</div>
+
+<div class="empty-state" id="empty-state">
+
+<div class="empty-symbol" aria-hidden="true">◎</div>
+
+<h3>まだ作品がありません</h3>
+
+<p>「作品を追加」から、ぐるり作品をコレクションに加えられます。</p>
+
+<button class="secondary-button" id="empty-add-button" type="button">作品を追加</button>
+
+</div>
+
+<div class="artwork-grid" id="artwork-grid" hidden></div>
+
+</section>
+
+</main>
+
+</div>
+
+<div class="viewer-layer" id="viewer-layer" hidden>
+
+<div class="viewer-header">
+
+<button
+class="viewer-back"
+id="viewer-back"
+type="button"
+aria-label="作品を閉じてコレクションへ戻る"
+title="閉じる"
+>
+×
+</button>
+
+<div class="viewer-meta">
+
+<strong id="viewer-title">
+
+作品タイトル
+
+</strong>
+
+<span id="viewer-author"></span>
+
+</div>
+
+</div>
+
+<div
+
+class="viewer-stage"
+
+id="viewer-stage"
+
+>
+
+<canvas
+
+class="viewer-canvas"
+
+id="viewer-canvas"
+
+></canvas>
+
+<button
+
+class="viewer-play-button"
+
+id="viewer-play-button"
+
+type="button"
+
+aria-label="再生"
+
+hidden
+
+>
+
+<span aria-hidden="true">▶</span>
+
+</button>
+
+<div
+
+class="viewer-message"
+
+id="viewer-message"
+
+>
+
+<p id="viewer-message-title">
+
+作品を読み込んでいます
+
+</p>
+
+<span id="viewer-message-text">
+
+しばらくお待ちください
+
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="./app.js"></script>
+
+</body>
+
+</html>
