@@ -1757,7 +1757,7 @@ try {
 const parsed = await parseGururiArtZip(file);
 const manifest = parsed.manifest;
 const work = {
-id: manifest.id || crypto.randomUUID(),
+id: crypto.randomUUID(),
 title: manifest.title || file.name.replace(/\.[^.]+$/, ""),
 author: manifest.author || "作者未設定",
 authorUrl: manifest.authorUrl || "",
