@@ -141,7 +141,11 @@ margin-top: 24px;
 }
 
 .collection-guide-navigation {
-justify-content: space-between;
+justify-content: flex-end;
+}
+
+#collection-guide-back:not([hidden]) {
+margin-right: auto;
 }
 
 .collection-guide-navigation button,
