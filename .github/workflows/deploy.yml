@@ -178,7 +178,7 @@ jobs:
           protocol: ftps
           port: 21
           local-dir: ./.collection-deploy/
-          server-dir: /tools/
+          server-dir: /tools/tools/
           state-name: .ftp-deploy-collection-dev-state.json
           exclude: |
             **/.git*
