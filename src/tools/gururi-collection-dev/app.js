@@ -1834,6 +1834,9 @@ work.author;
 els.viewerPlayButton.hidden =
 true;
 
+els.viewerCanvas.style.visibility =
+"hidden";
+
 els.viewerLayer.hidden =
 false;
 
@@ -1879,6 +1882,9 @@ work.camera || null
 );
 }
 
+els.viewerCanvas.style.visibility =
+"visible";
+
 hideViewerMessage();
 
 updateViewerPlaybackUi();
@@ -1911,6 +1917,9 @@ false;
 
 els.viewerPlayButton.hidden =
 true;
+
+els.viewerCanvas.style.visibility =
+"hidden";
 
 els.viewerLayer.hidden =
 true;
