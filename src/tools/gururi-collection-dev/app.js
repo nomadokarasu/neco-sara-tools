@@ -2433,11 +2433,45 @@ passwordSettingsOverlay.hidden = false;
 (passwordMode === "set" ? passwordNewInput : passwordCurrentInput).focus();
 }
 
+const collectionMenuButton = document.querySelector("#collection-menu-button");
+const collectionMenuPanel = document.querySelector("#collection-menu-panel");
+
+function closeCollectionMenu() {
+collectionMenuPanel.hidden = true;
+collectionMenuButton.setAttribute("aria-expanded", "false");
+collectionMenuButton.setAttribute("aria-label", "メニューを開く");
+}
+
+collectionMenuButton.addEventListener("click", event => {
+event.stopPropagation();
+const willOpen = collectionMenuPanel.hidden;
+collectionMenuPanel.hidden = !willOpen;
+collectionMenuButton.setAttribute("aria-expanded", String(willOpen));
+collectionMenuButton.setAttribute("aria-label", willOpen ? "メニューを閉じる" : "メニューを開く");
+});
+
+document.addEventListener("click", event => {
+if (!event.target.closest(".collection-menu")) {
+closeCollectionMenu();
+}
+});
+
+document.addEventListener("keydown", event => {
+if (event.key === "Escape" && !collectionMenuPanel.hidden) {
+closeCollectionMenu();
+collectionMenuButton.focus();
+}
+});
+
 passwordSettingsButton.addEventListener("click", () => {
+closeCollectionMenu();
 openPasswordSettings();
 });
 
-passwordLockButton.addEventListener("click", lockCollection);
+passwordLockButton.addEventListener("click", () => {
+closeCollectionMenu();
+lockCollection();
+});
 
 passwordSettingsClose.addEventListener("click", () => {
 if (passwordBusy) return;

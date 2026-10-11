@@ -152,12 +152,71 @@ min-height: 100dvh;
 }
 
 .app-header {
+position: relative;
 padding: 34px max(20px, env(safe-area-inset-right)) 22px max(20px, env(safe-area-inset-left));
 }
 
 .brand {
 width: min(100%, var(--max-width));
 margin: 0 auto;
+padding-right: 56px;
+}
+
+.collection-menu {
+position: absolute;
+z-index: 100;
+top: 28px;
+right: max(20px, calc((100% - var(--max-width)) / 2));
+}
+
+.collection-menu-button {
+width: 44px;
+height: 44px;
+display: flex;
+align-items: center;
+justify-content: center;
+border: 1px solid var(--border);
+border-radius: 10px;
+background: var(--surface);
+color: var(--text);
+font-size: 23px;
+cursor: pointer;
+}
+
+.collection-menu-panel {
+position: absolute;
+top: calc(100% + 8px);
+right: 0;
+width: 190px;
+padding: 6px;
+border: 1px solid var(--border);
+border-radius: 12px;
+background: var(--surface);
+box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.collection-menu-panel[hidden] {
+display: none !important;
+}
+
+.collection-menu-panel button {
+display: block;
+width: 100%;
+padding: 12px;
+border: 0;
+border-radius: 8px;
+background: transparent;
+color: var(--text);
+text-align: left;
+cursor: pointer;
+}
+
+.collection-menu-panel button:hover {
+background: var(--surface-soft);
+}
+
+.collection-menu-panel button[hidden] {
+display: none !important;
 }
 
 .brand h1 {
