@@ -140,6 +140,10 @@ flex-wrap: wrap;
 margin-top: 24px;
 }
 
+#collection-guide-finish {
+margin-left: auto;
+}
+
 .collection-guide-navigation {
 justify-content: flex-end;
 }
