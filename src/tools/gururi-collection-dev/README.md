@@ -33,7 +33,7 @@ HMD対応はViewer Coreの入力・表示レイヤーとして追加し、
 
 ## PWA・プライバシー追加仕様
 - HTTPSの同一ディレクトリにファイル一式をアップロードしてください（localhostでもテスト可能）。
-- `.gart`の処理とIndexedDB保存はブラウザ内で行います。サイトへのHTTPアクセスやおすすめ作品のBOOTHリンクなどは別途通信を伴います。
+- ぐるりペイントの作品ZIP（`manifest.json`とPNG/MP4）の処理とIndexedDB保存はブラウザ内で行います。サイトへのHTTPアクセスやおすすめ作品のBOOTHリンクなどは別途通信を伴います。
 - Service Workerはアプリの静的ファイルのみキャッシュします。ユーザー作品は従来通りIndexedDBに保存されます。
 - Androidでインストール画面を安定して表示するには、192px/512pxのアプリアイコンを用意し、manifest.webmanifestにicons項目を追加してください。今回は画像を新規作成していません。
 - 実機テスト: HTTPS接続→作品登録→機内モード→再起動→鑑賞→バックアップ→復元。iPhone/Android両方で動作確認してください。

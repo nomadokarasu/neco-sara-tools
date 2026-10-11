@@ -236,7 +236,7 @@ reject(request.error || new Error("コレクションデータベースを開け
 async function saveArtworkToDatabase(
 work,
 sourceBlob,
-gartBlob = null
+zipBlob = null
 ) {
 const database = await openCollectionDatabase();
 
@@ -258,7 +258,7 @@ type: work.type,
 symbol: work.symbol,
 sourceFileName: work.sourceFileName,
 sourceBlob,
-gartBlob,
+zipBlob,
 thumbnailBlob:
 work.thumbnailBlob || null,
 playback:
@@ -393,174 +393,110 @@ fov: 75
 
 
 
-const GURURI_ART_MAGIC = "GURURIART";
-const GURURI_ART_FORMAT_VERSION = 1;
+const ZIP_MAX_ENTRIES = 32;
+const ZIP_MAX_MANIFEST_BYTES = 1024 * 1024;
+const ZIP_MAX_ARTWORK_BYTES = 1024 * 1024 * 1024;
 
-function readAscii(bytes, start, length) {
-let result = "";
+async function parseGururiArtZip(file) {
+const bytes = new Uint8Array(await file.arrayBuffer());
+const view = new DataView(bytes.buffer);
+const decoder = new TextDecoder("utf-8", {fatal: true});
 
-for (let i = start; i < start + length; i += 1) {
-result += String.fromCharCode(bytes[i]);
+if (bytes.length < 22) throw new Error("ZIPファイルが破損しています。");
+
+let endPosition = -1;
+for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 22 - 65535); i--) {
+if (view.getUint32(i, true) === 0x06054b50 && i + 22 + view.getUint16(i + 20, true) === bytes.length) {
+endPosition = i;
+break;
+}
+}
+if (endPosition < 0) throw new Error("ZIPのファイル一覧を読み取れませんでした。");
+if (view.getUint16(endPosition + 4, true) !== 0 || view.getUint16(endPosition + 6, true) !== 0) {
+throw new Error("分割ZIPには対応していません。");
+}
+const count = view.getUint16(endPosition + 10, true);
+const directorySize = view.getUint32(endPosition + 12, true);
+const directoryOffset = view.getUint32(endPosition + 16, true);
+if (count < 2 || count > ZIP_MAX_ENTRIES || directoryOffset + directorySize > endPosition) {
+throw new Error("ZIPの構造が正しくありません。");
 }
 
-return result;
+const entries = new Map();
+let position = directoryOffset;
+for (let i = 0; i < count; i++) {
+if (position + 46 > bytes.length || view.getUint32(position, true) !== 0x02014b50) {
+throw new Error("ZIPのファイル一覧が破損しています。");
 }
-
-function getGururiArtAssetBlob(file, asset, payloadStart) {
-if (!asset) return null;
-
-const offset = Number(asset.offset);
-const length = Number(asset.length);
-
-if (
-!Number.isFinite(offset) ||
-!Number.isFinite(length) ||
-offset < 0 ||
-length <= 0
-) {
-throw new Error("作品アセット情報が正しくありません。");
+const flags = view.getUint16(position + 8, true);
+const method = view.getUint16(position + 10, true);
+const crc = view.getUint32(position + 16, true);
+const compressedSize = view.getUint32(position + 20, true);
+const plainSize = view.getUint32(position + 24, true);
+const nameLength = view.getUint16(position + 28, true);
+const extraLength = view.getUint16(position + 30, true);
+const commentLength = view.getUint16(position + 32, true);
+const localOffset = view.getUint32(position + 42, true);
+const next = position + 46 + nameLength + extraLength + commentLength;
+if (next > directoryOffset + directorySize || (flags & 1) !== 0 || method !== 0 || compressedSize !== plainSize || plainSize > ZIP_MAX_ARTWORK_BYTES) {
+throw new Error("このZIP形式には対応していません。ぐるりペイントから書き出したZIPを選択してください。");
 }
-
-const start = payloadStart + offset;
-const end = start + length;
-
-if (end > file.size) {
-throw new Error("作品ファイルのアセットが破損しています。");
+const name = decoder.decode(bytes.subarray(position + 46, position + 46 + nameLength));
+if (!/^(manifest\.json|artwork\.(png|mp4)|thumbnail\.png)$/.test(name) || entries.has(name)) {
+throw new Error("ぐるり作品ZIPに対応していないファイルが含まれています。");
 }
-
-return file.slice(
-start,
-end,
-asset.mimeType || "application/octet-stream"
-);
+if (localOffset + 30 > directoryOffset || view.getUint32(localOffset, true) !== 0x04034b50) {
+throw new Error("ZIPのデータが破損しています。");
 }
-
-async function parseGururiArtFile(file) {
-const buffer = await file.arrayBuffer();
-const bytes = new Uint8Array(buffer);
-
-const magicLength = GURURI_ART_MAGIC.length;
-
-if (bytes.length < magicLength + 8) {
-throw new Error("ぐるり作品ファイルが破損しています。");
+const localFlags = view.getUint16(localOffset + 6, true);
+const localMethod = view.getUint16(localOffset + 8, true);
+const localNameLength = view.getUint16(localOffset + 26, true);
+const localExtraLength = view.getUint16(localOffset + 28, true);
+const dataStart = localOffset + 30 + localNameLength + localExtraLength;
+const localName = decoder.decode(bytes.subarray(localOffset + 30, localOffset + 30 + localNameLength));
+if (localName !== name || localFlags !== flags || localMethod !== method || dataStart + compressedSize > directoryOffset) {
+throw new Error("ZIP内のファイル情報が一致しません。");
 }
-
-const magic = readAscii(bytes, 0, magicLength);
-
-if (magic !== GURURI_ART_MAGIC) {
-throw new Error("ぐるり作品ファイルではありません。");
+entries.set(name, {start: dataStart, size: plainSize, crc});
+position = next;
 }
+if (position !== directoryOffset + directorySize) throw new Error("ZIPのファイル一覧に不整合があります。");
 
-const view = new DataView(buffer);
-
-const version = view.getUint32(
-magicLength,
-true
-);
-
-if (version !== GURURI_ART_FORMAT_VERSION) {
-throw new Error(
-`この作品のファイルバージョン ${version} にはまだ対応していません。`
-);
+function readEntry(name, maxSize, mimeType) {
+const entry = entries.get(name);
+if (!entry || entry.size > maxSize) throw new Error(`${name} が見つからないか、サイズが大きすぎます。`);
+const content = bytes.subarray(entry.start, entry.start + entry.size);
+let checksum = 0xffffffff;
+for (const byte of content) {
+checksum ^= byte;
+for (let i = 0; i < 8; i++) checksum = (checksum >>> 1) ^ ((checksum & 1) ? 0xedb88320 : 0);
 }
-
-const manifestLength = view.getUint32(
-magicLength + 4,
-true
-);
-
-const manifestStart = magicLength + 8;
-const manifestEnd = manifestStart + manifestLength;
-
-if (manifestEnd > bytes.length) {
-throw new Error("作品情報が破損しています。");
+if (((checksum ^ 0xffffffff) >>> 0) !== entry.crc) throw new Error(`${name} が破損しています。`);
+return new Blob([content], {type: mimeType});
 }
-
-const manifestBytes = bytes.slice(
-manifestStart,
-manifestEnd
-);
-
-const manifestText = new TextDecoder("utf-8").decode(
-manifestBytes
-);
 
 let manifest;
-
 try {
-manifest = JSON.parse(manifestText);
+manifest = JSON.parse(await readEntry("manifest.json", ZIP_MAX_MANIFEST_BYTES, "application/json").text());
 } catch (error) {
-throw new Error("作品情報を読み取れませんでした。");
+throw new Error(`作品情報を読み取れませんでした: ${error.message}`);
 }
-
-if (
-!manifest ||
-manifest.format !== "gururi-art" ||
-manifest.formatVersion !== 1
-) {
-throw new Error("対応していないぐるり作品形式です。");
+if (!manifest || manifest.format !== "gururi-art" || manifest.formatVersion !== 2 ||
+manifest.exporter?.app !== "gururi-paint" || !["image", "video"].includes(manifest.type)) {
+throw new Error("対応するぐるりペイントの作品ZIPではありません。");
 }
-
-if (
-manifest.type !== "image" &&
-manifest.type !== "video"
-) {
-throw new Error(
-"この作品カテゴリーは現在のぐるりコレクションではまだ再生できません。"
-);
+const artworkName = manifest.type === "video" ? "artwork.mp4" : "artwork.png";
+const artworkType = manifest.type === "video" ? "video/mp4" : "image/png";
+if (manifest.assets?.artwork?.path !== artworkName || manifest.assets?.thumbnail?.path !== "thumbnail.png" ||
+entries.has(manifest.type === "video" ? "artwork.png" : "artwork.mp4")) {
+throw new Error("作品情報とZIPの内容が一致しません。");
 }
-
-if (!manifest.assets) {
-throw new Error("作品データが含まれていません。");
+if (!manifest.initialView || ![manifest.initialView.yaw, manifest.initialView.pitch, manifest.initialView.fov].every(Number.isFinite)) {
+throw new Error("初期視点情報が正しくありません。");
 }
-
-const sourceAsset =
-manifest.type === "video"
-? (
-manifest.assets.video ||
-manifest.assets.artwork
-)
-: manifest.assets.artwork;
-
-if (!sourceAsset) {
-throw new Error(
-manifest.type === "video"
-? "作品動画が含まれていません。"
-: "作品画像が含まれていません。"
-);
-}
-
-const payloadStart = manifestEnd;
-
-const sourceBlob =
-getGururiArtAssetBlob(
-file,
-sourceAsset,
-payloadStart
-);
-
-const thumbnailBlob =
-manifest.assets.thumbnail
-? getGururiArtAssetBlob(
-file,
-manifest.assets.thumbnail,
-payloadStart
-)
-: null;
-
-return {
-manifest,
-sourceBlob,
-artworkBlob:
-manifest.type === "image"
-? sourceBlob
-: null,
-videoBlob:
-manifest.type === "video"
-? sourceBlob
-: null,
-thumbnailBlob
-};
+const sourceBlob = readEntry(artworkName, ZIP_MAX_ARTWORK_BYTES, artworkType);
+const thumbnailBlob = readEntry("thumbnail.png", 32 * 1024 * 1024, "image/png");
+return {manifest, sourceBlob, thumbnailBlob};
 }
 
 function blobToDataUrl(blob) {
@@ -586,43 +522,17 @@ return response.blob();
 
 async function createCollectionBackup() {
 const records = await getAllArtworkRecordsFromDatabase();
-
 const artworks = [];
-
 for (const record of records) {
-const hasGartBlob =
-record.gartBlob instanceof Blob &&
-record.gartBlob.size > 0;
-
+if (!(record.zipBlob instanceof Blob) || !record.zipBlob.size) continue;
 artworks.push({
 id: record.id,
-title: record.title,
-author: record.author,
-authorUrl: record.authorUrl || "",
-createdAt: record.createdAt || "",
-type: record.type,
-symbol: record.symbol,
-sourceFileName: record.sourceFileName,
-gartData: hasGartBlob
-? await blobToDataUrl(record.gartBlob)
-: null,
-sourceData: !hasGartBlob && record.sourceBlob
-? await blobToDataUrl(record.sourceBlob)
-: null,
-thumbnailData: !hasGartBlob && record.thumbnailBlob
-? await blobToDataUrl(record.thumbnailBlob)
-: null,
-camera: record.camera || {
-yaw: 0,
-pitch: 0,
-fov: 75
-}
+zipData: await blobToDataUrl(record.zipBlob)
 });
 }
-
 return {
 format: "gururi-collection",
-version: 2,
+version: 3,
 createdAt: new Date().toISOString(),
 artworks
 };
@@ -665,137 +575,43 @@ window.alert(
 }
 
 async function restoreCollectionBackup(file) {
-const text = await file.text();
-const backup = JSON.parse(text);
-
-if (
-!backup ||
-backup.format !== "gururi-collection" ||
-![1, 2].includes(backup.version) ||
-!Array.isArray(backup.artworks)
-) {
-throw new Error("ぐるりコレクションのバックアップファイルではありません。");
+const backup = JSON.parse(await file.text());
+if (!backup || backup.format !== "gururi-collection" || backup.version !== 3 || !Array.isArray(backup.artworks)) {
+throw new Error("対応するぐるりコレクションのバックアップではありません。");
 }
-
+// すべての作品を先に検証し、途中で失敗した場合には保存済み作品を変更しない。
+const restored = [];
 for (const item of backup.artworks) {
-if (item.gartData) {
-const gartBlob =
-await dataUrlToBlob(
-item.gartData
-);
-
-const parsed =
-await parseGururiArtFile(
-gartBlob
-);
-
-const manifest =
-parsed.manifest;
-
-const work = {
-id:
-item.id ||
-manifest.id ||
-`${Date.now()}-${Math.random().toString(36).slice(2)}`,
-title:
-item.title ||
-manifest.title ||
-"無題",
-author:
-item.author ||
-manifest.author ||
-"作者未設定",
-authorUrl:
-item.authorUrl ||
-manifest.authorUrl ||
-"",
-createdAt:
-item.createdAt ||
-manifest.createdAt ||
-"",
-type:
-item.type ||
-"illustration",
-symbol:
-item.symbol ||
-"◎",
-sourceFileName:
-item.sourceFileName ||
-"artwork.gart",
-thumbnailBlob:
-parsed.thumbnailBlob,
-playback:
-manifest.playback || null,
-camera:
-item.camera ||
-manifest.initialView || {
-yaw: 0,
-pitch: 0,
-fov: 75
-}
-};
-
-await saveArtworkToDatabase(
-work,
-parsed.sourceBlob,
-gartBlob
-);
-
-continue;
-}
-
-if (!item.sourceData) {
-continue;
-}
-
-const sourceBlob =
-await dataUrlToBlob(
-item.sourceData
-);
-
-const thumbnailBlob =
-item.thumbnailData
-? await dataUrlToBlob(
-item.thumbnailData
-)
-: null;
-
-const work = {
-id: item.id,
-title: item.title,
-author: item.author,
-authorUrl: item.authorUrl || "",
-createdAt: item.createdAt || "",
-type: item.type,
-symbol: item.symbol,
-sourceFileName: item.sourceFileName,
-thumbnailBlob,
-camera: item.camera || {
-yaw: 0,
-pitch: 0,
-fov: 75
-}
-};
-
-await saveArtworkToDatabase(
-work,
-sourceBlob
-);
-}
-
-state.works.forEach((work) => {
-if (work.sourceUrl) {
-URL.revokeObjectURL(work.sourceUrl);
-}
-
-if (work.thumbnailUrl) {
-URL.revokeObjectURL(work.thumbnailUrl);
-}
+if (typeof item.zipData !== "string") throw new Error("バックアップ内の作品データがありません。");
+const zipBlob = await dataUrlToBlob(item.zipData);
+const parsed = await parseGururiArtZip(zipBlob);
+const manifest = parsed.manifest;
+restored.push({
+work: {
+id: item.id || manifest.id || crypto.randomUUID(),
+title: manifest.title || "無題",
+author: manifest.author || "作者未設定",
+authorUrl: manifest.authorUrl || "",
+createdAt: manifest.createdAt || "",
+type: manifest.type === "video" ? "animation" : "illustration",
+symbol: "◎",
+sourceFileName: `${manifest.title || "artwork"}.zip`,
+thumbnailBlob: parsed.thumbnailBlob,
+playback: manifest.playback || null,
+camera: manifest.initialView
+},
+sourceBlob: parsed.sourceBlob,
+zipBlob
 });
-
-state.works =
-await loadArtworksFromDatabase();
-
+}
+for (const entry of restored) {
+await saveArtworkToDatabase(entry.work, entry.sourceBlob, entry.zipBlob);
+}
+state.works.forEach((work) => {
+if (work.sourceUrl) URL.revokeObjectURL(work.sourceUrl);
+if (work.thumbnailUrl) URL.revokeObjectURL(work.thumbnailUrl);
+});
+state.works = await loadArtworksFromDatabase();
 renderLibrary();
 }
 
@@ -1575,7 +1391,7 @@ return categoryMatch && queryMatch;
 
 async function removeWorkFromCollection(work) {
 const confirmed = window.confirm(
-`「${work.title}」をコレクションから削除しますか？\n\n元の.gartファイルは削除されません。`
+`「${work.title}」をコレクションから削除しますか？\n\n元のZIPファイルは削除されません。`
 );
 
 if (!confirmed) {
@@ -1933,65 +1749,48 @@ els.fileInput.click();
 }
 
 async function addTemporaryWorkFromFile(file) {
-const extension = file.name.split(".").pop().toLowerCase();
-
-if (extension !== "gart") {
-window.alert("ぐるり作品（.gart）を選択してください。");
+if (!file.name.toLowerCase().endsWith(".zip")) {
+window.alert("ぐるりペイントの作品ZIP（.zip）を選択してください。");
 return;
 }
-
 try {
-const parsed = await parseGururiArtFile(file);
+const parsed = await parseGururiArtZip(file);
 const manifest = parsed.manifest;
-
 const work = {
-id: manifest.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+id: manifest.id || crypto.randomUUID(),
 title: manifest.title || file.name.replace(/\.[^.]+$/, ""),
 author: manifest.author || "作者未設定",
 authorUrl: manifest.authorUrl || "",
 createdAt: manifest.createdAt || "",
-type:
-manifest.type === "video"
-? "animation"
-: "illustration",
+type: manifest.type === "video" ? "animation" : "illustration",
 symbol: "◎",
 sourceFileName: file.name,
-sourceUrl:
-URL.createObjectURL(
-parsed.sourceBlob
-),
-thumbnailUrl:
-parsed.thumbnailBlob
-? URL.createObjectURL(
-parsed.thumbnailBlob
-)
-: null,
-thumbnailBlob:
-parsed.thumbnailBlob,
-playback:
-manifest.playback || null,
-camera:
-manifest.initialView || {
-yaw: 0,
-pitch: 0,
-fov: 75
-}
+sourceUrl: URL.createObjectURL(parsed.sourceBlob),
+thumbnailUrl: URL.createObjectURL(parsed.thumbnailBlob),
+thumbnailBlob: parsed.thumbnailBlob,
+playback: manifest.playback || null,
+camera: manifest.initialView
 };
-
-await saveArtworkToDatabase(
-work,
-parsed.sourceBlob,
-file
-);
-
+try {
+await saveArtworkToDatabase(work, parsed.sourceBlob, file);
+} catch (error) {
+URL.revokeObjectURL(work.sourceUrl);
+URL.revokeObjectURL(work.thumbnailUrl);
+throw error;
+}
+const existingIndex = state.works.findIndex((item) => item.id === work.id);
+if (existingIndex >= 0) {
+const previous = state.works[existingIndex];
+if (previous.sourceUrl) URL.revokeObjectURL(previous.sourceUrl);
+if (previous.thumbnailUrl) URL.revokeObjectURL(previous.thumbnailUrl);
+state.works[existingIndex] = work;
+} else {
 state.works.push(work);
+}
 renderLibrary();
 } catch (error) {
 console.error(error);
-
-window.alert(
-error.message || "ぐるり作品を読み込めませんでした。"
-);
+window.alert(error.message || "作品ZIPを読み込めませんでした。");
 }
 }
 
