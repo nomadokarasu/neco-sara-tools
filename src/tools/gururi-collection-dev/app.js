@@ -2292,5 +2292,263 @@ first.focus();
 }
 });
 
+const PASSWORD_STORAGE_KEY = "gururi-collection-password-v1";
+const passwordOverlay = document.querySelector("#password-overlay");
+const passwordUnlockForm = document.querySelector("#password-unlock-form");
+const passwordUnlockInput = document.querySelector("#password-unlock-input");
+const passwordUnlockMessage = document.querySelector("#password-unlock-message");
+const passwordSettingsOverlay = document.querySelector("#password-settings-overlay");
+const passwordSettingsButton = document.querySelector("#password-settings-button");
+const passwordLockButton = document.querySelector("#password-lock-button");
+const passwordSettingsForm = document.querySelector("#password-settings-form");
+const passwordSettingsTitle = document.querySelector("#password-settings-title");
+const passwordSettingsDescription = document.querySelector("#password-settings-description");
+const passwordCurrentLabel = document.querySelector("#password-current-label");
+const passwordCurrentInput = document.querySelector("#password-current-input");
+const passwordNewLabel = document.querySelector("#password-new-label");
+const passwordNewInput = document.querySelector("#password-new-input");
+const passwordConfirmLabel = document.querySelector("#password-confirm-label");
+const passwordConfirmInput = document.querySelector("#password-confirm-input");
+const passwordSettingsMessage = document.querySelector("#password-settings-message");
+const passwordSaveButton = document.querySelector("#password-save-button");
+const passwordRemoveButton = document.querySelector("#password-remove-button");
+const passwordSettingsClose = document.querySelector("#password-settings-close");
+
+let passwordRecord = null;
+let passwordMode = "set";
+let appInitialized = false;
+let passwordBusy = false;
+
+function bytesToHex(bytes) {
+return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function hexToBytes(hex) {
+if (!/^(?:[0-9a-f]{2})+$/i.test(hex)) {
+throw new Error("パスワード情報が破損しています。");
+}
+return new Uint8Array(hex.match(/.{2}/g).map(value => parseInt(value, 16)));
+}
+
+async function derivePassword(password, salt) {
+const key = await crypto.subtle.importKey(
+"raw",
+new TextEncoder().encode(password),
+"PBKDF2",
+false,
+["deriveBits"]
+);
+const bits = await crypto.subtle.deriveBits(
+{
+name: "PBKDF2",
+salt,
+iterations: 210000,
+hash: "SHA-256"
+},
+key,
+256
+);
+return bytesToHex(new Uint8Array(bits));
+}
+
+async function createPasswordRecord(password) {
+const salt = crypto.getRandomValues(new Uint8Array(16));
+return {
+version: 1,
+salt: bytesToHex(salt),
+hash: await derivePassword(password, salt)
+};
+}
+
+async function verifyPassword(password) {
+if (!passwordRecord) return false;
+const actual = await derivePassword(
+password,
+hexToBytes(passwordRecord.salt)
+);
+const expected = hexToBytes(passwordRecord.hash);
+const actualBytes = hexToBytes(actual);
+let difference = 0;
+for (let i = 0; i < expected.length; i += 1) {
+difference |= expected[i] ^ actualBytes[i];
+}
+return expected.length === actualBytes.length && difference === 0;
+}
+
+function savePasswordRecord(record) {
+if (record) {
+localStorage.setItem(PASSWORD_STORAGE_KEY, JSON.stringify(record));
+} else {
+localStorage.removeItem(PASSWORD_STORAGE_KEY);
+}
+passwordRecord = record;
+passwordLockButton.hidden = !record;
+}
+
+async function unlockCollection() {
+passwordOverlay.hidden = true;
+document.body.classList.remove("lock-pending");
+passwordUnlockInput.value = "";
+passwordUnlockMessage.textContent = "";
+
+if (!appInitialized) {
+appInitialized = true;
+await initializeApp();
+}
+}
+
+function lockCollection() {
+if (!passwordRecord) return;
+if (!els.viewerLayer.hidden) closeViewer();
+passwordSettingsOverlay.hidden = true;
+document.body.classList.add("lock-pending");
+passwordOverlay.hidden = false;
+passwordUnlockInput.value = "";
+passwordUnlockMessage.textContent = "";
+passwordUnlockInput.focus();
+}
+
+function openPasswordSettings(mode = "change") {
+passwordMode = passwordRecord ? mode : "set";
+passwordSettingsForm.reset();
+passwordSettingsMessage.textContent = "";
+passwordCurrentLabel.hidden = passwordMode === "set";
+passwordNewLabel.hidden = passwordMode === "remove";
+passwordConfirmLabel.hidden = passwordMode === "remove";
+passwordRemoveButton.hidden = !passwordRecord || passwordMode === "remove";
+passwordSettingsTitle.textContent = passwordMode === "set"
+? "パスワードを設定"
+: passwordMode === "remove"
+? "パスワードを解除"
+: "パスワードを変更";
+passwordSettingsDescription.textContent = passwordMode === "remove"
+? "現在のパスワードを入力すると、次回からロックされなくなります。"
+: "パスワードは8文字以上で設定してください。";
+passwordSaveButton.textContent = passwordMode === "set"
+? "設定する"
+: passwordMode === "remove"
+? "ロックを解除する"
+: "変更する";
+passwordSettingsOverlay.hidden = false;
+(passwordMode === "set" ? passwordNewInput : passwordCurrentInput).focus();
+}
+
+passwordSettingsButton.addEventListener("click", () => {
+openPasswordSettings();
+});
+
+passwordLockButton.addEventListener("click", lockCollection);
+
+passwordSettingsClose.addEventListener("click", () => {
+if (passwordBusy) return;
+passwordSettingsOverlay.hidden = true;
+});
+
+passwordRemoveButton.addEventListener("click", () => {
+openPasswordSettings("remove");
+});
+
+passwordUnlockForm.addEventListener("submit", async event => {
+event.preventDefault();
+if (passwordBusy) return;
+passwordBusy = true;
+const button = passwordUnlockForm.querySelector("button");
+button.disabled = true;
+try {
+const valid = await verifyPassword(passwordUnlockInput.value);
+if (!valid) {
+passwordUnlockMessage.textContent = "パスワードが正しくありません。";
+passwordUnlockInput.value = "";
+passwordUnlockInput.focus();
+return;
+}
+await unlockCollection();
+} catch (error) {
+console.error(error);
+passwordUnlockMessage.textContent = "認証できませんでした。";
+} finally {
+passwordBusy = false;
+button.disabled = false;
+}
+});
+
+passwordSettingsForm.addEventListener("submit", async event => {
+event.preventDefault();
+if (passwordBusy) return;
+passwordBusy = true;
+passwordSaveButton.disabled = true;
+passwordSettingsMessage.textContent = "";
+
+try {
+if (passwordRecord) {
+const valid = await verifyPassword(passwordCurrentInput.value);
+if (!valid) {
+passwordSettingsMessage.textContent = "現在のパスワードが正しくありません。";
+return;
+}
+}
+
+if (passwordMode === "remove") {
+savePasswordRecord(null);
+passwordSettingsOverlay.hidden = true;
+return;
+}
+
+const newPassword = passwordNewInput.value;
+if (newPassword.length < 8) {
+passwordSettingsMessage.textContent = "8文字以上で入力してください。";
+return;
+}
+if (newPassword !== passwordConfirmInput.value) {
+passwordSettingsMessage.textContent = "確認用パスワードが一致しません。";
+return;
+}
+
+const record = await createPasswordRecord(newPassword);
+savePasswordRecord(record);
+passwordSettingsOverlay.hidden = true;
+} catch (error) {
+console.error(error);
+passwordSettingsMessage.textContent = "設定を保存できませんでした。";
+} finally {
+passwordBusy = false;
+passwordSaveButton.disabled = false;
+}
+});
+
+async function startPasswordProtectedApp() {
+try {
+if (!window.isSecureContext || !crypto.subtle) {
+throw new Error("安全な接続が必要です。");
+}
+
+const saved = localStorage.getItem(PASSWORD_STORAGE_KEY);
+if (saved) {
+const record = JSON.parse(saved);
+if (
+record.version !== 1 ||
+typeof record.salt !== "string" ||
+typeof record.hash !== "string" ||
+record.salt.length !== 32 ||
+record.hash.length !== 64
+) {
+throw new Error("保存済みのパスワード情報が正しくありません。");
+}
+hexToBytes(record.salt);
+hexToBytes(record.hash);
+passwordRecord = record;
+passwordLockButton.hidden = false;
+lockCollection();
+} else {
+await unlockCollection();
+}
+} catch (error) {
+console.error(error);
+passwordUnlockMessage.textContent =
+"ロックの初期化に失敗しました。作品データは削除されていません。";
+passwordUnlockInput.disabled = true;
+}
+}
+
 setupPwa();
-initializeApp();
+startPasswordProtectedApp();

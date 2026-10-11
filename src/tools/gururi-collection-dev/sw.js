@@ -1,4 +1,4 @@
-const CACHE_NAME = "gururi-collection-shell-v2";
+const CACHE_NAME = "gururi-collection-shell-v3";
 const SHELL_FILES = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

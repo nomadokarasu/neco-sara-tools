@@ -8,7 +8,7 @@
 <title>ぐるりコレクション</title>
 <link rel="stylesheet" href="./styles.css">
 </head>
-<body>
+<body class="lock-pending">
 <div class="app-shell">
 <header class="app-header">
 <div class="brand">
@@ -158,6 +158,50 @@
 </button>
 </div>
 </header>
+
+<div class="password-actions">
+<button id="password-settings-button" type="button">パスワード設定</button>
+<button id="password-lock-button" type="button" hidden>今すぐロック</button>
+</div>
+
+<div class="password-overlay" id="password-overlay">
+<div class="password-panel">
+<h2>ぐるりコレクション</h2>
+<p>パスワードを入力してください</p>
+<form id="password-unlock-form">
+<input id="password-unlock-input" type="password" placeholder="パスワード" autocomplete="current-password" required>
+<button type="submit">ロックを解除</button>
+</form>
+<p class="password-message" id="password-unlock-message" role="status"></p>
+</div>
+</div>
+
+<div class="password-overlay" id="password-settings-overlay" hidden>
+<div class="password-panel">
+<h2 id="password-settings-title">パスワード設定</h2>
+<p id="password-settings-description"></p>
+<form id="password-settings-form">
+<label id="password-current-label" hidden>
+現在のパスワード
+<input id="password-current-input" type="password" autocomplete="current-password">
+</label>
+<label id="password-new-label">
+新しいパスワード
+<input id="password-new-input" type="password" autocomplete="new-password" minlength="8">
+</label>
+<label id="password-confirm-label">
+新しいパスワード（確認）
+<input id="password-confirm-input" type="password" autocomplete="new-password" minlength="8">
+</label>
+<p class="password-message" id="password-settings-message" role="status"></p>
+<button id="password-save-button" type="submit">設定する</button>
+</form>
+<div class="password-settings-controls">
+<button id="password-remove-button" type="button" hidden>パスワードを解除する</button>
+<button id="password-settings-close" type="button">閉じる</button>
+</div>
+</div>
+</div>
 
 <div class="privacy-modal" id="privacy-modal" hidden>
 <div class="privacy-modal-panel" role="dialog" aria-modal="true" aria-labelledby="privacy-modal-title">
