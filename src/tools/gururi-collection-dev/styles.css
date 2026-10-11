@@ -793,12 +793,6 @@ outline-offset: 3px;
 display: none;
 }
 
-.viewer-meta {
-min-width: 0;
-display: grid;
-gap: 2px;
-}
-
 .viewer-meta strong,
 .viewer-meta span {
 overflow: hidden;
