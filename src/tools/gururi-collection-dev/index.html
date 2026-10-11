@@ -159,11 +159,52 @@
 </div>
 <div class="collection-menu">
 <button id="collection-menu-button" class="collection-menu-button" type="button" aria-label="メニューを開く" aria-expanded="false" aria-controls="collection-menu-panel">☰</button>
-<div id="collection-menu-panel" class="collection-menu-panel" hidden>
-<button id="password-settings-button" type="button">パスワード設定</button>
-<button id="password-change-button" type="button">パスワード変更</button>
-<button id="password-menu-remove-button" type="button">パスワード解除</button>
+</header>
+
+<div class="collection-guide-overlay" id="collection-guide-overlay" hidden>
+<div class="collection-guide-panel" role="dialog" aria-modal="true" aria-labelledby="collection-guide-title">
+<p class="collection-guide-counter" id="collection-guide-counter">1 / 4</p>
+
+<section class="collection-guide-page" data-guide-page="0">
+<h2 id="collection-guide-title">ぐるりコレクションへようこそ</h2>
+<p>ぐるりコレクションは、360度アートを楽しむためのビューワーです。</p>
+<p>.gart形式の作品を追加して、360度の世界を自由に鑑賞できます。</p>
+</section>
+
+<section class="collection-guide-page" data-guide-page="1" hidden>
+<h2>作品データの保存について</h2>
+<p>追加した作品データは、この端末のブラウザ・アプリ内に保存されます。</p>
+<p>作品データや作品名を当サイトのサーバーへ送信したり、第三者に公開したりしません。ただし、Webサイトへのアクセス情報はサーバーログに残る場合があります。</p>
+<p>ブラウザのデータ消去やアプリの削除などによって、保存した作品が失われる場合があります。</p>
+</section>
+
+<section class="collection-guide-page" data-guide-page="2" hidden>
+<h2>作品データを安全に保管するために</h2>
+<p>人に見られたくない作品を閲覧する場合は、作品の追加後、元の.gartファイルを安全な場所に保管し、必要に応じて端末上の元ファイルを削除することをおすすめします。</p>
+<p>作品を追加したら、バックアップ機能を使ってコレクション全体を保存し、元の.gartファイルと一緒に保管してください。</p>
+<p>バックアップファイルにも作品データが含まれるため、安全な場所に保存してください。</p>
+</section>
+
+<section class="collection-guide-page" data-guide-page="3" hidden>
+<h2>パスワードの設定</h2>
+<p>ぐるりコレクションには、起動時にパスワードを要求する機能があります。</p>
+<p>パスワード情報はブラウザ・PWAの保存領域に保持します。バックアップには含まれず、別のブラウザや端末には引き継がれません。</p>
+<p>パスワードを忘れた場合の通常の再設定手段はありません。サイトデータの消去では作品データも失われる可能性があるため、データ消去による解除は行わないでください。</p>
+<div class="collection-guide-final-actions">
+<button id="collection-guide-set-password" type="button">設定する</button>
+<button id="collection-guide-skip-password" type="button">設定しない</button>
+<button id="collection-guide-finish" type="button" hidden>閉じる</button>
 </div>
+</section>
+
+<div class="collection-guide-navigation">
+<button id="collection-guide-back" type="button" hidden>戻る</button>
+<button id="collection-guide-next" type="button">次へ</button>
+</div>
+</div>
+</div>
+
+<div class="password-overlay" id="password-overlay">
 </div>
 </header>
 

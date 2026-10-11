@@ -2317,6 +2317,92 @@ let passwordMode = "set";
 let appInitialized = false;
 let passwordBusy = false;
 
+const COLLECTION_GUIDE_STORAGE_KEY = "gururi-collection-guide-completed-v1";
+const collectionGuideOverlay = document.querySelector("#collection-guide-overlay");
+const collectionGuidePages = [...document.querySelectorAll(".collection-guide-page")];
+const collectionGuideCounter = document.querySelector("#collection-guide-counter");
+const collectionGuideBack = document.querySelector("#collection-guide-back");
+const collectionGuideNext = document.querySelector("#collection-guide-next");
+const collectionGuideSetPassword = document.querySelector("#collection-guide-set-password");
+const collectionGuideSkipPassword = document.querySelector("#collection-guide-skip-password");
+const collectionGuideFinish = document.querySelector("#collection-guide-finish");
+const collectionGuideButton = document.querySelector("#collection-guide-button");
+
+let collectionGuidePage = 0;
+let collectionGuideInitial = false;
+let collectionGuideAwaitingPassword = false;
+
+function renderCollectionGuide() {
+collectionGuidePages.forEach((page, index) => {
+page.hidden = index !== collectionGuidePage;
+});
+collectionGuideCounter.textContent = `${collectionGuidePage + 1} / 4`;
+collectionGuideBack.hidden = collectionGuidePage === 0;
+collectionGuideNext.hidden = collectionGuidePage === 3;
+
+const isFinal = collectionGuidePage === 3;
+collectionGuideSetPassword.hidden = !isFinal || Boolean(passwordRecord);
+collectionGuideSkipPassword.hidden = !isFinal || Boolean(passwordRecord) || !collectionGuideInitial;
+collectionGuideFinish.hidden = !isFinal || (collectionGuideInitial && !passwordRecord);
+}
+
+function showCollectionGuide(initial = false) {
+collectionGuideInitial = initial;
+collectionGuideAwaitingPassword = false;
+collectionGuidePage = 0;
+renderCollectionGuide();
+collectionGuideOverlay.hidden = false;
+collectionGuideNext.focus();
+}
+
+async function completeCollectionGuide() {
+const initial = collectionGuideInitial;
+if (initial) {
+localStorage.setItem(COLLECTION_GUIDE_STORAGE_KEY, "1");
+}
+collectionGuideAwaitingPassword = false;
+collectionGuideInitial = false;
+collectionGuideOverlay.hidden = true;
+if (initial) {
+await unlockCollection();
+} else {
+collectionGuideButton.focus();
+}
+}
+
+collectionGuideBack.addEventListener("click", () => {
+if (collectionGuidePage > 0) {
+collectionGuidePage -= 1;
+renderCollectionGuide();
+}
+});
+
+collectionGuideNext.addEventListener("click", () => {
+if (collectionGuidePage < 3) {
+collectionGuidePage += 1;
+renderCollectionGuide();
+}
+});
+
+collectionGuideSkipPassword.addEventListener("click", () => {
+completeCollectionGuide();
+});
+
+collectionGuideFinish.addEventListener("click", () => {
+completeCollectionGuide();
+});
+
+collectionGuideSetPassword.addEventListener("click", () => {
+collectionGuideAwaitingPassword = true;
+collectionGuideOverlay.hidden = true;
+openPasswordSettings("set");
+});
+
+collectionGuideButton.addEventListener("click", () => {
+closeCollectionMenu();
+showCollectionGuide(false);
+});
+
 function bytesToHex(bytes) {
 return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
 }
@@ -2385,9 +2471,17 @@ updatePasswordMenu();
 
 async function unlockCollection() {
 passwordOverlay.hidden = true;
-document.body.classList.remove("lock-pending");
 passwordUnlockInput.value = "";
 passwordUnlockMessage.textContent = "";
+
+if (localStorage.getItem(COLLECTION_GUIDE_STORAGE_KEY) !== "1") {
+if (collectionGuideOverlay.hidden) {
+showCollectionGuide(true);
+}
+return;
+}
+
+document.body.classList.remove("lock-pending");
 
 if (!appInitialized) {
 appInitialized = true;
@@ -2489,6 +2583,12 @@ updatePasswordMenu();
 passwordSettingsClose.addEventListener("click", () => {
 if (passwordBusy) return;
 passwordSettingsOverlay.hidden = true;
+if (collectionGuideAwaitingPassword) {
+collectionGuideAwaitingPassword = false;
+collectionGuideOverlay.hidden = false;
+renderCollectionGuide();
+collectionGuideSetPassword.focus();
+}
 });
 
 passwordUnlockForm.addEventListener("submit", async event => {
@@ -2550,6 +2650,10 @@ return;
 const record = await createPasswordRecord(newPassword);
 savePasswordRecord(record);
 passwordSettingsOverlay.hidden = true;
+
+if (collectionGuideAwaitingPassword) {
+await completeCollectionGuide();
+}
 } catch (error) {
 console.error(error);
 passwordSettingsMessage.textContent = "設定を保存できませんでした。";
