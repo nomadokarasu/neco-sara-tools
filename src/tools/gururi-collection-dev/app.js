@@ -2310,7 +2310,6 @@ const passwordConfirmLabel = document.querySelector("#password-confirm-label");
 const passwordConfirmInput = document.querySelector("#password-confirm-input");
 const passwordSettingsMessage = document.querySelector("#password-settings-message");
 const passwordSaveButton = document.querySelector("#password-save-button");
-const passwordRemoveButton = document.querySelector("#password-remove-button");
 const passwordSettingsClose = document.querySelector("#password-settings-close");
 
 let passwordRecord = null;
@@ -2414,7 +2413,6 @@ passwordSettingsMessage.textContent = "";
 passwordCurrentLabel.hidden = passwordMode === "set";
 passwordNewLabel.hidden = passwordMode === "remove";
 passwordConfirmLabel.hidden = passwordMode === "remove";
-passwordRemoveButton.hidden = !passwordRecord || passwordMode === "remove";
 passwordSettingsTitle.textContent = passwordMode === "set"
 ? "パスワードを設定"
 : passwordMode === "remove"
@@ -2491,10 +2489,6 @@ updatePasswordMenu();
 passwordSettingsClose.addEventListener("click", () => {
 if (passwordBusy) return;
 passwordSettingsOverlay.hidden = true;
-});
-
-passwordRemoveButton.addEventListener("click", () => {
-openPasswordSettings("remove");
 });
 
 passwordUnlockForm.addEventListener("submit", async event => {
