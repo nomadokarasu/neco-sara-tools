@@ -955,28 +955,23 @@ function findHtmlFiles(
 // 開発版のHTMLをアクセス解析の対象から外す
 // ========================================
 
-const developmentDirectory =
-path.join(
-outputDirectory,
-"tools",
-"gururi-paint-dev"
-);
+const developmentDirectories = [
+path.join(outputDirectory, "tools", "gururi-paint-dev"),
+path.join(outputDirectory, "tools", "gururi-collection-dev")
+];
 
-const originalFindHtmlFiles =
-findHtmlFiles;
+const originalFindHtmlFiles = findHtmlFiles;
 
 findHtmlFiles = function(directory) {
+const resolvedDirectory = path.resolve(directory);
 
-if (
-path.resolve(directory) ===
-path.resolve(developmentDirectory)
-) {
+if (developmentDirectories.some((item) => {
+return resolvedDirectory === path.resolve(item);
+})) {
 return [];
 }
 
-return originalFindHtmlFiles(
-directory
-);
+return originalFindHtmlFiles(directory);
 };
 
 

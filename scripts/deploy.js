@@ -6,6 +6,87 @@ execFileSync
 const fs = require("node:fs");
 const path = require("node:path");
 
+if (process.argv.includes("--collection-dev")) {
+try {
+process.chdir(path.resolve(__dirname, ".."));
+
+const workflow = fs.readFileSync(".github/workflows/deploy.yml", "utf8");
+
+if (!workflow.includes("# COLLECTION_DEV_DEPLOY_READY")) {
+throw new Error("ぐるりコレクション開発版の配信設定が未完成です。");
+}
+
+const sourceDirectory = "src/tools/gururi-collection-dev";
+const requiredFiles = [
+"index.html",
+"app.js",
+"styles.css",
+"sw.js",
+"manifest.webmanifest",
+"icon-192.png",
+"icon-512.png"
+];
+
+for (const fileName of requiredFiles) {
+if (!fs.existsSync(path.join(sourceDirectory, fileName))) {
+throw new Error(`必要なファイルが見つかりません：${fileName}`);
+}
+}
+
+function gitReadCollection(args) {
+return execFileSync("git", args, {encoding: "utf8"}).trim();
+}
+
+function gitRunCollection(args) {
+execFileSync("git", args, {stdio: "inherit"});
+}
+
+const stagedFiles = gitReadCollection(["diff", "--cached", "--name-only"]);
+
+if (stagedFiles) {
+throw new Error("すでにGitへ追加済みの変更があります。配信を停止しました。");
+}
+
+execFileSync(process.execPath, ["scripts/build.js"], {stdio: "inherit"});
+
+gitRunCollection([
+"add",
+"--",
+"package.json",
+"scripts/build.js",
+"scripts/deploy.js",
+".github/workflows/deploy.yml",
+sourceDirectory
+]);
+
+const changes = gitReadCollection(["diff", "--cached", "--name-only"]);
+
+if (changes) {
+gitRunCollection([
+"commit",
+"-m",
+"Update Gururi Collection development"
+]);
+}
+
+gitRunCollection([
+"push",
+"origin",
+"HEAD:gururi-collection-dev-deploy"
+]);
+
+console.log("ぐるりコレクション開発版を配信用ブランチへ送信しました。");
+console.log("サーバーへの反映結果はGitHub Actionsで確認してください。");
+
+process.exit(0);
+
+} catch (error) {
+console.error("ぐるりコレクション開発版の更新を停止しました。");
+console.error(error.message);
+process.exit(1);
+}
+}
+
 if (
 process.argv.includes("--gururi-release")
 ) {

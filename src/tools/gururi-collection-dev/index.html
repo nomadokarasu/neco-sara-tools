@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>ぐるりコレクション</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="app-shell">
+<header class="app-header">
+<div class="brand">
+<button class="install-trigger" id="install-button" type="button">
+<span aria-hidden="true">↓</span> アプリとして使う
+</button>
+
+<div class="install-modal" id="install-modal" hidden>
+<div class="install-modal-panel" role="dialog" aria-modal="true" aria-labelledby="install-modal-title">
+<div class="install-modal-header">
+<h2 id="install-modal-title">アプリとして使う</h2>
+<button class="install-modal-close" id="install-modal-close" type="button" aria-label="閉じる">×</button>
+</div>
+
+<p class="install-modal-description">ぐるりコレクションをホーム画面に追加すると、アプリのように起動できます。</p>
+
+<div class="install-device-tabs" role="group" aria-label="端末を選択">
+<button type="button" class="install-device-tab" data-install-device="ios">iPhone・iPad</button>
+<button type="button" class="install-device-tab" data-install-device="android">Android</button>
+<button type="button" class="install-device-tab" data-install-device="pc">PC</button>
+</div>
+
+<section class="install-guide" data-install-guide="ios" hidden>
+<h3>iPhone・iPadの場合</h3>
+<p>Safariでぐるりコレクションを開いてください。</p>
+<div class="install-step">
+<div class="install-step-number">1</div>
+<div class="install-step-content">
+<strong>共有メニューを開く</strong>
+<div class="install-diagram">
+<div class="install-browser-bar">Safari　ぐるりコレクション</div>
+<div class="install-diagram-focus"><span class="install-share-symbol">□↑</span> 共有</div>
+</div>
+<p>Safariの共有ボタンを押します。表示されていない場合は、ページメニューから「共有」を選択します。</p>
+</div>
+</div>
+<div class="install-step">
+<div class="install-step-number">2</div>
+<div class="install-step-content">
+<strong>ホーム画面に追加</strong>
+<div class="install-diagram">
+<div class="install-diagram-row">共有メニュー</div>
+<div class="install-diagram-focus">⊞　ホーム画面に追加</div>
+</div>
+<p>共有メニューをスクロールして「ホーム画面に追加」を選びます。</p>
+</div>
+</div>
+<div class="install-step">
+<div class="install-step-number">3</div>
+<div class="install-step-content">
+<strong>Webアプリとして追加する</strong>
+<div class="install-diagram">
+<div class="install-diagram-row">Webアプリとして開く　<span>オン</span></div>
+<div class="install-diagram-focus">追加</div>
+</div>
+<p>「Webアプリとして開く」をオンにして「追加」を押します。ホーム画面から起動できるようになります。</p>
+</div>
+</div>
+</section>
+
+<section class="install-guide" data-install-guide="android" hidden>
+<h3>Androidの場合</h3>
+<p>Chromeなどの対応ブラウザで開いてください。</p>
+<div class="install-step">
+<div class="install-step-number">1</div>
+<div class="install-step-content">
+<strong>ブラウザのメニューを開く</strong>
+<div class="install-diagram">
+<div class="install-browser-bar">Chrome　ぐるりコレクション　 ⋮</div>
+<div class="install-diagram-focus">⋮　メニュー</div>
+</div>
+<p>画面右上などにある「⋮」を押します。</p>
+</div>
+</div>
+<div class="install-step">
+<div class="install-step-number">2</div>
+<div class="install-step-content">
+<strong>アプリをインストール</strong>
+<div class="install-diagram">
+<div class="install-diagram-row">ブラウザのメニュー</div>
+<div class="install-diagram-focus">↓　アプリをインストール</div>
+</div>
+<p>「アプリをインストール」または「ホーム画面に追加」を選択します。メニュー名は端末やブラウザによって異なります。</p>
+</div>
+</div>
+<div class="install-step">
+<div class="install-step-number">3</div>
+<div class="install-step-content">
+<strong>確認画面でインストール</strong>
+<div class="install-diagram">
+<div class="install-diagram-row">ぐるりコレクション</div>
+<div class="install-diagram-focus">インストール</div>
+</div>
+<p>確認画面でインストールを許可します。</p>
+</div>
+</div>
+<button class="install-native-button" id="install-native-button" type="button" hidden>この端末にインストール</button>
+</section>
+
+<section class="install-guide" data-install-guide="pc" hidden>
+<h3>PCの場合</h3>
+<p>Microsoft EdgeまたはGoogle Chromeで開いてください。</p>
+<div class="install-step">
+<div class="install-step-number">1</div>
+<div class="install-step-content">
+<strong>ブラウザのメニューを開く</strong>
+<div class="install-diagram">
+<div class="install-browser-bar">ぐるりコレクション　 ⋯</div>
+<div class="install-diagram-focus">⋯　ブラウザのメニュー</div>
+</div>
+<p>ブラウザ右上のメニューを開きます。アドレスバーにインストールアイコンがある場合は、そこから直接進むこともできます。</p>
+</div>
+</div>
+<div class="install-step">
+<div class="install-step-number">2</div>
+<div class="install-step-content">
+<strong>アプリとしてインストール</strong>
+<div class="install-diagram">
+<div class="install-diagram-row">Edgeの場合：その他のツール → アプリ</div>
+<div class="install-diagram-focus">このサイトをアプリとしてインストール</div>
+</div>
+<p>Edgeではアプリのインストール項目を選択します。Chromeでは「キャスト、保存、共有」などのメニュー内に表示される場合があります。</p>
+</div>
+</div>
+<div class="install-step">
+<div class="install-step-number">3</div>
+<div class="install-step-content">
+<strong>インストールを確定する</strong>
+<div class="install-diagram">
+<div class="install-diagram-row">ぐるりコレクション</div>
+<div class="install-diagram-focus">インストール</div>
+</div>
+<p>確認画面の「インストール」を押します。以後はPCのアプリとして起動できます。</p>
+</div>
+</div>
+<button class="install-native-button" id="install-pc-button" type="button" hidden>このPCにインストール</button>
+</section>
+
+<p class="install-guide-note">※ 図は操作位置を示す簡略図です。実際の表示はOSやブラウザのバージョンによって異なります。</p>
+</div>
+</div>
+<h1>ぐるりコレクション</h1>
+<p>360°作品を集めて、いつでも楽しめるコレクション</p>
+<button class="privacy-trigger" id="privacy-button" type="button" aria-haspopup="dialog">
+作品データのプライバシーについて ›
+</button>
+</div>
+</header>
+
+<div class="privacy-modal" id="privacy-modal" hidden>
+<div class="privacy-modal-panel" role="dialog" aria-modal="true" aria-labelledby="privacy-modal-title">
+<div class="privacy-modal-header">
+<h2 id="privacy-modal-title">作品データのプライバシーについて</h2>
+<button class="privacy-modal-close" id="privacy-modal-close" type="button" aria-label="閉じる">×</button>
+</div>
+<div class="privacy-modal-content">
+<p>追加した作品はこの端末内で読み込み・保存します。<br>
+作品データや作品名を当サイトのサーバーへ送信したり、第三者に公開したりしません。<br>
+ただし、Webサイトへのアクセス情報はサーバーログに残る場合があります。</p>
+<p>ブラウザのデータを削除すると保存済み作品が失われることがあります。<br>
+購入した.gartファイルとバックアップは別途、安全な場所に保管してください。</p>
+</div>
+</div>
+</div>
+
+<main class="main-content">
+<section class="section recommended-section" aria-labelledby="recommended-title" hidden>
+<div class="section-heading">
+<div>
+<h2 id="recommended-title">おすすめ作品</h2>
+<p>ぐるり作品を見つける</p>
+</div>
+<div class="recommended-nav" aria-label="おすすめ作品の移動">
+<button class="icon-button" id="recommended-prev" type="button" aria-label="前へ">←</button>
+<button class="icon-button" id="recommended-next" type="button" aria-label="次へ">→</button>
+</div>
+</div>
+<div class="recommended-track" id="recommended-track"></div>
+</section>
+
+<section class="library-section" aria-labelledby="library-title">
+<div class="library-toolbar">
+<div class="toolbar-top">
+<div>
+<h2 id="library-title">作品一覧</h2>
+<p id="library-count">0作品</p>
+</div>
+<div class="library-actions">
+<button class="secondary-action-button" id="backup-button" type="button">バックアップ</button>
+<button class="secondary-action-button" id="restore-button" type="button">復元</button>
+<button class="add-button" id="add-artwork-button" type="button">
+<span class="add-button-mark">＋</span>
+<span>作品を追加</span>
+</button>
+</div>
+<input id="artwork-file-input" type="file" accept=".gart" hidden>
+<input id="restore-file-input" type="file" accept=".gururicollection" hidden>
+</div>
+
+<div class="filters-row">
+<div class="category-tabs" role="tablist" aria-label="作品カテゴリー">
+<button class="category-tab is-active" type="button" data-category="all" role="tab" aria-selected="true">すべて</button>
+<button class="category-tab" type="button" data-category="illustration" role="tab" aria-selected="false">画像</button>
+<button class="category-tab" type="button" data-category="animation" role="tab" aria-selected="false">動画</button>
+<button class="category-tab" type="button" data-category="game" role="tab" aria-selected="false">ゲーム</button>
+</div>
+
+<label class="search-box">
+<span class="search-icon" aria-hidden="true">⌕</span>
+<input id="search-input" type="search" placeholder="作品名・作者名で検索" autocomplete="off">
+</label>
+</div>
+</div>
+
+<div class="empty-state" id="empty-state">
+<div class="empty-symbol" aria-hidden="true">◎</div>
+<h3>まだ作品がありません</h3>
+<p>「作品を追加」から、ぐるり作品をコレクションに加えられます。</p>
+<button class="secondary-button" id="empty-add-button" type="button">作品を追加</button>
+</div>
+
+<div class="artwork-grid" id="artwork-grid" hidden></div>
+</section>
+</main>
+</div>
+
+<div class="viewer-layer" id="viewer-layer" hidden>
+
+<div class="viewer-header">
+
+<button
+class="viewer-back"
+id="viewer-back"
+type="button"
+>
+← コレクションへ戻る
+</button>
+
+<div class="viewer-meta">
+
+<strong id="viewer-title">
+作品タイトル
+</strong>
+
+<span id="viewer-author"></span>
+
+</div>
+
+</div>
+
+<div
+class="viewer-stage"
+id="viewer-stage"
+>
+
+<canvas
+class="viewer-canvas"
+id="viewer-canvas"
+></canvas>
+
+<button
+class="viewer-play-button"
+id="viewer-play-button"
+type="button"
+aria-label="再生"
+hidden
+>
+<span aria-hidden="true">▶</span>
+</button>
+
+<div
+class="viewer-message"
+id="viewer-message"
+>
+
+<p id="viewer-message-title">
+作品を読み込んでいます
+</p>
+
+<span id="viewer-message-text">
+しばらくお待ちください
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="./app.js"></script>
+</body>
+</html>

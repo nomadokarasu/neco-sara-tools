@@ -8,7 +8,8 @@
 "deploy": "node scripts/deploy.js",
 "deploy:gururi-dev": "node scripts/deploy.js --gururi-dev",
 "promote:gururi": "node scripts/build.js --promote-gururi",
-"deploy:gururi-release": "node scripts/deploy.js --gururi-release"
+"deploy:gururi-release": "node scripts/deploy.js --gururi-release",
+"deploy:collection-dev": "node scripts/deploy.js --collection-dev"
 },
   "devDependencies": {
     "serve": "^14.2.6"

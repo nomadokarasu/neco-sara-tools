@@ -1,5 +1,6 @@
 # GURURI_DEV_DEPLOY_READY
 # GURURI_RELEASE_DEPLOY_READY
+# COLLECTION_DEV_DEPLOY_READY
 
 name: Deploy to Lolipop
 
@@ -9,6 +10,7 @@ on:
       - main
       - gururi-paint-dev-deploy
       - gururi-paint-release-deploy
+      - gururi-collection-dev-deploy
 
 permissions:
   contents: read
@@ -136,6 +138,56 @@ jobs:
             tools/gururi-paint/home-content.json
             tools/gururi-paint/home-thumbnails/**
 
+      - name: Prepare Gururi Collection development files
+        if: github.ref == 'refs/heads/gururi-collection-dev-deploy'
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+
+          const source = "dist/tools/gururi-collection-dev";
+          const destination = ".collection-deploy/gururi-collection-dev";
+
+          const requiredFiles = [
+          "index.html",
+          "app.js",
+          "styles.css",
+          "sw.js",
+          "manifest.webmanifest",
+          "icon-192.png",
+          "icon-512.png"
+          ];
+
+          for (const fileName of requiredFiles) {
+          if (!fs.existsSync(path.join(source, fileName))) {
+          throw new Error("必要なファイルが見つかりません：" + fileName);
+          }
+          }
+
+          fs.mkdirSync(destination, {recursive: true});
+          fs.cpSync(source, destination, {recursive: true});
+          NODE
+
+      - name: Upload Gururi Collection development by FTPS
+        if: github.ref == 'refs/heads/gururi-collection-dev-deploy'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.LOLIPOP_FTP_SERVER }}
+          username: ${{ secrets.LOLIPOP_FTP_USERNAME }}
+          password: ${{ secrets.LOLIPOP_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./.collection-deploy/
+          server-dir: /tools/
+          state-name: .ftp-deploy-collection-dev-state.json
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.env*
+            **/.htaccess
+            **/.htpasswd
+
       - name: Upload other tools by FTPS
         if: github.ref == 'refs/heads/main'
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -159,3 +211,4 @@ jobs:
             tools/gururi-watch/api/admin-config.php
             tools/gururi-paint/**
             tools/gururi-paint-dev/**
+            tools/gururi-collection-dev/**
