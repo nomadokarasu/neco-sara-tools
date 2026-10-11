@@ -1017,6 +1017,10 @@ font-size: 13px;
 line-height: 1.75;
 margin: 9px 0 0;
 }
+.install-trigger[hidden] {
+display: none !important;
+}
+
 .install-trigger {
 display: inline-flex;
 align-items: center;
