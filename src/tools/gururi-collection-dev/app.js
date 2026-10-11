@@ -2299,7 +2299,6 @@ const passwordUnlockInput = document.querySelector("#password-unlock-input");
 const passwordUnlockMessage = document.querySelector("#password-unlock-message");
 const passwordSettingsOverlay = document.querySelector("#password-settings-overlay");
 const passwordSettingsButton = document.querySelector("#password-settings-button");
-const passwordLockButton = document.querySelector("#password-lock-button");
 const passwordSettingsForm = document.querySelector("#password-settings-form");
 const passwordSettingsTitle = document.querySelector("#password-settings-title");
 const passwordSettingsDescription = document.querySelector("#password-settings-description");
@@ -2382,7 +2381,7 @@ localStorage.setItem(PASSWORD_STORAGE_KEY, JSON.stringify(record));
 localStorage.removeItem(PASSWORD_STORAGE_KEY);
 }
 passwordRecord = record;
-passwordLockButton.hidden = !record;
+updatePasswordMenu();
 }
 
 async function unlockCollection() {
@@ -2463,15 +2462,31 @@ collectionMenuButton.focus();
 }
 });
 
+const passwordChangeButton = document.querySelector("#password-change-button");
+const passwordMenuRemoveButton = document.querySelector("#password-menu-remove-button");
+
+function updatePasswordMenu() {
+passwordSettingsButton.disabled = Boolean(passwordRecord);
+passwordChangeButton.disabled = !passwordRecord;
+passwordMenuRemoveButton.disabled = !passwordRecord;
+}
+
 passwordSettingsButton.addEventListener("click", () => {
 closeCollectionMenu();
-openPasswordSettings();
+openPasswordSettings("set");
 });
 
-passwordLockButton.addEventListener("click", () => {
+passwordChangeButton.addEventListener("click", () => {
 closeCollectionMenu();
-lockCollection();
+openPasswordSettings("change");
 });
+
+passwordMenuRemoveButton.addEventListener("click", () => {
+closeCollectionMenu();
+openPasswordSettings("remove");
+});
+
+updatePasswordMenu();
 
 passwordSettingsClose.addEventListener("click", () => {
 if (passwordBusy) return;
@@ -2571,7 +2586,7 @@ throw new Error("保存済みのパスワード情報が正しくありません
 hexToBytes(record.salt);
 hexToBytes(record.hash);
 passwordRecord = record;
-passwordLockButton.hidden = false;
+updatePasswordMenu();
 lockCollection();
 } else {
 await unlockCollection();

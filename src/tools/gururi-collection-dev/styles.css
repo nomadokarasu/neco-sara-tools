@@ -220,6 +220,15 @@ background: var(--surface-soft);
 display: none !important;
 }
 
+.collection-menu-panel button:disabled {
+opacity: 0.4;
+cursor: not-allowed;
+}
+
+.collection-menu-panel button:disabled:hover {
+background: transparent;
+}
+
 .brand h1 {
 margin: 0;
 font-size: clamp(26px, 4vw, 42px);
