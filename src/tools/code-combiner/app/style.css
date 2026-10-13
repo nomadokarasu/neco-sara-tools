@@ -181,8 +181,27 @@ textarea {
 }
 
 .section-heading h2 {
-  margin: 0;
-  font-size: 18px;
+margin: 0;
+font-size: 18px;
+}
+
+.section-heading-left {
+display: flex;
+align-items: center;
+flex-wrap: wrap;
+gap: 20px;
+}
+
+.select-all-label {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+font-size: 13px;
+cursor: pointer;
+}
+
+.select-all-label input {
+cursor: pointer;
 }
 
 .text-button {
@@ -315,3 +334,17 @@ textarea {
   gap: 3px;
 }
 }
+
+/* Selection tree */
+.tree-heading,.tree-file{display:flex;align-items:center;gap:10px;padding:8px 14px;font-size:14px;cursor:pointer;overflow-wrap:anywhere;}
+.tree-heading{font-weight:600;background:#fafafa;border-bottom:1px solid #eee;}
+.tree-file{border-bottom:1px solid #f1f1f1;}
+.tree-file small{margin-left:auto;color:#888;white-space:nowrap;}
+.tree-file--disabled{opacity:.5;cursor:default;}
+.tree-children{padding-left:20px;}
+.tree-heading input,.tree-file input{flex-shrink:0;}
+.selection-actions{display:flex;align-items:center;justify-content:flex-end;gap:16px;margin-top:16px;flex-wrap:wrap;}
+.selection-action-buttons{display:flex;flex-direction:column;gap:8px;}
+#selection-count{font-size:13px;color:#666;}
+.selection-actions .select-button:disabled{opacity:.45;cursor:default;}
+[hidden]{display:none!important;}

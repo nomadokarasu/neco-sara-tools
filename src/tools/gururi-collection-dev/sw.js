@@ -1,4 +1,4 @@
-const CACHE_NAME = "gururi-collection-shell-v11";
+const CACHE_NAME = "gururi-collection-dev-shell-v12";
 const SHELL_FILES = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -9,7 +9,10 @@ self.skipWaiting();
 self.addEventListener("activate", (event) => {
 event.waitUntil((async () => {
 const names = await caches.keys();
-await Promise.all(names.filter((name) => name.startsWith("gururi-collection-shell-") && name !== CACHE_NAME).map((name) => caches.delete(name)));
+await Promise.all(names.filter((name) => (
+name.startsWith("gururi-collection-dev-shell-") ||
+name.startsWith("gururi-collection-shell-")
+) && name !== CACHE_NAME).map((name) => caches.delete(name)));
 await self.clients.claim();
 })());
 });

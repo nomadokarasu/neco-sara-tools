@@ -35,7 +35,7 @@
     <section class="intro">
       <p>
   プロジェクトフォルダを選択すると、
-  フォルダ内のコードをひとつのテキストにまとめます。
+  統合したいファイルやフォルダを選び、「統合する」を押してください。
   AIとのコード共有にお使いください。
 </p>
 
@@ -66,6 +66,7 @@
       >
         テキストを保存
       </button>
+      <button id="copy-button" class="download-button" type="button" disabled>テキストをコピー</button>
 
     </section>
 
@@ -98,21 +99,34 @@
       hidden
     >
 
-      <div class="section-heading">
-        <h2>対象ファイル</h2>
-        <button
-          id="clear-button"
-          class="text-button"
-          type="button"
-        >
-          クリア
-        </button>
-      </div>
+<div class="section-heading">
+<div class="section-heading-left">
+<h2>ファイル・フォルダを選択</h2>
+<label class="select-all-label">
+<input id="select-all-checkbox" type="checkbox">
+<span>すべて選択</span>
+</label>
+</div>
+<button
+id="clear-button"
+class="text-button"
+type="button"
+>
+クリア
+</button>
+</div>
 
       <div
         id="file-list"
         class="file-list"
       ></div>
+<div class="selection-actions">
+<span id="selection-count"></span>
+<div class="selection-action-buttons">
+<button id="combine-button" class="select-button" type="button" disabled>統合する</button>
+<button id="copy-button-bottom" class="download-button" type="button" disabled>テキストをコピー</button>
+</div>
+</div>
 
     </section>
 
@@ -141,13 +155,7 @@
       <div class="section-heading">
         <h2>出力プレビュー</h2>
 
-        <button
-          id="copy-button"
-          class="text-button"
-          type="button"
-        >
-          コピー
-        </button>
+
       </div>
 
       <textarea

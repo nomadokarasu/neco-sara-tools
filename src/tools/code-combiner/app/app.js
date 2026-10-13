@@ -2,6 +2,7 @@ const folderInput = document.getElementById("folder-input");
 const downloadButton = document.getElementById("download-button");
 const clearButton = document.getElementById("clear-button");
 const copyButton = document.getElementById("copy-button");
+const copyButtonBottom = document.getElementById("copy-button-bottom");
 
 const summary = document.getElementById("summary");
 const fileCount = document.getElementById("file-count");
@@ -10,6 +11,9 @@ const totalSize = document.getElementById("total-size");
 
 const fileSection = document.getElementById("file-section");
 const fileList = document.getElementById("file-list");
+const combineButton = document.getElementById("combine-button");
+const selectionCount = document.getElementById("selection-count");
+const selectAllCheckbox = document.getElementById("select-all-checkbox");
 
 const excludedSection = document.getElementById("excluded-section");
 const excludedList = document.getElementById("excluded-list");
@@ -106,93 +110,158 @@ const allowedExtensions = new Set([
 
 ]);
 
+let availableFiles = [];
+let selectedPaths = new Set();
 let selectedFiles = [];
 let excludedFiles = [];
 let combinedText = "";
 let rootFolderName = "project";
+let openedFolders = new Set();
 
 folderInput.addEventListener("change", handleFolderSelection);
 downloadButton.addEventListener("click", downloadCombinedText);
 clearButton.addEventListener("click", clearSelection);
-copyButton.addEventListener("click", copyCombinedText);
-
-async function handleFolderSelection(event) {
-  const allFiles = Array.from(event.target.files ?? []);
-
-  if (allFiles.length === 0) {
-    return;
-  }
-
-  setControlsDisabled(true);
-  showTemporaryMessage("ファイルを読み込んでいます。");
-
-  try {
-    rootFolderName = getRootFolderName(allFiles);
-
-    const classifiedFiles = allFiles.map((file) => {
-  return classifyFile(file);
+copyButton.addEventListener("click", () => copyCombinedText(copyButton));
+copyButtonBottom.addEventListener("click", () => copyCombinedText(copyButtonBottom));
+combineButton.addEventListener("click", executeCombination);
+selectAllCheckbox.addEventListener("change", () => {
+selectedPaths = selectAllCheckbox.checked
+? new Set(availableFiles.map(getRelativePath))
+: new Set();
+selectionChanged();
 });
 
-const filteredFiles = classifiedFiles
-  .filter((result) => result.included)
-  .map((result) => result.file)
-  .sort((a, b) => {
-    const pathA = getRelativePath(a);
-    const pathB = getRelativePath(b);
+function handleFolderSelection(event) {
+const allFiles = Array.from(event.target.files ?? []);
+if (!allFiles.length) return;
+clearSelection();
+rootFolderName = getRootFolderName(allFiles);
+const classified = allFiles.map(classifyFile).sort((a,b) => getRelativePath(a.file).localeCompare(getRelativePath(b.file), "ja"));
+availableFiles = classified.filter(item => item.included).map(item => item.file);
+excludedFiles = classified.filter(item => !item.included);
+selectedPaths = new Set();
+fileSection.hidden = false;
+summary.hidden = false;
+renderFileTree();
+updateSelectionSummary();
+}
 
-    return pathA.localeCompare(pathB, "ja");
-  });
+function renderFileTree() {
+fileList.replaceChildren();
+const root = {name: rootFolderName, folders: new Map(), files: []};
+for (const result of [...availableFiles.map(file => ({file, included: true})), ...excludedFiles]) {
+const parts = getRelativePath(result.file).split("/").slice(1);
+let node = root;
+for (const segment of parts.slice(0, -1)) {
+if (!node.folders.has(segment)) node.folders.set(segment, {name: segment, folders: new Map(), files: []});
+node = node.folders.get(segment);
+}
+node.files.push(result);
+}
+function pathsWithin(node) {
+return [...node.files.filter(item => item.included).map(item => getRelativePath(item.file)), ...[...node.folders.values()].flatMap(pathsWithin)];
+}
+function addNode(node, container, isRoot = false, parentPath = "") {
+const folderPaths = pathsWithin(node);
+let children = container;
+const folderPath = parentPath ? `${parentPath}/${node.name}` : node.name;
+if (!isRoot) {
+const details = document.createElement("details");
+details.open = openedFolders.has(folderPath);
+details.addEventListener("toggle", () => {
+if (details.open) {
+openedFolders.add(folderPath);
+} else {
+openedFolders.delete(folderPath);
+}
+});
+const heading = document.createElement("summary");
+heading.className = "tree-heading";
+const checkbox = document.createElement("input");
+checkbox.type = "checkbox";
+checkbox.disabled = folderPaths.length === 0;
+checkbox.checked = folderPaths.length > 0 && folderPaths.every(path => selectedPaths.has(path));
+checkbox.indeterminate = folderPaths.some(path => selectedPaths.has(path)) && !checkbox.checked;
+checkbox.addEventListener("click", e => e.stopPropagation());
+checkbox.addEventListener("change", () => {
+for (const path of folderPaths) checkbox.checked ? selectedPaths.add(path) : selectedPaths.delete(path);
+selectionChanged();
+});
+const name = document.createElement("span");
+name.textContent = "📁 " + node.name;
+heading.append(checkbox,name);
+details.append(heading);
+children = document.createElement("div");
+children.className = "tree-children";
+details.append(children);
+container.append(details);
+}
+for (const folder of [...node.folders.values()].sort((a,b) => a.name.localeCompare(b.name,"ja"))) addNode(folder, children, false, folderPath);
+for (const item of node.files.sort((a,b) => a.file.name.localeCompare(b.file.name,"ja"))) {
+const label = document.createElement("label");
+label.className = "tree-file";
+const checkbox = document.createElement("input");
+checkbox.type = "checkbox";
+checkbox.disabled = !item.included;
+checkbox.checked = item.included && selectedPaths.has(getRelativePath(item.file));
+checkbox.addEventListener("change", () => {
+const path = getRelativePath(item.file);
+checkbox.checked ? selectedPaths.add(path) : selectedPaths.delete(path);
+selectionChanged();
+});
+const name = document.createElement("span");
+name.textContent = "📄 " + item.file.name;
+const size = document.createElement("small");
+size.textContent = item.included ? formatBytes(item.file.size) : item.reason;
+if (!item.included) label.classList.add("tree-file--disabled");
+label.append(checkbox,name,size);
+children.append(label);
+}
+}
+addNode(root,fileList,true);
+}
 
-excludedFiles = classifiedFiles
-  .filter((result) => !result.included)
-  .sort((a, b) => {
-    const pathA = getRelativePath(a.file);
-    const pathB = getRelativePath(b.file);
+function selectionChanged() {
+combinedText = "";
+selectedFiles = [];
+output.value = "";
+previewSection.hidden = true;
+downloadButton.disabled = true;
+copyButton.disabled = true;
+copyButtonBottom.disabled = true;
+renderFileTree();
+updateSelectionSummary();
+}
 
-    return pathA.localeCompare(pathB, "ja");
-  });
+function updateSelectionSummary() {
+const files = availableFiles.filter(file => selectedPaths.has(getRelativePath(file)));
+const bytes = files.reduce((sum,file) => sum + file.size,0);
+fileCount.textContent = String(files.length);
+excludedCount.textContent = String(excludedFiles.length + availableFiles.length - files.length);
+totalSize.textContent = formatBytes(bytes);
+selectionCount.textContent = `${files.length}ファイル選択中`;
+combineButton.disabled = files.length === 0 || bytes > MAX_TOTAL_SIZE;
+selectionCount.textContent += bytes > MAX_TOTAL_SIZE ? "（合計20MBを超えています）" : "";
+selectAllCheckbox.checked = availableFiles.length > 0 && files.length === availableFiles.length;
+selectAllCheckbox.indeterminate = files.length > 0 && files.length < availableFiles.length;
+selectAllCheckbox.disabled = availableFiles.length === 0;
+}
 
-    if (filteredFiles.length === 0) {
-      clearSelection();
-
-      window.alert(
-        "統合対象となるコードファイルが見つかりませんでした。"
-      );
-
-      return;
-    }
-
-    const totalBytes = filteredFiles.reduce(
-      (sum, file) => sum + file.size,
-      0
-    );
-
-    if (totalBytes > MAX_TOTAL_SIZE) {
-      clearSelection();
-
-      window.alert(
-        "対象ファイルの合計容量が大きすぎます。\n" +
-        "合計20MB以内のフォルダを選択してください。"
-      );
-
-      return;
-    }
-
-    selectedFiles = filteredFiles;
-    combinedText = await combineFiles(selectedFiles);
-
-    renderResult();
-  } catch (error) {
-    console.error(error);
-
-    clearSelection();
-
-    window.alert(
-      "ファイルの読み込み中に問題が発生しました。"
-    );
-  } finally {
-    setControlsDisabled(false);
-  }
+async function executeCombination() {
+selectedFiles = availableFiles.filter(file => selectedPaths.has(getRelativePath(file)));
+if (!selectedFiles.length) return;
+setControlsDisabled(true);
+combineButton.disabled = true;
+try {
+combinedText = await combineFiles(selectedFiles);
+renderResult();
+} catch (error) {
+console.error(error);
+window.alert("統合中に問題が発生しました。");
+} finally {
+setControlsDisabled(false);
+updateSelectionSummary();
+}
 }
 
 function classifyFile(file) {
@@ -340,62 +409,11 @@ function createProjectHeader(files) {
 }
 
 function renderResult() {
-  const totalBytes = selectedFiles.reduce(
-    (sum, file) => sum + file.size,
-    0
-  );
-
-  fileCount.textContent = String(selectedFiles.length);
-  excludedCount.textContent = String(excludedFiles.length);
-  totalSize.textContent = formatBytes(totalBytes);
-
-  fileList.innerHTML = "";
-
-  selectedFiles.forEach((file) => {
-    const item = document.createElement("div");
-    item.className = "file-item";
-
-    const path = document.createElement("span");
-    path.className = "file-item__path";
-    path.textContent = removeRootFolder(
-      getRelativePath(file)
-    );
-
-    const size = document.createElement("span");
-    size.className = "file-item__size";
-    size.textContent = formatBytes(file.size);
-
-    item.append(path, size);
-    fileList.appendChild(item);
-  });
-
-  excludedList.innerHTML = "";
-
-  excludedFiles.forEach((result) => {
-    const item = document.createElement("div");
-    item.className = "excluded-item";
-
-    const path = document.createElement("span");
-    path.className = "excluded-item__path";
-    path.textContent = removeRootFolder(
-      getRelativePath(result.file)
-    );
-
-    const reason = document.createElement("span");
-    reason.className = "excluded-item__reason";
-    reason.textContent = result.reason;
-
-    item.append(path, reason);
-    excludedList.appendChild(item);
-  });
-
-  output.value = combinedText;
-
-  summary.hidden = false;
-  fileSection.hidden = false;
-  excludedSection.hidden = excludedFiles.length === 0;
-  previewSection.hidden = false;
-  downloadButton.disabled = false;
+output.value = combinedText;
+previewSection.hidden = false;
+downloadButton.disabled = false;
+copyButton.disabled = false;
+copyButtonBottom.disabled = false;
 }
 
 function downloadCombinedText() {
@@ -423,51 +441,50 @@ function downloadCombinedText() {
   URL.revokeObjectURL(downloadUrl);
 }
 
-async function copyCombinedText() {
-  if (!combinedText) {
-    return;
-  }
+async function copyCombinedText(button) {
+if (!combinedText) {
+return;
+}
 
-  const originalText = copyButton.textContent;
+const originalText = button.textContent;
 
-  try {
-    await navigator.clipboard.writeText(combinedText);
+try {
+await navigator.clipboard.writeText(combinedText);
+button.textContent = "コピーしました";
+} catch (error) {
+console.error(error);
+output.focus();
+output.select();
+const copied = document.execCommand("copy");
+button.textContent = copied ? "コピーしました" : "コピーできませんでした";
+}
 
-    copyButton.textContent = "コピーしました";
-  } catch (error) {
-    console.error(error);
-
-    output.focus();
-    output.select();
-
-    const copied = document.execCommand("copy");
-
-    copyButton.textContent = copied
-      ? "コピーしました"
-      : "コピーできませんでした";
-  }
-
-  window.setTimeout(() => {
-    copyButton.textContent = originalText;
-  }, 1800);
+window.setTimeout(() => {
+button.textContent = originalText;
+}, 1800);
 }
 
 function clearSelection() {
-  selectedFiles = [];
+availableFiles = [];
+selectedPaths = new Set();
+selectedFiles = [];
 excludedFiles = [];
 combinedText = "";
-  rootFolderName = "project";
-
-  folderInput.value = "";
-  output.value = "";
-  fileList.innerHTML = "";
-  excludedList.innerHTML = "";
-
-  summary.hidden = true;
+rootFolderName = "project";
+openedFolders = new Set();
+folderInput.value = "";
+output.value = "";
+fileList.replaceChildren();
+excludedList.replaceChildren();
+summary.hidden = true;
 fileSection.hidden = true;
 excludedSection.hidden = true;
 previewSection.hidden = true;
-  downloadButton.disabled = true;
+downloadButton.disabled = true;
+copyButton.disabled = true;
+copyButtonBottom.disabled = true;
+combineButton.disabled = true;
+selectionCount.textContent = "";
 }
 
 function getRelativePath(file) {
@@ -520,26 +537,10 @@ function formatBytes(bytes) {
 }
 
 function setControlsDisabled(disabled) {
-  folderInput.disabled = disabled;
-
-  if (disabled) {
-    downloadButton.disabled = true;
-    clearButton.disabled = true;
-    copyButton.disabled = true;
-  } else {
-    downloadButton.disabled = combinedText.length === 0;
-    clearButton.disabled = false;
-    copyButton.disabled = false;
-  }
-}
-
-function showTemporaryMessage(message) {
-  fileList.innerHTML = "";
-
-  const item = document.createElement("div");
-  item.className = "file-item";
-  item.textContent = message;
-
-  fileList.appendChild(item);
-  fileSection.hidden = false;
+folderInput.disabled = disabled;
+clearButton.disabled = disabled;
+combineButton.disabled = disabled || selectedPaths.size === 0;
+downloadButton.disabled = disabled || !combinedText;
+copyButton.disabled = disabled || !combinedText;
+copyButtonBottom.disabled = disabled || !combinedText;
 }
