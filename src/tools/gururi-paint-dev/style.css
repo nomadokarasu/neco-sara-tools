@@ -821,7 +821,8 @@ display: flex;
 
 }
 
-.drawing-tools .drawing-tool-button {
+.drawing-tools,
+.drawing-tools * {
 touch-action: none;
 }
 
