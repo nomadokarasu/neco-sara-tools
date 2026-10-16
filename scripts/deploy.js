@@ -6,6 +6,101 @@ execFileSync
 const fs = require("node:fs");
 const path = require("node:path");
 
+if (process.argv.includes("--gururi-admin")) {
+  try {
+    process.chdir(path.resolve(__dirname, ".."));
+
+    const adminPath = "src/tools/gururi-paint/admin.php";
+    const workflowPath = ".github/workflows/deploy.yml";
+
+    if (!fs.existsSync(adminPath)) {
+      throw new Error("公開版admin.phpが見つかりません。");
+    }
+
+    const workflow = fs.readFileSync(workflowPath, "utf8");
+
+    if (!workflow.includes("Upload Gururi Paint admin by FTPS")) {
+      throw new Error("管理画面専用の配信設定が見つかりません。");
+    }
+
+    const admin = fs.readFileSync(adminPath, "utf8");
+
+    if (
+      !admin.includes("gururi-editor/home-content.json") ||
+      admin.includes("gururi-editor-dev") ||
+      admin.includes("gururi_paint_testing_admin")
+    ) {
+      throw new Error("公開版管理画面の設定を確認できません。");
+    }
+
+    execFileSync("php", ["-l", adminPath], {
+      stdio: "inherit"
+    });
+
+    const staged = execFileSync(
+      "git",
+      ["diff", "--cached", "--name-only"],
+      { encoding: "utf8" }
+    ).trim();
+
+    if (staged) {
+      throw new Error("Gitに追加済みの変更があります。配信を中止しました。");
+    }
+
+    console.log("管理画面専用配信の事前検証：OK");
+
+    // 管理画面と配信設定だけをGitに追加
+    execFileSync("git", [
+      "add", "--",
+      adminPath,
+      workflowPath
+    ], { stdio: "inherit" });
+
+    const changes = execFileSync(
+      "git",
+      ["diff", "--cached", "--name-only"],
+      { encoding: "utf8" }
+    ).trim();
+
+    if (!changes) {
+      throw new Error("送信する変更がありません。");
+    }
+
+    const allowedFiles = [adminPath, workflowPath];
+
+    for (const file of changes.split(/\r?\n/)) {
+      if (!allowedFiles.includes(file)) {
+        throw new Error("許可されていないファイルが含まれています：" + file);
+      }
+    }
+
+    console.log("Gitへの追加対象：");
+    console.log(changes);
+
+    // 許可された2ファイルだけをコミット
+    execFileSync("git", [
+      "commit",
+      "-m",
+      "Deploy Gururi admin only"
+    ], { stdio: "inherit" });
+
+    // 管理画面専用ブランチへ送信
+    execFileSync("git", [
+      "push",
+      "origin",
+      "HEAD:gururi-paint-admin-deploy"
+    ], { stdio: "inherit" });
+
+    console.log("管理画面専用ブランチへの送信が完了しました。");
+    console.log("GitHub Actionsで配信結果を確認してください。");
+
+    process.exit(0);
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+}
+
 if (process.argv.includes("--editor-release")) {
 try {
   process.chdir(path.resolve(__dirname, ".."));

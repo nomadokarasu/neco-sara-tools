@@ -25,6 +25,110 @@ const outputDirectory =
     "dist"
   );
 
+// 共通管理画面だけを公開版に反映する
+if (process.argv.includes("--promote-gururi-admin")) {
+  const { execFileSync } = require("node:child_process");
+
+  const developmentAdminPath = path.join(
+    sourceDirectory, "tools", "gururi-paint-dev", "admin.php"
+  );
+
+  const releaseAdminPath = path.join(
+    sourceDirectory, "tools", "gururi-paint", "admin.php"
+  );
+
+  const developmentAdmin = fs.readFileSync(
+    developmentAdminPath, "utf8"
+  );
+
+  if (
+    !developmentAdmin.includes("session_name('gururi_paint_testing_admin');") ||
+    !developmentAdmin.includes("'path' => '/tools/gururi-paint-dev/'") ||
+    !developmentAdmin.includes("gururi-editor-dev")
+  ) {
+    console.error("エラー：開発版管理画面の設定を確認できません。");
+    process.exit(1);
+  }
+
+  let releaseAdmin = developmentAdmin.replace(
+    /session_name\('gururi_paint_testing_admin'\);\r?\n\r?\n/,
+    ""
+  );
+
+  releaseAdmin = releaseAdmin.replace(
+    "'path' => '/tools/gururi-paint-dev/'",
+    "'path' => '/'"
+  );
+
+  releaseAdmin = releaseAdmin.replaceAll(
+    "gururi-editor-dev",
+    "gururi-editor"
+  );
+
+  if (
+    releaseAdmin.includes("gururi_paint_testing_admin") ||
+    releaseAdmin.includes("gururi-editor-dev") ||
+    releaseAdmin.includes("/tools/gururi-paint-dev/") ||
+    !releaseAdmin.includes("'path' => '/'")
+  ) {
+    console.error("エラー：公開版への変換に失敗しました。");
+    process.exit(1);
+  }
+
+  // 変換結果を一時ファイルに保存してPHP構文を検証
+  const temporaryAdminPath = path.join(
+    projectRoot, "gururi-admin-validation.tmp.php"
+  );
+
+  try {
+    fs.writeFileSync(temporaryAdminPath, releaseAdmin, "utf8");
+
+    execFileSync(
+      "php",
+      ["-l", temporaryAdminPath],
+      { stdio: "inherit" }
+    );
+
+    // 既存の公開版管理画面をバックアップ
+    if (!fs.existsSync(releaseAdminPath)) {
+      throw new Error("公開版admin.phpが見つかりません。");
+    }
+
+    const backupDirectory = path.join(
+      projectRoot, "backups"
+    );
+
+    fs.mkdirSync(backupDirectory, { recursive: true });
+
+    const backupPath = path.join(
+      backupDirectory,
+      "gururi-admin-" +
+        new Date().toISOString().replace(/[:.]/g, "-") +
+        ".php.bak"
+    );
+
+    fs.copyFileSync(releaseAdminPath, backupPath);
+
+    // PHP構文チェックに合格した内容だけを反映
+    fs.copyFileSync(
+      temporaryAdminPath,
+      releaseAdminPath
+    );
+
+    console.log("管理画面の公開版用変換：OK");
+    console.log("PHP構文チェック：OK");
+    console.log("バックアップ：" + backupPath);
+    console.log("公開版への反映：" + releaseAdminPath);
+    console.log("サーバーにはまだ配信していません。");
+  } finally {
+    if (fs.existsSync(temporaryAdminPath)) {
+      fs.unlinkSync(temporaryAdminPath);
+    }
+  }
+
+  process.exit(0);
+}
+
 
 // ========================================
 // ぐるりペイント
@@ -518,6 +622,13 @@ nextAdmin.replace(
 "'path' => '/'"
 );
 
+// エディタの管理データ・画像参照先を公開版用に変換
+nextAdmin =
+nextAdmin.replaceAll(
+"gururi-editor-dev",
+"gururi-editor"
+);
+
 
 if (
 nextAdmin.includes(
@@ -525,6 +636,9 @@ nextAdmin.includes(
 ) ||
 nextAdmin.includes(
 "/tools/gururi-paint-dev/"
+) ||
+nextAdmin.includes(
+"gururi-editor-dev"
 )
 ) {
 
@@ -723,6 +837,135 @@ console.log(
 process.exit(0);
 }
 
+
+// ========================================
+// ぐるりエディタ
+// 開発版から公開版への反映
+// ========================================
+
+if (process.argv.includes("--promote-editor")) {
+  const developmentDirectory = path.join(
+    sourceDirectory, "tools", "gururi-editor-dev"
+  );
+
+  const releaseDirectory = path.join(
+    sourceDirectory, "tools", "gururi-editor"
+  );
+
+  const files = ["index.html", "app.js", "style.css"];
+
+  for (const name of files) {
+    if (!fs.existsSync(path.join(developmentDirectory, name))) {
+      console.error("開発版のファイルがありません：" + name);
+      process.exit(1);
+    }
+  }
+
+  // 公開版の既存ファイルをバックアップ
+  if (fs.existsSync(releaseDirectory)) {
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const backupDirectory = path.join(
+      path.dirname(projectRoot),
+      "gururi-editor-before-" + stamp
+    );
+
+    fs.cpSync(releaseDirectory, backupDirectory, {
+      recursive: true
+    });
+
+    console.log("公開版バックアップ：" + backupDirectory);
+  }
+
+  // 公開版への反映前にJavaScriptの構文を確認
+  const {execFileSync} = require("node:child_process");
+
+  try {
+    execFileSync(
+      process.execPath,
+      ["--check", path.join(developmentDirectory, "app.js")],
+      {stdio: "pipe"}
+    );
+  } catch (error) {
+    console.error("エラー：開発版app.jsに構文エラーがあります。");
+    console.error(error.stderr?.toString() || error.message);
+    process.exit(1);
+  }
+
+  fs.mkdirSync(releaseDirectory, {recursive: true});
+
+  const developmentIndexPath = path.join(
+    developmentDirectory, "index.html"
+  );
+
+  let releaseIndex = fs.readFileSync(
+    developmentIndexPath, "utf8"
+  );
+
+  // 開発版のURLを公開版のURLに変更
+  releaseIndex = releaseIndex.replaceAll(
+    "gururi-editor-dev",
+    "gururi-editor"
+  );
+
+  // 公開版のバージョンを指定
+  const editorVersion = "0.1.0";
+
+  if (!/ver\.\d+\.\d+\.\d+/.test(releaseIndex)) {
+    console.error("エラー：バージョン表記が見つかりません。");
+    process.exit(1);
+  }
+
+  releaseIndex = releaseIndex.replace(
+    /ver\.\d+\.\d+\.\d+/,
+    "ver." + editorVersion
+  );
+
+  // 公開版は検索エンジンへの登録を許可
+  releaseIndex = releaseIndex.replace(
+    /<meta\s+name=["']robots["']\s+content=["']noindex,\s*nofollow["']\s*\/?>/i,
+    '<meta name="robots" content="index, follow">'
+  );
+
+  // robots設定がない場合も公開版用に追加
+  if (!/<meta\s+name=["']robots["']/i.test(releaseIndex)) {
+    releaseIndex = releaseIndex.replace(
+      "</head>",
+      '<meta name="robots" content="index, follow">\n</head>'
+    );
+  }
+
+  // 公開版のURLとSEO設定を検証
+  if (
+    releaseIndex.includes("gururi-editor-dev") ||
+    releaseIndex.includes("noindex") ||
+    !releaseIndex.includes('content="index, follow"')
+  ) {
+    console.error("エラー：ぐるりエディタ公開版の設定を確認できません。");
+    process.exit(1);
+  }
+
+  for (const name of files) {
+    if (name === "index.html") {
+      fs.writeFileSync(
+        path.join(releaseDirectory, name),
+        releaseIndex,
+        "utf8"
+      );
+    } else {
+      fs.copyFileSync(
+        path.join(developmentDirectory, name),
+        path.join(releaseDirectory, name)
+      );
+    }
+  }
+
+  // 管理データはコピーしない
+  console.log("ぐるりエディタの開発版を公開版へ反映しました。");
+  console.log("管理データ home-content.json は変更していません。");
+  console.log("まだサーバーには配信していません。");
+
+  process.exit(0);
+}
 
 // ========================================
 // GA4設定

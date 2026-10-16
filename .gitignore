@@ -24,3 +24,9 @@ src/tools/gururi-editor/.htaccess
 **/.admin-credentials.php
 **/.htpasswd
 **/.env*
+
+# Local backups
+/backups/
+
+# Local admin backups
+*.php.bak
