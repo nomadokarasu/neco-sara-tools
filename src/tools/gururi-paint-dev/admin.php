@@ -33,12 +33,14 @@ $app = in_array($requestedApp, ['paint', 'editor'], true)
 ? $requestedApp
 : 'paint';
 
-$contentPath = __DIR__ . ($app === 'editor'
-? '/home-content-editor.json'
-: '/home-content.json');
-$thumbnailFolder = $app === 'editor'
-? 'home-thumbnails-editor'
-: 'home-thumbnails';
+$contentPath = $app === 'editor'
+? dirname(__DIR__) . '/gururi-editor-dev/home-content.json'
+: __DIR__ . '/home-content.json';
+$thumbnailFolder = 'home-thumbnails';
+
+$thumbnailDirectory = $app === 'editor'
+? dirname(__DIR__) . '/gururi-editor-dev/home-thumbnails'
+: __DIR__ . '/home-thumbnails';
 
 
 $defaultContent = [
@@ -961,7 +963,7 @@ try {
 $newThumbnail =
 saveThumbnail(
 $uploadedFile,
-__DIR__ . '/' . $thumbnailFolder,
+$thumbnailDirectory,
 $thumbnailFolder
 );
 
@@ -2169,7 +2171,11 @@ data-related-page-delete
 <div class="admin__thumbnail-preview">
 
 <img
-src="<?= escapeHtml((string) $page['thumbnail']) ?>"
+src="<?= escapeHtml(
+$app === 'editor'
+? '../gururi-editor-dev/' . (string) $page['thumbnail']
+: (string) $page['thumbnail']
+) ?>"
 alt=""
 >
 
