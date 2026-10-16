@@ -13,6 +13,8 @@ on:
       - gururi-paint-release-deploy
       - gururi-collection-dev-deploy
       - gururi-collection-release-deploy
+      - gururi-editor-dev-deploy
+      - gururi-editor-release-deploy
 
 permissions:
   contents: read
@@ -244,6 +246,90 @@ jobs:
             **/.htaccess
             **/.htpasswd
 
+      - name: Prepare Gururi Editor development files
+        if: github.ref == 'refs/heads/gururi-editor-dev-deploy'
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const source = "dist/tools/gururi-editor-dev";
+          const destination = ".editor-dev-deploy/tools/gururi-editor-dev";
+
+          for (const file of ["index.html", "app.js", "style.css"]) {
+            if (!fs.existsSync(source + "/" + file)) {
+              throw new Error("ぐるりエディタ開発版のファイルがありません：" + file);
+            }
+          }
+
+          fs.mkdirSync(destination, {recursive: true});
+          fs.cpSync(source, destination, {recursive: true});
+          NODE
+
+      - name: Upload Gururi Editor development by FTPS
+        if: github.ref == 'refs/heads/gururi-editor-dev-deploy'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.LOLIPOP_FTP_SERVER }}
+          username: ${{ secrets.LOLIPOP_FTP_USERNAME }}
+          password: ${{ secrets.LOLIPOP_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./.editor-dev-deploy/
+          server-dir: /tools/
+          state-name: .ftp-deploy-editor-dev-state.json
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.admin-credentials.php
+            **/.htaccess
+            **/.htpasswd
+            **/.env*
+            tools/gururi-editor-dev/home-content.json
+            tools/gururi-editor-dev/home-thumbnails/**
+
+      - name: Prepare Gururi Editor release files
+        if: github.ref == 'refs/heads/gururi-editor-release-deploy'
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const source = "dist/tools/gururi-editor";
+          const destination = ".editor-release-deploy/tools/gururi-editor";
+
+          for (const file of ["index.html", "app.js", "style.css"]) {
+            if (!fs.existsSync(source + "/" + file)) {
+              throw new Error("ぐるりエディタ公開版のファイルがありません：" + file);
+            }
+          }
+
+          fs.mkdirSync(destination, {recursive: true});
+          fs.cpSync(source, destination, {recursive: true});
+          NODE
+
+      - name: Upload Gururi Editor release by FTPS
+        if: github.ref == 'refs/heads/gururi-editor-release-deploy'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.LOLIPOP_FTP_SERVER }}
+          username: ${{ secrets.LOLIPOP_FTP_USERNAME }}
+          password: ${{ secrets.LOLIPOP_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./.editor-release-deploy/
+          server-dir: /tools/
+          state-name: .ftp-deploy-editor-release-state.json
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.admin-credentials.php
+            **/.htaccess
+            **/.htpasswd
+            **/.env*
+            tools/gururi-editor/home-content.json
+            tools/gururi-editor/home-thumbnails/**
+
       - name: Upload other tools by FTPS
         if: github.ref == 'refs/heads/main'
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -269,3 +355,5 @@ jobs:
             tools/gururi-paint-dev/**
             tools/gururi-collection-dev/**
             tools/gururi-collection/**
+            tools/gururi-editor-dev/**
+            tools/gururi-editor/**

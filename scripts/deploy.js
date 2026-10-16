@@ -6,6 +6,146 @@ execFileSync
 const fs = require("node:fs");
 const path = require("node:path");
 
+if (process.argv.includes("--editor-release")) {
+try {
+  process.chdir(path.resolve(__dirname, ".."));
+
+  const sourceDirectory = "src/tools/gururi-editor";
+  const requiredFiles = [
+    "index.html",
+    "app.js",
+    "style.css"
+  ];
+
+  for (const fileName of requiredFiles) {
+    if (!fs.existsSync(path.join(sourceDirectory, fileName))) {
+      throw new Error("公開版のファイルがありません：" + fileName);
+    }
+  }
+
+  const workflow = fs.readFileSync(".github/workflows/deploy.yml", "utf8");
+
+  if (!workflow.includes("Prepare Gururi Editor release files")) {
+    throw new Error("公開版の配信設定が見つかりません。");
+  }
+
+  const staged = execFileSync("git", ["diff", "--cached", "--name-only"], {
+    encoding: "utf8"
+  }).trim();
+
+  if (staged) {
+    throw new Error("Gitに追加済みの変更があります。配信を停止しました。");
+  }
+
+  execFileSync(process.execPath, ["scripts/build.js"], {
+    stdio: "inherit"
+  });
+
+  execFileSync("git", [
+    "add", "--",
+    "package.json",
+    ".gitignore",
+    "scripts/build.js",
+    "scripts/deploy.js",
+    ".github/workflows/deploy.yml",
+    sourceDirectory
+  ], {stdio: "inherit"});
+
+  const changes = execFileSync("git", ["diff", "--cached", "--name-only"], {
+    encoding: "utf8"
+  }).trim();
+
+  if (changes) {
+    execFileSync("git", [
+      "commit", "-m", "Release Gururi Editor"
+    ], {stdio: "inherit"});
+  }
+
+  execFileSync("git", [
+    "push", "origin", "HEAD:gururi-editor-release-deploy"
+  ], {stdio: "inherit"});
+
+  console.log("ぐるりエディタ公開版を配信用ブランチへ送信しました。");
+  console.log("GitHub Actionsで配信結果を確認してください。");
+  process.exit(0);
+
+} catch (error) {
+  console.error("ぐるりエディタ公開版の配信を停止しました。");
+  console.error(error.message);
+  process.exit(1);
+}
+}
+
+if (process.argv.includes("--editor-dev")) {
+try {
+  process.chdir(path.resolve(__dirname, ".."));
+
+  const sourceDirectory = "src/tools/gururi-editor-dev";
+  const requiredFiles = [
+    "index.html",
+    "app.js",
+    "style.css"
+  ];
+
+  for (const fileName of requiredFiles) {
+    if (!fs.existsSync(path.join(sourceDirectory, fileName))) {
+      throw new Error("必要なファイルがありません：" + fileName);
+    }
+  }
+
+  const workflow = fs.readFileSync(".github/workflows/deploy.yml", "utf8");
+
+  if (!workflow.includes("Prepare Gururi Editor development files")) {
+    throw new Error("開発版の配信設定が見つかりません。");
+  }
+
+  const staged = execFileSync("git", ["diff", "--cached", "--name-only"], {
+    encoding: "utf8"
+  }).trim();
+
+  if (staged) {
+    throw new Error("Gitに追加済みの変更があります。配信を停止しました。");
+  }
+
+  execFileSync(process.execPath, ["scripts/build.js"], {
+    stdio: "inherit"
+  });
+
+  execFileSync("git", [
+    "add", "--",
+    "package.json",
+    ".gitignore",
+    "scripts/build.js",
+    "scripts/deploy.js",
+    ".github/workflows/deploy.yml",
+    sourceDirectory
+  ], {stdio: "inherit"});
+
+  const changes = execFileSync("git", ["diff", "--cached", "--name-only"], {
+    encoding: "utf8"
+  }).trim();
+
+  if (changes) {
+    execFileSync("git", [
+      "commit", "-m", "Update Gururi Editor development"
+    ], {stdio: "inherit"});
+  }
+
+  execFileSync("git", [
+    "push", "origin", "HEAD:gururi-editor-dev-deploy"
+  ], {stdio: "inherit"});
+
+  console.log("ぐるりエディタ開発版を配信用ブランチへ送信しました。");
+  console.log("GitHub Actionsで配信結果を確認してください。");
+  process.exit(0);
+
+} catch (error) {
+  console.error("ぐるりエディタ開発版の配信を停止しました。");
+  console.error(error.message);
+  process.exit(1);
+}
+}
+
 if (process.argv.includes("--collection-release")) {
 try {
 process.chdir(path.resolve(__dirname, ".."));

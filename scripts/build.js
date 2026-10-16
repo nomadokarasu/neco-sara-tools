@@ -853,7 +853,9 @@ force: true
 
 for (const toolName of [
 "gururi-paint",
-"gururi-paint-dev"
+"gururi-paint-dev",
+"gururi-editor",
+"gururi-editor-dev"
 ]) {
 
 const toolDirectory =
@@ -959,7 +961,8 @@ function findHtmlFiles(
 
 const developmentDirectories = [
 path.join(outputDirectory, "tools", "gururi-paint-dev"),
-path.join(outputDirectory, "tools", "gururi-collection-dev")
+path.join(outputDirectory, "tools", "gururi-collection-dev"),
+path.join(outputDirectory, "tools", "gururi-editor-dev")
 ];
 
 const originalFindHtmlFiles = findHtmlFiles;
