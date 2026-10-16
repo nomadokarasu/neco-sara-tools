@@ -27,8 +27,19 @@ header('Cache-Control: no-store, no-cache, must-revalidate');
 $credentialsPath =
 __DIR__ . '/.admin-credentials.php';
 
-$contentPath =
-__DIR__ . '/home-content.json';
+// 保存先を製品別に固定し、POSTの切替値は必ず検証する。
+$requestedApp = (string) ($_POST['app'] ?? $_GET['app'] ?? 'paint');
+$app = in_array($requestedApp, ['paint', 'editor'], true)
+? $requestedApp
+: 'paint';
+
+$contentPath = __DIR__ . ($app === 'editor'
+? '/home-content-editor.json'
+: '/home-content.json');
+$thumbnailFolder = $app === 'editor'
+? 'home-thumbnails-editor'
+: 'home-thumbnails';
+
 
 $defaultContent = [
 'languages' => [
@@ -176,6 +187,18 @@ $defaultContent = [
 ]
 ]
 ];
+
+// エディタ側にペイントのお知らせが混入しないようにする。
+if ($app === 'editor') {
+$defaultContent['languages']['ja']['title'] = 'ぐるりエディタ';
+$defaultContent['languages']['ja']['description'] = 'ぐるりペイントで描いた素材を組み合わせてインタラクティブ作品を作れます';
+$defaultContent['languages']['en']['title'] = 'Gururi Editor';
+$defaultContent['languages']['en']['description'] = 'Create interactive works by combining assets drawn in Gururi Paint.';
+$defaultContent['importantNotices'] = [];
+$defaultContent['products'] = [];
+$defaultContent['notices'] = [];
+$defaultContent['relatedPages'] = [];
+}
 
 function escapeHtml(string $value): string
 {
@@ -380,7 +403,8 @@ return $result;
 
 function saveThumbnail(
 array $file,
-string $thumbnailDirectory
+string $thumbnailDirectory,
+string $thumbnailFolder
 ): string
 {
 $errorCode =
@@ -484,7 +508,7 @@ throw new RuntimeException(
 }
 
 return
-'home-thumbnails/' .
+$thumbnailFolder . '/' .
 $fileName;
 }
 
@@ -641,7 +665,7 @@ $_SESSION['admin_logged_in'] =
 true;
 
 header(
-'Location: admin.php'
+'Location: admin.php?app=' . rawurlencode($app)
 );
 
 exit;
@@ -661,7 +685,7 @@ $_SESSION = [];
 session_destroy();
 
 header(
-'Location: admin.php'
+'Location: admin.php?app=' . rawurlencode($app)
 );
 
 exit;
@@ -909,7 +933,7 @@ $pagePost,
 
 if (
 !preg_match(
-'#\Ahome-thumbnails/[a-f0-9]{32}\.(jpg|png|webp)\z#D',
+'#\A' . preg_quote($thumbnailFolder, '#') . '/[a-f0-9]{32}\.(jpg|png|webp)\z#D',
 $thumbnail
 )
 ) {
@@ -937,7 +961,8 @@ try {
 $newThumbnail =
 saveThumbnail(
 $uploadedFile,
-__DIR__ . '/home-thumbnails'
+__DIR__ . '/' . $thumbnailFolder,
+$thumbnailFolder
 );
 
 if ($newThumbnail !== '') {
@@ -1037,7 +1062,7 @@ content="width=device-width, initial-scale=1.0"
 name="robots"
 content="noindex, nofollow"
 >
-<title>ぐるりペイント 管理画面</title>
+<title>ぐるり 管理画面</title>
 
 <style>
 * {
@@ -1260,11 +1285,14 @@ grid-template-columns: 1fr;
 
 <header class="admin__header">
 
-<h1 class="admin__title">
-ぐるりペイント 管理画面
-</h1>
+<h1 class="admin__title">ぐるり 管理画面</h1>
 
 <?php if ($isLoggedIn): ?>
+
+<nav aria-label="管理対象" style="margin:0 0 20px;display:flex;gap:10px;flex-wrap:wrap">
+<a href="admin.php?app=paint" style="padding:10px 16px;border:1px solid #181818;border-radius:4px;color:<?= $app === 'paint' ? '#fff' : '#181818' ?>;background:<?= $app === 'paint' ? '#181818' : '#fff' ?>;text-decoration:none">ぐるりペイント</a>
+<a href="admin.php?app=editor" style="padding:10px 16px;border:1px solid #181818;border-radius:4px;color:<?= $app === 'editor' ? '#fff' : '#181818' ?>;background:<?= $app === 'editor' ? '#181818' : '#fff' ?>;text-decoration:none">ぐるりエディタ</a>
+</nav>
 
 <form method="post">
 
@@ -1472,6 +1500,7 @@ class="admin__panel"
 method="post"
 enctype="multipart/form-data"
 >
+<input type="hidden" name="app" value="<?= escapeHtml($app) ?>">
 
 <input
 type="hidden"

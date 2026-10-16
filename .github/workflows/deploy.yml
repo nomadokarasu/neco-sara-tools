@@ -87,7 +87,9 @@ jobs:
             **/.htaccess
             **/.env*
             tools/gururi-paint-dev/home-content.json
+            tools/gururi-paint-dev/home-content-editor.json
             tools/gururi-paint-dev/home-thumbnails/**
+            tools/gururi-paint-dev/home-thumbnails-editor/**
 
       - name: Prepare Gururi Paint release files
         if: github.ref == 'refs/heads/gururi-paint-release-deploy'
@@ -138,7 +140,9 @@ jobs:
             **/.htaccess
             **/.env*
             tools/gururi-paint/home-content.json
+            tools/gururi-paint/home-content-editor.json
             tools/gururi-paint/home-thumbnails/**
+            tools/gururi-paint/home-thumbnails-editor/**
 
       - name: Prepare Gururi Collection development files
         if: github.ref == 'refs/heads/gururi-collection-dev-deploy'

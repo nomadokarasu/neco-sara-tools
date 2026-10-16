@@ -1,0 +1,28 @@
+{
+  "languages": {
+    "ja": {
+      "title": "ぐるりエディタ",
+      "description": "ぐるりペイントで描いた素材を組み合わせてインタラクティブ作品を作れます",
+      "startButton": "はじめる",
+      "importantHeading": "重要なお知らせ",
+      "noticeHeading": "お知らせ",
+      "productsHeading": "製品情報",
+      "linksHeading": "関連ページ",
+      "footer": "© JUNOTA"
+    },
+    "en": {
+      "title": "Gururi Editor",
+      "description": "Create interactive works by combining assets drawn in Gururi Paint.",
+      "startButton": "START",
+      "importantHeading": "Important",
+      "noticeHeading": "News",
+      "productsHeading": "Products",
+      "linksHeading": "Links",
+      "footer": "© JUNOTA"
+    }
+  },
+  "importantNotices": [],
+  "products": [],
+  "notices": [],
+  "relatedPages": []
+}

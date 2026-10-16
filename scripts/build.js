@@ -868,7 +868,9 @@ for (const entryName of [
 ".htaccess",
 ".htpasswd",
 "home-content.json",
-"home-thumbnails"
+"home-content-editor.json",
+"home-thumbnails",
+"home-thumbnails-editor"
 ]) {
 
 fs.rmSync(
