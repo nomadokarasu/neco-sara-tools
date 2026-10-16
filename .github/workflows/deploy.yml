@@ -11,6 +11,7 @@ on:
       - main
       - gururi-paint-dev-deploy
       - gururi-paint-release-deploy
+      - gururi-paint-admin-deploy
       - gururi-collection-dev-deploy
       - gururi-collection-release-deploy
       - gururi-editor-dev-deploy
@@ -145,6 +146,44 @@ jobs:
             tools/gururi-paint/home-content-editor.json
             tools/gururi-paint/home-thumbnails/**
             tools/gururi-paint/home-thumbnails-editor/**
+
+      - name: Setup PHP for Gururi admin
+        if: github.ref == 'refs/heads/gururi-paint-admin-deploy'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: none
+          coverage: none
+
+      - name: Prepare Gururi Paint admin release file
+        if: github.ref == 'refs/heads/gururi-paint-admin-deploy'
+        run: |
+          mkdir -p .gururi-admin-deploy/tools/gururi-paint
+          php -l dist/tools/gururi-paint/admin.php
+          cp dist/tools/gururi-paint/admin.php .gururi-admin-deploy/tools/gururi-paint/admin.php
+
+      - name: Upload Gururi Paint admin by FTPS
+        if: github.ref == 'refs/heads/gururi-paint-admin-deploy'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.LOLIPOP_FTP_SERVER }}
+          username: ${{ secrets.LOLIPOP_FTP_USERNAME }}
+          password: ${{ secrets.LOLIPOP_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./.gururi-admin-deploy/
+          server-dir: /tools/
+          state-name: .ftp-deploy-gururi-admin-state.json
+          dangerous-clean-slate: false
+          dry-run: true
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.admin-credentials.php
+            **/.htpasswd
+            **/.htaccess
+            **/.env*
 
       - name: Prepare Gururi Collection development files
         if: github.ref == 'refs/heads/gururi-collection-dev-deploy'
