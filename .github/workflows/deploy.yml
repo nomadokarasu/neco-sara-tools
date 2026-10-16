@@ -175,7 +175,7 @@ jobs:
           server-dir: /tools/
           state-name: .ftp-deploy-gururi-admin-state.json
           dangerous-clean-slate: false
-          dry-run: true
+          dry-run: false
           exclude: |
             **/.git*
             **/.git*/**
