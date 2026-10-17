@@ -49,6 +49,7 @@ $defaultContent = [
 'title' => 'ぐるりペイント',
 'description' => 'カメラをぐるぐる回しながらお絵描きできます。',
 'heroImage' => '',
+'logoImage' => '',
 'startButton' => 'はじめる',
 'importantHeading' => '重要なお知らせ',
 'noticeHeading' => 'お知らせ',
@@ -740,6 +741,11 @@ $languagePost,
 : (string) (
 $content['languages'][$language]['heroImage'] ?? ''
 ),
+'logoImage' => isset($languagePost['removeLogoImage'])
+? ''
+: (string) (
+$content['languages'][$language]['logoImage'] ?? ''
+),
 'startButton' => postedText(
 $languagePost,
 'startButton'
@@ -786,6 +792,26 @@ foreach (['ja', 'en'] as $language) {
 
         if ($newHeroImage !== '') {
             $newContent['languages'][$language]['heroImage'] = $newHeroImage;
+        }
+
+        $uploadedLogo = $_FILES['logoImages'] ?? [];
+
+        $logoFile = [
+            'name' => $uploadedLogo['name'][$language] ?? '',
+            'type' => $uploadedLogo['type'][$language] ?? '',
+            'tmp_name' => $uploadedLogo['tmp_name'][$language] ?? '',
+            'error' => $uploadedLogo['error'][$language] ?? UPLOAD_ERR_NO_FILE,
+            'size' => $uploadedLogo['size'][$language] ?? 0
+        ];
+
+        $newLogoImage = saveThumbnail(
+            $logoFile,
+            $thumbnailDirectory,
+            $thumbnailFolder
+        );
+
+        if ($newLogoImage !== '') {
+            $newContent['languages'][$language]['logoImage'] = $newLogoImage;
         }
     } catch (RuntimeException $exception) {
         $error = 'トップ画像（' . $language . '）：' . $exception->getMessage();
@@ -1674,6 +1700,55 @@ type="checkbox"
 name="languages[<?= escapeHtml($language) ?>][removeHeroImage]"
 >
 現在のトップ画像を外す
+</label>
+
+<?php endif; ?>
+
+<h3 class="admin__language-title" style="margin-top:28px">
+ロゴ画像
+</h3>
+
+<?php
+$logoImage = (string) (
+$content['languages'][$language]['logoImage'] ?? ''
+);
+?>
+
+<?php if ($logoImage !== ''): ?>
+
+<div class="admin__thumbnail-preview">
+<img
+src="<?= escapeHtml(
+$app === 'editor'
+? '../gururi-editor-dev/' . $logoImage
+: $logoImage
+) ?>"
+alt="現在のロゴ画像"
+>
+</div>
+
+<?php endif; ?>
+
+<label class="admin__field">
+<span class="admin__label">
+ロゴ画像を選択（JPEG・PNG・WebP、5MB以内）
+</span>
+<input
+class="admin__input"
+type="file"
+name="logoImages[<?= escapeHtml($language) ?>]"
+accept="image/jpeg,image/png,image/webp"
+>
+</label>
+
+<?php if ($logoImage !== ''): ?>
+
+<label class="admin__field">
+<input
+type="checkbox"
+name="languages[<?= escapeHtml($language) ?>][removeLogoImage]"
+>
+現在のロゴ画像を外す
 </label>
 
 <?php endif; ?>
