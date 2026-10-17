@@ -2365,6 +2365,8 @@ async function renderHomePageWhenReady() {
     });
 }
 
+function renderHomePage() {
+
 homeLanguageButtons.forEach(
 (button) => {
 
