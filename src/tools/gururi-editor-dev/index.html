@@ -19,6 +19,9 @@
 </header>
 <div class="editor-home__intro">
 <p id="editorHomeDescription">ぐるりペイントで描いた素材を組み合わせて、インタラクティブ作品を制作できます。</p>
+<div id="editorHomeHero" class="editor-home__hero" hidden>
+<img id="editorHomeHeroImage" src="" alt="ぐるりエディタの紹介画像">
+</div>
 <button type="button" id="editorHomeStart" class="editor-home__start">はじめる</button>
 </div>
 <main class="editor-home__content">
@@ -182,6 +185,19 @@ const content=homeContent;
 const texts=content?.languages?.[lang]||{};
 document.getElementById('editorHomeTitle').textContent=texts.title||t.title;
 document.getElementById('editorHomeDescription').textContent=texts.description||t.description;
+
+const hero=document.getElementById('editorHomeHero');
+const heroImage=document.getElementById('editorHomeHeroImage');
+const imagePath=typeof texts.heroImage==='string'?texts.heroImage:'';
+
+if(/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(imagePath)){
+heroImage.src='./'+imagePath;
+hero.hidden=false;
+}else{
+hero.hidden=true;
+heroImage.removeAttribute('src');
+}
+
 start.textContent=texts.startButton||t.start;
 document.getElementById('editorHomeImportantHeading').textContent=texts.importantHeading||t.important;
 document.getElementById('editorHomeNoticeHeading').textContent=texts.noticeHeading||t.notice;

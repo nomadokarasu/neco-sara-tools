@@ -228,3 +228,21 @@ a.editor-home__item:hover{background:transparent;opacity:.65}
 .editor-home__start{width:min(260px,100%);min-height:46px;margin:0 auto}
 .editor-home__section{grid-template-columns:1fr;gap:20px;padding:30px 0}
 }
+
+/* トップページのメイン画像 */
+
+.editor-home__hero {
+    width: min(100%, 620px);
+    margin: 20px auto 0;
+}
+
+.editor-home__hero[hidden] {
+    display: none;
+}
+
+.editor-home__hero img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
