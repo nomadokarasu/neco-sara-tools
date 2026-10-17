@@ -481,9 +481,6 @@ nodesLayer.querySelectorAll('.node').forEach(nodeEl=>{
 nodeEl.classList.toggle('selected',nodeEl.dataset.id===node.id);
 });
 
-renderConnections();
-renderSettings();
-
 state.dragging={
 id:node.id,
 pointerId:e.pointerId,
@@ -495,6 +492,9 @@ originY:node.y
 
 el.setPointerCapture(e.pointerId);
 e.preventDefault();
+
+renderConnections();
+renderSettings();
 });
 
 el.addEventListener('pointermove',e=>{
@@ -788,7 +788,7 @@ ensureDialogueView(node,previousMedia);
 const editors=node.dialoguePages.map((text,index)=>`<div class="dialogue-editor"><div class="setting-label">ダイアローグ ${index+1}</div><textarea class="dialogue-textarea" data-dialogue-index="${index}" maxlength="60">${escapeHtml(text)}</textarea><div class="dialogue-count" data-dialogue-count="${index}">${text.length}/60</div></div>`).join('');
 const hasDialogue=node.dialoguePages.length>0;
 settingsPanel.innerHTML=`<div class="settings-title">ダイアローグ</div><div class="setting-group"><button id="addDialogueBtn" class="add-world-btn" type="button">＋</button></div><div class="setting-group"><div class="dialogue-preview-wrap"><canvas id="dialoguePreviewCanvas" class="world-preview" width="320" height="320"></canvas><div id="dialoguePreviewBox" class="dialogue-preview-box ${hasDialogue?'':'hidden'}"><div id="dialoguePreviewText" class="dialogue-preview-text"></div><div class="dialogue-arrow">▼</div></div></div></div><div id="dialogueEditors">${editors}</div>`;
-setupDialogueTriggerPreview(node,dialogueWorld);
+setupDialogueTriggerPreview(node,previousMedia);
 return;
 }
 settingsPanel.innerHTML=`<div class="settings-title">ビュー（2:1 PNG）</div><div class="setting-group"><div class="setting-label">メディアを選択</div><select id="worldMediaSelect" class="number-input">${getMediaOptions('media',node.world.mediaId)}</select></div><div class="setting-group"><div class="setting-label">初期カメラ位置 <label style="margin-left:12px;font-size:12px;font-weight:normal;white-space:nowrap"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div><canvas id="worldPreviewCanvas" class="world-preview" width="320" height="320"></canvas></div>`;
@@ -3082,22 +3082,26 @@ return;
 const create=e.target.closest('[data-create]');
 
 if(create){
-if(state.insertConnection){
-insertNodeIntoConnection(
-create.dataset.create,
-state.insertConnection,
-state.menuPoint
-);
-state.insertConnection=null;
-}else{
-addNode(
-create.dataset.create,
-state.menuPoint.x,
-state.menuPoint.y
-);
-}
+const insertConnection=state.insertConnection;
+const menuPoint={...state.menuPoint};
+const nodeType=create.dataset.create;
 
 contextMenu.classList.add('hidden');
+state.insertConnection=null;
+
+if(insertConnection){
+insertNodeIntoConnection(
+nodeType,
+insertConnection,
+menuPoint
+);
+}else{
+addNode(
+nodeType,
+menuPoint.x,
+menuPoint.y
+);
+}
 }
 });
 
