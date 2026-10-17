@@ -259,3 +259,31 @@ a.editor-home__item:hover{background:transparent;opacity:.65}
 .editor-home__title {
     z-index: 1;
 }
+
+/* ぐるりペイントと共通のタイトル画像方式 */
+
+.editor-home__title.has-logo {
+    top: 110px;
+    width: min(420px, 48%);
+    padding: 0;
+    line-height: 0;
+}
+
+.editor-home__title-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+}
+
+.editor-home__title-image[hidden],
+#editorHomeTitleText[hidden] {
+    display: none;
+}
+
+@media (max-width: 700px) {
+    .editor-home__title.has-logo {
+        top: 42vw;
+        width: 68%;
+    }
+}

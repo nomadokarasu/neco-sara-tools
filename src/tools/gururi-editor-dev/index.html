@@ -18,7 +18,16 @@
 <img id="editorHomeHeroImage" src="" alt="">
 </div>
 <p class="editor-home__version">ver.0.1.0</p>
-<h1 class="editor-home__title" id="editorHomeTitle">ぐるりエディタ</h1>
+<h1 class="editor-home__title" id="editorHomeTitle" aria-label="ぐるりエディタ">
+<span id="editorHomeTitleText">ぐるりエディタ</span>
+<img
+id="editorHomeLogo"
+class="editor-home__title-image"
+alt=""
+aria-hidden="true"
+hidden
+>
+</h1>
 </header>
 <div class="editor-home__intro">
 <p id="editorHomeDescription">ぐるりペイントで描いた素材を組み合わせて、インタラクティブ作品を制作できます。</p>
@@ -183,7 +192,30 @@ function setLanguage(lang){
 const t=data[lang]||data.ja;
 const content=homeContent;
 const texts=content?.languages?.[lang]||{};
-document.getElementById('editorHomeTitle').textContent=texts.title||t.title;
+const title=document.getElementById('editorHomeTitle');
+const titleText=document.getElementById('editorHomeTitleText');
+const logo=document.getElementById('editorHomeLogo');
+
+const titleValue=texts.title||t.title;
+const logoPath=typeof texts.logoImage==='string'
+?texts.logoImage
+:'';
+
+const hasLogo=/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(logoPath);
+
+title.setAttribute('aria-label',titleValue);
+titleText.textContent=titleValue;
+titleText.hidden=hasLogo;
+
+logo.hidden=!hasLogo;
+title.classList.toggle('has-logo',hasLogo);
+
+if(hasLogo){
+logo.src='./'+logoPath;
+}else{
+logo.removeAttribute('src');
+}
+
 document.getElementById('editorHomeDescription').textContent=texts.description||t.description;
 
 const hero=document.getElementById('editorHomeHero');
