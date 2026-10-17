@@ -14,19 +14,13 @@
 <button type="button" data-editor-home-lang="en" aria-pressed="false">English</button>
 </div>
 <header class="editor-home__header">
-<div id="editorHomeHero" class="editor-home__hero" hidden>
-<img id="editorHomeHeroImage" src="" alt="">
+<div id="editorHomeHero" class="editor-home__hero">
+<img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
 <p class="editor-home__version">ver.0.1.0</p>
-<h1 class="editor-home__title" id="editorHomeTitle" aria-label="ぐるりエディタ">
-<span id="editorHomeTitleText">ぐるりエディタ</span>
-<img
-id="editorHomeLogo"
-class="editor-home__title-image"
-alt=""
-aria-hidden="true"
-hidden
->
+<h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
+<img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
+<img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
 </h1>
 </header>
 <div class="editor-home__intro">
@@ -192,43 +186,9 @@ function setLanguage(lang){
 const t=data[lang]||data.ja;
 const content=homeContent;
 const texts=content?.languages?.[lang]||{};
-const title=document.getElementById('editorHomeTitle');
-const titleText=document.getElementById('editorHomeTitleText');
-const logo=document.getElementById('editorHomeLogo');
-
-const titleValue=texts.title||t.title;
-const logoPath=typeof texts.logoImage==='string'
-?texts.logoImage
-:'';
-
-const hasLogo=/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(logoPath);
-
-title.setAttribute('aria-label',titleValue);
-titleText.textContent=titleValue;
-titleText.hidden=hasLogo;
-
-logo.hidden=!hasLogo;
-title.classList.toggle('has-logo',hasLogo);
-
-if(hasLogo){
-logo.src='./'+logoPath;
-}else{
-logo.removeAttribute('src');
-}
-
+document.documentElement.lang=lang;
+document.getElementById('editorHomeTitle').setAttribute('aria-label',texts.title||t.title);
 document.getElementById('editorHomeDescription').textContent=texts.description||t.description;
-
-const hero=document.getElementById('editorHomeHero');
-const heroImage=document.getElementById('editorHomeHeroImage');
-const imagePath=typeof texts.heroImage==='string'?texts.heroImage:'';
-
-if(/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(imagePath)){
-heroImage.src='./'+imagePath;
-hero.hidden=false;
-}else{
-hero.hidden=true;
-heroImage.removeAttribute('src');
-}
 
 start.textContent=texts.startButton||t.start;
 document.getElementById('editorHomeImportantHeading').textContent=texts.importantHeading||t.important;

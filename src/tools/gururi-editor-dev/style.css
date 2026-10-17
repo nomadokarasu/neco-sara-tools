@@ -287,3 +287,6 @@ a.editor-home__item:hover{background:transparent;opacity:.65}
         width: 68%;
     }
 }
+/* 管理画面から切り離したエディタの固定ロゴ */
+html[lang="ja"] #editorHomeLogoEn,
+html[lang="en"] #editorHomeLogoJa { display: none !important; }
