@@ -371,7 +371,6 @@ const bodyEl=el.querySelector('.node-body');
 bodyEl.textContent=node.customBody===undefined?body:node.customBody;
 
 attachNodeEvents(el,node);
-attachNodeBodyEditor(el,node);
 nodesLayer.appendChild(el);
 }
 requestAnimationFrame(renderConnections);
@@ -545,6 +544,56 @@ cleanupAnimationSettingsPreview=null;
 }
 
 const node=getNode(state.selectedNodeId);
+
+if(node){
+queueMicrotask(()=>{
+if(state.selectedNodeId!==node.id)return;
+if(settingsPanel.querySelector('#nodeMemoInput'))return;
+
+const group=document.createElement('div');
+group.className='setting-group';
+
+const label=document.createElement('div');
+label.className='setting-label';
+label.textContent='メモ';
+
+const textarea=document.createElement('textarea');
+textarea.id='nodeMemoInput';
+textarea.className='dialogue-textarea';
+textarea.maxLength=160;
+textarea.rows=3;
+textarea.placeholder='ノードに表示する文章を入力';
+textarea.value=node.customBody||'';
+
+const counter=document.createElement('div');
+counter.className='dialogue-count';
+counter.textContent=`${textarea.value.length}/160`;
+
+textarea.addEventListener('input',()=>{
+node.customBody=textarea.value.length>0?textarea.value:undefined;
+counter.textContent=`${textarea.value.length}/160`;
+
+const nodeEl=Array.from(nodesLayer.querySelectorAll('.node')).find(el=>el.dataset.id===node.id);
+const bodyEl=nodeEl?.querySelector('.node-body');
+
+if(bodyEl){
+if(node.customBody!==undefined){
+bodyEl.textContent=node.customBody;
+}else{
+renderNodes();
+}
+}
+
+requestAnimationFrame(renderConnections);
+});
+
+group.appendChild(label);
+group.appendChild(textarea);
+group.appendChild(counter);
+settingsPanel.appendChild(group);
+});
+}
+
 if(!node){settingsPanel.innerHTML='<div class="settings-empty">ノードを選択してください</div>';return}
 if(node.type==='start'){
 settingsPanel.innerHTML='<div class="settings-title">START</div><div class="settings-empty">ゲーム開始地点です。</div>';
