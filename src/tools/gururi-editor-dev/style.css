@@ -487,3 +487,12 @@ html[lang="en"] #editorHomeLogoJa { display: none !important; }
 #editorHomeLinks .editor-home__item--link:not(.is-disabled):hover span {
     color: #ffffff;
 }
+
+.dialogue-preview-box,.game-dialogue{box-sizing:border-box;overflow:visible}
+.dialogue-preview-box{padding:20px 48px 28px 24px}
+.dialogue-preview-box .dialogue-panel-thumbnail{width:var(--dialogue-thumbnail-size,92px);height:var(--dialogue-thumbnail-size,92px);flex:0 0 var(--dialogue-thumbnail-size,92px)}
+.game-dialogue .dialogue-panel-thumbnail{width:var(--dialogue-thumbnail-size,92px);height:var(--dialogue-thumbnail-size,92px);flex:0 0 var(--dialogue-thumbnail-size,92px)}
+.dialogue-speaker{position:absolute;left:0;bottom:100%;max-width:75%;padding:8px 20px;background:rgba(0,0,0,.76);color:#fff;font-size:20px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:5px 5px 0 0;box-sizing:border-box}
+.dialogue-speaker.hidden{display:none}
+.game-dialogue .dialogue-speaker{font-size:calc(20px * var(--dialogue-scale,1));padding:calc(8px * var(--dialogue-scale,1)) calc(20px * var(--dialogue-scale,1))}
+.dialogue-preview-wrap .dialogue-preview-box{overflow:visible}

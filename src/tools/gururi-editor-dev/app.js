@@ -256,6 +256,8 @@ dialogueEditIndex:0,
 dialogueView:{yaw:0,pitch:0,zoom:1,initialized:false},
 dialogueThumbnail:null,
 dialogueFontSize:24,
+dialogueSpeaker:'',
+dialoguePanelHeights:{pc:20,mobile:20},
 animation:{
 fileName:'',
 raw:null,
@@ -790,9 +792,14 @@ ensureDialogueView(node,previousMedia);
 const editors=node.dialoguePages.map((text,index)=>`<div class="dialogue-editor"><div class="setting-label">ダイアローグ ${index+1}</div><textarea class="dialogue-textarea" data-dialogue-index="${index}" maxlength="60">${escapeHtml(text)}</textarea><div class="dialogue-count" data-dialogue-count="${index}">${text.length}/60</div></div>`).join('');
 const hasDialogue=node.dialoguePages.length>0;
 const fontSize=Number(node.dialogueFontSize)||24;
+const panelHeight=getDialoguePanelHeight(node);
 
 settingsPanel.innerHTML=`
 <div class="settings-title">ダイアローグ</div>
+<div class="setting-group">
+<div class="setting-label">発話者</div>
+<input id="dialogueSpeakerInput" class="number-input" type="text" maxlength="40" placeholder="発話者の名前" value="${escapeHtml(node.dialogueSpeaker||'').replace(/"/g,'&quot;')}">
+</div>
 <div class="setting-group">
 <div class="setting-label">サムネイル</div>
 <div class="dialogue-thumbnail-controls">
@@ -805,13 +812,14 @@ settingsPanel.innerHTML=`
 <input id="dialogueFontSizeInput" class="number-input" type="number" min="10" max="36" step="1" value="${fontSize}">
 </div>
 <div class="setting-group">
-<div class="setting-label">ダイアローグ</div>
-<button id="addDialogueBtn" class="add-world-btn" type="button">＋</button>
+<div class="setting-label">パネルの高さ（${state.displayMode==='pc'?'PC':'スマホ'}・画面高さの％）</div>
+<input id="dialoguePanelHeightInput" class="number-input" type="number" min="10" max="60" step="1" value="${panelHeight}">
 </div>
 <div class="setting-group">
 <div class="dialogue-preview-wrap">
 <canvas id="dialoguePreviewCanvas" class="world-preview" width="320" height="320"></canvas>
 <div id="dialoguePreviewBox" class="dialogue-preview-box ${hasDialogue?'':'hidden'}">
+<div id="dialoguePreviewSpeaker" class="dialogue-speaker hidden"></div>
 <div class="dialogue-panel-content">
 <img id="dialoguePreviewThumbnail" class="dialogue-panel-thumbnail hidden" alt="">
 <div id="dialoguePreviewText" class="dialogue-preview-text"></div>
@@ -819,6 +827,9 @@ settingsPanel.innerHTML=`
 <div class="dialogue-arrow">▼</div>
 </div>
 </div>
+</div>
+<div class="setting-group">
+<button id="addDialogueBtn" class="add-world-btn" type="button">＋</button>
 </div>
 <div id="dialogueEditors">${editors}</div>`;
 
@@ -2869,6 +2880,44 @@ zoom:node.dialogueView.zoom
 };
 }
 
+function getDialoguePanelHeight(node){
+const value=Number(node.dialoguePanelHeights?.[state.displayMode]);
+return Number.isFinite(value)&&value>=10&&value<=60?value:20;
+}
+
+function applyDialoguePreviewLayout(node){
+const box=document.getElementById('dialoguePreviewBox');
+if(!box)return;
+
+const layout=getActiveLayout();
+const referenceWidth=layout.width>=layout.height?1280:720;
+const referenceHeight=referenceWidth*layout.height/layout.width;
+const previewWidth=box.parentElement.clientWidth;
+const scale=previewWidth/referenceWidth;
+const panelHeight=referenceHeight*getDialoguePanelHeight(node)/100;
+
+box.style.width=`${referenceWidth}px`;
+box.style.height=`${panelHeight}px`;
+box.style.transform=`scale(${scale})`;
+box.style.setProperty('--dialogue-thumbnail-size',`${Math.max(1,panelHeight-48)}px`);
+}
+
+function applyGameDialogueLayout(node){
+const height=getDialoguePanelHeight(node);
+const scale=Number.parseFloat(
+gameViewport.style.getPropertyValue('--dialogue-scale')
+)||1;
+
+const panelHeight=gameViewport.clientHeight*height/100;
+const thumbnailSize=Math.max(1,panelHeight-48*scale);
+
+dialogueOverlay.style.height=`${height}%`;
+dialogueOverlay.style.setProperty(
+'--dialogue-thumbnail-size',
+`${thumbnailSize}px`
+);
+}
+
 function getDialogueThumbnailOptions(selectedId){
 const options=mediaLibrary
 .filter(media=>
@@ -2907,20 +2956,31 @@ return canvas.toDataURL('image/png');
 }
 
 function setupDialogueAppearance(node){
+const speakerInput=document.getElementById('dialogueSpeakerInput');
 const thumbnailSelect=document.getElementById('dialogueThumbnailSelect');
 const settingsImage=document.getElementById('dialogueThumbnailSettingsImage');
 const fontInput=document.getElementById('dialogueFontSizeInput');
+const heightInput=document.getElementById('dialoguePanelHeightInput');
 
-if(!thumbnailSelect||!settingsImage||!fontInput)return;
+if(!speakerInput||!thumbnailSelect||!settingsImage||!fontInput||!heightInput)return;
 
 const updateAppearance=()=>{
 const previewImage=document.getElementById('dialoguePreviewThumbnail');
 const previewText=document.getElementById('dialoguePreviewText');
+const previewSpeaker=document.getElementById('dialoguePreviewSpeaker');
 const fontSize=Number(node.dialogueFontSize)||24;
 const thumbnailData=getDialogueThumbnailData(node);
+const speaker=(node.dialogueSpeaker||'').trim();
+
+applyDialoguePreviewLayout(node);
 
 if(previewText){
 previewText.style.fontSize=`${fontSize}px`;
+}
+
+if(previewSpeaker){
+previewSpeaker.textContent=speaker;
+previewSpeaker.classList.toggle('hidden',!speaker);
 }
 
 if(previewImage){
@@ -2934,6 +2994,11 @@ if(thumbnailData)settingsImage.src=thumbnailData;
 else settingsImage.removeAttribute('src');
 };
 
+speakerInput.addEventListener('input',()=>{
+node.dialogueSpeaker=speakerInput.value.slice(0,40);
+updateAppearance();
+});
+
 thumbnailSelect.addEventListener('change',()=>{
 node.dialogueThumbnailMediaId=thumbnailSelect.value||null;
 node.dialogueThumbnail=null;
@@ -2943,7 +3008,6 @@ updateAppearance();
 fontInput.addEventListener('input',()=>{
 const value=Number(fontInput.value);
 if(!Number.isFinite(value)||value<10||value>36)return;
-
 node.dialogueFontSize=value;
 updateAppearance();
 });
@@ -2954,6 +3018,30 @@ node.dialogueFontSize=Math.max(
 Math.min(36,Number(fontInput.value)||24)
 );
 fontInput.value=node.dialogueFontSize;
+updateAppearance();
+});
+
+heightInput.addEventListener('input',()=>{
+const value=Number(heightInput.value);
+if(!Number.isFinite(value)||value<10||value>60)return;
+
+if(!node.dialoguePanelHeights){
+node.dialoguePanelHeights={pc:20,mobile:20};
+}
+
+node.dialoguePanelHeights[state.displayMode]=value;
+updateAppearance();
+});
+
+heightInput.addEventListener('change',()=>{
+const value=Math.max(10,Math.min(60,Number(heightInput.value)||20));
+
+if(!node.dialoguePanelHeights){
+node.dialoguePanelHeights={pc:20,mobile:20};
+}
+
+node.dialoguePanelHeights[state.displayMode]=value;
+heightInput.value=value;
 updateAppearance();
 });
 
@@ -3001,13 +3089,7 @@ video.addEventListener('loadeddata',draw,{once:true});
 const updatePreview=()=>{
 if(!previewBox||!previewText)return;
 
-const layout=getActiveLayout();
-const referenceWidth=layout.width>=layout.height?1280:720;
-const previewWidth=previewBox.parentElement.clientWidth;
-const scale=previewWidth/referenceWidth;
-
-previewBox.style.width=`${referenceWidth}px`;
-previewBox.style.transform=`scale(${scale})`;
+applyDialoguePreviewLayout(node);
 
 if(node.dialoguePages.length===0){
 previewBox.classList.add('hidden');
@@ -4649,6 +4731,21 @@ state.effectAnimationFrame=requestAnimationFrame(animate);
 
 function showDialoguePage(node,index){
 stopDialogueTyping();
+
+applyGameDialogueLayout(node);
+
+let speaker=dialogueOverlay.querySelector('#gameDialogueSpeaker');
+
+if(!speaker){
+speaker=document.createElement('div');
+speaker.id='gameDialogueSpeaker';
+speaker.className='dialogue-speaker';
+dialogueOverlay.insertBefore(speaker,dialogueOverlay.firstChild);
+}
+
+const speakerName=(node.dialogueSpeaker||'').trim();
+speaker.textContent=speakerName;
+speaker.classList.toggle('hidden',!speakerName);
 
 const fontSize=Math.max(
 10,
