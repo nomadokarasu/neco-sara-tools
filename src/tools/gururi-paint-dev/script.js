@@ -2301,10 +2301,20 @@ homeTitle.setAttribute(
 languageContent.title || ""
 );
 
-homeTitleImage.src =
+const defaultTitleImage =
 currentLanguage === "en"
 ? "./images/home-title-en.png"
 : "./images/home-title-ja.png";
+
+const managedTitleImage =
+typeof languageContent.heroImage === "string"
+? languageContent.heroImage
+: "";
+
+homeTitleImage.src =
+/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(managedTitleImage)
+? "./" + managedTitleImage
+: defaultTitleImage;
 
 homeDescription.textContent =
 languageContent.description || "";

@@ -48,6 +48,7 @@ $defaultContent = [
 'ja' => [
 'title' => 'ぐるりペイント',
 'description' => 'カメラをぐるぐる回しながらお絵描きできます。',
+'heroImage' => '',
 'startButton' => 'はじめる',
 'importantHeading' => '重要なお知らせ',
 'noticeHeading' => 'お知らせ',
@@ -58,6 +59,7 @@ $defaultContent = [
 'en' => [
 'title' => 'Gururi Paint',
 'description' => 'You can draw while spinning the camera around.',
+'heroImage' => '',
 'startButton' => 'START',
 'importantHeading' => 'Important',
 'noticeHeading' => 'News',
@@ -733,6 +735,11 @@ $languagePost,
 $languagePost,
 'description'
 ),
+'heroImage' => isset($languagePost['removeHeroImage'])
+? ''
+: (string) (
+$content['languages'][$language]['heroImage'] ?? ''
+),
 'startButton' => postedText(
 $languagePost,
 'startButton'
@@ -758,6 +765,32 @@ $languagePost,
 'footer'
 )
 ];
+}
+
+foreach (['ja', 'en'] as $language) {
+    $uploadedFile = $_FILES['heroImages'] ?? [];
+    $file = [
+        'name' => $uploadedFile['name'][$language] ?? '',
+        'type' => $uploadedFile['type'][$language] ?? '',
+        'tmp_name' => $uploadedFile['tmp_name'][$language] ?? '',
+        'error' => $uploadedFile['error'][$language] ?? UPLOAD_ERR_NO_FILE,
+        'size' => $uploadedFile['size'][$language] ?? 0
+    ];
+
+    try {
+        $newHeroImage = saveThumbnail(
+            $file,
+            $thumbnailDirectory,
+            $thumbnailFolder
+        );
+
+        if ($newHeroImage !== '') {
+            $newContent['languages'][$language]['heroImage'] = $newHeroImage;
+        }
+    } catch (RuntimeException $exception) {
+        $error = 'トップ画像（' . $language . '）：' . $exception->getMessage();
+        break;
+    }
 }
 
 $postedImportantNotices =
@@ -1578,6 +1611,72 @@ value="<?= escapeHtml($value) ?>"
 </label>
 
 <?php endforeach; ?>
+
+</div>
+
+<?php endforeach; ?>
+
+</div>
+
+<div class="admin__language-grid" style="margin-top:24px">
+
+<?php foreach (['ja' => '日本語', 'en' => 'English'] as $language => $languageLabel): ?>
+
+<div class="admin__language-panel">
+
+<h3 class="admin__language-title">
+トップ画像（<?= escapeHtml($languageLabel) ?>）
+</h3>
+
+<?php
+$heroImage = (string) (
+$content['languages'][$language]['heroImage'] ?? ''
+);
+?>
+
+<?php if ($heroImage !== ''): ?>
+
+<div class="admin__thumbnail-preview">
+
+<img
+src="<?= escapeHtml(
+$app === 'editor'
+? '../gururi-editor-dev/' . $heroImage
+: $heroImage
+) ?>"
+alt="現在のトップ画像"
+>
+
+</div>
+
+<?php endif; ?>
+
+<label class="admin__field">
+
+<span class="admin__label">
+画像を選択（JPEG・PNG・WebP、5MB以内）
+</span>
+
+<input
+class="admin__input"
+type="file"
+name="heroImages[<?= escapeHtml($language) ?>]"
+accept="image/jpeg,image/png,image/webp"
+>
+
+</label>
+
+<?php if ($heroImage !== ''): ?>
+
+<label class="admin__field">
+<input
+type="checkbox"
+name="languages[<?= escapeHtml($language) ?>][removeHeroImage]"
+>
+現在のトップ画像を外す
+</label>
+
+<?php endif; ?>
 
 </div>
 
