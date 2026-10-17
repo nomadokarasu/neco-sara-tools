@@ -2011,7 +2011,7 @@ currentLanguage
 
 
 applyLanguage();
-renderHomePage();
+renderHomePageWhenReady();
 }
 
 
@@ -2261,7 +2261,109 @@ element.removeAttribute(
 }
 
 
-function renderHomePage() {
+/* トップ画像・ロゴの読み込み完了を待つ */
+
+let homeRenderRequestId = 0;
+
+function preloadHomeImage(path) {
+    if (
+        typeof path !== "string" ||
+        !/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(path)
+    ) {
+        return Promise.resolve(true);
+    }
+
+    return new Promise((resolve) => {
+        const image = new Image();
+        let completed = false;
+
+        const finish = (success) => {
+            if (completed) return;
+            completed = true;
+
+            clearTimeout(timeoutId);
+            image.onload = null;
+            image.onerror = null;
+
+            resolve(success);
+        };
+
+        const timeoutId = setTimeout(() => {
+            finish(false);
+        }, 10000);
+
+        image.onload = () => finish(true);
+        image.onerror = () => finish(false);
+
+        image.src = "./" + path;
+
+        if (image.complete) {
+            finish(image.naturalWidth > 0);
+        }
+    });
+}
+
+async function renderHomePageWhenReady() {
+    const requestId = ++homeRenderRequestId;
+    const header = document.querySelector(".home-page__header");
+
+    if (header) {
+        header.style.visibility = "hidden";
+    }
+
+    const language = currentLanguage;
+    const languageContent = homeContent?.languages?.[language];
+
+    if (!languageContent) {
+        renderHomePage();
+
+        if (header && requestId === homeRenderRequestId) {
+            header.style.visibility = "visible";
+        }
+
+        return;
+    }
+
+    const heroPath = languageContent.heroImage || "";
+    const logoPath = languageContent.logoImage || "";
+
+    const [heroLoaded, logoLoaded] = await Promise.all([
+        preloadHomeImage(heroPath),
+        preloadHomeImage(logoPath)
+    ]);
+
+    // 言語が途中で切り替わった場合、古い処理では更新しない
+    if (requestId !== homeRenderRequestId) {
+        return;
+    }
+
+    renderHomePage();
+
+    // 画像の取得に失敗した場合は、安全な表示に戻す
+    if (!heroLoaded && header) {
+        header.style.backgroundImage = "none";
+    }
+
+    if (!logoLoaded) {
+        const logo = document.getElementById("homeTitleImage");
+        const text = document.getElementById("homeTitleText");
+        const title = document.getElementById("homeTitle");
+
+        if (logo) logo.hidden = true;
+        if (text) text.hidden = false;
+
+        if (title) {
+            title.classList.add("home-page__title--text");
+        }
+    }
+
+    // 画像とDOMの更新が済んでから表示する
+    requestAnimationFrame(() => {
+        if (requestId === homeRenderRequestId && header) {
+            header.style.visibility = "visible";
+        }
+    });
+}
 
 homeLanguageButtons.forEach(
 (button) => {
@@ -2683,7 +2785,7 @@ throw new Error(
 homeContent =
 data;
 
-renderHomePage();
+renderHomePageWhenReady();
 
 } catch (error) {
 
@@ -2692,7 +2794,7 @@ console.warn(
 error
 );
 
-renderHomePage();
+renderHomePageWhenReady();
 }
 }
 
