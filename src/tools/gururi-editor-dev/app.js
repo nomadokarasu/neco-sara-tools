@@ -255,7 +255,7 @@ dialoguePages:[],
 dialogueEditIndex:0,
 dialogueView:{yaw:0,pitch:0,zoom:1,initialized:false},
 dialogueThumbnail:null,
-dialogueFontSize:18,
+dialogueFontSize:24,
 animation:{
 fileName:'',
 raw:null,
@@ -789,18 +789,16 @@ ensureDialogueView(node,previousMedia);
 
 const editors=node.dialoguePages.map((text,index)=>`<div class="dialogue-editor"><div class="setting-label">ダイアローグ ${index+1}</div><textarea class="dialogue-textarea" data-dialogue-index="${index}" maxlength="60">${escapeHtml(text)}</textarea><div class="dialogue-count" data-dialogue-count="${index}">${text.length}/60</div></div>`).join('');
 const hasDialogue=node.dialoguePages.length>0;
-const fontSize=Number(node.dialogueFontSize)||18;
+const fontSize=Number(node.dialogueFontSize)||24;
 
 settingsPanel.innerHTML=`
 <div class="settings-title">ダイアローグ</div>
 <div class="setting-group">
 <div class="setting-label">サムネイル</div>
 <div class="dialogue-thumbnail-controls">
-<button id="dialogueThumbnailAddBtn" class="add-world-btn" type="button">＋</button>
+<select id="dialogueThumbnailSelect" class="number-input">${getDialogueThumbnailOptions(node.dialogueThumbnailMediaId)}</select>
 <img id="dialogueThumbnailSettingsImage" class="dialogue-thumbnail-settings-image hidden" alt="サムネイル">
-<button id="dialogueThumbnailRemoveBtn" type="button" class="hidden">削除</button>
 </div>
-<input id="dialogueThumbnailFileInput" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" hidden>
 </div>
 <div class="setting-group">
 <div class="setting-label">フォントサイズ（px）</div>
@@ -872,7 +870,8 @@ setMediaPanelOpen(false);
 
 function getMediaOptions(type,selectedId){
 const available=mediaLibrary.filter(media=>{
-return type==='media'||media.fileType===(type==='world'?'png':'mp4');
+return media.width===media.height*2&&
+(media.fileType==='png'||media.fileType==='mp4');
 });
 
 const options=available.map(media=>{
@@ -915,7 +914,7 @@ if(context){
 context.fillStyle='#252525';
 context.fillRect(0,0,canvas.width,canvas.height);
 
-const source=media.fileType==='png'?media.image:media.video;
+const source=media.fileType==='mp4'?media.video:media.image;
 
 if(source){
 try{
@@ -965,6 +964,11 @@ mediaList.appendChild(item);
 function assignMediaToNode(node,mediaId){
 const media=mediaLibrary.find(item=>item.id===mediaId);
 
+if(media&&media.width!==media.height*2){
+alert('360度メディアには2:1の画像・動画を選択してください。');
+return;
+}
+
 if(
 media&&(
 node.type==='media'||
@@ -999,16 +1003,18 @@ renderSettings();
 async function importMediaFile(file){
 const extension=file.name.toLowerCase();
 const isPng=extension.endsWith('.png');
+const isJpg=extension.endsWith('.jpg')||extension.endsWith('.jpeg');
 const isMp4=extension.endsWith('.mp4');
+const isImage=isPng||isJpg;
 
-if(!isPng&&!isMp4){
-throw new Error('PNGまたはMP4を選択してください。');
+if(!isImage&&!isMp4){
+throw new Error('PNG、JPGまたはMP4を選択してください。');
 }
 
 const media={
 id:uid('media'),
 fileName:file.name,
-fileType:isPng?'png':'mp4',
+fileType:isPng?'png':isJpg?'jpg':'mp4',
 image:null,
 video:null,
 url:null,
@@ -1019,7 +1025,7 @@ width:0,
 height:0
 };
 
-if(isPng){
+if(isImage){
 const url=URL.createObjectURL(file);
 
 try{
@@ -1066,13 +1072,8 @@ throw error;
 }
 }
 
-if(media.width!==media.height*2){
-if(media.url){
-media.video.removeAttribute('src');
-media.video.load();
-URL.revokeObjectURL(media.url);
-}
-throw new Error('2:1の画像・動画を選択してください。');
+if(media.width<=0||media.height<=0){
+throw new Error('画像・動画のサイズを取得できませんでした。');
 }
 
 media.sourceFile=file;
@@ -2868,110 +2869,80 @@ zoom:node.dialogueView.zoom
 };
 }
 
-function setupDialogueAppearance(node){
-const addButton=document.getElementById('dialogueThumbnailAddBtn');
-const fileInput=document.getElementById('dialogueThumbnailFileInput');
-const removeButton=document.getElementById('dialogueThumbnailRemoveBtn');
-const settingsImage=document.getElementById('dialogueThumbnailSettingsImage');
-const fontInput=document.getElementById('dialogueFontSizeInput');
+function getDialogueThumbnailOptions(selectedId){
+const options=mediaLibrary
+.filter(media=>
+(media.fileType==='png'||media.fileType==='jpg')&&
+media.width===media.height
+)
+.map(media=>{
+const selected=media.id===selectedId?' selected':'';
+return `<option value="${media.id}"${selected}>${escapeHtml(media.fileName)}</option>`;
+})
+.join('');
 
-const updateAppearance=()=>{
-const previewImage=document.getElementById('dialoguePreviewThumbnail');
-const previewText=document.getElementById('dialoguePreviewText');
-const fontSize=Number(node.dialogueFontSize)||18;
-
-if(previewText){
-previewText.style.fontSize=`${fontSize}px`;
+return `<option value="">未設定</option>${options}`;
 }
 
-if(previewImage){
-previewImage.classList.toggle('hidden',!node.dialogueThumbnail);
-if(node.dialogueThumbnail){
-previewImage.src=node.dialogueThumbnail;
-}
-}
+function getDialogueThumbnailData(node){
+if(!node.dialogueThumbnailMediaId)return node.dialogueThumbnail||null;
 
-settingsImage.classList.toggle('hidden',!node.dialogueThumbnail);
-removeButton.classList.toggle('hidden',!node.dialogueThumbnail);
+const media=mediaLibrary.find(item=>
+item.id===node.dialogueThumbnailMediaId&&
+(item.fileType==='png'||item.fileType==='jpg')&&
+item.width===item.height
+);
 
-if(node.dialogueThumbnail){
-settingsImage.src=node.dialogueThumbnail;
-}
-};
-
-addButton.addEventListener('click',()=>{
-fileInput.click();
-});
-
-fileInput.addEventListener('change',async()=>{
-const file=fileInput.files?.[0];
-fileInput.value='';
-if(!file)return;
-
-if(!['image/png','image/jpeg'].includes(file.type)){
-alert('PNGまたはJPG画像を選択してください。');
-return;
-}
-
-if(file.size>10*1024*1024){
-alert('10MB以下の画像を選択してください。');
-return;
-}
-
-const url=URL.createObjectURL(file);
-
-try{
-const image=await new Promise((resolve,reject)=>{
-const img=new Image();
-img.onload=()=>resolve(img);
-img.onerror=()=>reject(new Error('画像を読み込めませんでした。'));
-img.src=url;
-});
+if(!media?.image)return null;
 
 const canvas=document.createElement('canvas');
 canvas.width=256;
 canvas.height=256;
 
 const ctx=canvas.getContext('2d');
-if(!ctx)throw new Error('画像を処理できませんでした。');
+if(!ctx)return null;
 
-ctx.clearRect(0,0,256,256);
-
-const scale=Math.min(
-256/image.naturalWidth,
-256/image.naturalHeight
-);
-
-const width=image.naturalWidth*scale;
-const height=image.naturalHeight*scale;
-
-ctx.drawImage(
-image,
-(256-width)/2,
-(256-height)/2,
-width,
-height
-);
-
-node.dialogueThumbnail=canvas.toDataURL('image/png');
-updateAppearance();
-}catch(error){
-console.error(error);
-alert(error.message);
-}finally{
-URL.revokeObjectURL(url);
+ctx.drawImage(media.image,0,0,256,256);
+return canvas.toDataURL('image/png');
 }
-});
 
-removeButton.addEventListener('click',()=>{
+function setupDialogueAppearance(node){
+const thumbnailSelect=document.getElementById('dialogueThumbnailSelect');
+const settingsImage=document.getElementById('dialogueThumbnailSettingsImage');
+const fontInput=document.getElementById('dialogueFontSizeInput');
+
+if(!thumbnailSelect||!settingsImage||!fontInput)return;
+
+const updateAppearance=()=>{
+const previewImage=document.getElementById('dialoguePreviewThumbnail');
+const previewText=document.getElementById('dialoguePreviewText');
+const fontSize=Number(node.dialogueFontSize)||24;
+const thumbnailData=getDialogueThumbnailData(node);
+
+if(previewText){
+previewText.style.fontSize=`${fontSize}px`;
+}
+
+if(previewImage){
+previewImage.classList.toggle('hidden',!thumbnailData);
+if(thumbnailData)previewImage.src=thumbnailData;
+else previewImage.removeAttribute('src');
+}
+
+settingsImage.classList.toggle('hidden',!thumbnailData);
+if(thumbnailData)settingsImage.src=thumbnailData;
+else settingsImage.removeAttribute('src');
+};
+
+thumbnailSelect.addEventListener('change',()=>{
+node.dialogueThumbnailMediaId=thumbnailSelect.value||null;
 node.dialogueThumbnail=null;
 updateAppearance();
 });
 
 fontInput.addEventListener('input',()=>{
 const value=Number(fontInput.value);
-if(!Number.isFinite(value))return;
-if(value<10||value>36)return;
+if(!Number.isFinite(value)||value<10||value>36)return;
 
 node.dialogueFontSize=value;
 updateAppearance();
@@ -2980,7 +2951,7 @@ updateAppearance();
 fontInput.addEventListener('change',()=>{
 node.dialogueFontSize=Math.max(
 10,
-Math.min(36,Number(fontInput.value)||18)
+Math.min(36,Number(fontInput.value)||24)
 );
 fontInput.value=node.dialogueFontSize;
 updateAppearance();
@@ -2988,7 +2959,6 @@ updateAppearance();
 
 updateAppearance();
 }
-
 function setupDialogueTriggerPreview(node,sourceNode){
 const canvas=document.getElementById('dialoguePreviewCanvas');
 const addButton=document.getElementById('addDialogueBtn');
@@ -4682,7 +4652,7 @@ stopDialogueTyping();
 
 const fontSize=Math.max(
 10,
-Math.min(36,Number(node.dialogueFontSize)||18)
+Math.min(36,Number(node.dialogueFontSize)||24)
 );
 
 dialogueText.style.fontSize=`calc(${fontSize}px * var(--dialogue-scale,1))`;
@@ -4703,10 +4673,14 @@ content.appendChild(thumbnail);
 content.appendChild(dialogueText);
 }
 
-thumbnail.classList.toggle('hidden',!node.dialogueThumbnail);
+const thumbnailData=getDialogueThumbnailData(node);
 
-if(node.dialogueThumbnail){
-thumbnail.src=node.dialogueThumbnail;
+thumbnail.classList.toggle('hidden',!thumbnailData);
+
+if(thumbnailData){
+thumbnail.src=thumbnailData;
+}else{
+thumbnail.removeAttribute('src');
 }
 
 const text=node.dialoguePages[index]||'';
@@ -5175,11 +5149,12 @@ if(!data.nodes.some(node=>node.id==='start'&&node.type==='start'))throw new Erro
 const nodeIds=new Set(data.nodes.map(node=>node.id));
 if(nodeIds.size!==data.nodes.length||data.connections.some(c=>!nodeIds.has(c.from)||!nodeIds.has(c.to)))throw new Error('ノードの接続情報が不正です。');
 for(const item of data.media){
-if(!item||!['png','mp4'].includes(item.fileType)||!entries.has(item.path))throw new Error('素材が不足しています。');
+if(!item||!['png','jpg','mp4'].includes(item.fileType)||!entries.has(item.path))throw new Error('素材が不足しています。');
 }
 for(const item of data.media){
 const blob=entries.get(item.path);
-const assetFile=new File([blob],item.fileName,{type:item.fileType==='png'?'image/png':'video/mp4'});
+const mimeType=item.fileType==='png'?'image/png':item.fileType==='jpg'?'image/jpeg':'video/mp4';
+const assetFile=new File([blob],item.fileName,{type:mimeType});
 const imported=await importMediaFile(assetFile);
 imported.id=item.id;
 }
@@ -5343,13 +5318,14 @@ const chunk=new Uint8Array(binary.length);
 for(let j=0;j<binary.length;j++)chunk[j]=binary.charCodeAt(j);
 chunks.push(chunk);
 }
-const blob=new Blob(chunks,{type:item.fileType==='png'?'image/png':'video/mp4'});
+const mimeType=item.fileType==='png'?'image/png':item.fileType==='jpg'?'image/jpeg':'video/mp4';
+const blob=new Blob(chunks,{type:mimeType});
 const url=URL.createObjectURL(blob);
 createdUrls.push(url);
-if(item.fileType==='png'){
+if(item.fileType==='png'||item.fileType==='jpg'){
 const picture=new Image();
 await new Promise((resolve,reject)=>{picture.onload=resolve;picture.onerror=()=>reject(new Error(item.fileName+' を開けません'));picture.src=url;});
-loaded.push({id:item.id,fileName:item.fileName,fileType:'png',image:picture,video:null,url,width:picture.naturalWidth,height:picture.naturalHeight,duration:0});
+loaded.push({id:item.id,fileName:item.fileName,fileType:item.fileType,image:picture,video:null,url,width:picture.naturalWidth,height:picture.naturalHeight,duration:0});
 }else if(item.fileType==='mp4'){
 const video=document.createElement('video');
 video.preload='auto';video.playsInline=true;video.muted=true;
