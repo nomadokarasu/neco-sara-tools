@@ -360,8 +360,9 @@ aria-live="polite"
 <p
 id="remaining-time"
 class="remaining-time"
+hidden
+aria-hidden="true"
 >
-残り時間：—
 </p>
 
 <div class="timer-buttons">
@@ -542,47 +543,15 @@ class="summary-work-day-list"
 </div>
 </details>
 
-<details class="summary-work-accordion">
-<summary>
-<span>
-計画内作業
-</span>
-
-<strong id="record-planned-work-total">
-0時間
-</strong>
-</summary>
-
 <div
-id="record-summary-planned-work-days"
-class="summary-work-day-list"
+hidden
+aria-hidden="true"
 >
-<p class="empty-message">
-この月の計画内作業はありません。
-</p>
+<strong id="record-planned-work-total"></strong>
+<strong id="record-unplanned-work-total"></strong>
+<div id="record-summary-planned-work-days"></div>
+<div id="record-summary-unplanned-work-days"></div>
 </div>
-</details>
-
-<details class="summary-work-accordion">
-<summary>
-<span>
-計画外作業
-</span>
-
-<strong id="record-unplanned-work-total">
-0時間
-</strong>
-</summary>
-
-<div
-id="record-summary-unplanned-work-days"
-class="summary-work-day-list"
->
-<p class="empty-message">
-この月の計画外作業はありません。
-</p>
-</div>
-</details>
 </div>
 
 <p class="summary-description">

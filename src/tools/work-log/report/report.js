@@ -6,21 +6,21 @@
 // ========================================
 
 const STORAGE_KEY =
-  "junota-work-log";
+"junota-work-log";
 
 
 const defaultData = {
-  settings: {
-    weeklyHours: 30
-  },
+settings: {
+weeklyHours: 30
+},
 
-  categories: [],
+categories: [],
 
-  monthlyPlans: {},
+monthlyPlans: {},
 
-  sessions: [],
+sessions: [],
 
-  activeSession: null
+activeSession: null
 };
 
 
@@ -32,112 +32,112 @@ const defaultData = {
 
 
 const previousPeriodButton =
-  document.getElementById(
-    "previous-period-button"
-  );
+document.getElementById(
+"previous-period-button"
+);
 
 
 const nextPeriodButton =
-  document.getElementById(
-    "next-period-button"
-  );
+document.getElementById(
+"next-period-button"
+);
 
 
 const reportMonthInput =
-  document.getElementById(
-    "report-month"
-  );
+document.getElementById(
+"report-month"
+);
 
 
 
 const activeWorkPanel =
-  document.getElementById(
-    "active-work-panel"
-  );
+document.getElementById(
+"active-work-panel"
+);
 
 
 const activeCategoryName =
-  document.getElementById(
-    "active-category-name"
-  );
+document.getElementById(
+"active-category-name"
+);
 
 
 const activeProjectName =
-  document.getElementById(
-    "active-project-name"
-  );
+document.getElementById(
+"active-project-name"
+);
 
 
 const activeTimer =
-  document.getElementById(
-    "active-timer"
-  );
+document.getElementById(
+"active-timer"
+);
 
 
 const reportPeriodTitle =
-  document.getElementById(
-    "report-period-title"
-  );
+document.getElementById(
+"report-period-title"
+);
 
 
 const reportTotalTime =
-  document.getElementById(
-    "report-total-time"
-  );
+document.getElementById(
+"report-total-time"
+);
 
 
 const plannedWorkTotal =
-  document.getElementById(
-    "planned-work-total"
-  );
+document.getElementById(
+"planned-work-total"
+);
 
 
 const unplannedWorkTotal =
-  document.getElementById(
-    "unplanned-work-total"
-  );
+document.getElementById(
+"unplanned-work-total"
+);
 
 
 const reportDateRange =
-  document.getElementById(
-    "report-date-range"
-  );
+document.getElementById(
+"report-date-range"
+);
 
 
 const categorySummaryList =
-  document.getElementById(
-    "category-summary-list"
-  );
+document.getElementById(
+"category-summary-list"
+);
 
 
 const summaryAllWorkDays =
-  document.getElementById(
-    "summary-all-work-days"
-  );
+document.getElementById(
+"summary-all-work-days"
+);
 
 
 const summaryPlannedWorkDays =
-  document.getElementById(
-    "summary-planned-work-days"
-  );
+document.getElementById(
+"summary-planned-work-days"
+);
 
 
 const summaryUnplannedWorkDays =
-  document.getElementById(
-    "summary-unplanned-work-days"
-  );
+document.getElementById(
+"summary-unplanned-work-days"
+);
 
 
 const currentProjectList =
-  document.getElementById(
-    "current-project-list"
-  );
+document.getElementById(
+"current-project-list"
+);
 
 
 const projectReportList =
-  document.getElementById(
-    "project-report-list"
-  );
+document.getElementById(
+"project-report-list"
+);
 
 
 // ========================================
@@ -145,17 +145,17 @@ const projectReportList =
 // ========================================
 
 const selectedPeriod =
-  "month";
+"month";
 
 
 let selectedDate =
-  new Date();
+new Date();
 
 
 let appData =
-  structuredClone(
-    defaultData
-  );
+structuredClone(
+defaultData
+);
 
 
 // ========================================
@@ -166,43 +166,43 @@ initializeReport();
 
 
 async function initializeReport() {
-  appData =
-    await loadAppData();
+appData =
+await loadAppData();
 
-  setDateInputValues();
+setDateInputValues();
 
-  renderReport();
-
-
-  window.setInterval(
-    function() {
-      renderActiveWork();
-    },
-
-    1000
-  );
+renderReport();
 
 
-  window.setInterval(
-    async function() {
-      appData =
-        await loadAppData();
+window.setInterval(
+function() {
+renderActiveWork();
+},
+
+1000
+);
 
 
-      const openDetailsState =
-        captureOpenDetailsState();
+window.setInterval(
+async function() {
+appData =
+await loadAppData();
 
 
-      renderReport();
+const openDetailsState =
+captureOpenDetailsState();
 
 
-      restoreOpenDetailsState(
-        openDetailsState
-      );
-    },
+renderReport();
 
-    15000
-  );
+
+restoreOpenDetailsState(
+openDetailsState
+);
+},
+
+15000
+);
 }
 
 
@@ -211,67 +211,67 @@ async function initializeReport() {
 // ========================================
 
 function captureOpenDetailsState() {
-  const rootIds = [
-    "summary-all-work-days",
-    "summary-planned-work-days",
-    "summary-unplanned-work-days",
-    "category-summary-list",
-    "current-project-list",
-    "project-report-list"
-  ];
+const rootIds = [
+"summary-all-work-days",
+"summary-planned-work-days",
+"summary-unplanned-work-days",
+"category-summary-list",
+"current-project-list",
+"project-report-list"
+];
 
 
-  return rootIds
-    .map(
-      function(rootId) {
-        const root =
-          document.getElementById(
-            rootId
-          );
+return rootIds
+.map(
+function(rootId) {
+const root =
+document.getElementById(
+rootId
+);
 
 
-        if (!root) {
-          return null;
-        }
+if (!root) {
+return null;
+}
 
 
-        const details =
-          Array.from(
-            root.querySelectorAll(
-              "details"
-            )
-          );
+const details =
+Array.from(
+root.querySelectorAll(
+"details"
+)
+);
 
 
-        const openIndexes =
-          [];
+const openIndexes =
+[];
 
 
-        details.forEach(
-          function(detail, index) {
-            if (detail.open) {
-              openIndexes.push(
-                index
-              );
-            }
-          }
-        );
+details.forEach(
+function(detail, index) {
+if (detail.open) {
+openIndexes.push(
+index
+);
+}
+}
+);
 
 
-        return {
-          rootId:
-            rootId,
+return {
+rootId:
+rootId,
 
-          openIndexes:
-            openIndexes
-        };
-      }
-    )
-    .filter(
-      function(state) {
-        return state !== null;
-      }
-    );
+openIndexes:
+openIndexes
+};
+}
+)
+.filter(
+function(state) {
+return state !== null;
+}
+);
 }
 
 
@@ -280,43 +280,43 @@ function captureOpenDetailsState() {
 // ========================================
 
 function restoreOpenDetailsState(
-  savedState
+savedState
 ) {
-  savedState.forEach(
-    function(rootState) {
-      const root =
-        document.getElementById(
-          rootState.rootId
-        );
+savedState.forEach(
+function(rootState) {
+const root =
+document.getElementById(
+rootState.rootId
+);
 
 
-      if (!root) {
-        return;
-      }
+if (!root) {
+return;
+}
 
 
-      const details =
-        Array.from(
-          root.querySelectorAll(
-            "details"
-          )
-        );
+const details =
+Array.from(
+root.querySelectorAll(
+"details"
+)
+);
 
 
-      rootState.openIndexes.forEach(
-        function(index) {
-          const detail =
-            details[index];
+rootState.openIndexes.forEach(
+function(index) {
+const detail =
+details[index];
 
 
-          if (detail) {
-            detail.open =
-              true;
-          }
-        }
-      );
-    }
-  );
+if (detail) {
+detail.open =
+true;
+}
+}
+);
+}
+);
 }
 
 
@@ -325,329 +325,329 @@ function restoreOpenDetailsState(
 // ========================================
 
 async function loadAppData() {
-  try {
-    const response =
-      await fetch(
-        "../api/load.php?time=" +
-        Date.now(),
+try {
+const response =
+await fetch(
+"../api/load.php?time=" +
+Date.now(),
 
-        {
-          method: "GET",
-          cache: "no-store"
-        }
-      );
+{
+method: "GET",
+cache: "no-store"
+}
+);
 
-    if (!response.ok) {
-      throw new Error(
-        "HTTP " +
-        response.status
-      );
-    }
+if (!response.ok) {
+throw new Error(
+"HTTP " +
+response.status
+);
+}
 
-    const serverData =
-      await response.json();
+const serverData =
+await response.json();
 
-    return normalizeReportData(
-      serverData
-    );
-  } catch (error) {
-    console.error(
-      "サーバーから作業記録を読み込めませんでした。",
-      error
-    );
+return normalizeReportData(
+serverData
+);
+} catch (error) {
+console.error(
+"サーバーから作業記録を読み込めませんでした。",
+error
+);
 
-    return loadLocalReportData();
-  }
+return loadLocalReportData();
+}
 }
 
 
 function loadLocalReportData() {
-  const savedData =
-    localStorage.getItem(
-      STORAGE_KEY
-    );
+const savedData =
+localStorage.getItem(
+STORAGE_KEY
+);
 
-  if (!savedData) {
-    return structuredClone(
-      defaultData
-    );
-  }
+if (!savedData) {
+return structuredClone(
+defaultData
+);
+}
 
-  try {
-    return normalizeReportData(
-      JSON.parse(
-        savedData
-      )
-    );
-  } catch (error) {
-    console.error(
-      "ブラウザ内の作業記録を読み込めませんでした。",
-      error
-    );
+try {
+return normalizeReportData(
+JSON.parse(
+savedData
+)
+);
+} catch (error) {
+console.error(
+"ブラウザ内の作業記録を読み込めませんでした。",
+error
+);
 
-    return structuredClone(
-      defaultData
-    );
-  }
+return structuredClone(
+defaultData
+);
+}
 }
 
 
 function normalizeReportMonthlyPlans(
-  monthlyPlans
+monthlyPlans
 ) {
-  if (
-    !monthlyPlans ||
-    typeof monthlyPlans !== "object" ||
-    Array.isArray(
-      monthlyPlans
-    )
-  ) {
-    return {};
-  }
+if (
+!monthlyPlans ||
+typeof monthlyPlans !== "object" ||
+Array.isArray(
+monthlyPlans
+)
+) {
+return {};
+}
 
 
-  const normalizedPlans =
-    {};
+const normalizedPlans =
+{};
 
 
-  Object.entries(
-    monthlyPlans
-  ).forEach(
-    function(
-      [
-        monthKey,
-        plan
-      ]
-    ) {
-      if (
-        !/^\d{4}-\d{2}$/.test(
-          monthKey
-        ) ||
-        !plan ||
-        typeof plan !== "object" ||
-        Array.isArray(
-          plan
-        )
-      ) {
-        return;
-      }
+Object.entries(
+monthlyPlans
+).forEach(
+function(
+[
+monthKey,
+plan
+]
+) {
+if (
+!/^\d{4}-\d{2}$/.test(
+monthKey
+) ||
+!plan ||
+typeof plan !== "object" ||
+Array.isArray(
+plan
+)
+) {
+return;
+}
 
 
-      const categories =
-        Array.isArray(
-          plan.categories
-        )
-          ? plan.categories
-              .map(
-                function(categoryPlan) {
-                  if (
-                    !categoryPlan ||
-                    !categoryPlan.categoryId
-                  ) {
-                    return null;
-                  }
+const categories =
+Array.isArray(
+plan.categories
+)
+? plan.categories
+.map(
+function(categoryPlan) {
+if (
+!categoryPlan ||
+!categoryPlan.categoryId
+) {
+return null;
+}
 
 
-                  const projects =
-                    Array.isArray(
-                      categoryPlan.projects
-                    )
-                      ? categoryPlan.projects
-                          .map(
-                            function(projectPlan) {
-                              if (
-                                !projectPlan ||
-                                !projectPlan.projectId
-                              ) {
-                                return null;
-                              }
+const projects =
+Array.isArray(
+categoryPlan.projects
+)
+? categoryPlan.projects
+.map(
+function(projectPlan) {
+if (
+!projectPlan ||
+!projectPlan.projectId
+) {
+return null;
+}
 
 
-                              return {
-                                projectId:
-                                  String(
-                                    projectPlan.projectId
-                                  ),
+return {
+projectId:
+String(
+projectPlan.projectId
+),
 
-                                projectName:
-                                  String(
-                                    projectPlan.projectName ||
-                                    ""
-                                  ),
+projectName:
+String(
+projectPlan.projectName ||
+""
+),
 
-                                allocationPercent:
-                                  Math.max(
-                                    0,
+allocationPercent:
+Math.max(
+0,
 
-                                    Number(
-                                      projectPlan.allocationPercent
-                                    ) ||
-                                    0
-                                  ),
+Number(
+projectPlan.allocationPercent
+) ||
+0
+),
 
-                                plannedMinutes:
-                                  Math.max(
-                                    0,
+plannedMinutes:
+Math.max(
+0,
 
-                                    Math.round(
-                                      Number(
-                                        projectPlan.plannedMinutes
-                                      ) ||
-                                      0
-                                    )
-                                  )
-                              };
-                            }
-                          )
-                          .filter(
-                            function(projectPlan) {
-                              return (
-                                projectPlan !==
-                                null
-                              );
-                            }
-                          )
-                      : [];
-
-
-                  return {
-                    categoryId:
-                      String(
-                        categoryPlan.categoryId
-                      ),
-
-                    categoryName:
-                      String(
-                        categoryPlan.categoryName ||
-                        ""
-                      ),
-
-                    allocationPercent:
-                      Math.max(
-                        0,
-
-                        Number(
-                          categoryPlan.allocationPercent
-                        ) ||
-                        0
-                      ),
-
-                    plannedMinutes:
-                      Math.max(
-                        0,
-
-                        Math.round(
-                          Number(
-                            categoryPlan.plannedMinutes
-                          ) ||
-                          0
-                        )
-                      ),
-
-                    projects:
-                      projects
-                  };
-                }
-              )
-              .filter(
-                function(categoryPlan) {
-                  return (
-                    categoryPlan !==
-                    null
-                  );
-                }
-              )
-          : [];
+Math.round(
+Number(
+projectPlan.plannedMinutes
+) ||
+0
+)
+)
+};
+}
+)
+.filter(
+function(projectPlan) {
+return (
+projectPlan !==
+null
+);
+}
+)
+: [];
 
 
-      normalizedPlans[
-        monthKey
-      ] = {
-        totalMinutes:
-          Math.max(
-            0,
+return {
+categoryId:
+String(
+categoryPlan.categoryId
+),
 
-            Math.round(
-              Number(
-                plan.totalMinutes
-              ) ||
-              0
-            )
-          ),
+categoryName:
+String(
+categoryPlan.categoryName ||
+""
+),
 
-        categories:
-          categories
-      };
-    }
-  );
+allocationPercent:
+Math.max(
+0,
+
+Number(
+categoryPlan.allocationPercent
+) ||
+0
+),
+
+plannedMinutes:
+Math.max(
+0,
+
+Math.round(
+Number(
+categoryPlan.plannedMinutes
+) ||
+0
+)
+),
+
+projects:
+projects
+};
+}
+)
+.filter(
+function(categoryPlan) {
+return (
+categoryPlan !==
+null
+);
+}
+)
+: [];
 
 
-  return normalizedPlans;
+normalizedPlans[
+monthKey
+] = {
+totalMinutes:
+Math.max(
+0,
+
+Math.round(
+Number(
+plan.totalMinutes
+) ||
+0
+)
+),
+
+categories:
+categories
+};
+}
+);
+
+
+return normalizedPlans;
 }
 
 
 function normalizeReportData(data) {
-  const categories =
-    Array.isArray(
-      data.categories
-    )
-      ? data.categories.map(
-          function(category) {
-            return {
-              ...category,
+const categories =
+Array.isArray(
+data.categories
+)
+? data.categories.map(
+function(category) {
+return {
+...category,
 
-              projects:
-                Array.isArray(
-                  category.projects
-                )
-                  ? category.projects.map(
-                      function(project) {
-                        return {
-                          ...project,
+projects:
+Array.isArray(
+category.projects
+)
+? category.projects.map(
+function(project) {
+return {
+...project,
 
-                          isCurrent:
-                            project.isCurrent !== false
-                        };
-                      }
-                    )
-                  : []
-            };
-          }
-        )
-      : [];
+isCurrent:
+project.isCurrent !== false
+};
+}
+)
+: []
+};
+}
+)
+: [];
 
 
-  return {
-    ...structuredClone(
-      defaultData
-    ),
+return {
+...structuredClone(
+defaultData
+),
 
-    ...data,
+...data,
 
-    settings: {
-      ...defaultData.settings,
+settings: {
+...defaultData.settings,
 
-      ...(data.settings || {})
-    },
+...(data.settings || {})
+},
 
-    categories:
-      categories,
+categories:
+categories,
 
-    monthlyPlans:
-      normalizeReportMonthlyPlans(
-        data.monthlyPlans
-      ),
+monthlyPlans:
+normalizeReportMonthlyPlans(
+data.monthlyPlans
+),
 
-    sessions:
-      Array.isArray(
-        data.sessions
-      )
-        ? data.sessions
-        : [],
+sessions:
+Array.isArray(
+data.sessions
+)
+? data.sessions
+: [],
 
-    activeSession:
-      data.activeSession || null
-  };
+activeSession:
+data.activeSession || null
+};
 }
 
 
@@ -659,24 +659,24 @@ function normalizeReportData(data) {
 // ========================================
 
 function setDateInputValues() {
-  reportMonthInput.value =
-    formatMonthForInput(
-      selectedDate
-    );
+reportMonthInput.value =
+formatMonthForInput(
+selectedDate
+);
 }
 
 
 function formatReportMonthDay(
-  date
+date
 ) {
-  return (
-    (
-      date.getMonth() + 1
-    ) +
-    "月" +
-    date.getDate() +
-    "日"
-  );
+return (
+(
+date.getMonth() + 1
+) +
+"月" +
+date.getDate() +
+"日"
+);
 }
 
 
@@ -686,33 +686,33 @@ function formatReportMonthDay(
 // ========================================
 
 reportMonthInput.addEventListener(
-  "change",
+"change",
 
-  function() {
-    if (!reportMonthInput.value) {
-      return;
-    }
-
-
-    const [
-      year,
-      month
-    ] =
-      reportMonthInput.value
-        .split("-")
-        .map(Number);
+function() {
+if (!reportMonthInput.value) {
+return;
+}
 
 
-    selectedDate =
-      new Date(
-        year,
-        month - 1,
-        1
-      );
+const [
+year,
+month
+] =
+reportMonthInput.value
+.split("-")
+.map(Number);
 
 
-    renderReport();
-  }
+selectedDate =
+new Date(
+year,
+month - 1,
+1
+);
+
+
+renderReport();
+}
 );
 
 
@@ -721,13 +721,13 @@ reportMonthInput.addEventListener(
 // ========================================
 
 previousPeriodButton.addEventListener(
-  "click",
+"click",
 
-  function() {
-    moveSelectedPeriod(
-      -1
-    );
-  }
+function() {
+moveSelectedPeriod(
+-1
+);
+}
 );
 
 
@@ -736,13 +736,13 @@ previousPeriodButton.addEventListener(
 // ========================================
 
 nextPeriodButton.addEventListener(
-  "click",
+"click",
 
-  function() {
-    moveSelectedPeriod(
-      1
-    );
-  }
+function() {
+moveSelectedPeriod(
+1
+);
+}
 );
 
 
@@ -751,20 +751,20 @@ nextPeriodButton.addEventListener(
 // ========================================
 
 function moveSelectedPeriod(
-  direction
+direction
 ) {
-  selectedDate =
-    new Date(
-      selectedDate.getFullYear(),
-      selectedDate.getMonth() +
-      direction,
-      1
-    );
+selectedDate =
+new Date(
+selectedDate.getFullYear(),
+selectedDate.getMonth() +
+direction,
+1
+);
 
 
-  setDateInputValues();
+setDateInputValues();
 
-  renderReport();
+renderReport();
 }
 
 
@@ -773,32 +773,32 @@ function moveSelectedPeriod(
 // ========================================
 
 function renderReport() {
-  const periodRange =
-    getSelectedPeriodRange();
+const periodRange =
+getSelectedPeriodRange();
 
 
-  const sessions =
-    getSessionsInRange(
-      periodRange
-    );
+const sessions =
+getSessionsInRange(
+periodRange
+);
 
 
-  renderPeriodInformation(
-    periodRange
-  );
+renderPeriodInformation(
+periodRange
+);
 
-  renderActiveWork();
+renderActiveWork();
 
-  renderCurrentSummary(
-    sessions,
-    periodRange
-  );
-
-
-  renderCurrentProjectReports();
+renderCurrentSummary(
+sessions,
+periodRange
+);
 
 
-  renderArchiveReports();
+renderCurrentProjectReports();
+
+
+renderArchiveReports();
 }
 
 
@@ -807,29 +807,29 @@ function renderReport() {
 // ========================================
 
 function getSelectedPeriodRange() {
-  const start =
-    new Date(
-      selectedDate.getFullYear(),
-      selectedDate.getMonth(),
-      1
-    );
+const start =
+new Date(
+selectedDate.getFullYear(),
+selectedDate.getMonth(),
+1
+);
 
 
-  const end =
-    new Date(
-      selectedDate.getFullYear(),
-      selectedDate.getMonth() + 1,
-      1
-    );
+const end =
+new Date(
+selectedDate.getFullYear(),
+selectedDate.getMonth() + 1,
+1
+);
 
 
-  return {
-    start:
-      start,
+return {
+start:
+start,
 
-    end:
-      end
-  };
+end:
+end
+};
 }
 
 
@@ -838,54 +838,54 @@ function getSelectedPeriodRange() {
 // ========================================
 
 function getSessionsInRange(
-  periodRange
+periodRange
 ) {
-  const sessions =
-    Array.isArray(
-      appData.sessions
-    )
-      ? appData.sessions.filter(
-          function(session) {
-            return isTimestampInRange(
-              session.startedAt,
-              periodRange
-            );
-          }
-        )
-      : [];
+const sessions =
+Array.isArray(
+appData.sessions
+)
+? appData.sessions.filter(
+function(session) {
+return isTimestampInRange(
+session.startedAt,
+periodRange
+);
+}
+)
+: [];
 
 
-  const result =
-    [
-      ...sessions
-    ];
+const result =
+[
+...sessions
+];
 
 
-  if (
-    appData.activeSession &&
-    isTimestampInRange(
-      appData.activeSession.startedAt,
-      periodRange
-    )
-  ) {
-    result.push(
-      {
-        ...appData.activeSession,
+if (
+appData.activeSession &&
+isTimestampInRange(
+appData.activeSession.startedAt,
+periodRange
+)
+) {
+result.push(
+{
+...appData.activeSession,
 
-        endedAt:
-          null,
+endedAt:
+null,
 
-        elapsedSeconds:
-          getActiveElapsedSeconds(),
+elapsedSeconds:
+getActiveElapsedSeconds(),
 
-        isActive:
-          true
-      }
-    );
-  }
+isActive:
+true
+}
+);
+}
 
 
-  return result;
+return result;
 }
 
 
@@ -894,21 +894,21 @@ function getSessionsInRange(
 // ========================================
 
 function isTimestampInRange(
-  timestamp,
-  periodRange
+timestamp,
+periodRange
 ) {
-  const date =
-    new Date(
-      timestamp
-    );
+const date =
+new Date(
+timestamp
+);
 
 
-  return (
-    date >=
-      periodRange.start &&
-    date <
-      periodRange.end
-  );
+return (
+date >=
+periodRange.start &&
+date <
+periodRange.end
+);
 }
 
 
@@ -917,20 +917,20 @@ function isTimestampInRange(
 // ========================================
 
 function renderPeriodInformation(
-  periodRange
+periodRange
 ) {
-  reportPeriodTitle.textContent =
-    periodRange.start.getFullYear() +
-    "年" +
-    (
-      periodRange.start.getMonth() +
-      1
-    ) +
-    "月の集計";
+reportPeriodTitle.textContent =
+periodRange.start.getFullYear() +
+"年" +
+(
+periodRange.start.getMonth() +
+1
+) +
+"月の集計";
 
 
-  reportDateRange.hidden =
-    true;
+reportDateRange.hidden =
+true;
 }
 
 
@@ -939,49 +939,49 @@ function renderPeriodInformation(
 // ========================================
 
 function renderActiveWork() {
-  const activeSession =
-    appData.activeSession;
+const activeSession =
+appData.activeSession;
 
 
-  if (!activeSession) {
-    activeWorkPanel.hidden =
-      true;
+if (!activeSession) {
+activeWorkPanel.hidden =
+true;
 
-    return;
-  }
-
-
-  const projectInformation =
-    findProjectInformation(
-      activeSession.projectId
-    );
+return;
+}
 
 
-  activeWorkPanel.hidden =
-    false;
+const projectInformation =
+findProjectInformation(
+activeSession.projectId
+);
 
 
-  if (projectInformation) {
-    activeCategoryName.textContent =
-      projectInformation.category.name;
+activeWorkPanel.hidden =
+false;
 
 
-    activeProjectName.textContent =
-      projectInformation.project.name;
-  } else {
-    activeCategoryName.textContent =
-      "分類情報なし";
+if (projectInformation) {
+activeCategoryName.textContent =
+projectInformation.category.name;
 
 
-    activeProjectName.textContent =
-      "削除されたプロジェクト";
-  }
+activeProjectName.textContent =
+projectInformation.project.name;
+} else {
+activeCategoryName.textContent =
+"分類情報なし";
 
 
-  activeTimer.textContent =
-    formatTimerClock(
-      getActiveElapsedSeconds()
-    );
+activeProjectName.textContent =
+"削除されたプロジェクト";
+}
+
+
+activeTimer.textContent =
+formatTimerClock(
+getActiveElapsedSeconds()
+);
 }
 
 
@@ -990,22 +990,22 @@ function renderActiveWork() {
 // ========================================
 
 function getActiveElapsedSeconds() {
-  if (!appData.activeSession) {
-    return 0;
-  }
+if (!appData.activeSession) {
+return 0;
+}
 
 
-  return Math.max(
-    0,
+return Math.max(
+0,
 
-    Math.floor(
-      (
-        Date.now() -
-        appData.activeSession.startedAt
-      ) /
-      1000
-    )
-  );
+Math.floor(
+(
+Date.now() -
+appData.activeSession.startedAt
+) /
+1000
+)
+);
 }
 
 
@@ -1014,26 +1014,26 @@ function getActiveElapsedSeconds() {
 // ========================================
 
 function getCurrentProjects(
-  category
+category
 ) {
-  if (
-    !category ||
-    !Array.isArray(
-      category.projects
-    )
-  ) {
-    return [];
-  }
+if (
+!category ||
+!Array.isArray(
+category.projects
+)
+) {
+return [];
+}
 
 
-  return category.projects.filter(
-    function(project) {
-      return (
-        project.isCurrent !==
-        false
-      );
-    }
-  );
+return category.projects.filter(
+function(project) {
+return (
+project.isCurrent !==
+false
+);
+}
+);
 }
 
 
@@ -1042,138 +1042,138 @@ function getCurrentProjects(
 // ========================================
 
 function calculatePlanForPeriod(
-  periodRange
+periodRange
 ) {
-  const monthKey =
-    formatMonthForInput(
-      periodRange.start
-    );
+const monthKey =
+formatMonthForInput(
+periodRange.start
+);
 
 
-  const monthlyPlan =
-    appData.monthlyPlans[
-      monthKey
-    ] || null;
+const monthlyPlan =
+appData.monthlyPlans[
+monthKey
+] || null;
 
 
-  const categoryPlannedSeconds =
-    new Map();
+const categoryPlannedSeconds =
+new Map();
 
 
-  const projectPlannedSeconds =
-    new Map();
+const projectPlannedSeconds =
+new Map();
 
 
-  if (!monthlyPlan) {
-    return {
-      hasMonthlyPlan:
-        false,
+if (!monthlyPlan) {
+return {
+hasMonthlyPlan:
+false,
 
-      totalPlannedSeconds:
-        0,
+totalPlannedSeconds:
+0,
 
-      categoryPlannedSeconds:
-        categoryPlannedSeconds,
+categoryPlannedSeconds:
+categoryPlannedSeconds,
 
-      projectPlannedSeconds:
-        projectPlannedSeconds
-    };
-  }
-
-
-  const categories =
-    Array.isArray(
-      monthlyPlan.categories
-    )
-      ? monthlyPlan.categories
-      : [];
+projectPlannedSeconds:
+projectPlannedSeconds
+};
+}
 
 
-  categories.forEach(
-    function(categoryPlan) {
-      const categoryId =
-        String(
-          categoryPlan.categoryId
-        );
+const categories =
+Array.isArray(
+monthlyPlan.categories
+)
+? monthlyPlan.categories
+: [];
 
 
-      categoryPlannedSeconds.set(
-        categoryId,
-
-        Math.max(
-          0,
-
-          Math.round(
-            Number(
-              categoryPlan.plannedMinutes ||
-              0
-            ) *
-            60
-          )
-        )
-      );
+categories.forEach(
+function(categoryPlan) {
+const categoryId =
+String(
+categoryPlan.categoryId
+);
 
 
-      const projects =
-        Array.isArray(
-          categoryPlan.projects
-        )
-          ? categoryPlan.projects
-          : [];
+categoryPlannedSeconds.set(
+categoryId,
+
+Math.max(
+0,
+
+Math.round(
+Number(
+categoryPlan.plannedMinutes ||
+0
+) *
+60
+)
+)
+);
 
 
-      projects.forEach(
-        function(projectPlan) {
-          const projectId =
-            String(
-              projectPlan.projectId
-            );
+const projects =
+Array.isArray(
+categoryPlan.projects
+)
+? categoryPlan.projects
+: [];
 
 
-          projectPlannedSeconds.set(
-            projectId,
-
-            Math.max(
-              0,
-
-              Math.round(
-                Number(
-                  projectPlan.plannedMinutes ||
-                  0
-                ) *
-                60
-              )
-            )
-          );
-        }
-      );
-    }
-  );
+projects.forEach(
+function(projectPlan) {
+const projectId =
+String(
+projectPlan.projectId
+);
 
 
-  return {
-    hasMonthlyPlan:
-      true,
+projectPlannedSeconds.set(
+projectId,
 
-    totalPlannedSeconds:
-      Math.max(
-        0,
+Math.max(
+0,
 
-        Math.round(
-          Number(
-            monthlyPlan.totalMinutes ||
-            0
-          ) *
-          60
-        )
-      ),
+Math.round(
+Number(
+projectPlan.plannedMinutes ||
+0
+) *
+60
+)
+)
+);
+}
+);
+}
+);
 
-    categoryPlannedSeconds:
-      categoryPlannedSeconds,
 
-    projectPlannedSeconds:
-      projectPlannedSeconds
-  };
+return {
+hasMonthlyPlan:
+true,
+
+totalPlannedSeconds:
+Math.max(
+0,
+
+Math.round(
+Number(
+monthlyPlan.totalMinutes ||
+0
+) *
+60
+)
+),
+
+categoryPlannedSeconds:
+categoryPlannedSeconds,
+
+projectPlannedSeconds:
+projectPlannedSeconds
+};
 }
 
 
@@ -1182,60 +1182,60 @@ function calculatePlanForPeriod(
 // ========================================
 
 function isSessionPlanned(
-  session
+session
 ) {
-  const sessionDate =
-    new Date(
-      session.startedAt
-    );
+const sessionDate =
+new Date(
+session.startedAt
+);
 
 
-  const monthKey =
-    formatMonthForInput(
-      sessionDate
-    );
+const monthKey =
+formatMonthForInput(
+sessionDate
+);
 
 
-  const monthlyPlan =
-    appData.monthlyPlans[
-      monthKey
-    ];
+const monthlyPlan =
+appData.monthlyPlans[
+monthKey
+];
 
 
-  if (
-    !monthlyPlan ||
-    !Array.isArray(
-      monthlyPlan.categories
-    )
-  ) {
-    return false;
-  }
+if (
+!monthlyPlan ||
+!Array.isArray(
+monthlyPlan.categories
+)
+) {
+return false;
+}
 
 
-  return monthlyPlan.categories.some(
-    function(categoryPlan) {
-      const projects =
-        Array.isArray(
-          categoryPlan.projects
-        )
-          ? categoryPlan.projects
-          : [];
+return monthlyPlan.categories.some(
+function(categoryPlan) {
+const projects =
+Array.isArray(
+categoryPlan.projects
+)
+? categoryPlan.projects
+: [];
 
 
-      return projects.some(
-        function(projectPlan) {
-          return (
-            String(
-              projectPlan.projectId
-            ) ===
-            String(
-              session.projectId
-            )
-          );
-        }
-      );
-    }
-  );
+return projects.some(
+function(projectPlan) {
+return (
+String(
+projectPlan.projectId
+) ===
+String(
+session.projectId
+)
+);
+}
+);
+}
+);
 }
 
 
@@ -1244,841 +1244,1100 @@ function isSessionPlanned(
 // ========================================
 
 function createSummaryWorkDaysHtml(
-  sessions,
-  emptyMessage
+sessions,
+emptyMessage
 ) {
-  if (
-    !Array.isArray(
-      sessions
-    ) ||
-    sessions.length === 0
-  ) {
-    return `
-      <p class="empty-message">
-        ${escapeHtml(emptyMessage)}
-      </p>
-    `;
-  }
+if (
+!Array.isArray(
+sessions
+) ||
+sessions.length === 0
+) {
+return `
+<p class="empty-message">
+${escapeHtml(emptyMessage)}
+</p>
+`;
+}
 
 
-  const workDayMap =
-    new Map();
+const workDayMap =
+new Map();
 
 
-  sessions.forEach(
-    function(session) {
-      const sessionDate =
-        new Date(
-          session.startedAt
-        );
+sessions.forEach(
+function(session) {
+const sessionDate =
+new Date(
+session.startedAt
+);
 
 
-      const dateKey =
-        formatDateForInput(
-          sessionDate
-        );
+const dateKey =
+formatDateForInput(
+sessionDate
+);
 
 
-      if (
-        !workDayMap.has(
-          dateKey
-        )
-      ) {
-        workDayMap.set(
-          dateKey,
+if (
+!workDayMap.has(
+dateKey
+)
+) {
+workDayMap.set(
+dateKey,
 
-          {
-            date:
-              startOfDay(
-                sessionDate
-              ),
+{
+date:
+startOfDay(
+sessionDate
+),
 
-            totalSeconds:
-              0,
+totalSeconds:
+0,
 
-            items:
-              []
-          }
-        );
-      }
-
-
-      const workDay =
-        workDayMap.get(
-          dateKey
-        );
+items:
+[]
+}
+);
+}
 
 
-      workDay.totalSeconds +=
-        Number(
-          session.elapsedSeconds ||
-          0
-        );
+const workDay =
+workDayMap.get(
+dateKey
+);
 
 
-      const projectInformation =
-        findProjectInformation(
-          session.projectId
-        );
+workDay.totalSeconds +=
+Number(
+session.elapsedSeconds ||
+0
+);
 
 
-      const categoryName =
-        projectInformation
-          ? projectInformation
-              .category.name
-          : "分類情報なし";
+const projectInformation =
+findProjectInformation(
+session.projectId
+);
 
 
-      const projectName =
-        projectInformation
-          ? projectInformation
-              .project.name
-          : "プロジェクト情報なし";
+const categoryName =
+projectInformation
+? projectInformation
+.category.name
+: "分類情報なし";
 
 
-      const notes =
-        Array.isArray(
-          session.notes
-        ) &&
-        session.notes.length > 0
-          ? session.notes
-          : [
-              {
-                text:
-                  "作業内容の記録なし",
-
-                startedAt:
-                  session.startedAt,
-
-                endedAt:
-                  session.endedAt ||
-                  session.startedAt
-              }
-            ];
+const projectName =
+projectInformation
+? projectInformation
+.project.name
+: "プロジェクト情報なし";
 
 
-      notes.forEach(
-        function(note) {
-          const startedAt =
-            Number(
-              note.startedAt
-            ) ||
-            Number(
-              session.startedAt
-            );
+const notes =
+Array.isArray(
+session.notes
+) &&
+session.notes.length > 0
+? session.notes
+: [
+{
+text:
+"作業内容の記録なし",
+
+startedAt:
+session.startedAt,
+
+endedAt:
+session.endedAt ||
+session.startedAt
+}
+];
 
 
-          const endedAt =
-            Number(
-              note.endedAt
-            ) ||
-            Number(
-              note.createdAt
-            ) ||
-            Number(
-              session.endedAt
-            ) ||
-            startedAt;
+notes.forEach(
+function(note) {
+const startedAt =
+Number(
+note.startedAt
+) ||
+Number(
+session.startedAt
+);
 
 
-          workDay.items.push(
-            {
-              startedAt:
-                startedAt,
-
-              endedAt:
-                endedAt,
-
-              categoryName:
-                categoryName,
-
-              projectName:
-                projectName,
-
-              text:
-                note.text ||
-                "作業内容の記録なし"
-            }
-          );
-        }
-      );
-    }
-  );
+const endedAt =
+Number(
+note.endedAt
+) ||
+Number(
+note.createdAt
+) ||
+Number(
+session.endedAt
+) ||
+startedAt;
 
 
-  const workDays =
-    Array.from(
-      workDayMap.values()
-    ).sort(
-      function(a, b) {
-        return (
-          a.date -
-          b.date
-        );
-      }
-    );
+workDay.items.push(
+{
+startedAt:
+startedAt,
+
+endedAt:
+endedAt,
+
+categoryName:
+categoryName,
+
+projectName:
+projectName,
+
+text:
+note.text ||
+"作業内容の記録なし"
+}
+);
+}
+);
+}
+);
 
 
-  return workDays
-    .map(
-      function(workDay) {
-        const items =
-          workDay.items
-            .slice()
-            .sort(
-              function(a, b) {
-                return (
-                  a.startedAt -
-                  b.startedAt
-                );
-              }
-            );
+const workDays =
+Array.from(
+workDayMap.values()
+).sort(
+function(a, b) {
+return (
+a.date -
+b.date
+);
+}
+);
 
 
-        const itemHtml =
-          items
-            .map(
-              function(item) {
-                const elapsedSeconds =
-                  Math.max(
-                    0,
-
-                    Math.floor(
-                      (
-                        item.endedAt -
-                        item.startedAt
-                      ) /
-                      1000
-                    )
-                  );
+return workDays
+.map(
+function(workDay) {
+const items =
+workDay.items
+.slice()
+.sort(
+function(a, b) {
+return (
+a.startedAt -
+b.startedAt
+);
+}
+);
 
 
-                return `
-                  <li>
-                    <time class="work-time-range">
-                      ${formatClockTime(item.startedAt)}
-                      ～
-                      ${formatClockTime(item.endedAt)}
-                    </time>
+const itemHtml =
+items
+.map(
+function(item) {
+const elapsedSeconds =
+Math.max(
+0,
 
-                    <strong class="summary-work-project">
-                      【${escapeHtml(item.categoryName)}/${escapeHtml(item.projectName)}】
-                    </strong>
-
-                    <span class="work-content-text">
-                      ${escapeHtml(item.text)}
-                      （${formatSecondsAsText(elapsedSeconds)}）
-                    </span>
-                  </li>
-                `;
-              }
-            )
-            .join("");
+Math.floor(
+(
+item.endedAt -
+item.startedAt
+) /
+1000
+)
+);
 
 
-        return `
-          <details class="work-day-item is-collapsible">
-            <summary>
-              <time
-                class="work-day-date"
-                datetime="${formatDateForInput(workDay.date)}"
-              >
-                ${formatJapaneseDate(workDay.date)}
-              </time>
+return `
+<li>
+<time class="work-time-range">
+${formatClockTime(item.startedAt)}
+～
+${formatClockTime(item.endedAt)}
+</time>
 
-              <span class="work-day-total">
-                合計
-                ${formatSecondsAsText(workDay.totalSeconds)}
-              </span>
-            </summary>
+<strong class="summary-work-project">
+【${escapeHtml(item.categoryName)}/${escapeHtml(item.projectName)}】
+</strong>
 
-            <div class="work-day-content">
-              <ul class="work-content-list summary-work-content-list">
-                ${itemHtml}
-              </ul>
-            </div>
-          </details>
-        `;
-      }
-    )
-    .join("");
+<span class="work-content-text">
+${escapeHtml(item.text)}
+（${formatSecondsAsText(elapsedSeconds)}）
+</span>
+</li>
+`;
+}
+)
+.join("");
+
+
+return `
+<details class="work-day-item is-collapsible">
+<summary>
+<time
+class="work-day-date"
+datetime="${formatDateForInput(workDay.date)}"
+>
+${formatJapaneseDate(workDay.date)}
+</time>
+
+<span class="work-day-total">
+合計
+${formatSecondsAsText(workDay.totalSeconds)}
+</span>
+</summary>
+
+<div class="work-day-content">
+<ul class="work-content-list summary-work-content-list">
+${itemHtml}
+</ul>
+</div>
+</details>
+`;
+}
+)
+.join("");
 }
 
 
 // ========================================
-// 月間計画と実績のSUMMARY
+// 実績だけのSUMMARY
+// ========================================
+
+function renderActualCurrentSummary(
+sessions
+) {
+const totalSeconds =
+sessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds ||
+0
+)
+);
+},
+
+0
+);
+
+reportTotalTime.textContent =
+formatSecondsAsText(
+totalSeconds
+);
+
+summaryAllWorkDays.innerHTML =
+createSummaryWorkDaysHtml(
+sessions,
+"この期間の作業記録はありません。"
+);
+
+plannedWorkTotal.textContent =
+"";
+
+unplannedWorkTotal.textContent =
+"";
+
+summaryPlannedWorkDays.innerHTML =
+"";
+
+summaryUnplannedWorkDays.innerHTML =
+"";
+
+const summaryDescription =
+document.querySelector(
+".summary-description"
+);
+
+if (summaryDescription) {
+summaryDescription.textContent =
+"大分類を押すとプロジェクト一覧を表示します。プロジェクトを押すと作業記録を確認できます。";
+}
+
+const recordedProjectIds =
+new Set(
+sessions.map(
+function(session) {
+return String(
+session.projectId
+);
+}
+)
+);
+
+const periodCategories =
+appData.categories.filter(
+function(category) {
+const projects =
+Array.isArray(
+category.projects
+)
+? category.projects
+: [];
+
+return projects.some(
+function(project) {
+return recordedProjectIds.has(
+String(
+project.id
+)
+);
+}
+);
+}
+);
+
+if (
+periodCategories.length === 0
+) {
+categorySummaryList.innerHTML = `
+<p class="empty-message">
+この期間の作業記録はありません。
+</p>
+`;
+
+return;
+}
+
+categorySummaryList.innerHTML =
+periodCategories
+.map(
+function(category) {
+const allProjects =
+Array.isArray(
+category.projects
+)
+? category.projects
+: [];
+
+const periodProjects =
+allProjects.filter(
+function(project) {
+return recordedProjectIds.has(
+String(
+project.id
+)
+);
+}
+);
+
+const categoryProjectIds =
+new Set(
+periodProjects.map(
+function(project) {
+return String(
+project.id
+);
+}
+)
+);
+
+const categorySessions =
+sessions.filter(
+function(session) {
+return categoryProjectIds.has(
+String(
+session.projectId
+)
+);
+}
+);
+
+const categoryActualSeconds =
+categorySessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds ||
+0
+)
+);
+},
+
+0
+);
+
+const projectHtml =
+periodProjects
+.map(
+function(project) {
+const projectSessions =
+categorySessions.filter(
+function(session) {
+return (
+String(
+session.projectId
+) ===
+String(
+project.id
+)
+);
+}
+);
+
+const projectActualSeconds =
+projectSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds ||
+0
+)
+);
+},
+
+0
+);
+
+const workDays =
+groupSessionsByDay(
+projectSessions
+);
+
+return `
+<details class="summary-project-item">
+<summary>
+<div class="summary-project-overview">
+<div class="category-summary-heading">
+<span class="category-summary-name">
+${escapeHtml(project.name)}
+</span>
+
+<span class="category-summary-times">
+${formatSecondsAsText(projectActualSeconds)}
+</span>
+</div>
+</div>
+</summary>
+
+<div class="summary-project-detail">
+${createWorkDayHtml(
+workDays,
+true
+)}
+</div>
+</details>
+`;
+}
+)
+.join("");
+
+return `
+<details class="category-summary-item">
+<summary>
+<div class="category-summary-overview">
+<div class="category-summary-heading">
+<span class="category-summary-name">
+${escapeHtml(category.name)}
+</span>
+
+<span class="category-summary-times">
+${formatSecondsAsText(categoryActualSeconds)}
+</span>
+</div>
+</div>
+</summary>
+
+<div class="summary-project-list">
+${projectHtml}
+</div>
+</details>
+`;
+}
+)
+.join("");
+}
+
+
+// ========================================
+// 月間計画と実績の旧SUMMARY
 // ========================================
 
 function renderCurrentSummary(
-  sessions,
-  periodRange
+sessions,
+periodRange
 ) {
-  const periodPlan =
-    calculatePlanForPeriod(
-      periodRange
-    );
-
-
-  const recordedProjectIds =
-    new Set(
-      sessions.map(
-        function(session) {
-          return String(
-            session.projectId
-          );
-        }
-      )
-    );
-
-
-  const plannedProjectIds =
-    new Set(
-      periodPlan
-        .projectPlannedSeconds
-        .keys()
-    );
-
-
-  const summaryProjectIds =
-    new Set(
-      [
-        ...recordedProjectIds,
-        ...plannedProjectIds
-      ]
-    );
-
-
-  const plannedCategoryIds =
-    new Set(
-      periodPlan
-        .categoryPlannedSeconds
-        .keys()
-    );
-
-
-  const periodCategories =
-    appData.categories.filter(
-      function(category) {
-        const projects =
-          Array.isArray(
-            category.projects
-          )
-            ? category.projects
-            : [];
-
-
-        return (
-          plannedCategoryIds.has(
-            String(
-              category.id
-            )
-          ) ||
-          projects.some(
-            function(project) {
-              return summaryProjectIds.has(
-                String(
-                  project.id
-                )
-              );
-            }
-          )
-        );
-      }
-    );
-
-
-  const totalSeconds =
-    sessions.reduce(
-      function(
-        total,
-        session
-      ) {
-        return (
-          total +
-          Number(
-            session.elapsedSeconds || 0
-          )
-        );
-      },
-
-      0
-    );
-
-
-  const periodPlannedSeconds =
-    periodPlan.totalPlannedSeconds;
-
-
-  const plannedSessions =
-    sessions.filter(
-      function(session) {
-        return isSessionPlanned(
-          session
-        );
-      }
-    );
-
-
-  const unplannedSessions =
-    sessions.filter(
-      function(session) {
-        return !isSessionPlanned(
-          session
-        );
-      }
-    );
-
-
-  const plannedActualSeconds =
-    plannedSessions.reduce(
-      function(
-        total,
-        session
-      ) {
-        return (
-          total +
-          Number(
-            session.elapsedSeconds ||
-            0
-          )
-        );
-      },
-
-      0
-    );
-
-
-  const unplannedActualSeconds =
-    unplannedSessions.reduce(
-      function(
-        total,
-        session
-      ) {
-        return (
-          total +
-          Number(
-            session.elapsedSeconds ||
-            0
-          )
-        );
-      },
-
-      0
-    );
-
-
-  reportTotalTime.textContent =
-    formatSecondsAsText(
-      totalSeconds
-    ) +
-    " / " +
-    (
-      periodPlan.hasMonthlyPlan
-        ? formatSecondsAsText(
-            periodPlannedSeconds
-          )
-        : "計画なし"
-    );
-
-
-  plannedWorkTotal.textContent =
-    formatSecondsAsText(
-      plannedActualSeconds
-    );
-
-
-  unplannedWorkTotal.textContent =
-    formatSecondsAsText(
-      unplannedActualSeconds
-    );
-
-
-  summaryAllWorkDays.innerHTML =
-    createSummaryWorkDaysHtml(
-      sessions,
-      "この期間の作業記録はありません。"
-    );
-
-
-  summaryPlannedWorkDays.innerHTML =
-    createSummaryWorkDaysHtml(
-      plannedSessions,
-      "この期間の計画内作業はありません。"
-    );
-
-
-  summaryUnplannedWorkDays.innerHTML =
-    createSummaryWorkDaysHtml(
-      unplannedSessions,
-      "この期間の計画外作業はありません。"
-    );
-
-
-  const summaryDescription =
-    document.querySelector(
-      ".summary-description"
-    );
-
-
-  if (summaryDescription) {
-    summaryDescription.textContent =
-      periodPlan.hasMonthlyPlan
-        ? "月間計画に含まれるプロジェクトは、実績がない場合も表示します。計画にない作業には「予定外」と表示します。"
-        : "この期間には月間計画がありません。記録された作業は「予定外」として表示します。";
-  }
-
-
-  if (
-    periodCategories.length === 0
-  ) {
-    categorySummaryList.innerHTML = `
-      <p class="empty-message">
-        この期間の月間計画と作業記録はありません。
-      </p>
-    `;
-
-    return;
-  }
-
-
-  categorySummaryList.innerHTML =
-    periodCategories
-      .map(
-        function(category) {
-          const allProjects =
-            Array.isArray(
-              category.projects
-            )
-              ? category.projects
-              : [];
-
-
-          const periodProjects =
-            allProjects
-              .filter(
-                function(project) {
-                  return summaryProjectIds.has(
-                    String(
-                      project.id
-                    )
-                  );
-                }
-              )
-              .sort(
-                function(a, b) {
-                  const aIsPlanned =
-                    plannedProjectIds.has(
-                      String(
-                        a.id
-                      )
-                    );
-
-
-                  const bIsPlanned =
-                    plannedProjectIds.has(
-                      String(
-                        b.id
-                      )
-                    );
-
-
-                  if (
-                    aIsPlanned ===
-                    bIsPlanned
-                  ) {
-                    return 0;
-                  }
-
-
-                  return aIsPlanned
-                    ? -1
-                    : 1;
-                }
-              );
-
-
-          const categoryProjectIds =
-            new Set(
-              periodProjects.map(
-                function(project) {
-                  return project.id;
-                }
-              )
-            );
-
-
-          const categorySessions =
-            sessions.filter(
-              function(session) {
-                return categoryProjectIds.has(
-                  session.projectId
-                );
-              }
-            );
-
-
-          const categoryActualSeconds =
-            categorySessions.reduce(
-              function(
-                total,
-                session
-              ) {
-                return (
-                  total +
-                  Number(
-                    session.elapsedSeconds || 0
-                  )
-                );
-              },
-
-              0
-            );
-
-
-          const categoryPlannedSeconds =
-            periodPlan
-              .categoryPlannedSeconds
-              .get(
-                String(
-                  category.id
-                )
-              ) ||
-            0;
-
-
-          const categoryProgressRate =
-            calculateProgressRate(
-              categoryActualSeconds,
-              categoryPlannedSeconds
-            );
-
-
-          const categoryProgressWidth =
-            calculateProgressWidth(
-              categoryActualSeconds,
-              categoryPlannedSeconds
-            );
-
-
-          const categoryStatus =
-            createProgressStatus(
-              categoryActualSeconds,
-              categoryPlannedSeconds
-            );
-
-
-          const projectHtml =
-            periodProjects
-              .map(
-                function(project) {
-                  const projectSessions =
-                    categorySessions.filter(
-                      function(session) {
-                        return (
-                          session.projectId ===
-                          project.id
-                        );
-                      }
-                    );
-
-
-                  const projectActualSeconds =
-                    projectSessions.reduce(
-                      function(
-                        total,
-                        session
-                      ) {
-                        return (
-                          total +
-                          Number(
-                            session.elapsedSeconds || 0
-                          )
-                        );
-                      },
-
-                      0
-                    );
-
-
-                  const projectPlannedSeconds =
-                    periodPlan
-                      .projectPlannedSeconds
-                      .get(
-                        String(
-                          project.id
-                        )
-                      ) ||
-                    0;
-
-
-                  const isUnplannedWork =
-                    !plannedProjectIds.has(
-                      String(
-                        project.id
-                      )
-                    ) &&
-                    projectActualSeconds > 0;
-
-
-                  const planStatusLabel =
-                    isUnplannedWork
-                      ? `
-                        <span class="unplanned-work-label">
-                          予定外
-                        </span>
-                      `
-                      : "";
-
-
-                  const projectProgressRate =
-                    calculateProgressRate(
-                      projectActualSeconds,
-                      projectPlannedSeconds
-                    );
-
-
-                  const projectProgressWidth =
-                    calculateProgressWidth(
-                      projectActualSeconds,
-                      projectPlannedSeconds
-                    );
-
-
-                  const projectStatus =
-                    createProgressStatus(
-                      projectActualSeconds,
-                      projectPlannedSeconds
-                    );
-
-
-                  const workDays =
-                    groupSessionsByDay(
-                      projectSessions
-                    );
-
-
-                  return `
-                    <details class="summary-project-item">
-                      <summary>
-                        <div class="summary-project-overview">
-                          <div class="category-summary-heading">
-                            <span class="category-summary-name">
-                              ${escapeHtml(project.name)}
-
-                              ${planStatusLabel}
-
-                              ${
-                                isUnplannedWork
-                                  ? ""
-                                  : `
-                                    <strong class="progress-percentage">
-                                      ${projectProgressRate}
-                                    </strong>
-                                  `
-                              }
-                            </span>
-                            <span class="category-summary-times">
-                              実績
-                              ${formatSecondsAsText(projectActualSeconds)}
-                              ／
-                              ${
-                                isUnplannedWork
-                                  ? "予定なし"
-                                  : (
-                                      "予定 " +
-                                      formatSecondsAsText(
-                                        projectPlannedSeconds
-                                      )
-                                    )
-                              }
-                            </span>
-                          </div>
-
-                          ${
-                            isUnplannedWork
-                              ? `
-                                <p class="category-summary-status is-unplanned">
-                                  月間計画にない作業です。
-                                </p>
-                              `
-                              : `
-                                <div class="progress-bar">
-                                  <span
-                                    class="progress-bar__value"
-                                    style="width: ${projectProgressWidth}%"
-                                  ></span>
-                                </div>
-
-                                <p
-                                  class="category-summary-status${projectStatus.isOver ? " is-over" : ""}"
-                                >
-                                  ${projectStatus.message}
-                                </p>
-                              `
-                          }
-                        </div>
-                      </summary>
-
-                      <div class="summary-project-detail">
-                        ${
-                          createWorkDayHtml(
-                            workDays,
-                            true
-                          )
-                        }
-                      </div>
-                    </details>
-                  `;
-                }
-              )
-              .join("");
-
-
-          return `
-            <details class="category-summary-item">
-              <summary>
-                <div class="category-summary-overview">
-                  <div class="category-summary-heading">
-                    <span class="category-summary-name">
-                      ${escapeHtml(category.name)}
-
-                      <strong class="progress-percentage">
-                        ${categoryProgressRate}
-                      </strong>
-                    </span>
-
-                    <span class="category-summary-times">
-                      実績
-                      ${formatSecondsAsText(categoryActualSeconds)}
-                      ／
-                      予定
-                      ${formatSecondsAsText(categoryPlannedSeconds)}
-                    </span>
-                  </div>
-
-                  <div class="progress-bar">
-                    <span
-                      class="progress-bar__value"
-                      style="width: ${categoryProgressWidth}%"
-                    ></span>
-                  </div>
-
-                  <p
-                    class="category-summary-status${categoryStatus.isOver ? " is-over" : ""}"
-                  >
-                    ${categoryStatus.message}
-                  </p>
-                </div>
-              </summary>
-
-              <div class="summary-project-list">
-                ${projectHtml}
-              </div>
-            </details>
-          `;
-        }
-      )
-      .join("");
+renderActualCurrentSummary(
+sessions
+);
+
+return;
+
+const periodPlan =
+calculatePlanForPeriod(
+periodRange
+);
+
+
+const recordedProjectIds =
+new Set(
+sessions.map(
+function(session) {
+return String(
+session.projectId
+);
+}
+)
+);
+
+
+const plannedProjectIds =
+new Set(
+periodPlan
+.projectPlannedSeconds
+.keys()
+);
+
+
+const summaryProjectIds =
+new Set(
+[
+...recordedProjectIds,
+...plannedProjectIds
+]
+);
+
+
+const plannedCategoryIds =
+new Set(
+periodPlan
+.categoryPlannedSeconds
+.keys()
+);
+
+
+const periodCategories =
+appData.categories.filter(
+function(category) {
+const projects =
+Array.isArray(
+category.projects
+)
+? category.projects
+: [];
+
+
+return (
+plannedCategoryIds.has(
+String(
+category.id
+)
+) ||
+projects.some(
+function(project) {
+return summaryProjectIds.has(
+String(
+project.id
+)
+);
+}
+)
+);
+}
+);
+
+
+const totalSeconds =
+sessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds || 0
+)
+);
+},
+
+0
+);
+
+
+const periodPlannedSeconds =
+periodPlan.totalPlannedSeconds;
+
+
+const plannedSessions =
+sessions.filter(
+function(session) {
+return isSessionPlanned(
+session
+);
+}
+);
+
+
+const unplannedSessions =
+sessions.filter(
+function(session) {
+return !isSessionPlanned(
+session
+);
+}
+);
+
+
+const plannedActualSeconds =
+plannedSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds ||
+0
+)
+);
+},
+
+0
+);
+
+
+const unplannedActualSeconds =
+unplannedSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds ||
+0
+)
+);
+},
+
+0
+);
+
+
+reportTotalTime.textContent =
+formatSecondsAsText(
+totalSeconds
+);
+
+
+plannedWorkTotal.textContent =
+formatSecondsAsText(
+plannedActualSeconds
+);
+
+
+unplannedWorkTotal.textContent =
+formatSecondsAsText(
+unplannedActualSeconds
+);
+
+
+summaryAllWorkDays.innerHTML =
+createSummaryWorkDaysHtml(
+sessions,
+"この期間の作業記録はありません。"
+);
+
+
+summaryPlannedWorkDays.innerHTML =
+createSummaryWorkDaysHtml(
+plannedSessions,
+"この期間の計画内作業はありません。"
+);
+
+
+summaryUnplannedWorkDays.innerHTML =
+createSummaryWorkDaysHtml(
+unplannedSessions,
+"この期間の計画外作業はありません。"
+);
+
+
+const summaryDescription =
+document.querySelector(
+".summary-description"
+);
+
+
+if (summaryDescription) {
+summaryDescription.textContent =
+periodPlan.hasMonthlyPlan
+? "月間計画に含まれるプロジェクトは、実績がない場合も表示します。計画にない作業には「予定外」と表示します。"
+: "この期間には月間計画がありません。記録された作業は「予定外」として表示します。";
+}
+
+
+if (
+periodCategories.length === 0
+) {
+categorySummaryList.innerHTML = `
+<p class="empty-message">
+この期間の月間計画と作業記録はありません。
+</p>
+`;
+
+return;
+}
+
+
+categorySummaryList.innerHTML =
+periodCategories
+.map(
+function(category) {
+const allProjects =
+Array.isArray(
+category.projects
+)
+? category.projects
+: [];
+
+
+const periodProjects =
+allProjects
+.filter(
+function(project) {
+return summaryProjectIds.has(
+String(
+project.id
+)
+);
+}
+)
+.sort(
+function(a, b) {
+const aIsPlanned =
+plannedProjectIds.has(
+String(
+a.id
+)
+);
+
+
+const bIsPlanned =
+plannedProjectIds.has(
+String(
+b.id
+)
+);
+
+
+if (
+aIsPlanned ===
+bIsPlanned
+) {
+return 0;
+}
+
+
+return aIsPlanned
+? -1
+: 1;
+}
+);
+
+
+const categoryProjectIds =
+new Set(
+periodProjects.map(
+function(project) {
+return project.id;
+}
+)
+);
+
+
+const categorySessions =
+sessions.filter(
+function(session) {
+return categoryProjectIds.has(
+session.projectId
+);
+}
+);
+
+
+const categoryActualSeconds =
+categorySessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds || 0
+)
+);
+},
+
+0
+);
+
+
+const categoryPlannedSeconds =
+periodPlan
+.categoryPlannedSeconds
+.get(
+String(
+category.id
+)
+) ||
+0;
+
+
+const categoryProgressRate =
+calculateProgressRate(
+categoryActualSeconds,
+categoryPlannedSeconds
+);
+
+
+const categoryProgressWidth =
+calculateProgressWidth(
+categoryActualSeconds,
+categoryPlannedSeconds
+);
+
+
+const categoryStatus =
+createProgressStatus(
+categoryActualSeconds,
+categoryPlannedSeconds
+);
+
+
+const projectHtml =
+periodProjects
+.map(
+function(project) {
+const projectSessions =
+categorySessions.filter(
+function(session) {
+return (
+session.projectId ===
+project.id
+);
+}
+);
+
+
+const projectActualSeconds =
+projectSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds || 0
+)
+);
+},
+
+0
+);
+
+
+const projectPlannedSeconds =
+periodPlan
+.projectPlannedSeconds
+.get(
+String(
+project.id
+)
+) ||
+0;
+
+
+const isUnplannedWork =
+!plannedProjectIds.has(
+String(
+project.id
+)
+) &&
+projectActualSeconds > 0;
+
+
+const planStatusLabel =
+isUnplannedWork
+? `
+<span class="unplanned-work-label">
+予定外
+</span>
+`
+: "";
+
+
+const projectProgressRate =
+calculateProgressRate(
+projectActualSeconds,
+projectPlannedSeconds
+);
+
+
+const projectProgressWidth =
+calculateProgressWidth(
+projectActualSeconds,
+projectPlannedSeconds
+);
+
+
+const projectStatus =
+createProgressStatus(
+projectActualSeconds,
+projectPlannedSeconds
+);
+
+
+const workDays =
+groupSessionsByDay(
+projectSessions
+);
+
+
+return `
+<details class="summary-project-item">
+<summary>
+<div class="summary-project-overview">
+<div class="category-summary-heading">
+<span class="category-summary-name">
+${escapeHtml(project.name)}
+
+${planStatusLabel}
+
+${
+isUnplannedWork
+? ""
+: `
+<strong class="progress-percentage">
+${projectProgressRate}
+</strong>
+`
+}
+</span>
+<span class="category-summary-times">
+実績
+${formatSecondsAsText(projectActualSeconds)}
+／
+${
+isUnplannedWork
+? "予定なし"
+: (
+"予定 " +
+formatSecondsAsText(
+projectPlannedSeconds
+)
+)
+}
+</span>
+</div>
+
+${
+isUnplannedWork
+? `
+<p class="category-summary-status is-unplanned">
+月間計画にない作業です。
+</p>
+`
+: `
+<div class="progress-bar">
+<span
+class="progress-bar__value"
+style="width: ${projectProgressWidth}%"
+></span>
+</div>
+
+<p
+class="category-summary-status${projectStatus.isOver ? " is-over" : ""}"
+>
+${projectStatus.message}
+</p>
+`
+}
+</div>
+</summary>
+
+<div class="summary-project-detail">
+${
+createWorkDayHtml(
+workDays,
+true
+)
+}
+</div>
+</details>
+`;
+}
+)
+.join("");
+
+
+return `
+<details class="category-summary-item">
+<summary>
+<div class="category-summary-overview">
+<div class="category-summary-heading">
+<span class="category-summary-name">
+${escapeHtml(category.name)}
+
+<strong class="progress-percentage">
+${categoryProgressRate}
+</strong>
+</span>
+
+<span class="category-summary-times">
+実績
+${formatSecondsAsText(categoryActualSeconds)}
+／
+予定
+${formatSecondsAsText(categoryPlannedSeconds)}
+</span>
+</div>
+
+<div class="progress-bar">
+<span
+class="progress-bar__value"
+style="width: ${categoryProgressWidth}%"
+></span>
+</div>
+
+<p
+class="category-summary-status${categoryStatus.isOver ? " is-over" : ""}"
+>
+${categoryStatus.message}
+</p>
+</div>
+</summary>
+
+<div class="summary-project-list">
+${projectHtml}
+</div>
+</details>
+`;
+}
+)
+.join("");
 }
 
 
@@ -2087,163 +2346,163 @@ function renderCurrentSummary(
 // ========================================
 
 function renderCurrentProjectReports() {
-  const categoryItems =
-    [];
+const categoryItems =
+[];
 
 
-  appData.categories.forEach(
-    function(category) {
-      const projects =
-        Array.isArray(
-          category.projects
-        )
-          ? category.projects.filter(
-              function(project) {
-                return (
-                  project.isCurrent !==
-                  false
-                );
-              }
-            )
-          : [];
+appData.categories.forEach(
+function(category) {
+const projects =
+Array.isArray(
+category.projects
+)
+? category.projects.filter(
+function(project) {
+return (
+project.isCurrent !==
+false
+);
+}
+)
+: [];
 
 
-      if (projects.length === 0) {
-        return;
-      }
+if (projects.length === 0) {
+return;
+}
 
 
-      const projectItems =
-        projects
-          .map(
-            function(project) {
-              const projectSessions =
-                appData.sessions.filter(
-                  function(session) {
-                    return (
-                      session.projectId ===
-                      project.id
-                    );
-                  }
-                );
+const projectItems =
+projects
+.map(
+function(project) {
+const projectSessions =
+appData.sessions.filter(
+function(session) {
+return (
+session.projectId ===
+project.id
+);
+}
+);
 
 
-              const totalSeconds =
-                projectSessions.reduce(
-                  function(
-                    total,
-                    session
-                  ) {
-                    return (
-                      total +
-                      Number(
-                        session.elapsedSeconds || 0
-                      )
-                    );
-                  },
+const totalSeconds =
+projectSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds || 0
+)
+);
+},
 
-                  0
-                );
-
-
-              const workDays =
-                groupSessionsByDay(
-                  projectSessions
-                );
+0
+);
 
 
-              let workPeriodText =
-                "作業記録なし";
+const workDays =
+groupSessionsByDay(
+projectSessions
+);
 
 
-              if (workDays.length > 0) {
-                const newestDate =
-                  workDays[0].date;
+let workPeriodText =
+"作業記録なし";
 
 
-                const oldestDate =
-                  workDays[
-                    workDays.length - 1
-                  ].date;
+if (workDays.length > 0) {
+const newestDate =
+workDays[0].date;
 
 
-                workPeriodText =
-                  formatJapaneseDate(
-                    oldestDate
-                  ) +
-                  " ～ " +
-                  formatJapaneseDate(
-                    newestDate
-                  );
-              }
+const oldestDate =
+workDays[
+workDays.length - 1
+].date;
 
 
-              return `
-                <details class="project-report-item">
-                  <summary>
-                    <span class="project-name">
-                      ${escapeHtml(project.name)}
-                    </span>
-
-                    <span class="project-total-information">
-                      <span class="project-total-time">
-                        ${formatSecondsAsText(totalSeconds)}
-                      </span>
-
-                      <span class="project-work-days">
-                        作業日数：
-                        ${workDays.length}日
-                      </span>
-                    </span>
-                  </summary>
-
-                  <div class="project-detail">
-                    <p class="archive-work-period">
-                      作業期間：
-                      ${workPeriodText}
-                    </p>
-
-                    ${createWorkDayHtml(workDays)}
-                  </div>
-                </details>
-              `;
-            }
-          )
-          .join("");
+workPeriodText =
+formatJapaneseDate(
+oldestDate
+) +
+" ～ " +
+formatJapaneseDate(
+newestDate
+);
+}
 
 
-      categoryItems.push(`
-        <details class="archive-category-item">
-          <summary>
-            <strong>
-              ${escapeHtml(category.name)}
-            </strong>
-          </summary>
+return `
+<details class="project-report-item">
+<summary>
+<span class="project-name">
+${escapeHtml(project.name)}
+</span>
 
-          <div class="archive-project-list">
-            ${projectItems}
-          </div>
-        </details>
-      `);
-    }
-  );
+<span class="project-total-information">
+<span class="project-total-time">
+${formatSecondsAsText(totalSeconds)}
+</span>
+
+<span class="project-work-days">
+作業日数：
+${workDays.length}日
+</span>
+</span>
+</summary>
+
+<div class="project-detail">
+<p class="archive-work-period">
+作業期間：
+${workPeriodText}
+</p>
+
+${createWorkDayHtml(workDays)}
+</div>
+</details>
+`;
+}
+)
+.join("");
 
 
-  if (
-    categoryItems.length === 0
-  ) {
-    currentProjectList.innerHTML = `
-      <p class="empty-message">
-        現在のプロジェクトはありません。
-      </p>
-    `;
+categoryItems.push(`
+<details class="archive-category-item">
+<summary>
+<strong>
+${escapeHtml(category.name)}
+</strong>
+</summary>
 
-    return;
-  }
+<div class="archive-project-list">
+${projectItems}
+</div>
+</details>
+`);
+}
+);
 
 
-  currentProjectList.innerHTML =
-    categoryItems.join("");
+if (
+categoryItems.length === 0
+) {
+currentProjectList.innerHTML = `
+<p class="empty-message">
+現在のプロジェクトはありません。
+</p>
+`;
+
+return;
+}
+
+
+currentProjectList.innerHTML =
+categoryItems.join("");
 }
 
 
@@ -2252,163 +2511,163 @@ function renderCurrentProjectReports() {
 // ========================================
 
 function renderArchiveReports() {
-  const categoryItems =
-    [];
+const categoryItems =
+[];
 
 
-  appData.categories.forEach(
-    function(category) {
-      const projects =
-        Array.isArray(
-          category.projects
-        )
-          ? category.projects.filter(
-              function(project) {
-                return (
-                  project.isCurrent ===
-                  false
-                );
-              }
-            )
-          : [];
+appData.categories.forEach(
+function(category) {
+const projects =
+Array.isArray(
+category.projects
+)
+? category.projects.filter(
+function(project) {
+return (
+project.isCurrent ===
+false
+);
+}
+)
+: [];
 
 
-      if (projects.length === 0) {
-        return;
-      }
+if (projects.length === 0) {
+return;
+}
 
 
-      const projectItems =
-        projects
-          .map(
-            function(project) {
-              const projectSessions =
-                appData.sessions.filter(
-                  function(session) {
-                    return (
-                      session.projectId ===
-                      project.id
-                    );
-                  }
-                );
+const projectItems =
+projects
+.map(
+function(project) {
+const projectSessions =
+appData.sessions.filter(
+function(session) {
+return (
+session.projectId ===
+project.id
+);
+}
+);
 
 
-              const totalSeconds =
-                projectSessions.reduce(
-                  function(
-                    total,
-                    session
-                  ) {
-                    return (
-                      total +
-                      Number(
-                        session.elapsedSeconds || 0
-                      )
-                    );
-                  },
+const totalSeconds =
+projectSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds || 0
+)
+);
+},
 
-                  0
-                );
-
-
-              const workDays =
-                groupSessionsByDay(
-                  projectSessions
-                );
+0
+);
 
 
-              let workPeriodText =
-                "作業記録なし";
+const workDays =
+groupSessionsByDay(
+projectSessions
+);
 
 
-              if (workDays.length > 0) {
-                const newestDate =
-                  workDays[0].date;
+let workPeriodText =
+"作業記録なし";
 
 
-                const oldestDate =
-                  workDays[
-                    workDays.length - 1
-                  ].date;
+if (workDays.length > 0) {
+const newestDate =
+workDays[0].date;
 
 
-                workPeriodText =
-                  formatJapaneseDate(
-                    oldestDate
-                  ) +
-                  " ～ " +
-                  formatJapaneseDate(
-                    newestDate
-                  );
-              }
+const oldestDate =
+workDays[
+workDays.length - 1
+].date;
 
 
-              return `
-                <details class="project-report-item">
-                  <summary>
-                    <span class="project-name">
-                      ${escapeHtml(project.name)}
-                    </span>
-
-                    <span class="project-total-information">
-                      <span class="project-total-time">
-                        ${formatSecondsAsText(totalSeconds)}
-                      </span>
-
-                      <span class="project-work-days">
-                        作業日数：
-                        ${workDays.length}日
-                      </span>
-                    </span>
-                  </summary>
-
-                  <div class="project-detail">
-                    <p class="archive-work-period">
-                      作業期間：
-                      ${workPeriodText}
-                    </p>
-
-                    ${createWorkDayHtml(workDays)}
-                  </div>
-                </details>
-              `;
-            }
-          )
-          .join("");
+workPeriodText =
+formatJapaneseDate(
+oldestDate
+) +
+" ～ " +
+formatJapaneseDate(
+newestDate
+);
+}
 
 
-      categoryItems.push(`
-        <details class="archive-category-item">
-          <summary>
-            <strong>
-              ${escapeHtml(category.name)}
-            </strong>
-          </summary>
+return `
+<details class="project-report-item">
+<summary>
+<span class="project-name">
+${escapeHtml(project.name)}
+</span>
 
-          <div class="archive-project-list">
-            ${projectItems}
-          </div>
-        </details>
-      `);
-    }
-  );
+<span class="project-total-information">
+<span class="project-total-time">
+${formatSecondsAsText(totalSeconds)}
+</span>
+
+<span class="project-work-days">
+作業日数：
+${workDays.length}日
+</span>
+</span>
+</summary>
+
+<div class="project-detail">
+<p class="archive-work-period">
+作業期間：
+${workPeriodText}
+</p>
+
+${createWorkDayHtml(workDays)}
+</div>
+</details>
+`;
+}
+)
+.join("");
 
 
-  if (
-    categoryItems.length === 0
-  ) {
-    projectReportList.innerHTML = `
-      <p class="empty-message">
-        アーカイブされたプロジェクトはありません。
-      </p>
-    `;
+categoryItems.push(`
+<details class="archive-category-item">
+<summary>
+<strong>
+${escapeHtml(category.name)}
+</strong>
+</summary>
 
-    return;
-  }
+<div class="archive-project-list">
+${projectItems}
+</div>
+</details>
+`);
+}
+);
 
 
-  projectReportList.innerHTML =
-    categoryItems.join("");
+if (
+categoryItems.length === 0
+) {
+projectReportList.innerHTML = `
+<p class="empty-message">
+アーカイブされたプロジェクトはありません。
+</p>
+`;
+
+return;
+}
+
+
+projectReportList.innerHTML =
+categoryItems.join("");
 }
 
 
@@ -2417,152 +2676,152 @@ function renderArchiveReports() {
 // ========================================
 
 function renderCategorySummary(
-  sessions
+sessions
 ) {
-  const totalSeconds =
-    sessions.reduce(
-      function(
-        total,
-        session
-      ) {
-        return (
-          total +
-          Number(
-            session.elapsedSeconds
-          )
-        );
-      },
+const totalSeconds =
+sessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds
+)
+);
+},
 
-      0
-    );
-
-
-  reportTotalTime.textContent =
-    formatSecondsAsText(
-      totalSeconds
-    );
+0
+);
 
 
-  if (
-    !Array.isArray(
-      appData.categories
-    ) ||
-    appData.categories.length === 0
-  ) {
-    categorySummaryList.innerHTML = `
-      <p class="empty-message">
-        大分類が設定されていません。
-      </p>
-    `;
-
-    return;
-  }
+reportTotalTime.textContent =
+formatSecondsAsText(
+totalSeconds
+);
 
 
-  const periodHours =
-    getSelectedPeriodHours();
+if (
+!Array.isArray(
+appData.categories
+) ||
+appData.categories.length === 0
+) {
+categorySummaryList.innerHTML = `
+<p class="empty-message">
+大分類が設定されていません。
+</p>
+`;
+
+return;
+}
 
 
-  categorySummaryList.innerHTML =
-    appData.categories
-      .map(
-        function(category) {
-          const plannedSeconds =
-            Math.round(
-              periodHours *
-              Number(
-                category.allocationPercent
-              ) /
-              100 *
-              3600
-            );
+const periodHours =
+getSelectedPeriodHours();
 
 
-          const actualSeconds =
-            sessions
-              .filter(
-                function(session) {
-                  return (
-                    session.categoryId ===
-                    category.id
-                  );
-                }
-              )
-              .reduce(
-                function(
-                  total,
-                  session
-                ) {
-                  return (
-                    total +
-                    Number(
-                      session.elapsedSeconds
-                    )
-                  );
-                },
-
-                0
-              );
+categorySummaryList.innerHTML =
+appData.categories
+.map(
+function(category) {
+const plannedSeconds =
+Math.round(
+periodHours *
+Number(
+category.allocationPercent
+) /
+100 *
+3600
+);
 
 
-          const progressRate =
-            calculateProgressRate(
-              actualSeconds,
-              plannedSeconds
-            );
+const actualSeconds =
+sessions
+.filter(
+function(session) {
+return (
+session.categoryId ===
+category.id
+);
+}
+)
+.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds
+)
+);
+},
+
+0
+);
 
 
-          const progressWidth =
-            calculateProgressWidth(
-              actualSeconds,
-              plannedSeconds
-            );
+const progressRate =
+calculateProgressRate(
+actualSeconds,
+plannedSeconds
+);
 
 
-          const status =
-            createProgressStatus(
-              actualSeconds,
-              plannedSeconds
-            );
+const progressWidth =
+calculateProgressWidth(
+actualSeconds,
+plannedSeconds
+);
 
 
-          return `
-            <article class="category-summary-item">
-              <div class="category-summary-heading">
-                <span class="category-summary-name">
-                  ${escapeHtml(category.name)}
+const status =
+createProgressStatus(
+actualSeconds,
+plannedSeconds
+);
 
-                  <strong class="progress-percentage">
-                    ${progressRate}
-                  </strong>
-                </span>
 
-                <span class="category-summary-times">
-                  実績
-                  ${formatSecondsAsText(actualSeconds)}
-                  ／
-                  予定
-                  ${formatSecondsAsText(plannedSeconds)}
-                </span>
-              </div>
+return `
+<article class="category-summary-item">
+<div class="category-summary-heading">
+<span class="category-summary-name">
+${escapeHtml(category.name)}
 
-              <div class="progress-bar">
-                <span
-                  class="progress-bar__value"
-                  style="width: ${progressWidth}%"
-                ></span>
-              </div>
+<strong class="progress-percentage">
+${progressRate}
+</strong>
+</span>
 
-              <p
-                class="category-summary-status${status.isOver ? " is-over" : ""}"
-              >
-                ${status.message}
-              </p>
-            </article>
-          `;
-        }
-      )
-      .join("");
+<span class="category-summary-times">
+実績
+${formatSecondsAsText(actualSeconds)}
+／
+予定
+${formatSecondsAsText(plannedSeconds)}
+</span>
+</div>
+
+<div class="progress-bar">
+<span
+class="progress-bar__value"
+style="width: ${progressWidth}%"
+></span>
+</div>
+
+<p
+class="category-summary-status${status.isOver ? " is-over" : ""}"
+>
+${status.message}
+</p>
+</article>
+`;
+}
+)
+.join("");
 }
 
 
@@ -2571,136 +2830,136 @@ function renderCategorySummary(
 // ========================================
 
 function renderProjectReports(
-  sessions
+sessions
 ) {
-  const periodHours =
-    getSelectedPeriodHours();
+const periodHours =
+getSelectedPeriodHours();
 
 
-  const reportItems =
-    [];
+const reportItems =
+[];
 
 
-  appData.categories.forEach(
-    function(category) {
-      category.projects.forEach(
-        function(project) {
-          const projectSessions =
-            sessions.filter(
-              function(session) {
-                return (
-                  session.projectId ===
-                  project.id
-                );
-              }
-            );
+appData.categories.forEach(
+function(category) {
+category.projects.forEach(
+function(project) {
+const projectSessions =
+sessions.filter(
+function(session) {
+return (
+session.projectId ===
+project.id
+);
+}
+);
 
 
-          const totalSeconds =
-            projectSessions.reduce(
-              function(
-                total,
-                session
-              ) {
-                return (
-                  total +
-                  Number(
-                    session.elapsedSeconds
-                  )
-                );
-              },
+const totalSeconds =
+projectSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds
+)
+);
+},
 
-              0
-            );
-
-
-          const plannedSeconds =
-            Math.round(
-              periodHours *
-              Number(
-                category.allocationPercent
-              ) /
-              100 *
-              Number(
-                project.allocationPercent
-              ) /
-              100 *
-              3600
-            );
+0
+);
 
 
-          const progressRate =
-            calculateProgressRate(
-              totalSeconds,
-              plannedSeconds
-            );
+const plannedSeconds =
+Math.round(
+periodHours *
+Number(
+category.allocationPercent
+) /
+100 *
+Number(
+project.allocationPercent
+) /
+100 *
+3600
+);
 
 
-          const workDays =
-            groupSessionsByDay(
-              projectSessions
-            );
+const progressRate =
+calculateProgressRate(
+totalSeconds,
+plannedSeconds
+);
 
 
-          const workDayHtml =
-            createWorkDayHtml(
-              workDays
-            );
+const workDays =
+groupSessionsByDay(
+projectSessions
+);
 
 
-          reportItems.push(`
-            <details class="project-report-item">
-              <summary>
-                <span class="project-summary-main">
-                  <span class="project-category-name">
-                    ${escapeHtml(category.name)}
-                  </span>
-
-                  <span class="project-name">
-                    ${escapeHtml(project.name)}
-
-                    <strong class="progress-percentage">
-                      ${progressRate}
-                    </strong>
-                  </span>
-                </span>
-
-                <span class="project-total-information">
-                  <span class="project-total-time">
-                    ${formatSecondsAsText(totalSeconds)}
-                  </span>
-
-                  <span class="project-work-days">
-                    作業日数：
-                    ${workDays.length}日
-                  </span>
-                </span>
-              </summary>
-
-              <div class="project-detail">
-                ${workDayHtml}
-              </div>
-            </details>
-          `);
-        }
-      );
-    }
-  );
+const workDayHtml =
+createWorkDayHtml(
+workDays
+);
 
 
-  if (reportItems.length === 0) {
-    projectReportList.innerHTML = `
-      <p class="empty-message">
-        プロジェクトが設定されていません。
-      </p>
-    `;
+reportItems.push(`
+<details class="project-report-item">
+<summary>
+<span class="project-summary-main">
+<span class="project-category-name">
+${escapeHtml(category.name)}
+</span>
 
-    return;
-  }
+<span class="project-name">
+${escapeHtml(project.name)}
+
+<strong class="progress-percentage">
+${progressRate}
+</strong>
+</span>
+</span>
+
+<span class="project-total-information">
+<span class="project-total-time">
+${formatSecondsAsText(totalSeconds)}
+</span>
+
+<span class="project-work-days">
+作業日数：
+${workDays.length}日
+</span>
+</span>
+</summary>
+
+<div class="project-detail">
+${workDayHtml}
+</div>
+</details>
+`);
+}
+);
+}
+);
 
 
-  projectReportList.innerHTML =
-    reportItems.join("");
+if (reportItems.length === 0) {
+projectReportList.innerHTML = `
+<p class="empty-message">
+プロジェクトが設定されていません。
+</p>
+`;
+
+return;
+}
+
+
+projectReportList.innerHTML =
+reportItems.join("");
 }
 
 
@@ -2709,130 +2968,130 @@ function renderProjectReports(
 // ========================================
 
 function groupSessionsByDay(
-  sessions
+sessions
 ) {
-  const workDayMap =
-    new Map();
+const workDayMap =
+new Map();
 
 
-  sessions.forEach(
-    function(session) {
-      const dateKey =
-        formatDateForInput(
-          new Date(
-            session.startedAt
-          )
-        );
+sessions.forEach(
+function(session) {
+const dateKey =
+formatDateForInput(
+new Date(
+session.startedAt
+)
+);
 
 
-      if (
-        !workDayMap.has(
-          dateKey
-        )
-      ) {
-        workDayMap.set(
-          dateKey,
+if (
+!workDayMap.has(
+dateKey
+)
+) {
+workDayMap.set(
+dateKey,
 
-          {
-            date:
-              startOfDay(
-                new Date(
-                  session.startedAt
-                )
-              ),
+{
+date:
+startOfDay(
+new Date(
+session.startedAt
+)
+),
 
-            totalSeconds:
-              0,
+totalSeconds:
+0,
 
-            notes:
-              []
-          }
-        );
-      }
-
-
-      const workDay =
-        workDayMap.get(
-          dateKey
-        );
+notes:
+[]
+}
+);
+}
 
 
-      workDay.totalSeconds +=
-        Number(
-          session.elapsedSeconds
-        );
+const workDay =
+workDayMap.get(
+dateKey
+);
 
 
-      const notes =
-        Array.isArray(
-          session.notes
-        )
-          ? session.notes
-          : [];
+workDay.totalSeconds +=
+Number(
+session.elapsedSeconds
+);
 
 
-            if (notes.length === 0) {
-        workDay.notes.push(
-          {
-            text:
-              "作業内容の記録なし",
-
-            startedAt:
-              session.startedAt,
-
-            endedAt:
-              session.endedAt ||
-              session.startedAt
-          }
-        );
-      } else {
-        notes.forEach(
-          function(note) {
-            workDay.notes.push(
-              {
-                text:
-                  note.text,
-
-                startedAt:
-                  Number(
-                    note.startedAt
-                  ) ||
-                  Number(
-                    session.startedAt
-                  ),
-
-                endedAt:
-                  Number(
-                    note.endedAt
-                  ) ||
-                  Number(
-                    note.createdAt
-                  ) ||
-                  Number(
-                    session.endedAt
-                  ) ||
-                  Number(
-                    session.startedAt
-                  )
-              }
-            );
-          }
-        );
-      }
-    }
-  );
+const notes =
+Array.isArray(
+session.notes
+)
+? session.notes
+: [];
 
 
-  return Array.from(
-    workDayMap.values()
-  ).sort(
-    function(a, b) {
-      return (
-        a.date -
-        b.date
-      );
-    }
-  );
+if (notes.length === 0) {
+workDay.notes.push(
+{
+text:
+"作業内容の記録なし",
+
+startedAt:
+session.startedAt,
+
+endedAt:
+session.endedAt ||
+session.startedAt
+}
+);
+} else {
+notes.forEach(
+function(note) {
+workDay.notes.push(
+{
+text:
+note.text,
+
+startedAt:
+Number(
+note.startedAt
+) ||
+Number(
+session.startedAt
+),
+
+endedAt:
+Number(
+note.endedAt
+) ||
+Number(
+note.createdAt
+) ||
+Number(
+session.endedAt
+) ||
+Number(
+session.startedAt
+)
+}
+);
+}
+);
+}
+}
+);
+
+
+return Array.from(
+workDayMap.values()
+).sort(
+function(a, b) {
+return (
+a.date -
+b.date
+);
+}
+);
 }
 
 
@@ -2841,78 +3100,78 @@ function groupSessionsByDay(
 // ========================================
 
 function createDayProjectWorkHtml(
-  workDays
+workDays
 ) {
-  if (workDays.length === 0) {
-    return `
-      <p class="empty-message">
-        この日の作業記録はありません。
-      </p>
-    `;
-  }
+if (workDays.length === 0) {
+return `
+<p class="empty-message">
+この日の作業記録はありません。
+</p>
+`;
+}
 
 
-  const notes =
-    workDays.flatMap(
-      function(workDay) {
-        return Array.isArray(
-          workDay.notes
-        )
-          ? workDay.notes
-          : [];
-      }
-    );
+const notes =
+workDays.flatMap(
+function(workDay) {
+return Array.isArray(
+workDay.notes
+)
+? workDay.notes
+: [];
+}
+);
 
 
-  notes.sort(
-    function(a, b) {
-      return (
-        Number(
-          a.startedAt || 0
-        ) -
-        Number(
-          b.startedAt || 0
-        )
-      );
-    }
-  );
+notes.sort(
+function(a, b) {
+return (
+Number(
+a.startedAt || 0
+) -
+Number(
+b.startedAt || 0
+)
+);
+}
+);
 
 
-  if (notes.length === 0) {
-    return `
-      <p class="empty-message">
-        作業内容の記録はありません。
-      </p>
-    `;
-  }
+if (notes.length === 0) {
+return `
+<p class="empty-message">
+作業内容の記録はありません。
+</p>
+`;
+}
 
 
-  return `
-    <ul class="work-content-list">
-      ${notes
-        .map(
-          function(note) {
-            return `
-              <li>
-                <time
-                  class="work-time-range"
-                  datetime="${new Date(
-                    note.startedAt
-                  ).toISOString()}"
-                >
-                  ${formatWorkTimeRange(note)}
-                </time>
+return `
+<ul class="work-content-list">
+${notes
+.map(
+function(note) {
+return `
+<li>
+<time
+class="work-time-range"
+datetime="${new Date(
+note.startedAt
+).toISOString()}"
+>
+${formatWorkTimeRange(note)}
+</time>
 
-                <span class="work-content-text">
-                  ${escapeHtml(note.text)}
-                </span>
-              </li>
-            `;
-          }
-        )
-        .join("")}
-    </ul>
-  `;
+<span class="work-content-text">
+${escapeHtml(note.text)}
+</span>
+</li>
+`;
+}
+)
+.join("")}
+</ul>
+`;
 }
 
 
@@ -2921,113 +3180,113 @@ function createDayProjectWorkHtml(
 // ========================================
 
 function createWorkDayHtml(
-  workDays,
-  isCollapsible = false
+workDays,
+isCollapsible = false
 ) {
-  if (workDays.length === 0) {
-    return `
-      <p class="empty-message">
-        この期間の作業記録はありません。
-      </p>
-    `;
-  }
+if (workDays.length === 0) {
+return `
+<p class="empty-message">
+この期間の作業記録はありません。
+</p>
+`;
+}
 
 
-  return workDays
-    .map(
-      function(workDay) {
-        const sortedNotes =
-          workDay.notes
-            .slice()
-            .sort(
-              function(a, b) {
-                return (
-                  Number(
-                    a.startedAt || 0
-                  ) -
-                  Number(
-                    b.startedAt || 0
-                  )
-                );
-              }
-            );
+return workDays
+.map(
+function(workDay) {
+const sortedNotes =
+workDay.notes
+.slice()
+.sort(
+function(a, b) {
+return (
+Number(
+a.startedAt || 0
+) -
+Number(
+b.startedAt || 0
+)
+);
+}
+);
 
 
-        const noteHtml =
-          sortedNotes
-            .map(
-              function(note) {
-                return `
-                  <li>
-                    <time
-                      class="work-time-range"
-                      datetime="${new Date(
-                        note.startedAt
-                      ).toISOString()}"
-                    >
-                      ${formatWorkTimeRange(note)}
-                    </time>
+const noteHtml =
+sortedNotes
+.map(
+function(note) {
+return `
+<li>
+<time
+class="work-time-range"
+datetime="${new Date(
+note.startedAt
+).toISOString()}"
+>
+${formatWorkTimeRange(note)}
+</time>
 
-                    <span class="work-content-text">
-                      ${escapeHtml(note.text)}
-                    </span>
-                  </li>
-                `;
-              }
-            )
-            .join("");
-
-
-        const dateHtml = `
-          <time
-            class="work-day-date"
-            datetime="${formatDateForInput(workDay.date)}"
-          >
-            ${formatJapaneseDate(workDay.date)}
-          </time>
-        `;
+<span class="work-content-text">
+${escapeHtml(note.text)}
+</span>
+</li>
+`;
+}
+)
+.join("");
 
 
-        const totalHtml = `
-          <span class="work-day-total">
-            合計
-            ${formatSecondsAsText(workDay.totalSeconds)}
-          </span>
-        `;
+const dateHtml = `
+<time
+class="work-day-date"
+datetime="${formatDateForInput(workDay.date)}"
+>
+${formatJapaneseDate(workDay.date)}
+</time>
+`;
 
 
-        if (isCollapsible) {
-          return `
-            <details class="work-day-item is-collapsible">
-              <summary>
-                ${dateHtml}
-                ${totalHtml}
-              </summary>
-
-              <div class="work-day-content">
-                <ul class="work-content-list">
-                  ${noteHtml}
-                </ul>
-              </div>
-            </details>
-          `;
-        }
+const totalHtml = `
+<span class="work-day-total">
+合計
+${formatSecondsAsText(workDay.totalSeconds)}
+</span>
+`;
 
 
-        return `
-          <article class="work-day-item">
-            ${dateHtml}
+if (isCollapsible) {
+return `
+<details class="work-day-item is-collapsible">
+<summary>
+${dateHtml}
+${totalHtml}
+</summary>
 
-            <ul class="work-content-list">
-              ${noteHtml}
-            </ul>
+<div class="work-day-content">
+<ul class="work-content-list">
+${noteHtml}
+</ul>
+</div>
+</details>
+`;
+}
 
-            ${totalHtml}
-          </article>
-        `;
-      }
-    )
-    .join("");
+
+return `
+<article class="work-day-item">
+${dateHtml}
+
+<ul class="work-content-list">
+${noteHtml}
+</ul>
+
+${totalHtml}
+</article>
+`;
+}
+)
+.join("");
 }
 
 
@@ -3036,17 +3295,17 @@ function createWorkDayHtml(
 // ========================================
 
 function getSelectedPeriodHours() {
-  const weeklyHours =
-    Number(
-      appData.settings.weeklyHours
-    ) || 0;
+const weeklyHours =
+Number(
+appData.settings.weeklyHours
+) || 0;
 
 
-  return (
-    weeklyHours *
-    52 /
-    12
-  );
+return (
+weeklyHours *
+52 /
+12
+);
 }
 
 
@@ -3055,36 +3314,36 @@ function getSelectedPeriodHours() {
 // ========================================
 
 function findProjectInformation(
-  projectId
+projectId
 ) {
-  for (
-    const category of
-    appData.categories
-  ) {
-    const project =
-      category.projects.find(
-        function(item) {
-          return (
-            item.id ===
-            projectId
-          );
-        }
-      );
+for (
+const category of
+appData.categories
+) {
+const project =
+category.projects.find(
+function(item) {
+return (
+item.id ===
+projectId
+);
+}
+);
 
 
-    if (project) {
-      return {
-        category:
-          category,
+if (project) {
+return {
+category:
+category,
 
-        project:
-          project
-      };
-    }
-  }
+project:
+project
+};
+}
+}
 
 
-  return null;
+return null;
 }
 
 
@@ -3093,35 +3352,35 @@ function findProjectInformation(
 // ========================================
 
 function calculateProgressRate(
-  actualSeconds,
-  plannedSeconds
+actualSeconds,
+plannedSeconds
 ) {
-  if (plannedSeconds <= 0) {
-    return (
-      actualSeconds > 0
-        ? "計算不可"
-        : "0%"
-    );
-  }
+if (plannedSeconds <= 0) {
+return (
+actualSeconds > 0
+? "計算不可"
+: "0%"
+);
+}
 
 
-  const rate =
-    actualSeconds /
-    plannedSeconds *
-    100;
+const rate =
+actualSeconds /
+plannedSeconds *
+100;
 
 
-  const roundedRate =
-    Math.round(
-      rate * 10
-    ) /
-    10;
+const roundedRate =
+Math.round(
+rate * 10
+) /
+10;
 
 
-  return (
-    roundedRate +
-    "%"
-  );
+return (
+roundedRate +
+"%"
+);
 }
 
 
@@ -3130,29 +3389,29 @@ function calculateProgressRate(
 // ========================================
 
 function calculateProgressWidth(
-  actualSeconds,
-  plannedSeconds
+actualSeconds,
+plannedSeconds
 ) {
-  if (plannedSeconds <= 0) {
-    return (
-      actualSeconds > 0
-        ? 100
-        : 0
-    );
-  }
+if (plannedSeconds <= 0) {
+return (
+actualSeconds > 0
+? 100
+: 0
+);
+}
 
 
-  return Math.min(
-    100,
+return Math.min(
+100,
 
-    Math.max(
-      0,
+Math.max(
+0,
 
-      actualSeconds /
-      plannedSeconds *
-      100
-    )
-  );
+actualSeconds /
+plannedSeconds *
+100
+)
+);
 }
 
 
@@ -3161,73 +3420,73 @@ function calculateProgressWidth(
 // ========================================
 
 function createProgressStatus(
-  actualSeconds,
-  plannedSeconds
+actualSeconds,
+plannedSeconds
 ) {
-  if (
-    plannedSeconds <= 0 &&
-    actualSeconds <= 0
-  ) {
-    return {
-      message:
-        "予定時間なし",
+if (
+plannedSeconds <= 0 &&
+actualSeconds <= 0
+) {
+return {
+message:
+"予定時間なし",
 
-      isOver:
-        false
-    };
-  }
-
-
-  if (
-    plannedSeconds <= 0 &&
-    actualSeconds > 0
-  ) {
-    return {
-      message:
-        "予定時間を設定せずに " +
-        formatSecondsAsText(
-          actualSeconds
-        ) +
-        " 作業",
-
-      isOver:
-        true
-    };
-  }
+isOver:
+false
+};
+}
 
 
-  const difference =
-    plannedSeconds -
-    actualSeconds;
+if (
+plannedSeconds <= 0 &&
+actualSeconds > 0
+) {
+return {
+message:
+"予定時間を設定せずに " +
+formatSecondsAsText(
+actualSeconds
+) +
+" 作業",
+
+isOver:
+true
+};
+}
 
 
-  if (difference >= 0) {
-    return {
-      message:
-        "残り " +
-        formatSecondsAsText(
-          difference
-        ),
-
-      isOver:
-        false
-    };
-  }
+const difference =
+plannedSeconds -
+actualSeconds;
 
 
-  return {
-    message:
-      "予定より " +
-      formatSecondsAsText(
-        Math.abs(
-          difference
-        )
-      ) +
-      " 超過",
+if (difference >= 0) {
+return {
+message:
+"残り " +
+formatSecondsAsText(
+difference
+),
 
-    isOver:
-      true
-  };
+isOver:
+false
+};
+}
+
+
+return {
+message:
+"予定より " +
+formatSecondsAsText(
+Math.abs(
+difference
+)
+) +
+" 超過",
+
+isOver:
+true
+};
 }
 
 
@@ -3236,155 +3495,155 @@ function createProgressStatus(
 // ========================================
 
 function startOfDay(
-  date
+date
 ) {
-  const result =
-    new Date(
-      date
-    );
+const result =
+new Date(
+date
+);
 
 
-  result.setHours(
-    0,
-    0,
-    0,
-    0
-  );
+result.setHours(
+0,
+0,
+0,
+0
+);
 
 
-  return result;
+return result;
 }
 
 
 function getWeekStart(
-  date
+date
 ) {
-  const result =
-    startOfDay(
-      date
-    );
+const result =
+startOfDay(
+date
+);
 
 
-  const daysFromMonday =
-    (
-      result.getDay() +
-      6
-    ) %
-    7;
+const daysFromMonday =
+(
+result.getDay() +
+6
+) %
+7;
 
 
-  result.setDate(
-    result.getDate() -
-    daysFromMonday
-  );
+result.setDate(
+result.getDate() -
+daysFromMonday
+);
 
 
-  return result;
+return result;
 }
 
 
 function createLocalDateFromInput(
-  dateText
+dateText
 ) {
-  const [
-    year,
-    month,
-    day
-  ] =
-    dateText
-      .split("-")
-      .map(Number);
+const [
+year,
+month,
+day
+] =
+dateText
+.split("-")
+.map(Number);
 
 
-  return new Date(
-    year,
-    month - 1,
-    day
-  );
+return new Date(
+year,
+month - 1,
+day
+);
 }
 
 
 function formatDateForInput(
-  date
+date
 ) {
-  const year =
-    date.getFullYear();
+const year =
+date.getFullYear();
 
 
-  const month =
-    String(
-      date.getMonth() + 1
-    ).padStart(
-      2,
-      "0"
-    );
+const month =
+String(
+date.getMonth() + 1
+).padStart(
+2,
+"0"
+);
 
 
-  const day =
-    String(
-      date.getDate()
-    ).padStart(
-      2,
-      "0"
-    );
+const day =
+String(
+date.getDate()
+).padStart(
+2,
+"0"
+);
 
 
-  return (
-    year +
-    "-" +
-    month +
-    "-" +
-    day
-  );
+return (
+year +
+"-" +
+month +
+"-" +
+day
+);
 }
 
 
 function formatMonthForInput(
-  date
+date
 ) {
-  const year =
-    date.getFullYear();
+const year =
+date.getFullYear();
 
 
-  const month =
-    String(
-      date.getMonth() + 1
-    ).padStart(
-      2,
-      "0"
-    );
+const month =
+String(
+date.getMonth() + 1
+).padStart(
+2,
+"0"
+);
 
 
-  return (
-    year +
-    "-" +
-    month
-  );
+return (
+year +
+"-" +
+month
+);
 }
 
 
 function formatJapaneseDate(
-  date
+date
 ) {
-  return new Intl.DateTimeFormat(
-    "ja-JP",
+return new Intl.DateTimeFormat(
+"ja-JP",
 
-    {
-      year:
-        "numeric",
+{
+year:
+"numeric",
 
-      month:
-        "long",
+month:
+"long",
 
-      day:
-        "numeric",
+day:
+"numeric",
 
-      weekday:
-        "short"
-    }
-  ).format(
-    date
-  );
+weekday:
+"short"
+}
+).format(
+date
+);
 }
 
 
@@ -3393,108 +3652,108 @@ function formatJapaneseDate(
 // ========================================
 
 function formatTimerClock(
-  totalSeconds
+totalSeconds
 ) {
-  const hours =
-    Math.floor(
-      totalSeconds / 3600
-    );
+const hours =
+Math.floor(
+totalSeconds / 3600
+);
 
 
-  const minutes =
-    Math.floor(
-      (
-        totalSeconds % 3600
-      ) /
-      60
-    );
+const minutes =
+Math.floor(
+(
+totalSeconds % 3600
+) /
+60
+);
 
 
-  const seconds =
-    totalSeconds % 60;
+const seconds =
+totalSeconds % 60;
 
 
-  return [
-    hours,
-    minutes,
-    seconds
-  ]
-    .map(
-      function(number) {
-        return String(
-          number
-        ).padStart(
-          2,
-          "0"
-        );
-      }
-    )
-    .join(":");
+return [
+hours,
+minutes,
+seconds
+]
+.map(
+function(number) {
+return String(
+number
+).padStart(
+2,
+"0"
+);
+}
+)
+.join(":");
 }
 
 
 function formatSecondsAsText(
-  totalSeconds
+totalSeconds
 ) {
-  const safeSeconds =
-    Math.max(
-      0,
+const safeSeconds =
+Math.max(
+0,
 
-      Math.round(
-        totalSeconds
-      )
-    );
-
-
-  if (safeSeconds < 60) {
-    return (
-      safeSeconds +
-      "秒"
-    );
-  }
+Math.round(
+totalSeconds
+)
+);
 
 
-  const totalMinutes =
-    Math.floor(
-      safeSeconds / 60
-    );
+if (safeSeconds < 60) {
+return (
+safeSeconds +
+"秒"
+);
+}
 
 
-  const hours =
-    Math.floor(
-      totalMinutes / 60
-    );
+const totalMinutes =
+Math.floor(
+safeSeconds / 60
+);
 
 
-  const minutes =
-    totalMinutes % 60;
+const hours =
+Math.floor(
+totalMinutes / 60
+);
 
 
-  if (
-    hours > 0 &&
-    minutes > 0
-  ) {
-    return (
-      hours +
-      "時間" +
-      minutes +
-      "分"
-    );
-  }
+const minutes =
+totalMinutes % 60;
 
 
-  if (hours > 0) {
-    return (
-      hours +
-      "時間"
-    );
-  }
+if (
+hours > 0 &&
+minutes > 0
+) {
+return (
+hours +
+"時間" +
+minutes +
+"分"
+);
+}
 
 
-  return (
-    minutes +
-    "分"
-  );
+if (hours > 0) {
+return (
+hours +
+"時間"
+);
+}
+
+
+return (
+minutes +
+"分"
+);
 }
 
 
@@ -3503,31 +3762,31 @@ function formatSecondsAsText(
 // ========================================
 
 function escapeHtml(
-  text
+text
 ) {
-  return String(
-    text
-  )
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      "\"",
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
+return String(
+text
+)
+.replaceAll(
+"&",
+"&amp;"
+)
+.replaceAll(
+"<",
+"&lt;"
+)
+.replaceAll(
+">",
+"&gt;"
+)
+.replaceAll(
+"\"",
+"&quot;"
+)
+.replaceAll(
+"'",
+"&#039;"
+);
 }
 
 
@@ -3537,17 +3796,17 @@ function escapeHtml(
 // ========================================
 
 function formatWorkTimeRange(
-  note
+note
 ) {
-  return (
-    formatClockTime(
-      note.startedAt
-    ) +
-    "〜" +
-    formatClockTime(
-      note.endedAt
-    )
-  );
+return (
+formatClockTime(
+note.startedAt
+) +
+"〜" +
+formatClockTime(
+note.endedAt
+)
+);
 }
 
 
@@ -3556,24 +3815,24 @@ function formatWorkTimeRange(
 // ========================================
 
 function formatClockTime(
-  timestamp
+timestamp
 ) {
-  return new Intl.DateTimeFormat(
-    "ja-JP",
+return new Intl.DateTimeFormat(
+"ja-JP",
 
-    {
-      hour:
-        "2-digit",
+{
+hour:
+"2-digit",
 
-      minute:
-        "2-digit",
+minute:
+"2-digit",
 
-      hour12:
-        false
-    }
-  ).format(
-    new Date(
-      timestamp
-    )
-  );
+hour12:
+false
+}
+).format(
+new Date(
+timestamp
+)
+);
 }

@@ -6,7 +6,7 @@
 // ========================================
 
 const STORAGE_KEY =
-  "junota-work-log";
+"junota-work-log";
 
 
 // ========================================
@@ -14,19 +14,19 @@ const STORAGE_KEY =
 // ========================================
 
 const defaultData = {
-  settings: {
-    weeklyHours: 30,
-    selectedPeriod: "month",
-    selectedScreen: "work"
-  },
+settings: {
+weeklyHours: 30,
+selectedPeriod: "month",
+selectedScreen: "work"
+},
 
-  categories: [],
+categories: [],
 
-  monthlyPlans: {},
+monthlyPlans: {},
 
-  sessions: [],
+sessions: [],
 
-  activeSession: null
+activeSession: null
 };
 
 
@@ -36,411 +36,411 @@ const defaultData = {
 
 
 const workTimeForm =
-  document.getElementById(
-    "work-time-form"
-  );
+document.getElementById(
+"work-time-form"
+);
 
 
 const monthlyPlanForm =
-  document.getElementById(
-    "monthly-plan-form"
-  );
+document.getElementById(
+"monthly-plan-form"
+);
 
 
 const monthlyPlanMonthInput =
-  document.getElementById(
-    "monthly-plan-month"
-  );
+document.getElementById(
+"monthly-plan-month"
+);
 
 
 const monthlyPlanTotalHoursInput =
-  document.getElementById(
-    "monthly-plan-total-hours"
-  );
+document.getElementById(
+"monthly-plan-total-hours"
+);
 
 
 const monthlyPlanTotalLabel =
-  document.getElementById(
-    "monthly-plan-total-label"
-  );
+document.getElementById(
+"monthly-plan-total-label"
+);
 
 
 const monthlyPlanSummaryTotalLabel =
-  document.getElementById(
-    "monthly-plan-summary-total-label"
-  );
+document.getElementById(
+"monthly-plan-summary-total-label"
+);
 
 
 const monthlyPlanProjectList =
-  document.getElementById(
-    "monthly-plan-project-list"
-  );
+document.getElementById(
+"monthly-plan-project-list"
+);
 
 
 const monthlyPlanTotalDisplay =
-  document.getElementById(
-    "monthly-plan-total-display"
-  );
+document.getElementById(
+"monthly-plan-total-display"
+);
 
 
 const monthlyPlanAssignedDisplay =
-  document.getElementById(
-    "monthly-plan-assigned-display"
-  );
+document.getElementById(
+"monthly-plan-assigned-display"
+);
 
 
 const monthlyPlanUnassignedDisplay =
-  document.getElementById(
-    "monthly-plan-unassigned-display"
-  );
+document.getElementById(
+"monthly-plan-unassigned-display"
+);
 
 
 const monthlyPlanWarning =
-  document.getElementById(
-    "monthly-plan-warning"
-  );
+document.getElementById(
+"monthly-plan-warning"
+);
 
 
 const copyPreviousPlanButton =
-  document.getElementById(
-    "copy-previous-plan-button"
-  );
+document.getElementById(
+"copy-previous-plan-button"
+);
 
 
 const monthlyPlanAddCategoryButton =
-  document.getElementById(
-    "monthly-plan-add-category-button"
-  );
+document.getElementById(
+"monthly-plan-add-category-button"
+);
 
 
 const workTimeLabel =
-  document.getElementById(
-    "work-time-label"
-  );
+document.getElementById(
+"work-time-label"
+);
 
 
 const totalWorkHoursInput =
-  document.getElementById(
-    "total-work-hours"
-  );
+document.getElementById(
+"total-work-hours"
+);
 
 
 const convertedDay =
-  document.getElementById(
-    "converted-day"
-  );
+document.getElementById(
+"converted-day"
+);
 
 
 const convertedWeek =
-  document.getElementById(
-    "converted-week"
-  );
+document.getElementById(
+"converted-week"
+);
 
 
 const convertedMonth =
-  document.getElementById(
-    "converted-month"
-  );
+document.getElementById(
+"converted-month"
+);
 
 
 const statusMessage =
-  document.getElementById(
-    "status-message"
-  );
+document.getElementById(
+"status-message"
+);
 
-  
+
 
 const categoryList =
-  document.getElementById(
-    "category-list"
-  );
+document.getElementById(
+"category-list"
+);
 
 
 const allocationTotal =
-  document.getElementById(
-    "allocation-total"
-  );
+document.getElementById(
+"allocation-total"
+);
 
 
 const addCategoryButton =
-  document.getElementById(
-    "add-category-button"
-  );
+document.getElementById(
+"add-category-button"
+);
 
 
 const projectStatusList =
-  document.getElementById(
-    "project-status-list"
-  );
+document.getElementById(
+"project-status-list"
+);
 
 
 const timerProjectSelect =
-  document.getElementById(
-    "timer-project"
-  );
+document.getElementById(
+"timer-project"
+);
 
 
 const progressList =
-  document.getElementById(
-    "progress-list"
-  );
+document.getElementById(
+"progress-list"
+);
 
-  
+
 
 const screenTabButtons =
-  document.querySelectorAll(
-    ".screen-tab"
-  );
+document.querySelectorAll(
+".screen-tab"
+);
 
 
 const logoutButton =
-  document.getElementById(
-    "logout-button"
-  );
+document.getElementById(
+"logout-button"
+);
 
 
 const workPanel =
-  document.getElementById(
-    "work-panel"
-  );
+document.getElementById(
+"work-panel"
+);
 
 
 const settingsPanel =
-  document.getElementById(
-    "settings-panel"
-  );
+document.getElementById(
+"settings-panel"
+);
 
 
 const recordsPanel =
-  document.getElementById(
-    "records-panel"
-  );
+document.getElementById(
+"records-panel"
+);
 
 
 const recordPreviousPeriodButton =
-  document.getElementById(
-    "record-previous-period-button"
-  );
+document.getElementById(
+"record-previous-period-button"
+);
 
 
 const recordNextPeriodButton =
-  document.getElementById(
-    "record-next-period-button"
-  );
+document.getElementById(
+"record-next-period-button"
+);
 
 
 
 const recordMonthInput =
-  document.getElementById(
-    "record-month"
-  );
+document.getElementById(
+"record-month"
+);
 
 
 const recordPeriodTitle =
-  document.getElementById(
-    "record-period-title"
-  );
+document.getElementById(
+"record-period-title"
+);
 
 
 const recordDateRange =
-  document.getElementById(
-    "record-date-range"
-  );
+document.getElementById(
+"record-date-range"
+);
 
 
 const recordTotalTime =
-  document.getElementById(
-    "record-total-time"
-  );
+document.getElementById(
+"record-total-time"
+);
 
 
 const recordPlannedWorkTotal =
-  document.getElementById(
-    "record-planned-work-total"
-  );
+document.getElementById(
+"record-planned-work-total"
+);
 
 
 const recordUnplannedWorkTotal =
-  document.getElementById(
-    "record-unplanned-work-total"
-  );
+document.getElementById(
+"record-unplanned-work-total"
+);
 
 
 const recordSummaryAllWorkDays =
-  document.getElementById(
-    "record-summary-all-work-days"
-  );
+document.getElementById(
+"record-summary-all-work-days"
+);
 
 
 const recordSummaryPlannedWorkDays =
-  document.getElementById(
-    "record-summary-planned-work-days"
-  );
+document.getElementById(
+"record-summary-planned-work-days"
+);
 
 
 const recordSummaryUnplannedWorkDays =
-  document.getElementById(
-    "record-summary-unplanned-work-days"
-  );
+document.getElementById(
+"record-summary-unplanned-work-days"
+);
 
 
 const recordCategorySummaryList =
-  document.getElementById(
-    "record-category-summary-list"
-  );
+document.getElementById(
+"record-category-summary-list"
+);
 
 
 const recordProjectList =
-  document.getElementById(
-    "record-project-list"
-  );
+document.getElementById(
+"record-project-list"
+);
 
 
 const addRecordButton =
-  document.getElementById(
-    "add-record-button"
-  );
+document.getElementById(
+"add-record-button"
+);
 
 
 const recordDialog =
-  document.getElementById(
-    "record-dialog"
-  );
+document.getElementById(
+"record-dialog"
+);
 
 
 const recordForm =
-  document.getElementById(
-    "record-form"
-  );
+document.getElementById(
+"record-form"
+);
 
 
 const recordDialogTitle =
-  document.getElementById(
-    "record-dialog-title"
-  );
+document.getElementById(
+"record-dialog-title"
+);
 
 
 const recordDialogCloseButton =
-  document.getElementById(
-    "record-dialog-close-button"
-  );
+document.getElementById(
+"record-dialog-close-button"
+);
 
 
 const recordCancelButton =
-  document.getElementById(
-    "record-cancel-button"
-  );
+document.getElementById(
+"record-cancel-button"
+);
 
 
 const recordSessionIdInput =
-  document.getElementById(
-    "record-session-id"
-  );
+document.getElementById(
+"record-session-id"
+);
 
 
 const recordNoteIndexInput =
-  document.getElementById(
-    "record-note-index"
-  );
+document.getElementById(
+"record-note-index"
+);
 
 
 const recordEditDateInput =
-  document.getElementById(
-    "record-edit-date"
-  );
+document.getElementById(
+"record-edit-date"
+);
 
 
 const recordEditProjectSelect =
-  document.getElementById(
-    "record-edit-project"
-  );
+document.getElementById(
+"record-edit-project"
+);
 
 
 const recordEditStartTimeInput =
-  document.getElementById(
-    "record-edit-start-time"
-  );
+document.getElementById(
+"record-edit-start-time"
+);
 
 
 const recordEditEndTimeInput =
-  document.getElementById(
-    "record-edit-end-time"
-  );
+document.getElementById(
+"record-edit-end-time"
+);
 
 
 const recordEditContentInput =
-  document.getElementById(
-    "record-edit-content"
-  );
+document.getElementById(
+"record-edit-content"
+);
 
 
 const recordFormError =
-  document.getElementById(
-    "record-form-error"
-  );
+document.getElementById(
+"record-form-error"
+);
 
-  
+
 
 const timerCategoryName =
-  document.getElementById(
-    "timer-category-name"
-  );
+document.getElementById(
+"timer-category-name"
+);
 
 
 const timerProjectName =
-  document.getElementById(
-    "timer-project-name"
-  );
+document.getElementById(
+"timer-project-name"
+);
 
 
 const timerDisplay =
-  document.getElementById(
-    "timer-display"
-  );
+document.getElementById(
+"timer-display"
+);
 
 
 const remainingTime =
-  document.getElementById(
-    "remaining-time"
-  );
+document.getElementById(
+"remaining-time"
+);
 
 
 const startButton =
-  document.getElementById(
-    "start-button"
-  );
+document.getElementById(
+"start-button"
+);
 
 
 const stopButton =
-  document.getElementById(
-    "stop-button"
-  );
+document.getElementById(
+"stop-button"
+);
 
 
 
 
 const workNoteForm =
-  document.getElementById(
-    "work-note-form"
-  );
+document.getElementById(
+"work-note-form"
+);
 
 
 const workNoteInput =
-  document.getElementById(
-    "work-note"
-  );
+document.getElementById(
+"work-note"
+);
 
 
 const addNoteButton =
-  document.getElementById(
-    "add-note-button"
-  );
+document.getElementById(
+"add-note-button"
+);
 
 
 const currentNoteList =
-  document.getElementById(
-    "current-note-list"
-  );
+document.getElementById(
+"current-note-list"
+);
 
 
 // ========================================
@@ -448,19 +448,19 @@ const currentNoteList =
 // ========================================
 
 let selectedRecordDate =
-  new Date();
+new Date();
 
 
 let appData =
-  structuredClone(
-    defaultData
-  );
+structuredClone(
+defaultData
+);
 
 
 let lastSavedAppData =
-  structuredClone(
-    defaultData
-  );
+structuredClone(
+defaultData
+);
 
 
 // ========================================
@@ -475,133 +475,133 @@ initializeApp();
 // ========================================
 
 async function ensureAuthenticated() {
-  try {
-    const statusResponse =
-      await fetch(
-        "../api/auth.php?time=" +
-        Date.now(),
+try {
+const statusResponse =
+await fetch(
+"../api/auth.php?time=" +
+Date.now(),
 
-        {
-          method:
-            "GET",
+{
+method:
+"GET",
 
-          cache:
-            "no-store",
+cache:
+"no-store",
 
-          credentials:
-            "same-origin"
-        }
-      );
-
-
-    if (!statusResponse.ok) {
-      throw new Error(
-        "認証状態を確認できませんでした。"
-      );
-    }
+credentials:
+"same-origin"
+}
+);
 
 
-    const statusResult =
-      await statusResponse.json();
+if (!statusResponse.ok) {
+throw new Error(
+"認証状態を確認できませんでした。"
+);
+}
 
 
-    if (
-      statusResult.authenticated ===
-      true
-    ) {
-      return true;
-    }
+const statusResult =
+await statusResponse.json();
 
 
-    while (true) {
-      const enteredPassword =
-        window.prompt(
-          "管理用パスワードを入力してください。"
-        );
+if (
+statusResult.authenticated ===
+true
+) {
+return true;
+}
 
 
-      if (enteredPassword === null) {
-        window.location.href =
-          "../report/";
-
-        return false;
-      }
-
-
-      if (!enteredPassword) {
-        window.alert(
-          "パスワードを入力してください。"
-        );
-
-        continue;
-      }
+while (true) {
+const enteredPassword =
+window.prompt(
+"管理用パスワードを入力してください。"
+);
 
 
-      const loginResponse =
-        await fetch(
-          "../api/auth.php",
+if (enteredPassword === null) {
+window.location.href =
+"../report/";
 
-          {
-            method:
-              "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json"
-            },
-
-            cache:
-              "no-store",
-
-            credentials:
-              "same-origin",
-
-            body:
-              JSON.stringify(
-                {
-                  action:
-                    "login",
-
-                  password:
-                    enteredPassword
-                }
-              )
-          }
-        );
+return false;
+}
 
 
-      const loginResult =
-        await loginResponse.json();
+if (!enteredPassword) {
+window.alert(
+"パスワードを入力してください。"
+);
+
+continue;
+}
 
 
-      if (
-        loginResponse.ok &&
-        loginResult.authenticated ===
-          true
-      ) {
-        return true;
-      }
+const loginResponse =
+await fetch(
+"../api/auth.php",
+
+{
+method:
+"POST",
+
+headers: {
+"Content-Type":
+"application/json"
+},
+
+cache:
+"no-store",
+
+credentials:
+"same-origin",
+
+body:
+JSON.stringify(
+{
+action:
+"login",
+
+password:
+enteredPassword
+}
+)
+}
+);
 
 
-      window.alert(
-        loginResult.error ||
-        "パスワードが正しくありません。"
-      );
-    }
-  } catch (error) {
-    console.error(
-      "ログイン確認に失敗しました。",
-      error
-    );
+const loginResult =
+await loginResponse.json();
 
 
-    window.alert(
-      "ログイン状態を確認できませんでした。"
-    );
+if (
+loginResponse.ok &&
+loginResult.authenticated ===
+true
+) {
+return true;
+}
 
 
-    return false;
-  }
+window.alert(
+loginResult.error ||
+"パスワードが正しくありません。"
+);
+}
+} catch (error) {
+console.error(
+"ログイン確認に失敗しました。",
+error
+);
+
+
+window.alert(
+"ログイン状態を確認できませんでした。"
+);
+
+
+return false;
+}
 }
 
 
@@ -610,94 +610,94 @@ async function ensureAuthenticated() {
 // ========================================
 
 async function logout() {
-  const shouldLogout =
-    window.confirm(
-      "ログアウトしますか？"
-    );
+const shouldLogout =
+window.confirm(
+"ログアウトしますか？"
+);
 
 
-  if (!shouldLogout) {
-    return;
-  }
+if (!shouldLogout) {
+return;
+}
 
 
-  try {
-    await fetch(
-      "../api/auth.php",
+try {
+await fetch(
+"../api/auth.php",
 
-      {
-        method:
-          "POST",
+{
+method:
+"POST",
 
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
+headers: {
+"Content-Type":
+"application/json"
+},
 
-        cache:
-          "no-store",
+cache:
+"no-store",
 
-        credentials:
-          "same-origin",
+credentials:
+"same-origin",
 
-        body:
-          JSON.stringify(
-            {
-              action:
-                "logout"
-            }
-          )
-      }
-    );
-  } catch (error) {
-    console.error(
-      "ログアウトに失敗しました。",
-      error
-    );
-  }
+body:
+JSON.stringify(
+{
+action:
+"logout"
+}
+)
+}
+);
+} catch (error) {
+console.error(
+"ログアウトに失敗しました。",
+error
+);
+}
 
 
-  window.location.href =
-    "../report/";
+window.location.href =
+"../report/";
 }
 
 
 async function initializeApp() {
-  const isAuthenticated =
-    await ensureAuthenticated();
+const isAuthenticated =
+await ensureAuthenticated();
 
 
-  if (!isAuthenticated) {
-    return;
-  }
+if (!isAuthenticated) {
+return;
+}
 
 
-  if (logoutButton) {
-    logoutButton.addEventListener(
-      "click",
+if (logoutButton) {
+logoutButton.addEventListener(
+"click",
 
-      logout
-    );
-  }
-
-
-  appData =
-    await loadAppData();
+logout
+);
+}
 
 
-  lastSavedAppData =
-    structuredClone(
-      appData
-    );
+appData =
+await loadAppData();
 
 
-  ensureInitialCategories();
+lastSavedAppData =
+structuredClone(
+appData
+);
 
-  initializeMonthlyPlan();
 
-  updateScreenTabs();
+ensureInitialCategories();
 
-  updateWorkTimeDisplay();
+initializeMonthlyPlan();
+
+updateScreenTabs();
+
+updateWorkTimeDisplay();
 
 initializeRecordNavigation();
 
@@ -712,370 +712,370 @@ initializeTimer();
 // ========================================
 
 async function loadAppData() {
-  const localData =
-    loadLocalAppData();
+const localData =
+loadLocalAppData();
 
-  try {
-    const response =
-      await fetch(
-        "../api/load.php?time=" +
-        Date.now(),
+try {
+const response =
+await fetch(
+"../api/load.php?time=" +
+Date.now(),
 
-        {
-          method: "GET",
-          cache: "no-store"
-        }
-      );
+{
+method: "GET",
+cache: "no-store"
+}
+);
 
-    if (!response.ok) {
-      throw new Error(
-        "HTTP " +
-        response.status
-      );
-    }
+if (!response.ok) {
+throw new Error(
+"HTTP " +
+response.status
+);
+}
 
-    const serverData =
-      await response.json();
+const serverData =
+await response.json();
 
-    const normalizedServerData =
-      normalizeAppData(
-        serverData
-      );
+const normalizedServerData =
+normalizeAppData(
+serverData
+);
 
-    if (
-      !hasWorkLogContent(
-        normalizedServerData
-      ) &&
-      hasWorkLogContent(
-        localData
-      )
-    ) {
-      return localData;
-    }
+if (
+!hasWorkLogContent(
+normalizedServerData
+) &&
+hasWorkLogContent(
+localData
+)
+) {
+return localData;
+}
 
-    localStorage.setItem(
-      STORAGE_KEY,
+localStorage.setItem(
+STORAGE_KEY,
 
-      JSON.stringify(
-        normalizedServerData
-      )
-    );
+JSON.stringify(
+normalizedServerData
+)
+);
 
-    return normalizedServerData;
-  } catch (error) {
-    console.error(
-      "サーバーからの読み込みに失敗しました。",
-      error
-    );
+return normalizedServerData;
+} catch (error) {
+console.error(
+"サーバーからの読み込みに失敗しました。",
+error
+);
 
-    return localData;
-  }
+return localData;
+}
 }
 
 
 function loadLocalAppData() {
-  const savedData =
-    localStorage.getItem(
-      STORAGE_KEY
-    );
+const savedData =
+localStorage.getItem(
+STORAGE_KEY
+);
 
-  if (!savedData) {
-    return structuredClone(
-      defaultData
-    );
-  }
+if (!savedData) {
+return structuredClone(
+defaultData
+);
+}
 
-  try {
-    return normalizeAppData(
-      JSON.parse(
-        savedData
-      )
-    );
-  } catch (error) {
-    console.error(
-      "ブラウザ内データの読み込みに失敗しました。",
-      error
-    );
+try {
+return normalizeAppData(
+JSON.parse(
+savedData
+)
+);
+} catch (error) {
+console.error(
+"ブラウザ内データの読み込みに失敗しました。",
+error
+);
 
-    return structuredClone(
-      defaultData
-    );
-  }
+return structuredClone(
+defaultData
+);
+}
 }
 
 
 function normalizeMonthlyPlans(
-  monthlyPlans
+monthlyPlans
 ) {
-  if (
-    !monthlyPlans ||
-    typeof monthlyPlans !== "object" ||
-    Array.isArray(
-      monthlyPlans
-    )
-  ) {
-    return {};
-  }
+if (
+!monthlyPlans ||
+typeof monthlyPlans !== "object" ||
+Array.isArray(
+monthlyPlans
+)
+) {
+return {};
+}
 
 
-  const normalizedPlans =
-    {};
+const normalizedPlans =
+{};
 
 
-  Object.entries(
-    monthlyPlans
-  ).forEach(
-    function(
-      [
-        monthKey,
-        plan
-      ]
-    ) {
-      if (
-        !/^\d{4}-\d{2}$/.test(
-          monthKey
-        ) ||
-        !plan ||
-        typeof plan !== "object" ||
-        Array.isArray(
-          plan
-        )
-      ) {
-        return;
-      }
+Object.entries(
+monthlyPlans
+).forEach(
+function(
+[
+monthKey,
+plan
+]
+) {
+if (
+!/^\d{4}-\d{2}$/.test(
+monthKey
+) ||
+!plan ||
+typeof plan !== "object" ||
+Array.isArray(
+plan
+)
+) {
+return;
+}
 
 
-      const categories =
-        Array.isArray(
-          plan.categories
-        )
-          ? plan.categories
-              .map(
-                function(categoryPlan) {
-                  if (
-                    !categoryPlan ||
-                    !categoryPlan.categoryId
-                  ) {
-                    return null;
-                  }
+const categories =
+Array.isArray(
+plan.categories
+)
+? plan.categories
+.map(
+function(categoryPlan) {
+if (
+!categoryPlan ||
+!categoryPlan.categoryId
+) {
+return null;
+}
 
 
-                  const projects =
-                    Array.isArray(
-                      categoryPlan.projects
-                    )
-                      ? categoryPlan.projects
-                          .map(
-                            function(projectPlan) {
-                              if (
-                                !projectPlan ||
-                                !projectPlan.projectId
-                              ) {
-                                return null;
-                              }
+const projects =
+Array.isArray(
+categoryPlan.projects
+)
+? categoryPlan.projects
+.map(
+function(projectPlan) {
+if (
+!projectPlan ||
+!projectPlan.projectId
+) {
+return null;
+}
 
 
-                              return {
-                                projectId:
-                                  String(
-                                    projectPlan.projectId
-                                  ),
+return {
+projectId:
+String(
+projectPlan.projectId
+),
 
-                                projectName:
-                                  String(
-                                    projectPlan.projectName ||
-                                    ""
-                                  ),
+projectName:
+String(
+projectPlan.projectName ||
+""
+),
 
-                                allocationPercent:
-                                  Math.max(
-                                    0,
+allocationPercent:
+Math.max(
+0,
 
-                                    Number(
-                                      projectPlan.allocationPercent
-                                    ) ||
-                                    0
-                                  ),
+Number(
+projectPlan.allocationPercent
+) ||
+0
+),
 
-                                plannedMinutes:
-                                  Math.max(
-                                    0,
+plannedMinutes:
+Math.max(
+0,
 
-                                    Math.round(
-                                      Number(
-                                        projectPlan.plannedMinutes
-                                      ) ||
-                                      0
-                                    )
-                                  )
-                              };
-                            }
-                          )
-                          .filter(
-                            function(projectPlan) {
-                              return (
-                                projectPlan !==
-                                null
-                              );
-                            }
-                          )
-                      : [];
-
-
-                  return {
-                    categoryId:
-                      String(
-                        categoryPlan.categoryId
-                      ),
-
-                    categoryName:
-                      String(
-                        categoryPlan.categoryName ||
-                        ""
-                      ),
-
-                    allocationPercent:
-                      Math.max(
-                        0,
-
-                        Number(
-                          categoryPlan.allocationPercent
-                        ) ||
-                        0
-                      ),
-
-                    plannedMinutes:
-                      Math.max(
-                        0,
-
-                        Math.round(
-                          Number(
-                            categoryPlan.plannedMinutes
-                          ) ||
-                          0
-                        )
-                      ),
-
-                    projects:
-                      projects
-                  };
-                }
-              )
-              .filter(
-                function(categoryPlan) {
-                  return (
-                    categoryPlan !==
-                    null
-                  );
-                }
-              )
-          : [];
+Math.round(
+Number(
+projectPlan.plannedMinutes
+) ||
+0
+)
+)
+};
+}
+)
+.filter(
+function(projectPlan) {
+return (
+projectPlan !==
+null
+);
+}
+)
+: [];
 
 
-      normalizedPlans[
-        monthKey
-      ] = {
-        totalMinutes:
-          Math.max(
-            0,
+return {
+categoryId:
+String(
+categoryPlan.categoryId
+),
 
-            Math.round(
-              Number(
-                plan.totalMinutes
-              ) ||
-              0
-            )
-          ),
+categoryName:
+String(
+categoryPlan.categoryName ||
+""
+),
 
-        categories:
-          categories
-      };
-    }
-  );
+allocationPercent:
+Math.max(
+0,
+
+Number(
+categoryPlan.allocationPercent
+) ||
+0
+),
+
+plannedMinutes:
+Math.max(
+0,
+
+Math.round(
+Number(
+categoryPlan.plannedMinutes
+) ||
+0
+)
+),
+
+projects:
+projects
+};
+}
+)
+.filter(
+function(categoryPlan) {
+return (
+categoryPlan !==
+null
+);
+}
+)
+: [];
 
 
-  return normalizedPlans;
+normalizedPlans[
+monthKey
+] = {
+totalMinutes:
+Math.max(
+0,
+
+Math.round(
+Number(
+plan.totalMinutes
+) ||
+0
+)
+),
+
+categories:
+categories
+};
+}
+);
+
+
+return normalizedPlans;
 }
 
 
 function normalizeAppData(data) {
-  const categories =
-    Array.isArray(
-      data.categories
-    )
-      ? data.categories.map(
-          function(category) {
-            return {
-              ...category,
+const categories =
+Array.isArray(
+data.categories
+)
+? data.categories.map(
+function(category) {
+return {
+...category,
 
-              projects:
-                Array.isArray(
-                  category.projects
-                )
-                  ? category.projects.map(
-                      function(project) {
-                        return {
-                          ...project,
+projects:
+Array.isArray(
+category.projects
+)
+? category.projects.map(
+function(project) {
+return {
+...project,
 
-                          isCurrent:
-                            project.isCurrent !== false
-                        };
-                      }
-                    )
-                  : []
-            };
-          }
-        )
-      : [];
+isCurrent:
+project.isCurrent !== false
+};
+}
+)
+: []
+};
+}
+)
+: [];
 
 
-  return {
-    ...structuredClone(
-      defaultData
-    ),
+return {
+...structuredClone(
+defaultData
+),
 
-    ...data,
+...data,
 
-    settings: {
-      ...defaultData.settings,
+settings: {
+...defaultData.settings,
 
-      ...(data.settings || {}),
+...(data.settings || {}),
 
-      selectedPeriod:
-        "month"
-    },
+selectedPeriod:
+"month"
+},
 
-    categories:
-      categories,
+categories:
+categories,
 
-    monthlyPlans:
-      normalizeMonthlyPlans(
-        data.monthlyPlans
-      ),
+monthlyPlans:
+normalizeMonthlyPlans(
+data.monthlyPlans
+),
 
-    sessions:
-      Array.isArray(
-        data.sessions
-      )
-        ? data.sessions
-        : [],
+sessions:
+Array.isArray(
+data.sessions
+)
+? data.sessions
+: [],
 
-    activeSession:
-      data.activeSession || null
-  };
+activeSession:
+data.activeSession || null
+};
 }
 
 function hasWorkLogContent(data) {
-  return (
-    data.categories.length > 0 ||
-    Object.keys(
-      data.monthlyPlans || {}
-    ).length > 0 ||
-    data.sessions.length > 0 ||
-    Boolean(
-      data.activeSession
-    )
-  );
+return (
+data.categories.length > 0 ||
+Object.keys(
+data.monthlyPlans || {}
+).length > 0 ||
+data.sessions.length > 0 ||
+Boolean(
+data.activeSession
+)
+);
 }
 
 
@@ -1089,147 +1089,147 @@ let serverSavePromise = null;
 
 
 function saveAppData() {
-  pendingServerData =
-    structuredClone(
-      appData
-    );
+pendingServerData =
+structuredClone(
+appData
+);
 
-  if (!serverSavePromise) {
-    serverSavePromise =
-      saveQueuedDataToServer()
-        .finally(
-          function() {
-            serverSavePromise =
-              null;
+if (!serverSavePromise) {
+serverSavePromise =
+saveQueuedDataToServer()
+.finally(
+function() {
+serverSavePromise =
+null;
 
-            if (pendingServerData) {
-              saveAppData();
-            }
-          }
-        );
-  }
+if (pendingServerData) {
+saveAppData();
+}
+}
+);
+}
 }
 
 
 function restoreLastSavedAppData(
-  message
+message
 ) {
-  pendingServerData =
-    null;
+pendingServerData =
+null;
 
 
-  appData =
-    structuredClone(
-      lastSavedAppData
-    );
+appData =
+structuredClone(
+lastSavedAppData
+);
 
 
-  localStorage.setItem(
-    STORAGE_KEY,
+localStorage.setItem(
+STORAGE_KEY,
 
-    JSON.stringify(
-      lastSavedAppData
-    )
-  );
-
-
-  window.alert(
-    message +
-    "\n\n変更前の状態に戻します。"
-  );
+JSON.stringify(
+lastSavedAppData
+)
+);
 
 
-  window.location.reload();
+window.alert(
+message +
+"\n\n変更前の状態に戻します。"
+);
+
+
+window.location.reload();
 }
 
 
 async function saveQueuedDataToServer() {
-  while (pendingServerData) {
-    const dataToSave =
-      pendingServerData;
+while (pendingServerData) {
+const dataToSave =
+pendingServerData;
 
-    pendingServerData =
-      null;
+pendingServerData =
+null;
 
-    try {
-      const response =
-        await fetch(
-          "../api/save.php",
+try {
+const response =
+await fetch(
+"../api/save.php",
 
-          {
-            method: "POST",
+{
+method: "POST",
 
-            headers: {
-              "Content-Type":
-                "application/json"
-            },
+headers: {
+"Content-Type":
+"application/json"
+},
 
-            cache: "no-store",
+cache: "no-store",
 
-            credentials:
-              "same-origin",
+credentials:
+"same-origin",
 
-            body: JSON.stringify(
-              {
-                data:
-                  dataToSave
-              }
-            )
-          }
-        );
+body: JSON.stringify(
+{
+data:
+dataToSave
+}
+)
+}
+);
 
-      const result =
-        await response.json();
+const result =
+await response.json();
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error(
-            "ログインの有効期限が切れました。ページを再読み込みしてください。"
-          );
-        }
-
-
-        throw new Error(
-          result.error ||
-          "サーバーへの保存に失敗しました。"
-        );
-      }
+if (!response.ok) {
+if (response.status === 401) {
+throw new Error(
+"ログインの有効期限が切れました。ページを再読み込みしてください。"
+);
+}
 
 
-      localStorage.setItem(
-        STORAGE_KEY,
-
-        JSON.stringify(
-          dataToSave
-        )
-      );
+throw new Error(
+result.error ||
+"サーバーへの保存に失敗しました。"
+);
+}
 
 
-      lastSavedAppData =
-        structuredClone(
-          dataToSave
-        );
+localStorage.setItem(
+STORAGE_KEY,
+
+JSON.stringify(
+dataToSave
+)
+);
 
 
-      showStatusMessage(
-        "ブラウザとサーバーに保存しました。"
-      );
-    } catch (error) {
-      console.error(
-        "サーバーへの保存に失敗しました。",
-        error
-      );
+lastSavedAppData =
+structuredClone(
+dataToSave
+);
 
 
-      restoreLastSavedAppData(
-        error.message ||
-        "サーバーへの保存に失敗しました。"
-      );
+showStatusMessage(
+"ブラウザとサーバーに保存しました。"
+);
+} catch (error) {
+console.error(
+"サーバーへの保存に失敗しました。",
+error
+);
 
 
-      return;
-    }
-  }
+restoreLastSavedAppData(
+error.message ||
+"サーバーへの保存に失敗しました。"
+);
+
+
+return;
+}
+}
 }
 
 
@@ -1238,13 +1238,13 @@ async function saveQueuedDataToServer() {
 // ========================================
 
 function saveDisplaySettingsLocally() {
-  localStorage.setItem(
-    STORAGE_KEY,
+localStorage.setItem(
+STORAGE_KEY,
 
-    JSON.stringify(
-      appData
-    )
-  );
+JSON.stringify(
+appData
+)
+);
 }
 
 
@@ -1254,156 +1254,156 @@ function saveDisplaySettingsLocally() {
 // ========================================
 
 function initializeMonthlyPlan() {
-  if (
-    !monthlyPlanForm ||
-    !monthlyPlanMonthInput
-  ) {
-    return;
-  }
+if (
+!monthlyPlanForm ||
+!monthlyPlanMonthInput
+) {
+return;
+}
 
 
-  monthlyPlanMonthInput.value =
-    createMonthKey(
-      new Date()
-    );
+monthlyPlanMonthInput.value =
+createMonthKey(
+new Date()
+);
 
 
-  renderMonthlyPlanForm();
+renderMonthlyPlanForm();
 
 
-  monthlyPlanMonthInput.addEventListener(
-    "change",
+monthlyPlanMonthInput.addEventListener(
+"change",
 
-    function() {
-      renderMonthlyPlanForm();
-    }
-  );
-
-
-  monthlyPlanForm.addEventListener(
-    "input",
-
-    function(event) {
-      if (
-        event.target ===
-        monthlyPlanTotalHoursInput
-      ) {
-        recalculateMonthlyPlanHours();
-
-        updateMonthlyPlanSummary();
-
-        return;
-      }
+function() {
+renderMonthlyPlanForm();
+}
+);
 
 
-      if (
-        event.target.classList.contains(
-          "monthly-plan-category-percent"
-        )
-      ) {
-        updateCategoryHoursFromPercent(
-          event.target
-        );
+monthlyPlanForm.addEventListener(
+"input",
 
-        recalculateCategoryProjectHours(
-          event.target.dataset.categoryId
-        );
+function(event) {
+if (
+event.target ===
+monthlyPlanTotalHoursInput
+) {
+recalculateMonthlyPlanHours();
 
-        updateMonthlyPlanSummary();
+updateMonthlyPlanSummary();
 
-        return;
-      }
+return;
+}
 
 
-      if (
-        event.target.classList.contains(
-          "monthly-plan-project-percent"
-        )
-      ) {
-        updateProjectHoursFromPercent(
-          event.target
-        );
+if (
+event.target.classList.contains(
+"monthly-plan-category-percent"
+)
+) {
+updateCategoryHoursFromPercent(
+event.target
+);
 
-        updateMonthlyPlanSummary();
-      }
-    }
-  );
+recalculateCategoryProjectHours(
+event.target.dataset.categoryId
+);
 
+updateMonthlyPlanSummary();
 
-  monthlyPlanForm.addEventListener(
-    "submit",
-
-    function(event) {
-      event.preventDefault();
-
-      saveMonthlyPlan();
-    }
-  );
-
-  copyPreviousPlanButton.addEventListener(
-    "click",
-
-    copyPreviousMonthlyPlan
-  );
+return;
+}
 
 
-  monthlyPlanAddCategoryButton.addEventListener(
-    "click",
+if (
+event.target.classList.contains(
+"monthly-plan-project-percent"
+)
+) {
+updateProjectHoursFromPercent(
+event.target
+);
 
-    function() {
-      const enteredName =
-        window.prompt(
-          "追加する大分類名を入力してください。"
-        );
-
-
-      if (enteredName === null) {
-        return;
-      }
-
-
-      const categoryName =
-        enteredName.trim();
+updateMonthlyPlanSummary();
+}
+}
+);
 
 
-      if (!categoryName) {
-        showStatusMessage(
-          "大分類名を入力してください。"
-        );
+monthlyPlanForm.addEventListener(
+"submit",
 
-        return;
-      }
+function(event) {
+event.preventDefault();
 
+saveMonthlyPlan();
+}
+);
 
-      appData.categories.push(
-        {
-          id:
-            createId(
-              "category"
-            ),
+copyPreviousPlanButton.addEventListener(
+"click",
 
-          name:
-            categoryName,
-
-          allocationPercent:
-            0,
-
-          projects: []
-        }
-      );
+copyPreviousMonthlyPlan
+);
 
 
-      saveAppData();
+monthlyPlanAddCategoryButton.addEventListener(
+"click",
 
-      renderMonthlyPlanForm();
+function() {
+const enteredName =
+window.prompt(
+"追加する大分類名を入力してください。"
+);
 
-      updateWorkTimeDisplay();
 
-      showStatusMessage(
-        "大分類を追加しました。"
-      );
-    }
-  );
+if (enteredName === null) {
+return;
+}
+
+
+const categoryName =
+enteredName.trim();
+
+
+if (!categoryName) {
+showStatusMessage(
+"大分類名を入力してください。"
+);
+
+return;
+}
+
+
+appData.categories.push(
+{
+id:
+createId(
+"category"
+),
+
+name:
+categoryName,
+
+allocationPercent:
+0,
+
+projects: []
+}
+);
+
+
+saveAppData();
+
+renderMonthlyPlanForm();
+
+updateWorkTimeDisplay();
+
+showStatusMessage(
+"大分類を追加しました。"
+);
+}
+);
 }
 
 
@@ -1412,84 +1412,84 @@ function initializeMonthlyPlan() {
 // ========================================
 
 monthlyPlanProjectList.addEventListener(
-  "click",
+"click",
 
-  function(event) {
-    const button =
-      event.target.closest(
-        "[data-action='monthly-plan-add-project']"
-      );
-
-
-    if (!button) {
-      return;
-    }
+function(event) {
+const button =
+event.target.closest(
+"[data-action='monthly-plan-add-project']"
+);
 
 
-    const category =
-      findCategory(
-        button.dataset.categoryId
-      );
+if (!button) {
+return;
+}
 
 
-    if (!category) {
-      return;
-    }
+const category =
+findCategory(
+button.dataset.categoryId
+);
 
 
-    const enteredName =
-      window.prompt(
-        "追加するプロジェクト名を入力してください。"
-      );
+if (!category) {
+return;
+}
 
 
-    if (enteredName === null) {
-      return;
-    }
+const enteredName =
+window.prompt(
+"追加するプロジェクト名を入力してください。"
+);
 
 
-    const projectName =
-      enteredName.trim();
+if (enteredName === null) {
+return;
+}
 
 
-    if (!projectName) {
-      showStatusMessage(
-        "プロジェクト名を入力してください。"
-      );
-
-      return;
-    }
+const projectName =
+enteredName.trim();
 
 
-    category.projects.push(
-      {
-        id:
-          createId(
-            "project"
-          ),
+if (!projectName) {
+showStatusMessage(
+"プロジェクト名を入力してください。"
+);
 
-        name:
-          projectName,
-
-        allocationPercent:
-          0,
-
-        isCurrent:
-          true
-      }
-    );
+return;
+}
 
 
-    saveAppData();
+category.projects.push(
+{
+id:
+createId(
+"project"
+),
 
-    renderMonthlyPlanForm();
+name:
+projectName,
 
-    updateWorkTimeDisplay();
+allocationPercent:
+0,
 
-    showStatusMessage(
-      "プロジェクトを追加しました。"
-    );
-  }
+isCurrent:
+true
+}
+);
+
+
+saveAppData();
+
+renderMonthlyPlanForm();
+
+updateWorkTimeDisplay();
+
+showStatusMessage(
+"プロジェクトを追加しました。"
+);
+}
 );
 
 
@@ -1498,184 +1498,184 @@ monthlyPlanProjectList.addEventListener(
 // ========================================
 
 monthlyPlanProjectList.addEventListener(
-  "click",
+"click",
 
-  function(event) {
-    const button =
-      event.target.closest(
-        "button[data-action]"
-      );
+function(event) {
+const button =
+event.target.closest(
+"button[data-action]"
+);
 
 
-    if (!button) {
-      return;
-    }
+if (!button) {
+return;
+}
 
 
-    const action =
-      button.dataset.action;
+const action =
+button.dataset.action;
 
 
-    const category =
-      findCategory(
-        button.dataset.categoryId
-      );
+const category =
+findCategory(
+button.dataset.categoryId
+);
 
 
-    if (!category) {
-      return;
-    }
+if (!category) {
+return;
+}
 
 
-    if (
-      action ===
-      "monthly-plan-rename-category"
-    ) {
-      const enteredName =
-        window.prompt(
-          "新しい大分類名を入力してください。",
-          category.name
-        );
+if (
+action ===
+"monthly-plan-rename-category"
+) {
+const enteredName =
+window.prompt(
+"新しい大分類名を入力してください。",
+category.name
+);
 
 
-      if (enteredName === null) {
-        return;
-      }
+if (enteredName === null) {
+return;
+}
 
 
-      const categoryName =
-        enteredName.trim();
+const categoryName =
+enteredName.trim();
 
 
-      if (!categoryName) {
-        showStatusMessage(
-          "大分類名を入力してください。"
-        );
+if (!categoryName) {
+showStatusMessage(
+"大分類名を入力してください。"
+);
 
-        return;
-      }
+return;
+}
 
 
-      category.name =
-        categoryName;
+category.name =
+categoryName;
 
 
-      saveAppData();
+saveAppData();
 
-      renderMonthlyPlanForm();
+renderMonthlyPlanForm();
 
-      updateWorkTimeDisplay();
+updateWorkTimeDisplay();
 
-      renderRecordSummary();
+renderRecordSummary();
 
 
-      showStatusMessage(
-        "大分類名を変更しました。"
-      );
+showStatusMessage(
+"大分類名を変更しました。"
+);
 
-      return;
-    }
+return;
+}
 
 
-    if (
-      action !==
-        "monthly-plan-rename-project" &&
-      action !==
-        "monthly-plan-toggle-current"
-    ) {
-      return;
-    }
+if (
+action !==
+"monthly-plan-rename-project" &&
+action !==
+"monthly-plan-toggle-current"
+) {
+return;
+}
 
 
-    const project =
-      findProject(
-        category,
-        button.dataset.projectId
-      );
+const project =
+findProject(
+category,
+button.dataset.projectId
+);
 
 
-    if (!project) {
-      return;
-    }
+if (!project) {
+return;
+}
 
 
-    if (
-      action ===
-      "monthly-plan-rename-project"
-    ) {
-      const enteredName =
-        window.prompt(
-          "新しいプロジェクト名を入力してください。",
-          project.name
-        );
+if (
+action ===
+"monthly-plan-rename-project"
+) {
+const enteredName =
+window.prompt(
+"新しいプロジェクト名を入力してください。",
+project.name
+);
 
 
-      if (enteredName === null) {
-        return;
-      }
+if (enteredName === null) {
+return;
+}
 
 
-      const projectName =
-        enteredName.trim();
+const projectName =
+enteredName.trim();
 
 
-      if (!projectName) {
-        showStatusMessage(
-          "プロジェクト名を入力してください。"
-        );
+if (!projectName) {
+showStatusMessage(
+"プロジェクト名を入力してください。"
+);
 
-        return;
-      }
+return;
+}
 
 
-      project.name =
-        projectName;
+project.name =
+projectName;
 
 
-      saveAppData();
+saveAppData();
 
-      renderMonthlyPlanForm();
+renderMonthlyPlanForm();
 
-      updateWorkTimeDisplay();
+updateWorkTimeDisplay();
 
-      renderRecordSummary();
+renderRecordSummary();
 
 
-      showStatusMessage(
-        "プロジェクト名を変更しました。"
-      );
+showStatusMessage(
+"プロジェクト名を変更しました。"
+);
 
-      return;
-    }
+return;
+}
 
 
-    project.isCurrent =
-      project.isCurrent === false;
+project.isCurrent =
+project.isCurrent === false;
 
 
-    if (
-      project.isCurrent === false
-    ) {
-      project.allocationPercent =
-        0;
-    }
+if (
+project.isCurrent === false
+) {
+project.allocationPercent =
+0;
+}
 
 
-    saveAppData();
+saveAppData();
 
-    renderMonthlyPlanForm();
+renderMonthlyPlanForm();
 
-    updateWorkTimeDisplay();
+updateWorkTimeDisplay();
 
-    renderRecordSummary();
+renderRecordSummary();
 
 
-    showStatusMessage(
-      project.isCurrent
-        ? "現在のプロジェクトに戻しました。"
-        : "プロジェクトをアーカイブへ移動しました。"
-    );
-  }
+showStatusMessage(
+project.isCurrent
+? "現在のプロジェクトに戻しました。"
+: "プロジェクトをアーカイブへ移動しました。"
+);
+}
 );
 
 
@@ -1684,332 +1684,332 @@ monthlyPlanProjectList.addEventListener(
 // ========================================
 
 function handleProjectDeletion(
-  event
+event
 ) {
-    const button =
-      event.target.closest(
-        "button[data-action]"
-      );
+const button =
+event.target.closest(
+"button[data-action]"
+);
 
 
-    if (!button) {
-      return;
-    }
-
-
-    const action =
-      button.dataset.action;
-
-
-    if (
-      action !==
-        "monthly-plan-delete-category" &&
-      action !==
-        "monthly-plan-delete-project"
-    ) {
-      return;
-    }
-
-
-    const categoryId =
-      button.dataset.categoryId;
-
-
-    const category =
-      findCategory(
-        categoryId
-      );
-
-
-    if (!category) {
-      return;
-    }
-
-
-    if (
-      action ===
-      "monthly-plan-delete-category"
-    ) {
-      const projectIds =
-        new Set(
-          category.projects.map(
-            function(project) {
-              return String(
-                project.id
-              );
-            }
-          )
-        );
-
-
-      const hasSavedRecords =
-        appData.sessions.some(
-          function(session) {
-            return projectIds.has(
-              String(
-                session.projectId
-              )
-            );
-          }
-        );
-
-
-      const hasActiveRecord =
-        Boolean(
-          appData.activeSession &&
-          projectIds.has(
-            String(
-              appData.activeSession.projectId
-            )
-          )
-        );
+if (!button) {
+return;
+}
+
+
+const action =
+button.dataset.action;
+
+
+if (
+action !==
+"monthly-plan-delete-category" &&
+action !==
+"monthly-plan-delete-project"
+) {
+return;
+}
+
+
+const categoryId =
+button.dataset.categoryId;
+
+
+const category =
+findCategory(
+categoryId
+);
+
+
+if (!category) {
+return;
+}
+
+
+if (
+action ===
+"monthly-plan-delete-category"
+) {
+const projectIds =
+new Set(
+category.projects.map(
+function(project) {
+return String(
+project.id
+);
+}
+)
+);
+
+
+const hasSavedRecords =
+appData.sessions.some(
+function(session) {
+return projectIds.has(
+String(
+session.projectId
+)
+);
+}
+);
+
+
+const hasActiveRecord =
+Boolean(
+appData.activeSession &&
+projectIds.has(
+String(
+appData.activeSession.projectId
+)
+)
+);
 
 
-      if (
-        hasSavedRecords ||
-        hasActiveRecord
-      ) {
-        window.alert(
-          "作業記録があるため、この大分類は削除できません。配下のプロジェクトをアーカイブへ移してください。"
-        );
+if (
+hasSavedRecords ||
+hasActiveRecord
+) {
+window.alert(
+"作業記録があるため、この大分類は削除できません。配下のプロジェクトをアーカイブへ移してください。"
+);
 
-        return;
-      }
+return;
+}
 
 
-      const shouldDelete =
-        window.confirm(
-          "この大分類と、その中のプロジェクトを削除しますか？"
-        );
+const shouldDelete =
+window.confirm(
+"この大分類と、その中のプロジェクトを削除しますか？"
+);
 
 
-      if (!shouldDelete) {
-        return;
-      }
+if (!shouldDelete) {
+return;
+}
 
 
-      appData.categories =
-        appData.categories.filter(
-          function(item) {
-            return (
-              String(
-                item.id
-              ) !==
-              String(
-                categoryId
-              )
-            );
-          }
-        );
-
-
-      Object.values(
-        appData.monthlyPlans
-      ).forEach(
-        function(monthlyPlan) {
-          if (
-            !Array.isArray(
-              monthlyPlan.categories
-            )
-          ) {
-            return;
-          }
-
-
-          monthlyPlan.categories =
-            monthlyPlan.categories.filter(
-              function(categoryPlan) {
-                return (
-                  String(
-                    categoryPlan.categoryId
-                  ) !==
-                  String(
-                    categoryId
-                  )
-                );
-              }
-            );
-
-
-          recalculateStoredMonthlyPlan(
-            monthlyPlan
-          );
-        }
-      );
-
-
-      saveAppData();
-
-      renderMonthlyPlanForm();
-
-      updateWorkTimeDisplay();
-
-      renderRecordSummary();
-
-
-      showStatusMessage(
-        "大分類を削除しました。"
-      );
-
-      return;
-    }
-
-
-    const projectId =
-      button.dataset.projectId;
-
-
-    const project =
-      findProject(
-        category,
-        projectId
-      );
-
-
-    if (!project) {
-      return;
-    }
-
-
-    const hasSavedRecords =
-      appData.sessions.some(
-        function(session) {
-          return (
-            String(
-              session.projectId
-            ) ===
-            String(
-              projectId
-            )
-          );
-        }
-      );
-
-
-    const hasActiveRecord =
-      Boolean(
-        appData.activeSession &&
-        String(
-          appData.activeSession.projectId
-        ) ===
-        String(
-          projectId
-        )
-      );
-
-
-    if (
-      hasSavedRecords ||
-      hasActiveRecord
-    ) {
-      window.alert(
-        "作業記録があるため、このプロジェクトは削除できません。「アーカイブへ移動」を使用してください。"
-      );
-
-      return;
-    }
-
-
-    const shouldDelete =
-      window.confirm(
-        "このプロジェクトを削除しますか？"
-      );
-
-
-    if (!shouldDelete) {
-      return;
-    }
-
-
-    category.projects =
-      category.projects.filter(
-        function(item) {
-          return (
-            String(
-              item.id
-            ) !==
-            String(
-              projectId
-            )
-          );
-        }
-      );
-
-
-    Object.values(
-      appData.monthlyPlans
-    ).forEach(
-      function(monthlyPlan) {
-        if (
-          !Array.isArray(
-            monthlyPlan.categories
-          )
-        ) {
-          return;
-        }
-
-
-        monthlyPlan.categories.forEach(
-          function(categoryPlan) {
-            if (
-              !Array.isArray(
-                categoryPlan.projects
-              )
-            ) {
-              return;
-            }
-
-
-            categoryPlan.projects =
-              categoryPlan.projects.filter(
-                function(projectPlan) {
-                  return (
-                    String(
-                      projectPlan.projectId
-                    ) !==
-                    String(
-                      projectId
-                    )
-                  );
-                }
-              );
-          }
-        );
-
-
-        recalculateStoredMonthlyPlan(
-          monthlyPlan
-        );
-      }
-    );
-
-
-    saveAppData();
-
-    renderMonthlyPlanForm();
-
-    updateWorkTimeDisplay();
-
-    renderRecordSummary();
-
-
-    showStatusMessage(
-      "プロジェクトを削除しました。"
-    );
+appData.categories =
+appData.categories.filter(
+function(item) {
+return (
+String(
+item.id
+) !==
+String(
+categoryId
+)
+);
+}
+);
+
+
+Object.values(
+appData.monthlyPlans
+).forEach(
+function(monthlyPlan) {
+if (
+!Array.isArray(
+monthlyPlan.categories
+)
+) {
+return;
+}
+
+
+monthlyPlan.categories =
+monthlyPlan.categories.filter(
+function(categoryPlan) {
+return (
+String(
+categoryPlan.categoryId
+) !==
+String(
+categoryId
+)
+);
+}
+);
+
+
+recalculateStoredMonthlyPlan(
+monthlyPlan
+);
+}
+);
+
+
+saveAppData();
+
+renderMonthlyPlanForm();
+
+updateWorkTimeDisplay();
+
+renderRecordSummary();
+
+
+showStatusMessage(
+"大分類を削除しました。"
+);
+
+return;
+}
+
+
+const projectId =
+button.dataset.projectId;
+
+
+const project =
+findProject(
+category,
+projectId
+);
+
+
+if (!project) {
+return;
+}
+
+
+const hasSavedRecords =
+appData.sessions.some(
+function(session) {
+return (
+String(
+session.projectId
+) ===
+String(
+projectId
+)
+);
+}
+);
+
+
+const hasActiveRecord =
+Boolean(
+appData.activeSession &&
+String(
+appData.activeSession.projectId
+) ===
+String(
+projectId
+)
+);
+
+
+if (
+hasSavedRecords ||
+hasActiveRecord
+) {
+window.alert(
+"作業記録があるため、このプロジェクトは削除できません。「アーカイブへ移動」を使用してください。"
+);
+
+return;
+}
+
+
+const shouldDelete =
+window.confirm(
+"このプロジェクトを削除しますか？"
+);
+
+
+if (!shouldDelete) {
+return;
+}
+
+
+category.projects =
+category.projects.filter(
+function(item) {
+return (
+String(
+item.id
+) !==
+String(
+projectId
+)
+);
+}
+);
+
+
+Object.values(
+appData.monthlyPlans
+).forEach(
+function(monthlyPlan) {
+if (
+!Array.isArray(
+monthlyPlan.categories
+)
+) {
+return;
+}
+
+
+monthlyPlan.categories.forEach(
+function(categoryPlan) {
+if (
+!Array.isArray(
+categoryPlan.projects
+)
+) {
+return;
+}
+
+
+categoryPlan.projects =
+categoryPlan.projects.filter(
+function(projectPlan) {
+return (
+String(
+projectPlan.projectId
+) !==
+String(
+projectId
+)
+);
+}
+);
+}
+);
+
+
+recalculateStoredMonthlyPlan(
+monthlyPlan
+);
+}
+);
+
+
+saveAppData();
+
+renderMonthlyPlanForm();
+
+updateWorkTimeDisplay();
+
+renderRecordSummary();
+
+
+showStatusMessage(
+"プロジェクトを削除しました。"
+);
 }
 
 
 monthlyPlanProjectList.addEventListener(
-  "click",
+"click",
 
-  handleProjectDeletion
+handleProjectDeletion
 );
 
 
 projectStatusList.addEventListener(
-  "click",
+"click",
 
-  handleProjectDeletion
+handleProjectDeletion
 );
 
 
@@ -2018,100 +2018,100 @@ projectStatusList.addEventListener(
 // ========================================
 
 function recalculateStoredMonthlyPlan(
-  monthlyPlan
+monthlyPlan
 ) {
-  if (
-    !monthlyPlan ||
-    !Array.isArray(
-      monthlyPlan.categories
-    )
-  ) {
-    return;
-  }
+if (
+!monthlyPlan ||
+!Array.isArray(
+monthlyPlan.categories
+)
+) {
+return;
+}
 
 
-  const totalMinutes =
-    Number(
-      monthlyPlan.totalMinutes ||
-      0
-    );
+const totalMinutes =
+Number(
+monthlyPlan.totalMinutes ||
+0
+);
 
 
-  monthlyPlan.categories =
-    monthlyPlan.categories.filter(
-      function(categoryPlan) {
-        const projects =
-          Array.isArray(
-            categoryPlan.projects
-          )
-            ? categoryPlan.projects
-            : [];
+monthlyPlan.categories =
+monthlyPlan.categories.filter(
+function(categoryPlan) {
+const projects =
+Array.isArray(
+categoryPlan.projects
+)
+? categoryPlan.projects
+: [];
 
 
-        categoryPlan.projects =
-          projects;
+categoryPlan.projects =
+projects;
 
 
-        const categoryPlannedMinutes =
-          Math.max(
-            0,
+const categoryPlannedMinutes =
+Math.max(
+0,
 
-            Number(
-              categoryPlan.plannedMinutes ||
-              0
-            )
-          );
-
-
-        categoryPlan.plannedMinutes =
-          categoryPlannedMinutes;
+Number(
+categoryPlan.plannedMinutes ||
+0
+)
+);
 
 
-        categoryPlan.allocationPercent =
-          totalMinutes > 0
-            ? (
-                categoryPlannedMinutes /
-                totalMinutes *
-                100
-              )
-            : 0;
+categoryPlan.plannedMinutes =
+categoryPlannedMinutes;
 
 
-        projects.forEach(
-          function(projectPlan) {
-            const projectPlannedMinutes =
-              Math.max(
-                0,
-
-                Number(
-                  projectPlan.plannedMinutes ||
-                  0
-                )
-              );
+categoryPlan.allocationPercent =
+totalMinutes > 0
+? (
+categoryPlannedMinutes /
+totalMinutes *
+100
+)
+: 0;
 
 
-            projectPlan.plannedMinutes =
-              projectPlannedMinutes;
+projects.forEach(
+function(projectPlan) {
+const projectPlannedMinutes =
+Math.max(
+0,
+
+Number(
+projectPlan.plannedMinutes ||
+0
+)
+);
 
 
-            projectPlan.allocationPercent =
-              categoryPlannedMinutes > 0
-                ? (
-                    projectPlannedMinutes /
-                    categoryPlannedMinutes *
-                    100
-                  )
-                : 0;
-          }
-        );
+projectPlan.plannedMinutes =
+projectPlannedMinutes;
 
 
-        return (
-          categoryPlannedMinutes > 0 ||
-          projects.length > 0
-        );
-      }
-    );
+projectPlan.allocationPercent =
+categoryPlannedMinutes > 0
+? (
+projectPlannedMinutes /
+categoryPlannedMinutes *
+100
+)
+: 0;
+}
+);
+
+
+return (
+categoryPlannedMinutes > 0 ||
+projects.length > 0
+);
+}
+);
 }
 
 
@@ -2120,18 +2120,18 @@ function recalculateStoredMonthlyPlan(
 // ========================================
 
 function createMonthKey(
-  date
+date
 ) {
-  return (
-    date.getFullYear() +
-    "-" +
-    String(
-      date.getMonth() + 1
-    ).padStart(
-      2,
-      "0"
-    )
-  );
+return (
+date.getFullYear() +
+"-" +
+String(
+date.getMonth() + 1
+).padStart(
+2,
+"0"
+)
+);
 }
 
 
@@ -2140,24 +2140,24 @@ function createMonthKey(
 // ========================================
 
 function getPreviousMonthKey(
-  monthKey
+monthKey
 ) {
-  const [
-    year,
-    month
-  ] =
-    monthKey
-      .split("-")
-      .map(Number);
+const [
+year,
+month
+] =
+monthKey
+.split("-")
+.map(Number);
 
 
-  return createMonthKey(
-    new Date(
-      year,
-      month - 2,
-      1
-    )
-  );
+return createMonthKey(
+new Date(
+year,
+month - 2,
+1
+)
+);
 }
 
 
@@ -2166,29 +2166,29 @@ function getPreviousMonthKey(
 // ========================================
 
 function getMonthlyPlanDaysInMonth() {
-  const monthKey =
-    monthlyPlanMonthInput.value;
+const monthKey =
+monthlyPlanMonthInput.value;
 
 
-  if (!monthKey) {
-    return 30;
-  }
+if (!monthKey) {
+return 30;
+}
 
 
-  const [
-    year,
-    month
-  ] =
-    monthKey
-      .split("-")
-      .map(Number);
+const [
+year,
+month
+] =
+monthKey
+.split("-")
+.map(Number);
 
 
-  return new Date(
-    year,
-    month,
-    0
-  ).getDate();
+return new Date(
+year,
+month,
+0
+).getDate();
 }
 
 
@@ -2197,23 +2197,23 @@ function getMonthlyPlanDaysInMonth() {
 // ========================================
 
 function getMonthlyPlanPeriodFactor(
-  period
+period
 ) {
-  const daysInMonth =
-    getMonthlyPlanDaysInMonth();
+const daysInMonth =
+getMonthlyPlanDaysInMonth();
 
 
-  if (period === "day") {
-    return 1 / daysInMonth;
-  }
+if (period === "day") {
+return 1 / daysInMonth;
+}
 
 
-  if (period === "week") {
-    return 7 / daysInMonth;
-  }
+if (period === "week") {
+return 7 / daysInMonth;
+}
 
 
-  return 1;
+return 1;
 }
 
 
@@ -2222,19 +2222,19 @@ function getMonthlyPlanPeriodFactor(
 // ========================================
 
 function monthlyMinutesToDisplayHours(
-  monthlyMinutes,
-  period
+monthlyMinutes,
+period
 ) {
-  return (
-    Number(
-      monthlyMinutes || 0
-    ) /
-    60 *
-    getMonthlyPlanPeriodFactor(
-      period ||
-      appData.settings.selectedPeriod
-    )
-  );
+return (
+Number(
+monthlyMinutes || 0
+) /
+60 *
+getMonthlyPlanPeriodFactor(
+period ||
+appData.settings.selectedPeriod
+)
+);
 }
 
 
@@ -2243,32 +2243,32 @@ function monthlyMinutesToDisplayHours(
 // ========================================
 
 function displayHoursToMonthlyMinutes(
-  displayHours,
-  period
+displayHours,
+period
 ) {
-  const factor =
-    getMonthlyPlanPeriodFactor(
-      period ||
-      appData.settings.selectedPeriod
-    );
+const factor =
+getMonthlyPlanPeriodFactor(
+period ||
+appData.settings.selectedPeriod
+);
 
 
-  if (factor <= 0) {
-    return 0;
-  }
+if (factor <= 0) {
+return 0;
+}
 
 
-  return Math.max(
-    0,
+return Math.max(
+0,
 
-    Math.round(
-      Number(
-        displayHours || 0
-      ) /
-      factor *
-      60
-    )
-  );
+Math.round(
+Number(
+displayHours || 0
+) /
+factor *
+60
+)
+);
 }
 
 
@@ -2277,31 +2277,31 @@ function displayHoursToMonthlyMinutes(
 // ========================================
 
 function updateMonthlyPlanPeriodLabels() {
-  const selectedPeriod =
-    appData.settings.selectedPeriod;
+const selectedPeriod =
+appData.settings.selectedPeriod;
 
 
-  if (selectedPeriod === "day") {
-    monthlyPlanTotalLabel.textContent =
-      "1日の予定作業時間";
+if (selectedPeriod === "day") {
+monthlyPlanTotalLabel.textContent =
+"1日の予定作業時間";
 
-    monthlyPlanSummaryTotalLabel.textContent =
-      "1日の予定時間";
-  } else if (
-    selectedPeriod === "week"
-  ) {
-    monthlyPlanTotalLabel.textContent =
-      "1週間の予定作業時間";
+monthlyPlanSummaryTotalLabel.textContent =
+"1日の予定時間";
+} else if (
+selectedPeriod === "week"
+) {
+monthlyPlanTotalLabel.textContent =
+"1週間の予定作業時間";
 
-    monthlyPlanSummaryTotalLabel.textContent =
-      "1週間の予定時間";
-  } else {
-    monthlyPlanTotalLabel.textContent =
-      "月の予定作業時間";
+monthlyPlanSummaryTotalLabel.textContent =
+"1週間の予定時間";
+} else {
+monthlyPlanTotalLabel.textContent =
+"月の予定作業時間";
 
-    monthlyPlanSummaryTotalLabel.textContent =
-      "月の予定時間";
-  }
+monthlyPlanSummaryTotalLabel.textContent =
+"月の予定時間";
+}
 }
 
 
@@ -2313,384 +2313,384 @@ function updateMonthlyPlanPeriodLabels() {
 // ========================================
 
 function renderMonthlyPlanForm() {
-  const monthKey =
-    monthlyPlanMonthInput.value;
+const monthKey =
+monthlyPlanMonthInput.value;
 
 
-  if (!monthKey) {
-    return;
-  }
-
-
-  const savedPlan =
-    appData.monthlyPlans[
-      monthKey
-    ] || null;
-
-
-  const defaultTotalMinutes =
-    Math.round(
-      Number(
-        appData.settings.weeklyHours ||
-        0
-      ) *
-      52 /
-      12 *
-      60
-    );
-
-
-  const totalMinutes =
-    savedPlan
-      ? Number(
-          savedPlan.totalMinutes ||
-          0
-        )
-      : defaultTotalMinutes;
-
-
-  monthlyPlanTotalHoursInput.value =
-    formatInputNumber(
-      monthlyMinutesToDisplayHours(
-        totalMinutes
-      )
-    );
-
-
-  updateMonthlyPlanPeriodLabels();
-
+if (!monthKey) {
+return;
+}
+
+
+const savedPlan =
+appData.monthlyPlans[
+monthKey
+] || null;
+
+
+const defaultTotalMinutes =
+Math.round(
+Number(
+appData.settings.weeklyHours ||
+0
+) *
+52 /
+12 *
+60
+);
+
+
+const totalMinutes =
+savedPlan
+? Number(
+savedPlan.totalMinutes ||
+0
+)
+: defaultTotalMinutes;
+
+
+monthlyPlanTotalHoursInput.value =
+formatInputNumber(
+monthlyMinutesToDisplayHours(
+totalMinutes
+)
+);
+
+
+updateMonthlyPlanPeriodLabels();
+
 
-  const savedCategoryPlans =
-    new Map();
-
-
-  const savedProjectPlans =
-    new Map();
-
+const savedCategoryPlans =
+new Map();
+
+
+const savedProjectPlans =
+new Map();
+
 
-  if (
-    savedPlan &&
-    Array.isArray(
-      savedPlan.categories
-    )
-  ) {
-    savedPlan.categories.forEach(
-      function(categoryPlan) {
-        savedCategoryPlans.set(
-          String(
-            categoryPlan.categoryId
-          ),
-
-          categoryPlan
-        );
-
+if (
+savedPlan &&
+Array.isArray(
+savedPlan.categories
+)
+) {
+savedPlan.categories.forEach(
+function(categoryPlan) {
+savedCategoryPlans.set(
+String(
+categoryPlan.categoryId
+),
+
+categoryPlan
+);
+
 
-        const projects =
-          Array.isArray(
-            categoryPlan.projects
-          )
-            ? categoryPlan.projects
-            : [];
+const projects =
+Array.isArray(
+categoryPlan.projects
+)
+? categoryPlan.projects
+: [];
 
 
-        projects.forEach(
-          function(projectPlan) {
-            savedProjectPlans.set(
-              String(
-                projectPlan.projectId
-              ),
-
-              projectPlan
-            );
-          }
-        );
-      }
-    );
-  }
-
-
-  const currentCategories =
-    appData.categories
-      .map(
-        function(category) {
-          const currentProjects =
-            Array.isArray(
-              category.projects
-            )
-              ? category.projects.filter(
-                  function(project) {
-                    return (
-                      project &&
-                      project.isCurrent !== false
-                    );
-                  }
-                )
-              : [];
-
-
-          if (
-            currentProjects.length === 0
-          ) {
-            return null;
-          }
-
-
-          return {
-            ...category,
-
-            projects:
-              currentProjects
-          };
-        }
-      )
-      .filter(Boolean);
-
-
-  if (currentCategories.length === 0) {
-    monthlyPlanProjectList.innerHTML = `
-      <p class="empty-message">
-        現在のプロジェクトはありません。
-      </p>
-    `;
-
-    updateMonthlyPlanSummary();
-
-    return;
-  }
-
-
-  monthlyPlanProjectList.innerHTML =
-    currentCategories
-      .map(
-        function(category) {
-          const projects =
-            category.projects;
-
-
-          const savedCategory =
-            savedCategoryPlans.get(
-              String(
-                category.id
-              )
-            );
-
-
-          const categoryPlannedMinutes =
-            savedCategory
-              ? Number(
-                  savedCategory.plannedMinutes ||
-                  0
-                )
-              : 0;
-
-
-          const categoryPlannedHours =
-            monthlyMinutesToDisplayHours(
-              categoryPlannedMinutes
-            );
-
-
-          const categoryPlannedPercent =
-            totalMinutes > 0
-              ? (
-                  categoryPlannedMinutes /
-                  totalMinutes *
-                  100
-                )
-              : 0;
-
-
-          const projectHtml =
-            projects
-              .map(
-                function(project) {
-                  const savedProject =
-                    savedProjectPlans.get(
-                      String(
-                        project.id
-                      )
-                    );
-
-
-                  const isSelected =
-                    Boolean(
-                      savedProject
-                    );
-
-
-                  const plannedHours =
-                    savedProject
-                      ? monthlyMinutesToDisplayHours(
-                          savedProject
-                            .plannedMinutes ||
-                          0
-                        )
-                      : 0;
-
-
-                  const plannedPercent =
-                    (
-                      savedProject &&
-                      categoryPlannedMinutes > 0
-                    )
-                      ? (
-                          Number(
-                            savedProject
-                              .allocationPercent ||
-                            0
-                          )
-                        )
-                      : 0;
-
-
-                  const archiveLabel =
-                    project.isCurrent ===
-                    false
-                      ? `
-                        <span class="monthly-plan-archive-label">
-                          アーカイブ
-                        </span>
-                      `
-                      : "";
-
-
-                  return `
-                    <div class="monthly-plan-project-item">
-                      <div class="monthly-plan-project-check-label">
-                        <span>
-                          ${escapeHtml(project.name)}
-                          ${archiveLabel}
-                        </span>
-                      </div>
-
-                      <div class="monthly-plan-value-fields">
-                        <label class="monthly-plan-percent-field">
-                          <input
-                            class="monthly-plan-project-percent"
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.1"
-                            value="${formatInputNumber(plannedPercent)}"
-                            data-category-id="${escapeHtml(category.id)}"
-                            data-project-id="${escapeHtml(project.id)}"
-                          >
-
-                          <span>
-                            ％
-                          </span>
-                        </label>
-
-                        <label class="monthly-plan-hours-field">
-                          <input
-                            class="monthly-plan-project-hours"
-                            type="number"
-                            min="0"
-                            step="0.5"
-                            value="${formatInputNumber(plannedHours)}"
-                            data-category-id="${escapeHtml(category.id)}"
-                            data-project-id="${escapeHtml(project.id)}"
-                            readonly
-                            tabindex="-1"
-                          >
-
-                          <span>
-                            時間
-                          </span>
-                        </label>
-                      </div>
-
-                    </div>
-                  `;
-                }
-              )
-              .join("");
-
-
-          return `
-            <details
-              class="project-status-category monthly-plan-category"
-            >
-              <summary>
-                <span>
-                  ${escapeHtml(category.name)}
-                </span>
-
-                <span class="monthly-plan-category-summary-value">
-                  ${formatInputNumber(categoryPlannedPercent)}％
-                  /
-                  ${formatHours(categoryPlannedHours)}
-                </span>
-              </summary>
-
-              <div
-                class="monthly-plan-category-allocation"
-                data-category-id="${escapeHtml(category.id)}"
-              >
-                <span class="monthly-plan-category-allocation-label">
-                  大分類の予定
-                </span>
-
-                <div class="monthly-plan-value-fields">
-                  <label class="monthly-plan-percent-field">
-                    <input
-                      class="monthly-plan-category-percent"
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value="${formatInputNumber(categoryPlannedPercent)}"
-                      data-category-id="${escapeHtml(category.id)}"
-                    >
-
-                    <span>
-                      ％
-                    </span>
-                  </label>
-
-                  <label class="monthly-plan-hours-field">
-                    <input
-                      class="monthly-plan-category-hours"
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      value="${formatInputNumber(categoryPlannedHours)}"
-                      data-category-id="${escapeHtml(category.id)}"
-                      readonly
-                      tabindex="-1"
-                    >
-
-                    <span>
-                      時間
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              <p
-                class="monthly-plan-category-project-status"
-                data-category-id="${escapeHtml(category.id)}"
-              >
-              </p>
-
-              <div class="project-status-project-list">
-                ${
-                  projectHtml ||
-                  `
-                    <p class="empty-message">
-                      プロジェクトがありません。
-                    </p>
-                  `
-                }
-              </div>
-            </details>
-          `;
-        }
-      )
-      .join("");
-
-
-  updateMonthlyPlanSummary();
+projects.forEach(
+function(projectPlan) {
+savedProjectPlans.set(
+String(
+projectPlan.projectId
+),
+
+projectPlan
+);
+}
+);
+}
+);
+}
+
+
+const currentCategories =
+appData.categories
+.map(
+function(category) {
+const currentProjects =
+Array.isArray(
+category.projects
+)
+? category.projects.filter(
+function(project) {
+return (
+project &&
+project.isCurrent !== false
+);
+}
+)
+: [];
+
+
+if (
+currentProjects.length === 0
+) {
+return null;
+}
+
+
+return {
+...category,
+
+projects:
+currentProjects
+};
+}
+)
+.filter(Boolean);
+
+
+if (currentCategories.length === 0) {
+monthlyPlanProjectList.innerHTML = `
+<p class="empty-message">
+現在のプロジェクトはありません。
+</p>
+`;
+
+updateMonthlyPlanSummary();
+
+return;
+}
+
+
+monthlyPlanProjectList.innerHTML =
+currentCategories
+.map(
+function(category) {
+const projects =
+category.projects;
+
+
+const savedCategory =
+savedCategoryPlans.get(
+String(
+category.id
+)
+);
+
+
+const categoryPlannedMinutes =
+savedCategory
+? Number(
+savedCategory.plannedMinutes ||
+0
+)
+: 0;
+
+
+const categoryPlannedHours =
+monthlyMinutesToDisplayHours(
+categoryPlannedMinutes
+);
+
+
+const categoryPlannedPercent =
+totalMinutes > 0
+? (
+categoryPlannedMinutes /
+totalMinutes *
+100
+)
+: 0;
+
+
+const projectHtml =
+projects
+.map(
+function(project) {
+const savedProject =
+savedProjectPlans.get(
+String(
+project.id
+)
+);
+
+
+const isSelected =
+Boolean(
+savedProject
+);
+
+
+const plannedHours =
+savedProject
+? monthlyMinutesToDisplayHours(
+savedProject
+.plannedMinutes ||
+0
+)
+: 0;
+
+
+const plannedPercent =
+(
+savedProject &&
+categoryPlannedMinutes > 0
+)
+? (
+Number(
+savedProject
+.allocationPercent ||
+0
+)
+)
+: 0;
+
+
+const archiveLabel =
+project.isCurrent ===
+false
+? `
+<span class="monthly-plan-archive-label">
+アーカイブ
+</span>
+`
+: "";
+
+
+return `
+<div class="monthly-plan-project-item">
+<div class="monthly-plan-project-check-label">
+<span>
+${escapeHtml(project.name)}
+${archiveLabel}
+</span>
+</div>
+
+<div class="monthly-plan-value-fields">
+<label class="monthly-plan-percent-field">
+<input
+class="monthly-plan-project-percent"
+type="number"
+min="0"
+max="100"
+step="0.1"
+value="${formatInputNumber(plannedPercent)}"
+data-category-id="${escapeHtml(category.id)}"
+data-project-id="${escapeHtml(project.id)}"
+>
+
+<span>
+％
+</span>
+</label>
+
+<label class="monthly-plan-hours-field">
+<input
+class="monthly-plan-project-hours"
+type="number"
+min="0"
+step="0.5"
+value="${formatInputNumber(plannedHours)}"
+data-category-id="${escapeHtml(category.id)}"
+data-project-id="${escapeHtml(project.id)}"
+readonly
+tabindex="-1"
+>
+
+<span>
+時間
+</span>
+</label>
+</div>
+
+</div>
+`;
+}
+)
+.join("");
+
+
+return `
+<details
+class="project-status-category monthly-plan-category"
+>
+<summary>
+<span>
+${escapeHtml(category.name)}
+</span>
+
+<span class="monthly-plan-category-summary-value">
+${formatInputNumber(categoryPlannedPercent)}％
+/
+${formatHours(categoryPlannedHours)}
+</span>
+</summary>
+
+<div
+class="monthly-plan-category-allocation"
+data-category-id="${escapeHtml(category.id)}"
+>
+<span class="monthly-plan-category-allocation-label">
+大分類の予定
+</span>
+
+<div class="monthly-plan-value-fields">
+<label class="monthly-plan-percent-field">
+<input
+class="monthly-plan-category-percent"
+type="number"
+min="0"
+max="100"
+step="0.1"
+value="${formatInputNumber(categoryPlannedPercent)}"
+data-category-id="${escapeHtml(category.id)}"
+>
+
+<span>
+％
+</span>
+</label>
+
+<label class="monthly-plan-hours-field">
+<input
+class="monthly-plan-category-hours"
+type="number"
+min="0"
+step="0.5"
+value="${formatInputNumber(categoryPlannedHours)}"
+data-category-id="${escapeHtml(category.id)}"
+readonly
+tabindex="-1"
+>
+
+<span>
+時間
+</span>
+</label>
+</div>
+</div>
+
+<p
+class="monthly-plan-category-project-status"
+data-category-id="${escapeHtml(category.id)}"
+>
+</p>
+
+<div class="project-status-project-list">
+${
+projectHtml ||
+`
+<p class="empty-message">
+プロジェクトがありません。
+</p>
+`
+}
+</div>
+</details>
+`;
+}
+)
+.join("");
+
+
+updateMonthlyPlanSummary();
 }
 
 
@@ -2699,53 +2699,53 @@ function renderMonthlyPlanForm() {
 // ========================================
 
 function updateCategoryHoursFromPercent(
-  percentInput
+percentInput
 ) {
-  const categoryAllocation =
-    percentInput.closest(
-      ".monthly-plan-category-allocation"
-    );
+const categoryAllocation =
+percentInput.closest(
+".monthly-plan-category-allocation"
+);
 
 
-  if (!categoryAllocation) {
-    return;
-  }
+if (!categoryAllocation) {
+return;
+}
 
 
-  const hoursInput =
-    categoryAllocation.querySelector(
-      ".monthly-plan-category-hours"
-    );
+const hoursInput =
+categoryAllocation.querySelector(
+".monthly-plan-category-hours"
+);
 
 
-  const totalHours =
-    Math.max(
-      0,
+const totalHours =
+Math.max(
+0,
 
-      Number(
-        monthlyPlanTotalHoursInput.value
-      ) ||
-      0
-    );
-
-
-  const percent =
-    Math.max(
-      0,
-
-      Number(
-        percentInput.value
-      ) ||
-      0
-    );
+Number(
+monthlyPlanTotalHoursInput.value
+) ||
+0
+);
 
 
-  hoursInput.value =
-    formatInputNumber(
-      totalHours *
-      percent /
-      100
-    );
+const percent =
+Math.max(
+0,
+
+Number(
+percentInput.value
+) ||
+0
+);
+
+
+hoursInput.value =
+formatInputNumber(
+totalHours *
+percent /
+100
+);
 }
 
 
@@ -2755,60 +2755,60 @@ function updateCategoryHoursFromPercent(
 // ========================================
 
 function recalculateCategoryProjectHours(
-  categoryId
+categoryId
 ) {
-  const categoryDetails =
-    Array.from(
-      monthlyPlanProjectList
-        .querySelectorAll(
-          ".monthly-plan-category"
-        )
-    ).find(
-      function(details) {
-        const categoryHoursInput =
-          details.querySelector(
-            ".monthly-plan-category-hours"
-          );
+const categoryDetails =
+Array.from(
+monthlyPlanProjectList
+.querySelectorAll(
+".monthly-plan-category"
+)
+).find(
+function(details) {
+const categoryHoursInput =
+details.querySelector(
+".monthly-plan-category-hours"
+);
 
 
-        return (
-          categoryHoursInput &&
-          String(
-            categoryHoursInput
-              .dataset.categoryId
-          ) ===
-          String(
-            categoryId
-          )
-        );
-      }
-    );
+return (
+categoryHoursInput &&
+String(
+categoryHoursInput
+.dataset.categoryId
+) ===
+String(
+categoryId
+)
+);
+}
+);
 
 
-  if (!categoryDetails) {
-    return;
-  }
+if (!categoryDetails) {
+return;
+}
 
 
-  categoryDetails
-    .querySelectorAll(
-      ".monthly-plan-project-item"
-    )
-    .forEach(
-      function(projectItem) {
-        const percentInput =
-          projectItem.querySelector(
-            ".monthly-plan-project-percent"
-          );
+categoryDetails
+.querySelectorAll(
+".monthly-plan-project-item"
+)
+.forEach(
+function(projectItem) {
+const percentInput =
+projectItem.querySelector(
+".monthly-plan-project-percent"
+);
 
 
-        if (percentInput) {
-          updateProjectHoursFromPercent(
-            percentInput
-          );
-        }
-      }
-    );
+if (percentInput) {
+updateProjectHoursFromPercent(
+percentInput
+);
+}
+}
+);
 }
 
 
@@ -2817,68 +2817,68 @@ function recalculateCategoryProjectHours(
 // ========================================
 
 function updateProjectHoursFromPercent(
-  percentInput
+percentInput
 ) {
-  const projectItem =
-    percentInput.closest(
-      ".monthly-plan-project-item"
-    );
+const projectItem =
+percentInput.closest(
+".monthly-plan-project-item"
+);
 
 
-  const categoryDetails =
-    percentInput.closest(
-      ".monthly-plan-category"
-    );
+const categoryDetails =
+percentInput.closest(
+".monthly-plan-category"
+);
 
 
-  if (
-    !projectItem ||
-    !categoryDetails
-  ) {
-    return;
-  }
+if (
+!projectItem ||
+!categoryDetails
+) {
+return;
+}
 
 
-  const hoursInput =
-    projectItem.querySelector(
-      ".monthly-plan-project-hours"
-    );
+const hoursInput =
+projectItem.querySelector(
+".monthly-plan-project-hours"
+);
 
 
-  const categoryHoursInput =
-    categoryDetails.querySelector(
-      ".monthly-plan-category-hours"
-    );
+const categoryHoursInput =
+categoryDetails.querySelector(
+".monthly-plan-category-hours"
+);
 
 
-  const categoryHours =
-    Math.max(
-      0,
+const categoryHours =
+Math.max(
+0,
 
-      Number(
-        categoryHoursInput.value
-      ) ||
-      0
-    );
-
-
-  const percent =
-    Math.max(
-      0,
-
-      Number(
-        percentInput.value
-      ) ||
-      0
-    );
+Number(
+categoryHoursInput.value
+) ||
+0
+);
 
 
-  hoursInput.value =
-    formatInputNumber(
-      categoryHours *
-      percent /
-      100
-    );
+const percent =
+Math.max(
+0,
+
+Number(
+percentInput.value
+) ||
+0
+);
+
+
+hoursInput.value =
+formatInputNumber(
+categoryHours *
+percent /
+100
+);
 }
 
 
@@ -2889,22 +2889,22 @@ function updateProjectHoursFromPercent(
 // ========================================
 
 function recalculateMonthlyPlanHours() {
-  monthlyPlanProjectList
-    .querySelectorAll(
-      ".monthly-plan-category-percent"
-    )
-    .forEach(
-      function(percentInput) {
-        updateCategoryHoursFromPercent(
-          percentInput
-        );
+monthlyPlanProjectList
+.querySelectorAll(
+".monthly-plan-category-percent"
+)
+.forEach(
+function(percentInput) {
+updateCategoryHoursFromPercent(
+percentInput
+);
 
 
-        recalculateCategoryProjectHours(
-          percentInput.dataset.categoryId
-        );
-      }
-    );
+recalculateCategoryProjectHours(
+percentInput.dataset.categoryId
+);
+}
+);
 }
 
 
@@ -2913,206 +2913,206 @@ function recalculateMonthlyPlanHours() {
 // ========================================
 
 function updateMonthlyPlanSummary() {
-  const totalMinutes =
-    displayHoursToMonthlyMinutes(
-      monthlyPlanTotalHoursInput.value
-    );
+const totalMinutes =
+displayHoursToMonthlyMinutes(
+monthlyPlanTotalHoursInput.value
+);
 
 
-  let assignedMinutes = 0;
+let assignedMinutes = 0;
 
-  let assignedPercent = 0;
-
-
-  monthlyPlanProjectList
-    .querySelectorAll(
-      ".monthly-plan-category"
-    )
-    .forEach(
-      function(categoryDetails) {
-        const categoryHoursInput =
-          categoryDetails.querySelector(
-            ".monthly-plan-category-hours"
-          );
+let assignedPercent = 0;
 
 
-        const categoryPercentInput =
-          categoryDetails.querySelector(
-            ".monthly-plan-category-percent"
-          );
+monthlyPlanProjectList
+.querySelectorAll(
+".monthly-plan-category"
+)
+.forEach(
+function(categoryDetails) {
+const categoryHoursInput =
+categoryDetails.querySelector(
+".monthly-plan-category-hours"
+);
 
 
-        const categorySummaryValue =
-          categoryDetails.querySelector(
-            ".monthly-plan-category-summary-value"
-          );
+const categoryPercentInput =
+categoryDetails.querySelector(
+".monthly-plan-category-percent"
+);
 
 
-        const projectStatus =
-          categoryDetails.querySelector(
-            ".monthly-plan-category-project-status"
-          );
+const categorySummaryValue =
+categoryDetails.querySelector(
+".monthly-plan-category-summary-value"
+);
 
 
-        if (
-          !categoryHoursInput ||
-          !categoryPercentInput
-        ) {
-          return;
-        }
+const projectStatus =
+categoryDetails.querySelector(
+".monthly-plan-category-project-status"
+);
 
 
-        const categoryPercent =
-          Math.max(
-            0,
-
-            Number(
-              categoryPercentInput.value
-            ) ||
-            0
-          );
+if (
+!categoryHoursInput ||
+!categoryPercentInput
+) {
+return;
+}
 
 
-        const categoryMinutes =
-          Math.max(
-            0,
+const categoryPercent =
+Math.max(
+0,
 
-            Math.round(
-              totalMinutes *
-              categoryPercent /
-              100
-            )
-          );
-
-
-        categoryHoursInput.value =
-          formatInputNumber(
-            monthlyMinutesToDisplayHours(
-              categoryMinutes
-            )
-          );
+Number(
+categoryPercentInput.value
+) ||
+0
+);
 
 
-        assignedMinutes +=
-          categoryMinutes;
+const categoryMinutes =
+Math.max(
+0,
+
+Math.round(
+totalMinutes *
+categoryPercent /
+100
+)
+);
 
 
-        assignedPercent +=
-          categoryPercent;
+categoryHoursInput.value =
+formatInputNumber(
+monthlyMinutesToDisplayHours(
+categoryMinutes
+)
+);
 
 
-        if (categorySummaryValue) {
-          categorySummaryValue.textContent =
-            formatInputNumber(
-              categoryPercent
-            ) +
-            "％ / " +
-            formatHours(
-              monthlyMinutesToDisplayHours(
-                categoryMinutes
-              )
-            );
-        }
+assignedMinutes +=
+categoryMinutes;
 
 
-        const projectAssignedPercent =
-          Array.from(
-            categoryDetails
-              .querySelectorAll(
-                ".monthly-plan-project-percent"
-              )
-          ).reduce(
-            function(
-              total,
-              percentInput
-            ) {
-              return (
-                total +
-                Math.max(
-                  0,
-
-                  Number(
-                    percentInput.value
-                  ) ||
-                  0
-                )
-              );
-            },
-
-            0
-          );
+assignedPercent +=
+categoryPercent;
 
 
-        if (projectStatus) {
-          projectStatus.textContent =
-            "プロジェクトへ割り振り済み：" +
-            formatInputNumber(
-              projectAssignedPercent
-            ) +
-            "％／100％";
+if (categorySummaryValue) {
+categorySummaryValue.textContent =
+formatInputNumber(
+categoryPercent
+) +
+"％ / " +
+formatHours(
+monthlyMinutesToDisplayHours(
+categoryMinutes
+)
+);
+}
 
 
-          projectStatus.classList.toggle(
-            "has-error",
-            projectAssignedPercent > 100
-          );
-        }
-      }
-    );
+const projectAssignedPercent =
+Array.from(
+categoryDetails
+.querySelectorAll(
+".monthly-plan-project-percent"
+)
+).reduce(
+function(
+total,
+percentInput
+) {
+return (
+total +
+Math.max(
+0,
+
+Number(
+percentInput.value
+) ||
+0
+)
+);
+},
+
+0
+);
 
 
-  const difference =
-    totalMinutes -
-    assignedMinutes;
+if (projectStatus) {
+projectStatus.textContent =
+"プロジェクトへ割り振り済み：" +
+formatInputNumber(
+projectAssignedPercent
+) +
+"％／100％";
 
 
-  monthlyPlanTotalDisplay.textContent =
-    formatHours(
-      monthlyMinutesToDisplayHours(
-        totalMinutes
-      )
-    );
+projectStatus.classList.toggle(
+"has-error",
+projectAssignedPercent > 100
+);
+}
+}
+);
 
 
-  monthlyPlanAssignedDisplay.textContent =
-    formatHours(
-      monthlyMinutesToDisplayHours(
-        assignedMinutes
-      )
-    ) +
-    "（" +
-    formatInputNumber(
-      assignedPercent
-    ) +
-    "％）";
+const difference =
+totalMinutes -
+assignedMinutes;
 
 
-  if (difference >= 0) {
-    monthlyPlanUnassignedDisplay.textContent =
-      formatHours(
-        monthlyMinutesToDisplayHours(
-          difference
-        )
-      );
+monthlyPlanTotalDisplay.textContent =
+formatHours(
+monthlyMinutesToDisplayHours(
+totalMinutes
+)
+);
 
 
-    monthlyPlanWarning.textContent =
-      "";
-  } else {
-    monthlyPlanUnassignedDisplay.textContent =
-      "0時間";
+monthlyPlanAssignedDisplay.textContent =
+formatHours(
+monthlyMinutesToDisplayHours(
+assignedMinutes
+)
+) +
+"（" +
+formatInputNumber(
+assignedPercent
+) +
+"％）";
 
 
-    monthlyPlanWarning.textContent =
-      formatHours(
-        monthlyMinutesToDisplayHours(
-          Math.abs(
-            difference
-          )
-        )
-      ) +
-      "超過しています。";
-  }
+if (difference >= 0) {
+monthlyPlanUnassignedDisplay.textContent =
+formatHours(
+monthlyMinutesToDisplayHours(
+difference
+)
+);
+
+
+monthlyPlanWarning.textContent =
+"";
+} else {
+monthlyPlanUnassignedDisplay.textContent =
+"0時間";
+
+
+monthlyPlanWarning.textContent =
+formatHours(
+monthlyMinutesToDisplayHours(
+Math.abs(
+difference
+)
+)
+) +
+"超過しています。";
+}
 }
 
 
@@ -3121,135 +3121,135 @@ function updateMonthlyPlanSummary() {
 // ========================================
 
 function getMonthlyPlanOverAllocationWarnings() {
-  const warnings =
-    [];
+const warnings =
+[];
 
 
-  const totalMinutes =
-    displayHoursToMonthlyMinutes(
-      monthlyPlanTotalHoursInput.value
-    );
+const totalMinutes =
+displayHoursToMonthlyMinutes(
+monthlyPlanTotalHoursInput.value
+);
 
 
-  let categoryAssignedPercent =
-    0;
+let categoryAssignedPercent =
+0;
 
-  monthlyPlanProjectList
-    .querySelectorAll(
-      ".monthly-plan-category"
-    )
-    .forEach(
-      function(categoryDetails) {
-        const categoryHoursInput =
-          categoryDetails.querySelector(
-            ".monthly-plan-category-hours"
-          );
-
-
-        if (!categoryHoursInput) {
-          return;
-        }
+monthlyPlanProjectList
+.querySelectorAll(
+".monthly-plan-category"
+)
+.forEach(
+function(categoryDetails) {
+const categoryHoursInput =
+categoryDetails.querySelector(
+".monthly-plan-category-hours"
+);
 
 
-        const categoryId =
-          categoryHoursInput
-            .dataset.categoryId;
+if (!categoryHoursInput) {
+return;
+}
 
 
-        const category =
-          findCategory(
-            categoryId
-          );
+const categoryId =
+categoryHoursInput
+.dataset.categoryId;
 
 
-        const categoryName =
-          category
-            ? category.name
-            : "名称未設定";
+const category =
+findCategory(
+categoryId
+);
 
 
-        const categoryPercentInput =
-          categoryDetails.querySelector(
-            ".monthly-plan-category-percent"
-          );
+const categoryName =
+category
+? category.name
+: "名称未設定";
 
 
-        const categoryPercent =
-          categoryPercentInput
-            ? Math.max(
-                0,
-
-                Number(
-                  categoryPercentInput.value
-                ) ||
-                0
-              )
-            : 0;
+const categoryPercentInput =
+categoryDetails.querySelector(
+".monthly-plan-category-percent"
+);
 
 
-        categoryAssignedPercent +=
-          categoryPercent;
+const categoryPercent =
+categoryPercentInput
+? Math.max(
+0,
+
+Number(
+categoryPercentInput.value
+) ||
+0
+)
+: 0;
 
 
-        const projectPercent =
-          Array.from(
-            categoryDetails
-              .querySelectorAll(
-                ".monthly-plan-project-percent"
-              )
-          ).reduce(
-            function(
-              total,
-              percentInput
-            ) {
-              return (
-                total +
-                Math.max(
-                  0,
-
-                  Number(
-                    percentInput.value
-                  ) ||
-                  0
-                )
-              );
-            },
-
-            0
-          );
+categoryAssignedPercent +=
+categoryPercent;
 
 
-        if (
-          projectPercent > 100
-        ) {
-          warnings.push(
-            "「" +
-            categoryName +
-            "」のプロジェクト割り振りが " +
-            formatInputNumber(
-              projectPercent
-            ) +
-            "％になっています。"
-          );
-        }
-      }
-    );
+const projectPercent =
+Array.from(
+categoryDetails
+.querySelectorAll(
+".monthly-plan-project-percent"
+)
+).reduce(
+function(
+total,
+percentInput
+) {
+return (
+total +
+Math.max(
+0,
+
+Number(
+percentInput.value
+) ||
+0
+)
+);
+},
+
+0
+);
 
 
-  if (
-    categoryAssignedPercent > 100
-  ) {
-    warnings.unshift(
-      "大分類の割り振りが " +
-      formatInputNumber(
-        categoryAssignedPercent
-      ) +
-      "％になっています。"
-    );
-  }
+if (
+projectPercent > 100
+) {
+warnings.push(
+"「" +
+categoryName +
+"」のプロジェクト割り振りが " +
+formatInputNumber(
+projectPercent
+) +
+"％になっています。"
+);
+}
+}
+);
 
 
-  return warnings;
+if (
+categoryAssignedPercent > 100
+) {
+warnings.unshift(
+"大分類の割り振りが " +
+formatInputNumber(
+categoryAssignedPercent
+) +
+"％になっています。"
+);
+}
+
+
+return warnings;
 }
 
 
@@ -3258,388 +3258,388 @@ function getMonthlyPlanOverAllocationWarnings() {
 // ========================================
 
 function saveMonthlyPlan() {
-  const monthKey =
-    monthlyPlanMonthInput.value;
+const monthKey =
+monthlyPlanMonthInput.value;
 
 
-  const savedPlan =
-    monthKey
-      ? (
-          appData.monthlyPlans[
-            monthKey
-          ] ||
-          null
-        )
-      : null;
+const savedPlan =
+monthKey
+? (
+appData.monthlyPlans[
+monthKey
+] ||
+null
+)
+: null;
 
 
-  const totalMinutes =
-    displayHoursToMonthlyMinutes(
-      monthlyPlanTotalHoursInput.value
-    );
+const totalMinutes =
+displayHoursToMonthlyMinutes(
+monthlyPlanTotalHoursInput.value
+);
 
 
-  if (!monthKey) {
-    showStatusMessage(
-      "計画する月を選択してください。"
-    );
+if (!monthKey) {
+showStatusMessage(
+"計画する月を選択してください。"
+);
 
-    return;
-  }
+return;
+}
 
 
-  if (totalMinutes <= 0) {
-    showStatusMessage(
-      "月の予定作業時間を入力してください。"
-    );
+if (totalMinutes <= 0) {
+showStatusMessage(
+"月の予定作業時間を入力してください。"
+);
 
-    return;
-  }
+return;
+}
 
 
-  const allocationWarnings =
-    getMonthlyPlanOverAllocationWarnings();
+const allocationWarnings =
+getMonthlyPlanOverAllocationWarnings();
 
 
-  if (
-    allocationWarnings.length > 0
-  ) {
-    const shouldSave =
-      window.confirm(
-        allocationWarnings.join(
-          "\n"
-        ) +
-        "\n\nこの内容で保存しますか？"
-      );
+if (
+allocationWarnings.length > 0
+) {
+const shouldSave =
+window.confirm(
+allocationWarnings.join(
+"\n"
+) +
+"\n\nこの内容で保存しますか？"
+);
 
 
-    if (!shouldSave) {
-      showStatusMessage(
-        "月間計画の保存を中止しました。"
-      );
+if (!shouldSave) {
+showStatusMessage(
+"月間計画の保存を中止しました。"
+);
 
-      return;
-    }
-  }
+return;
+}
+}
 
 
-  const categoryPlans =
-    Array.from(
-      monthlyPlanProjectList
-        .querySelectorAll(
-          ".monthly-plan-category"
-        )
-    )
-      .map(
-        function(categoryDetails) {
-          const categoryHoursInput =
-            categoryDetails.querySelector(
-              ".monthly-plan-category-hours"
-            );
+const categoryPlans =
+Array.from(
+monthlyPlanProjectList
+.querySelectorAll(
+".monthly-plan-category"
+)
+)
+.map(
+function(categoryDetails) {
+const categoryHoursInput =
+categoryDetails.querySelector(
+".monthly-plan-category-hours"
+);
 
 
-          const categoryPercentInput =
-            categoryDetails.querySelector(
-              ".monthly-plan-category-percent"
-            );
+const categoryPercentInput =
+categoryDetails.querySelector(
+".monthly-plan-category-percent"
+);
 
 
-          if (
-            !categoryHoursInput ||
-            !categoryPercentInput
-          ) {
-            return null;
-          }
+if (
+!categoryHoursInput ||
+!categoryPercentInput
+) {
+return null;
+}
 
 
-          const categoryId =
-            categoryHoursInput
-              .dataset.categoryId;
+const categoryId =
+categoryHoursInput
+.dataset.categoryId;
 
 
-          const category =
-            findCategory(
-              categoryId
-            );
+const category =
+findCategory(
+categoryId
+);
 
 
-          if (!category) {
-            return null;
-          }
+if (!category) {
+return null;
+}
 
 
-          const categoryAllocationPercent =
-            Math.max(
-              0,
+const categoryAllocationPercent =
+Math.max(
+0,
 
-              Number(
-                categoryPercentInput.value
-              ) ||
-              0
-            );
+Number(
+categoryPercentInput.value
+) ||
+0
+);
 
 
-          const categoryPlannedMinutes =
-            Math.max(
-              0,
+const categoryPlannedMinutes =
+Math.max(
+0,
 
-              Math.round(
-                totalMinutes *
-                categoryAllocationPercent /
-                100
-              )
-            );
+Math.round(
+totalMinutes *
+categoryAllocationPercent /
+100
+)
+);
 
 
-          const projectPlans =
-            Array.from(
-              categoryDetails
-                .querySelectorAll(
-                  ".monthly-plan-project-item"
-                )
-            ).map(
-              function(projectItem) {
-                const percentInput =
-                  projectItem.querySelector(
-                    ".monthly-plan-project-percent"
-                  );
+const projectPlans =
+Array.from(
+categoryDetails
+.querySelectorAll(
+".monthly-plan-project-item"
+)
+).map(
+function(projectItem) {
+const percentInput =
+projectItem.querySelector(
+".monthly-plan-project-percent"
+);
 
 
-                const hoursInput =
-                  projectItem.querySelector(
-                    ".monthly-plan-project-hours"
-                  );
+const hoursInput =
+projectItem.querySelector(
+".monthly-plan-project-hours"
+);
 
 
-                if (
-                  !percentInput ||
-                  !hoursInput
-                ) {
-                  return null;
-                }
+if (
+!percentInput ||
+!hoursInput
+) {
+return null;
+}
 
 
-                const projectId =
-                  percentInput.dataset.projectId;
+const projectId =
+percentInput.dataset.projectId;
 
 
-                const project =
-                  findProject(
-                    category,
-                    projectId
-                  );
+const project =
+findProject(
+category,
+projectId
+);
 
 
-                if (!project) {
-                  return null;
-                }
+if (!project) {
+return null;
+}
 
 
-                const projectAllocationPercent =
-                  Math.max(
-                    0,
+const projectAllocationPercent =
+Math.max(
+0,
 
-                    Number(
-                      percentInput.value
-                    ) ||
-                    0
-                  );
+Number(
+percentInput.value
+) ||
+0
+);
 
 
-                const projectPlannedMinutes =
-                  Math.max(
-                    0,
-
-                    Math.round(
-                      categoryPlannedMinutes *
-                      projectAllocationPercent /
-                      100
-                    )
-                  );
-
+const projectPlannedMinutes =
+Math.max(
+0,
+
+Math.round(
+categoryPlannedMinutes *
+projectAllocationPercent /
+100
+)
+);
+
 
-                if (
-                  projectAllocationPercent <= 0 ||
-                  projectPlannedMinutes <= 0
-                ) {
-                  return null;
-                }
-
-
-                return {
-                  projectId:
-                    project.id,
-
-                  projectName:
-                    project.name,
-
-                  allocationPercent:
-                    projectAllocationPercent,
-
-                  plannedMinutes:
-                    projectPlannedMinutes
-                };
-              }
-            )
-              .filter(Boolean);
-
-
-          if (
-            categoryPlannedMinutes <= 0 &&
-            projectPlans.length === 0
-          ) {
-            return null;
-          }
-
-
-          return {
-            categoryId:
-              category.id,
-
-            categoryName:
-              category.name,
-
-            allocationPercent:
-              categoryAllocationPercent,
-
-            plannedMinutes:
-              categoryPlannedMinutes,
-
-            projects:
-              projectPlans
-          };
-        }
-      )
-      .filter(Boolean);
-
-
-  if (
-    savedPlan &&
-    Array.isArray(
-      savedPlan.categories
-    )
-  ) {
-    savedPlan.categories.forEach(
-      function(savedCategoryPlan) {
-        const category =
-          findCategory(
-            savedCategoryPlan.categoryId
-          );
-
-
-        const archivedProjectPlans =
-          Array.isArray(
-            savedCategoryPlan.projects
-          )
-            ? savedCategoryPlan.projects.filter(
-                function(savedProjectPlan) {
-                  const project =
-                    category
-                      ? findProject(
-                          category,
-                          savedProjectPlan.projectId
-                        )
-                      : null;
-
-
-                  return (
-                    !project ||
-                    project.isCurrent === false
-                  );
-                }
-              )
-            : [];
-
-
-        if (
-          archivedProjectPlans.length === 0
-        ) {
-          return;
-        }
-
-
-        const currentCategoryPlan =
-          categoryPlans.find(
-            function(categoryPlan) {
-              return (
-                String(
-                  categoryPlan.categoryId
-                ) ===
-                String(
-                  savedCategoryPlan.categoryId
-                )
-              );
-            }
-          );
-
-
-        if (currentCategoryPlan) {
-          archivedProjectPlans.forEach(
-            function(archivedProjectPlan) {
-              const alreadyExists =
-                currentCategoryPlan.projects.some(
-                  function(projectPlan) {
-                    return (
-                      String(
-                        projectPlan.projectId
-                      ) ===
-                      String(
-                        archivedProjectPlan.projectId
-                      )
-                    );
-                  }
-                );
-
-
-              if (!alreadyExists) {
-                currentCategoryPlan.projects.push({
-                  ...archivedProjectPlan
-                });
-              }
-            }
-          );
-
-          return;
-        }
-
-
-        categoryPlans.push({
-          ...savedCategoryPlan,
-
-          projects:
-            archivedProjectPlans.map(
-              function(projectPlan) {
-                return {
-                  ...projectPlan
-                };
-              }
-            )
-        });
-      }
-    );
-  }
-
-
-  appData.monthlyPlans[
-    monthKey
-  ] = {
-    totalMinutes:
-      totalMinutes,
-
-    categories:
-      categoryPlans
-  };
-
-
-  saveAppData();
-
-  renderMonthlyPlanForm();
-
-
-  showStatusMessage(
-    monthKey +
-    "の月間計画を保存しました。"
-  );
+if (
+projectAllocationPercent <= 0 ||
+projectPlannedMinutes <= 0
+) {
+return null;
+}
+
+
+return {
+projectId:
+project.id,
+
+projectName:
+project.name,
+
+allocationPercent:
+projectAllocationPercent,
+
+plannedMinutes:
+projectPlannedMinutes
+};
+}
+)
+.filter(Boolean);
+
+
+if (
+categoryPlannedMinutes <= 0 &&
+projectPlans.length === 0
+) {
+return null;
+}
+
+
+return {
+categoryId:
+category.id,
+
+categoryName:
+category.name,
+
+allocationPercent:
+categoryAllocationPercent,
+
+plannedMinutes:
+categoryPlannedMinutes,
+
+projects:
+projectPlans
+};
+}
+)
+.filter(Boolean);
+
+
+if (
+savedPlan &&
+Array.isArray(
+savedPlan.categories
+)
+) {
+savedPlan.categories.forEach(
+function(savedCategoryPlan) {
+const category =
+findCategory(
+savedCategoryPlan.categoryId
+);
+
+
+const archivedProjectPlans =
+Array.isArray(
+savedCategoryPlan.projects
+)
+? savedCategoryPlan.projects.filter(
+function(savedProjectPlan) {
+const project =
+category
+? findProject(
+category,
+savedProjectPlan.projectId
+)
+: null;
+
+
+return (
+!project ||
+project.isCurrent === false
+);
+}
+)
+: [];
+
+
+if (
+archivedProjectPlans.length === 0
+) {
+return;
+}
+
+
+const currentCategoryPlan =
+categoryPlans.find(
+function(categoryPlan) {
+return (
+String(
+categoryPlan.categoryId
+) ===
+String(
+savedCategoryPlan.categoryId
+)
+);
+}
+);
+
+
+if (currentCategoryPlan) {
+archivedProjectPlans.forEach(
+function(archivedProjectPlan) {
+const alreadyExists =
+currentCategoryPlan.projects.some(
+function(projectPlan) {
+return (
+String(
+projectPlan.projectId
+) ===
+String(
+archivedProjectPlan.projectId
+)
+);
+}
+);
+
+
+if (!alreadyExists) {
+currentCategoryPlan.projects.push({
+...archivedProjectPlan
+});
+}
+}
+);
+
+return;
+}
+
+
+categoryPlans.push({
+...savedCategoryPlan,
+
+projects:
+archivedProjectPlans.map(
+function(projectPlan) {
+return {
+...projectPlan
+};
+}
+)
+});
+}
+);
+}
+
+
+appData.monthlyPlans[
+monthKey
+] = {
+totalMinutes:
+totalMinutes,
+
+categories:
+categoryPlans
+};
+
+
+saveAppData();
+
+renderMonthlyPlanForm();
+
+
+showStatusMessage(
+monthKey +
+"の月間計画を保存しました。"
+);
 }
 
 
@@ -3648,71 +3648,71 @@ function saveMonthlyPlan() {
 // ========================================
 
 function copyPreviousMonthlyPlan() {
-  const monthKey =
-    monthlyPlanMonthInput.value;
+const monthKey =
+monthlyPlanMonthInput.value;
 
 
-  if (!monthKey) {
-    showStatusMessage(
-      "計画する月を選択してください。"
-    );
+if (!monthKey) {
+showStatusMessage(
+"計画する月を選択してください。"
+);
 
-    return;
-  }
-
-
-  const previousMonthKey =
-    getPreviousMonthKey(
-      monthKey
-    );
+return;
+}
 
 
-  const previousPlan =
-    appData.monthlyPlans[
-      previousMonthKey
-    ];
+const previousMonthKey =
+getPreviousMonthKey(
+monthKey
+);
 
 
-  if (!previousPlan) {
-    showStatusMessage(
-      previousMonthKey +
-      "の月間計画はありません。"
-    );
-
-    return;
-  }
+const previousPlan =
+appData.monthlyPlans[
+previousMonthKey
+];
 
 
-  if (
-    appData.monthlyPlans[
-      monthKey
-    ] &&
-    !window.confirm(
-      monthKey +
-      "の計画を前月の内容で上書きしますか？"
-    )
-  ) {
-    return;
-  }
+if (!previousPlan) {
+showStatusMessage(
+previousMonthKey +
+"の月間計画はありません。"
+);
+
+return;
+}
 
 
-  appData.monthlyPlans[
-    monthKey
-  ] =
-    structuredClone(
-      previousPlan
-    );
+if (
+appData.monthlyPlans[
+monthKey
+] &&
+!window.confirm(
+monthKey +
+"の計画を前月の内容で上書きしますか？"
+)
+) {
+return;
+}
 
 
-  saveAppData();
+appData.monthlyPlans[
+monthKey
+] =
+structuredClone(
+previousPlan
+);
 
-  renderMonthlyPlanForm();
+
+saveAppData();
+
+renderMonthlyPlanForm();
 
 
-  showStatusMessage(
-    previousMonthKey +
-    "の計画をコピーしました。"
-  );
+showStatusMessage(
+previousMonthKey +
+"の計画をコピーしました。"
+);
 }
 
 
@@ -3721,52 +3721,52 @@ function copyPreviousMonthlyPlan() {
 // ========================================
 
 workTimeForm.addEventListener(
-  "submit",
+"submit",
 
-  function(event) {
-    event.preventDefault();
-
-
-    const enteredHours =
-      Number(
-        totalWorkHoursInput.value
-      );
+function(event) {
+event.preventDefault();
 
 
-    if (
-      !Number.isFinite(
-        enteredHours
-      ) ||
-      enteredHours <= 0
-    ) {
-      showStatusMessage(
-        "0より大きい時間を入力してください。"
-      );
-
-      return;
-    }
+const enteredHours =
+Number(
+totalWorkHoursInput.value
+);
 
 
-    const selectedPeriod =
-      appData.settings.selectedPeriod;
+if (
+!Number.isFinite(
+enteredHours
+) ||
+enteredHours <= 0
+) {
+showStatusMessage(
+"0より大きい時間を入力してください。"
+);
+
+return;
+}
 
 
-    appData.settings.weeklyHours =
-      convertToWeeklyHours(
-        enteredHours,
-        selectedPeriod
-      );
+const selectedPeriod =
+appData.settings.selectedPeriod;
 
 
-    saveAppData();
+appData.settings.weeklyHours =
+convertToWeeklyHours(
+enteredHours,
+selectedPeriod
+);
 
-    updateWorkTimeDisplay();
+
+saveAppData();
+
+updateWorkTimeDisplay();
 
 
-    showStatusMessage(
-      "作業時間を保存しました。"
-    );
-  }
+showStatusMessage(
+"作業時間を保存しました。"
+);
+}
 );
 
 
@@ -3775,20 +3775,20 @@ workTimeForm.addEventListener(
 // ========================================
 
 function convertToWeeklyHours(
-  enteredHours,
-  period
+enteredHours,
+period
 ) {
-    if (period === "day") {
-    return enteredHours * 7;
-  }
+if (period === "day") {
+return enteredHours * 7;
+}
 
 
-  if (period === "month") {
-    return enteredHours * 12 / 52;
-  }
+if (period === "month") {
+return enteredHours * 12 / 52;
+}
 
 
-  return enteredHours;
+return enteredHours;
 }
 
 
@@ -3797,20 +3797,20 @@ function convertToWeeklyHours(
 // ========================================
 
 function getConvertedHours() {
-  const weeklyHours =
-    appData.settings.weeklyHours;
+const weeklyHours =
+appData.settings.weeklyHours;
 
 
-  return {
-        day:
-      weeklyHours / 7,
+return {
+day:
+weeklyHours / 7,
 
-    week:
-      weeklyHours,
+week:
+weeklyHours,
 
-    month:
-      weeklyHours * 52 / 12
-  };
+month:
+weeklyHours * 52 / 12
+};
 }
 
 
@@ -3819,63 +3819,63 @@ function getConvertedHours() {
 // ========================================
 
 function updateWorkTimeDisplay() {
-  const convertedHours =
-    getConvertedHours();
+const convertedHours =
+getConvertedHours();
 
 
-  const selectedPeriod =
-    appData.settings.selectedPeriod;
+const selectedPeriod =
+appData.settings.selectedPeriod;
 
 
-  if (selectedPeriod === "day") {
-    workTimeLabel.textContent =
-      "1日の作業時間";
-  } else if (
-    selectedPeriod === "month"
-  ) {
-    workTimeLabel.textContent =
-      "1か月の作業時間";
-  } else {
-    workTimeLabel.textContent =
-      "1週間の作業時間";
-  }
+if (selectedPeriod === "day") {
+workTimeLabel.textContent =
+"1日の作業時間";
+} else if (
+selectedPeriod === "month"
+) {
+workTimeLabel.textContent =
+"1か月の作業時間";
+} else {
+workTimeLabel.textContent =
+"1週間の作業時間";
+}
 
 
-  totalWorkHoursInput.value =
-    formatInputNumber(
-      convertedHours[
-        selectedPeriod
-      ]
-    );
+totalWorkHoursInput.value =
+formatInputNumber(
+convertedHours[
+selectedPeriod
+]
+);
 
 
-  convertedDay.textContent =
-    formatHours(
-      convertedHours.day
-    );
+convertedDay.textContent =
+formatHours(
+convertedHours.day
+);
 
 
-  convertedWeek.textContent =
-    formatHours(
-      convertedHours.week
-    );
+convertedWeek.textContent =
+formatHours(
+convertedHours.week
+);
 
 
-    convertedMonth.textContent =
-    formatHours(
-      convertedHours.month
-    );
+convertedMonth.textContent =
+formatHours(
+convertedHours.month
+);
 
 
-  renderCategoryList();
+renderCategoryList();
 
-  renderProjectStatusList();
+renderProjectStatusList();
 
-  renderTimerProjectOptions();
+renderTimerProjectOptions();
 
-  renderProgressList();
+renderProgressList();
 
-  renderTimer();
+renderTimer();
 }
 
 
@@ -3884,17 +3884,17 @@ function updateWorkTimeDisplay() {
 // ========================================
 
 function formatInputNumber(
-  number
+number
 ) {
-  const roundedNumber =
-    Math.round(
-      number * 10
-    ) / 10;
+const roundedNumber =
+Math.round(
+number * 10
+) / 10;
 
 
-  return String(
-    roundedNumber
-  );
+return String(
+roundedNumber
+);
 }
 
 
@@ -3903,49 +3903,49 @@ function formatInputNumber(
 // ========================================
 
 function formatHours(
-  decimalHours
+decimalHours
 ) {
-  const totalMinutes =
-    Math.round(
-      decimalHours * 60
-    );
+const totalMinutes =
+Math.round(
+decimalHours * 60
+);
 
 
-  const hours =
-    Math.floor(
-      totalMinutes / 60
-    );
+const hours =
+Math.floor(
+totalMinutes / 60
+);
 
 
-  const minutes =
-    totalMinutes % 60;
+const minutes =
+totalMinutes % 60;
 
 
-  if (
-    hours > 0 &&
-    minutes > 0
-  ) {
-    return (
-      hours +
-      "時間" +
-      minutes +
-      "分"
-    );
-  }
+if (
+hours > 0 &&
+minutes > 0
+) {
+return (
+hours +
+"時間" +
+minutes +
+"分"
+);
+}
 
 
-  if (hours > 0) {
-    return (
-      hours +
-      "時間"
-    );
-  }
+if (hours > 0) {
+return (
+hours +
+"時間"
+);
+}
 
 
-  return (
-    minutes +
-    "分"
-  );
+return (
+minutes +
+"分"
+);
 }
 
 
@@ -3954,38 +3954,38 @@ function formatHours(
 // ========================================
 
 let statusMessageTimer =
-  null;
+null;
 
 
 function showStatusMessage(
-  message
+message
 ) {
-  statusMessage.textContent =
-    message;
+statusMessage.textContent =
+message;
 
 
-  statusMessage.classList.add(
-    "is-visible"
-  );
+statusMessage.classList.add(
+"is-visible"
+);
 
 
-  if (statusMessageTimer) {
-    clearTimeout(
-      statusMessageTimer
-    );
-  }
+if (statusMessageTimer) {
+clearTimeout(
+statusMessageTimer
+);
+}
 
 
-  statusMessageTimer =
-    setTimeout(
-      function() {
-        statusMessage.classList.remove(
-          "is-visible"
-        );
-      },
+statusMessageTimer =
+setTimeout(
+function() {
+statusMessage.classList.remove(
+"is-visible"
+);
+},
 
-      2500
-    );
+2500
+);
 }
 
 
@@ -3995,117 +3995,117 @@ function showStatusMessage(
 // ========================================
 
 function ensureInitialCategories() {
-  if (
-    Array.isArray(
-      appData.categories
-    ) &&
-    appData.categories.length > 0
-  ) {
-    return;
-  }
+if (
+Array.isArray(
+appData.categories
+) &&
+appData.categories.length > 0
+) {
+return;
+}
 
 
-  appData.categories = [
-    {
-      id:
-        createId(
-          "category"
-        ),
+appData.categories = [
+{
+id:
+createId(
+"category"
+),
 
-      name:
-        "作品づくり",
+name:
+"作品づくり",
 
-      allocationPercent:
-        40,
+allocationPercent:
+40,
 
-      projects: [
-        {
-          id:
-            createId(
-              "project"
-            ),
+projects: [
+{
+id:
+createId(
+"project"
+),
 
-          name:
-            "作品制作",
+name:
+"作品制作",
 
-          allocationPercent:
-            100
-        }
-      ]
-    },
+allocationPercent:
+100
+}
+]
+},
 
-    {
-      id:
-        createId(
-          "category"
-        ),
+{
+id:
+createId(
+"category"
+),
 
-      name:
-        "ウェブツールづくり",
+name:
+"ウェブツールづくり",
 
-      allocationPercent:
-        35,
+allocationPercent:
+35,
 
-      projects: [
-        {
-          id:
-            createId(
-              "project"
-            ),
+projects: [
+{
+id:
+createId(
+"project"
+),
 
-          name:
-            "ぐるりの世界",
+name:
+"ぐるりの世界",
 
-          allocationPercent:
-            50
-        },
+allocationPercent:
+50
+},
 
-        {
-          id:
-            createId(
-              "project"
-            ),
+{
+id:
+createId(
+"project"
+),
 
-          name:
-            "手が描けーる",
+name:
+"手が描けーる",
 
-          allocationPercent:
-            50
-        }
-      ]
-    },
+allocationPercent:
+50
+}
+]
+},
 
-    {
-      id:
-        createId(
-          "category"
-        ),
+{
+id:
+createId(
+"category"
+),
 
-      name:
-        "SEO記事作成",
+name:
+"SEO記事作成",
 
-      allocationPercent:
-        25,
+allocationPercent:
+25,
 
-      projects: [
-        {
-          id:
-            createId(
-              "project"
-            ),
+projects: [
+{
+id:
+createId(
+"project"
+),
 
-          name:
-            "SEO記事",
+name:
+"SEO記事",
 
-          allocationPercent:
-            100
-        }
-      ]
-    }
-  ];
+allocationPercent:
+100
+}
+]
+}
+];
 
 
-  saveAppData();
+saveAppData();
 }
 
 
@@ -4114,30 +4114,30 @@ function ensureInitialCategories() {
 // ========================================
 
 function createId(
-  prefix
+prefix
 ) {
-  if (
-    window.crypto &&
-    typeof window.crypto.randomUUID ===
-      "function"
-  ) {
-    return (
-      prefix +
-      "-" +
-      window.crypto.randomUUID()
-    );
-  }
+if (
+window.crypto &&
+typeof window.crypto.randomUUID ===
+"function"
+) {
+return (
+prefix +
+"-" +
+window.crypto.randomUUID()
+);
+}
 
 
-  return (
-    prefix +
-    "-" +
-    Date.now() +
-    "-" +
-    Math.random()
-      .toString(16)
-      .slice(2)
-  );
+return (
+prefix +
+"-" +
+Date.now() +
+"-" +
+Math.random()
+.toString(16)
+.slice(2)
+);
 }
 
 
@@ -4146,19 +4146,19 @@ function createId(
 // ========================================
 
 function getSelectedPeriodHours() {
-  const convertedHours =
-    getConvertedHours();
+const convertedHours =
+getConvertedHours();
 
 
-  const selectedPeriod =
-    appData.settings.selectedPeriod;
+const selectedPeriod =
+appData.settings.selectedPeriod;
 
 
-  return (
-    convertedHours[
-      selectedPeriod
-    ]
-  );
+return (
+convertedHours[
+selectedPeriod
+]
+);
 }
 
 
@@ -4167,278 +4167,278 @@ function getSelectedPeriodHours() {
 // ========================================
 
 function renderCategoryList() {
-  const openCategoryIds =
-    new Set(
-      Array.from(
-        categoryList.querySelectorAll(
-          ".category-item[open]"
-        )
-      ).map(
-        function(categoryItem) {
-          return String(
-            categoryItem.dataset.categoryId
-          );
-        }
-      )
-    );
+const openCategoryIds =
+new Set(
+Array.from(
+categoryList.querySelectorAll(
+".category-item[open]"
+)
+).map(
+function(categoryItem) {
+return String(
+categoryItem.dataset.categoryId
+);
+}
+)
+);
 
 
-  const selectedPeriodHours =
-    getSelectedPeriodHours();
+const selectedPeriodHours =
+getSelectedPeriodHours();
 
 
-  const totalPercentage =
-    appData.categories.reduce(
-      function(total, category) {
-        return (
-          total +
-          Number(
-            category.allocationPercent
-          )
-        );
-      },
+const totalPercentage =
+appData.categories.reduce(
+function(total, category) {
+return (
+total +
+Number(
+category.allocationPercent
+)
+);
+},
 
-      0
-    );
-
-
-    allocationTotal.textContent =
-    createAllocationMessage(
-      totalPercentage
-    );
+0
+);
 
 
-  allocationTotal.classList.toggle(
-    "has-error",
-
-    Math.round(
-      totalPercentage
-    ) !== 100
-  );
+allocationTotal.textContent =
+createAllocationMessage(
+totalPercentage
+);
 
 
-  categoryList.innerHTML =
-    appData.categories
-      .map(
-        function(category) {
-                    const categoryHours =
-            selectedPeriodHours *
-            Number(
-              category.allocationPercent
-            ) /
-            100;
+allocationTotal.classList.toggle(
+"has-error",
+
+Math.round(
+totalPercentage
+) !== 100
+);
 
 
-          const projects =
-            getCurrentProjects(
-              category
-            );
+categoryList.innerHTML =
+appData.categories
+.map(
+function(category) {
+const categoryHours =
+selectedPeriodHours *
+Number(
+category.allocationPercent
+) /
+100;
 
 
-          const projectTotalPercentage =
-            projects.reduce(
-              function(
-                total,
-                project
-              ) {
-                return (
-                  total +
-                  Number(
-                    project.allocationPercent
-                  )
-                );
-              },
-
-              0
-            );
+const projects =
+getCurrentProjects(
+category
+);
 
 
-          const projectAllocationMessage =
-            createAllocationMessage(
-              projectTotalPercentage
-            );
+const projectTotalPercentage =
+projects.reduce(
+function(
+total,
+project
+) {
+return (
+total +
+Number(
+project.allocationPercent
+)
+);
+},
+
+0
+);
 
 
-          const projectAllocationClass =
-            Math.round(
-              projectTotalPercentage
-            ) === 100
-              ? ""
-              : " has-error";
+const projectAllocationMessage =
+createAllocationMessage(
+projectTotalPercentage
+);
 
 
-          const projectHtml =
-            projects
-              .map(
-                function(project) {
-                  const projectHours =
-                    categoryHours *
-                    Number(
-                      project.allocationPercent
-                    ) /
-                    100;
+const projectAllocationClass =
+Math.round(
+projectTotalPercentage
+) === 100
+? ""
+: " has-error";
 
 
-                  return `
-                    <div
-                      class="project-item"
-                      data-project-id="${project.id}"
-                    >
-                      <span class="project-branch">
-                        └
-                      </span>
-
-                      <input
-                        class="project-name-input"
-                        type="text"
-                        value="${escapeHtml(project.name)}"
-                        data-action="project-name"
-                        data-category-id="${category.id}"
-                        data-project-id="${project.id}"
-                        aria-label="プロジェクト名"
-                      >
-
-                      <label class="percentage-input">
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.1"
-                          value="${project.allocationPercent}"
-                          data-action="project-percentage"
-                          data-category-id="${category.id}"
-                          data-project-id="${project.id}"
-                          aria-label="プロジェクトの割合"
-                        >
-
-                        <span>
-                          %
-                        </span>
-                      </label>
-
-                      <span class="project-hours">
-                        ${formatHours(projectHours)}
-                      </span>
-
-                      <button
-                        class="small-button delete-button"
-                        type="button"
-                        data-action="delete-project"
-                        data-category-id="${category.id}"
-                        data-project-id="${project.id}"
-                      >
-                        削除
-                      </button>
-                    </div>
-                  `;
-                }
-              )
-              .join("");
+const projectHtml =
+projects
+.map(
+function(project) {
+const projectHours =
+categoryHours *
+Number(
+project.allocationPercent
+) /
+100;
 
 
-          const isCategoryOpen =
-            openCategoryIds.has(
-              String(
-                category.id
-              )
-            );
+return `
+<div
+class="project-item"
+data-project-id="${project.id}"
+>
+<span class="project-branch">
+└
+</span>
+
+<input
+class="project-name-input"
+type="text"
+value="${escapeHtml(project.name)}"
+data-action="project-name"
+data-category-id="${category.id}"
+data-project-id="${project.id}"
+aria-label="プロジェクト名"
+>
+
+<label class="percentage-input">
+<input
+type="number"
+min="0"
+max="100"
+step="0.1"
+value="${project.allocationPercent}"
+data-action="project-percentage"
+data-category-id="${category.id}"
+data-project-id="${project.id}"
+aria-label="プロジェクトの割合"
+>
+
+<span>
+%
+</span>
+</label>
+
+<span class="project-hours">
+${formatHours(projectHours)}
+</span>
+
+<button
+class="small-button delete-button"
+type="button"
+data-action="delete-project"
+data-category-id="${category.id}"
+data-project-id="${project.id}"
+>
+削除
+</button>
+</div>
+`;
+}
+)
+.join("");
 
 
-          return `
-            <details
-              class="category-item"
-              data-category-id="${category.id}"
-              ${isCategoryOpen ? "open" : ""}
-            >
-              <summary class="category-toggle">
-                <strong class="category-toggle-name">
-                  ${escapeHtml(category.name)}
-                </strong>
+const isCategoryOpen =
+openCategoryIds.has(
+String(
+category.id
+)
+);
 
-                <span class="category-toggle-percentage">
-                  ${category.allocationPercent}%
-                </span>
 
-                <span class="category-toggle-hours">
-                  ${formatHours(categoryHours)}
-                </span>
-              </summary>
+return `
+<details
+class="category-item"
+data-category-id="${category.id}"
+${isCategoryOpen ? "open" : ""}
+>
+<summary class="category-toggle">
+<strong class="category-toggle-name">
+${escapeHtml(category.name)}
+</strong>
 
-              <div class="category-header">
-                <input
-                  class="category-name-input"
-                  type="text"
-                  value="${escapeHtml(category.name)}"
-                  data-action="category-name"
-                  data-category-id="${category.id}"
-                  aria-label="大分類名"
-                >
+<span class="category-toggle-percentage">
+${category.allocationPercent}%
+</span>
 
-                <label class="percentage-input">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value="${category.allocationPercent}"
-                    data-action="category-percentage"
-                    data-category-id="${category.id}"
-                    aria-label="大分類の割合"
-                  >
+<span class="category-toggle-hours">
+${formatHours(categoryHours)}
+</span>
+</summary>
 
-                  <span>
-                    %
-                  </span>
-                </label>
+<div class="category-header">
+<input
+class="category-name-input"
+type="text"
+value="${escapeHtml(category.name)}"
+data-action="category-name"
+data-category-id="${category.id}"
+aria-label="大分類名"
+>
 
-                <span class="category-hours">
-                  ${formatHours(categoryHours)}
-                </span>
+<label class="percentage-input">
+<input
+type="number"
+min="0"
+max="100"
+step="0.1"
+value="${category.allocationPercent}"
+data-action="category-percentage"
+data-category-id="${category.id}"
+aria-label="大分類の割合"
+>
 
-                <button
-                  class="small-button delete-button"
-                  type="button"
-                  data-action="delete-category"
-                  data-category-id="${category.id}"
-                >
-                  削除
-                </button>
-              </div>
+<span>
+%
+</span>
+</label>
 
-              <div class="project-list">
-                <p
-                  class="project-allocation-status${projectAllocationClass}"
-                >
-                  プロジェクト配分：
-                  ${projectAllocationMessage}
-                </p>
+<span class="category-hours">
+${formatHours(categoryHours)}
+</span>
 
-                ${projectHtml}
+<button
+class="small-button delete-button"
+type="button"
+data-action="delete-category"
+data-category-id="${category.id}"
+>
+削除
+</button>
+</div>
 
-                <form
-                  class="add-project-form"
-                  data-category-id="${category.id}"
-                >
-                  <input
-                    type="text"
-                    name="projectName"
-                    placeholder="プロジェクトを追加"
-                    required
-                  >
+<div class="project-list">
+<p
+class="project-allocation-status${projectAllocationClass}"
+>
+プロジェクト配分：
+${projectAllocationMessage}
+</p>
 
-                  <button
-                    class="small-button"
-                    type="submit"
-                  >
-                    追加
-                  </button>
-                </form>
-              </div>
-            </details>
-          `;
-        }
-      )
-      .join("");
+${projectHtml}
+
+<form
+class="add-project-form"
+data-category-id="${category.id}"
+>
+<input
+type="text"
+name="projectName"
+placeholder="プロジェクトを追加"
+required
+>
+
+<button
+class="small-button"
+type="submit"
+>
+追加
+</button>
+</form>
+</div>
+</details>
+`;
+}
+)
+.join("");
 }
 
 
@@ -4447,171 +4447,171 @@ function renderCategoryList() {
 // ========================================
 
 function renderProjectStatusList() {
-  const openCategoryIds =
-    new Set(
-      Array.from(
-        projectStatusList.querySelectorAll(
-          ".project-status-category[open]"
-        )
-      ).map(
-        function(categoryItem) {
-          return String(
-            categoryItem.dataset.categoryId
-          );
-        }
-      )
-    );
+const openCategoryIds =
+new Set(
+Array.from(
+projectStatusList.querySelectorAll(
+".project-status-category[open]"
+)
+).map(
+function(categoryItem) {
+return String(
+categoryItem.dataset.categoryId
+);
+}
+)
+);
 
 
-  const categoryItems =
-    [];
+const categoryItems =
+[];
 
 
-  appData.categories.forEach(
-    function(category) {
-      const projects =
-        Array.isArray(
-          category.projects
-        )
-          ? category.projects
-          : [];
+appData.categories.forEach(
+function(category) {
+const projects =
+Array.isArray(
+category.projects
+)
+? category.projects
+: [];
 
 
 
-      const projectItems =
-        projects
-          .map(
-            function(project) {
-              const isCurrent =
-                project.isCurrent !== false;
+const projectItems =
+projects
+.map(
+function(project) {
+const isCurrent =
+project.isCurrent !== false;
 
 
-              return `
-                <div class="project-status-item">
-                  <strong class="project-status-name">
-                    ${escapeHtml(project.name)}
-                  </strong>
+return `
+<div class="project-status-item">
+<strong class="project-status-name">
+${escapeHtml(project.name)}
+</strong>
 
-                  <div class="project-status-item-actions">
-                    <label class="project-status-check">
-                      <input
-                        type="checkbox"
-                        data-action="project-current"
-                        data-category-id="${category.id}"
-                        data-project-id="${project.id}"
-                        ${isCurrent ? "checked" : ""}
-                      >
+<div class="project-status-item-actions">
+<label class="project-status-check">
+<input
+type="checkbox"
+data-action="project-current"
+data-category-id="${category.id}"
+data-project-id="${project.id}"
+${isCurrent ? "checked" : ""}
+>
 
-                      現在のプロジェクト
-                    </label>
+現在のプロジェクト
+</label>
 
-                    <button
-                      class="small-button"
-                      type="button"
-                      data-action="project-status-rename-project"
-                      data-category-id="${category.id}"
-                      data-project-id="${project.id}"
-                    >
-                      名称変更
-                    </button>
+<button
+class="small-button"
+type="button"
+data-action="project-status-rename-project"
+data-category-id="${category.id}"
+data-project-id="${project.id}"
+>
+名称変更
+</button>
 
-                    <button
-                      class="small-button delete-button"
-                      type="button"
-                      data-action="monthly-plan-delete-project"
-                      data-category-id="${category.id}"
-                      data-project-id="${project.id}"
-                    >
-                      削除
-                    </button>
-                  </div>
-                </div>
-              `;
-            }
-          )
-          .join("");
-
-
-      const isOpen =
-        openCategoryIds.has(
-          String(
-            category.id
-          )
-        );
+<button
+class="small-button delete-button"
+type="button"
+data-action="monthly-plan-delete-project"
+data-category-id="${category.id}"
+data-project-id="${project.id}"
+>
+削除
+</button>
+</div>
+</div>
+`;
+}
+)
+.join("");
 
 
-      categoryItems.push(`
-        <details
-          class="project-status-category"
-          data-category-id="${category.id}"
-          ${isOpen ? "open" : ""}
-        >
-          <summary>
-            <strong>
-              ${escapeHtml(category.name)}
-            </strong>
-          </summary>
-
-          <div class="project-status-category-list">
-            <div class="project-status-category-actions">
-              <button
-                class="small-button"
-                type="button"
-                data-action="project-status-rename-category"
-                data-category-id="${category.id}"
-              >
-                大分類名を変更
-              </button>
-
-              <button
-                class="small-button"
-                type="button"
-                data-action="project-status-add-project"
-                data-category-id="${category.id}"
-              >
-                プロジェクトを追加
-              </button>
-
-              <button
-                class="small-button delete-button"
-                type="button"
-                data-action="monthly-plan-delete-category"
-                data-category-id="${category.id}"
-              >
-                大分類を削除
-              </button>
-            </div>
-
-            ${
-              projectItems ||
-              `
-                <p class="empty-message">
-                  プロジェクトがありません。
-                </p>
-              `
-            }
-          </div>
-        </details>
-      `);
-    }
-  );
+const isOpen =
+openCategoryIds.has(
+String(
+category.id
+)
+);
 
 
-  if (
-    categoryItems.length === 0
-  ) {
-    projectStatusList.innerHTML = `
-      <p class="empty-message">
-        プロジェクトが設定されていません。
-      </p>
-    `;
+categoryItems.push(`
+<details
+class="project-status-category"
+data-category-id="${category.id}"
+${isOpen ? "open" : ""}
+>
+<summary>
+<strong>
+${escapeHtml(category.name)}
+</strong>
+</summary>
 
-    return;
-  }
+<div class="project-status-category-list">
+<div class="project-status-category-actions">
+<button
+class="small-button"
+type="button"
+data-action="project-status-rename-category"
+data-category-id="${category.id}"
+>
+大分類名を変更
+</button>
+
+<button
+class="small-button"
+type="button"
+data-action="project-status-add-project"
+data-category-id="${category.id}"
+>
+プロジェクトを追加
+</button>
+
+<button
+class="small-button delete-button"
+type="button"
+data-action="monthly-plan-delete-category"
+data-category-id="${category.id}"
+>
+大分類を削除
+</button>
+</div>
+
+${
+projectItems ||
+`
+<p class="empty-message">
+プロジェクトがありません。
+</p>
+`
+}
+</div>
+</details>
+`);
+}
+);
 
 
-  projectStatusList.innerHTML =
-    categoryItems.join("");
+if (
+categoryItems.length === 0
+) {
+projectStatusList.innerHTML = `
+<p class="empty-message">
+プロジェクトが設定されていません。
+</p>
+`;
+
+return;
+}
+
+
+projectStatusList.innerHTML =
+categoryItems.join("");
 }
 
 
@@ -4620,71 +4620,71 @@ function renderProjectStatusList() {
 // ========================================
 
 projectStatusList.addEventListener(
-  "change",
+"change",
 
-  function(event) {
-    const checkbox =
-      event.target;
-
-
-    if (
-      !(
-        checkbox instanceof
-        HTMLInputElement
-      ) ||
-      checkbox.dataset.action !==
-        "project-current"
-    ) {
-      return;
-    }
+function(event) {
+const checkbox =
+event.target;
 
 
-    const category =
-      findCategory(
-        checkbox.dataset.categoryId
-      );
+if (
+!(
+checkbox instanceof
+HTMLInputElement
+) ||
+checkbox.dataset.action !==
+"project-current"
+) {
+return;
+}
 
 
-    if (!category) {
-      return;
-    }
+const category =
+findCategory(
+checkbox.dataset.categoryId
+);
 
 
-    const project =
-      findProject(
-        category,
-        checkbox.dataset.projectId
-      );
+if (!category) {
+return;
+}
 
 
-    if (!project) {
-      return;
-    }
+const project =
+findProject(
+category,
+checkbox.dataset.projectId
+);
 
 
-    project.isCurrent =
-      checkbox.checked;
+if (!project) {
+return;
+}
 
 
-    if (!checkbox.checked) {
-      project.allocationPercent =
-        0;
-    }
+project.isCurrent =
+checkbox.checked;
 
 
-    saveAppData();
+if (!checkbox.checked) {
+project.allocationPercent =
+0;
+}
 
-    updateWorkTimeDisplay();
 
-    renderRecordSummary();
+saveAppData();
+
+updateWorkTimeDisplay();
+
+renderRecordSummary();
 
 
-    showStatusMessage(
-      checkbox.checked
-        ? "現在のプロジェクトに戻しました。"
-        : "プロジェクトをアーカイブへ移動しました。"
-    );
-  }
+showStatusMessage(
+checkbox.checked
+? "現在のプロジェクトに戻しました。"
+: "プロジェクトをアーカイブへ移動しました。"
+);
+}
 );
 
 
@@ -4693,208 +4693,208 @@ projectStatusList.addEventListener(
 // ========================================
 
 projectStatusList.addEventListener(
-  "click",
+"click",
 
-  function(event) {
-    const button =
-      event.target.closest(
-        "button[data-action]"
-      );
+function(event) {
+const button =
+event.target.closest(
+"button[data-action]"
+);
 
 
-    if (!button) {
-      return;
-    }
+if (!button) {
+return;
+}
 
 
-    const action =
-      button.dataset.action;
+const action =
+button.dataset.action;
 
 
-    const category =
-      findCategory(
-        button.dataset.categoryId
-      );
+const category =
+findCategory(
+button.dataset.categoryId
+);
 
 
-    if (!category) {
-      return;
-    }
+if (!category) {
+return;
+}
 
 
-    if (
-      action ===
-      "project-status-rename-category"
-    ) {
-      const enteredName =
-        window.prompt(
-          "新しい大分類名を入力してください。",
-          category.name
-        );
+if (
+action ===
+"project-status-rename-category"
+) {
+const enteredName =
+window.prompt(
+"新しい大分類名を入力してください。",
+category.name
+);
 
 
-      if (enteredName === null) {
-        return;
-      }
+if (enteredName === null) {
+return;
+}
 
 
-      const categoryName =
-        enteredName.trim();
+const categoryName =
+enteredName.trim();
 
 
-      if (!categoryName) {
-        showStatusMessage(
-          "大分類名を入力してください。"
-        );
+if (!categoryName) {
+showStatusMessage(
+"大分類名を入力してください。"
+);
 
-        return;
-      }
+return;
+}
 
 
-      category.name =
-        categoryName;
+category.name =
+categoryName;
 
 
-      saveAppData();
+saveAppData();
 
-      updateWorkTimeDisplay();
+updateWorkTimeDisplay();
 
-      renderMonthlyPlanForm();
+renderMonthlyPlanForm();
 
-      renderRecordSummary();
+renderRecordSummary();
 
 
-      showStatusMessage(
-        "大分類名を変更しました。"
-      );
+showStatusMessage(
+"大分類名を変更しました。"
+);
 
-      return;
-    }
+return;
+}
 
 
-    if (
-      action ===
-      "project-status-add-project"
-    ) {
-      const enteredName =
-        window.prompt(
-          "追加するプロジェクト名を入力してください。"
-        );
+if (
+action ===
+"project-status-add-project"
+) {
+const enteredName =
+window.prompt(
+"追加するプロジェクト名を入力してください。"
+);
 
 
-      if (enteredName === null) {
-        return;
-      }
+if (enteredName === null) {
+return;
+}
 
 
-      const projectName =
-        enteredName.trim();
+const projectName =
+enteredName.trim();
 
 
-      if (!projectName) {
-        showStatusMessage(
-          "プロジェクト名を入力してください。"
-        );
+if (!projectName) {
+showStatusMessage(
+"プロジェクト名を入力してください。"
+);
 
-        return;
-      }
+return;
+}
 
 
-      category.projects.push(
-        {
-          id:
-            createId(
-              "project"
-            ),
+category.projects.push(
+{
+id:
+createId(
+"project"
+),
 
-          name:
-            projectName,
+name:
+projectName,
 
-          allocationPercent:
-            0,
+allocationPercent:
+0,
 
-          isCurrent:
-            true
-        }
-      );
+isCurrent:
+true
+}
+);
 
 
-      saveAppData();
+saveAppData();
 
-      updateWorkTimeDisplay();
+updateWorkTimeDisplay();
 
-      renderMonthlyPlanForm();
+renderMonthlyPlanForm();
 
-      renderRecordSummary();
+renderRecordSummary();
 
 
-      showStatusMessage(
-        "プロジェクトを追加しました。"
-      );
+showStatusMessage(
+"プロジェクトを追加しました。"
+);
 
-      return;
-    }
+return;
+}
 
 
-    if (
-      action ===
-      "project-status-rename-project"
-    ) {
-      const project =
-        findProject(
-          category,
-          button.dataset.projectId
-        );
+if (
+action ===
+"project-status-rename-project"
+) {
+const project =
+findProject(
+category,
+button.dataset.projectId
+);
 
 
-      if (!project) {
-        return;
-      }
+if (!project) {
+return;
+}
 
 
-      const enteredName =
-        window.prompt(
-          "新しいプロジェクト名を入力してください。",
-          project.name
-        );
+const enteredName =
+window.prompt(
+"新しいプロジェクト名を入力してください。",
+project.name
+);
 
 
-      if (enteredName === null) {
-        return;
-      }
+if (enteredName === null) {
+return;
+}
 
 
-      const projectName =
-        enteredName.trim();
+const projectName =
+enteredName.trim();
 
 
-      if (!projectName) {
-        showStatusMessage(
-          "プロジェクト名を入力してください。"
-        );
+if (!projectName) {
+showStatusMessage(
+"プロジェクト名を入力してください。"
+);
 
-        return;
-      }
+return;
+}
 
 
-      project.name =
-        projectName;
+project.name =
+projectName;
 
 
-      saveAppData();
+saveAppData();
 
-      updateWorkTimeDisplay();
+updateWorkTimeDisplay();
 
-      renderMonthlyPlanForm();
+renderMonthlyPlanForm();
 
-      renderRecordSummary();
+renderRecordSummary();
 
 
-      showStatusMessage(
-        "プロジェクト名を変更しました。"
-      );
-    }
-  }
+showStatusMessage(
+"プロジェクト名を変更しました。"
+);
+}
+}
 );
 
 
@@ -4902,31 +4902,31 @@ projectStatusList.addEventListener(
 // HTMLとして解釈される文字を変換する
 // ========================================
 function escapeHtml(
-  text
+text
 ) {
-  return String(
-    text
-  )
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      "\"",
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
+return String(
+text
+)
+.replaceAll(
+"&",
+"&amp;"
+)
+.replaceAll(
+"<",
+"&lt;"
+)
+.replaceAll(
+">",
+"&gt;"
+)
+.replaceAll(
+"\"",
+"&quot;"
+)
+.replaceAll(
+"'",
+"&#039;"
+);
 }
 
 
@@ -4935,36 +4935,36 @@ function escapeHtml(
 // ========================================
 
 addCategoryButton.addEventListener(
-  "click",
+"click",
 
-  function() {
-    appData.categories.push(
-      {
-        id:
-          createId(
-            "category"
-          ),
+function() {
+appData.categories.push(
+{
+id:
+createId(
+"category"
+),
 
-        name:
-          "新しい大分類",
+name:
+"新しい大分類",
 
-        allocationPercent:
-          0,
+allocationPercent:
+0,
 
-        projects: []
-      }
-    );
-
-
-    saveAppData();
-
-    updateWorkTimeDisplay();
+projects: []
+}
+);
 
 
-    showStatusMessage(
-      "大分類を追加しました。"
-    );
-  }
+saveAppData();
+
+updateWorkTimeDisplay();
+
+
+showStatusMessage(
+"大分類を追加しました。"
+);
+}
 );
 
 
@@ -4973,113 +4973,113 @@ addCategoryButton.addEventListener(
 // ========================================
 
 categoryList.addEventListener(
-  "change",
+"change",
 
-  function(event) {
-    const target =
-      event.target;
-
-
-    if (
-      !(target instanceof HTMLInputElement)
-    ) {
-      return;
-    }
+function(event) {
+const target =
+event.target;
 
 
-    const action =
-      target.dataset.action;
+if (
+!(target instanceof HTMLInputElement)
+) {
+return;
+}
 
 
-    const categoryId =
-      target.dataset.categoryId;
+const action =
+target.dataset.action;
 
 
-    const projectId =
-      target.dataset.projectId;
+const categoryId =
+target.dataset.categoryId;
 
 
-    const category =
-      findCategory(
-        categoryId
-      );
+const projectId =
+target.dataset.projectId;
 
 
-    if (!category) {
-      return;
-    }
+const category =
+findCategory(
+categoryId
+);
 
 
-    if (
-      action ===
-      "category-name"
-    ) {
-      category.name =
-        target.value.trim() ||
-        "名称未設定";
-    }
+if (!category) {
+return;
+}
 
 
-    if (
-      action ===
-      "category-percentage"
-    ) {
-      category.allocationPercent =
-        normalizePercentage(
-          target.value
-        );
-    }
+if (
+action ===
+"category-name"
+) {
+category.name =
+target.value.trim() ||
+"名称未設定";
+}
 
 
-    if (
-      action ===
-        "project-name" ||
-      action ===
-        "project-percentage"
-    ) {
-      const project =
-        findProject(
-          category,
-          projectId
-        );
+if (
+action ===
+"category-percentage"
+) {
+category.allocationPercent =
+normalizePercentage(
+target.value
+);
+}
 
 
-      if (!project) {
-        return;
-      }
+if (
+action ===
+"project-name" ||
+action ===
+"project-percentage"
+) {
+const project =
+findProject(
+category,
+projectId
+);
 
 
-      if (
-        action ===
-        "project-name"
-      ) {
-        project.name =
-          target.value.trim() ||
-          "名称未設定";
-      }
+if (!project) {
+return;
+}
 
 
-      if (
-        action ===
-        "project-percentage"
-      ) {
-        project.allocationPercent =
-          normalizePercentage(
-            target.value
-          );
-      }
-    }
+if (
+action ===
+"project-name"
+) {
+project.name =
+target.value.trim() ||
+"名称未設定";
+}
 
 
-    saveAppData();
+if (
+action ===
+"project-percentage"
+) {
+project.allocationPercent =
+normalizePercentage(
+target.value
+);
+}
+}
 
-    updateWorkTimeDisplay();
+
+saveAppData();
+
+updateWorkTimeDisplay();
 
 
-    showStatusMessage(
-      "設定を保存しました。"
-    );
-  }
+showStatusMessage(
+"設定を保存しました。"
+);
+}
 );
 
 
@@ -5088,87 +5088,87 @@ categoryList.addEventListener(
 // ========================================
 
 categoryList.addEventListener(
-  "submit",
+"submit",
 
-  function(event) {
-    const form =
-      event.target;
-
-
-    if (
-      !form.classList.contains(
-        "add-project-form"
-      )
-    ) {
-      return;
-    }
+function(event) {
+const form =
+event.target;
 
 
-    event.preventDefault();
+if (
+!form.classList.contains(
+"add-project-form"
+)
+) {
+return;
+}
 
 
-    const categoryId =
-      form.dataset.categoryId;
+event.preventDefault();
 
 
-    const category =
-      findCategory(
-        categoryId
-      );
+const categoryId =
+form.dataset.categoryId;
 
 
-    if (!category) {
-      return;
-    }
+const category =
+findCategory(
+categoryId
+);
 
 
-    const formData =
-      new FormData(
-        form
-      );
+if (!category) {
+return;
+}
 
 
-    const projectName =
-      String(
-        formData.get(
-          "projectName"
-        ) || ""
-      ).trim();
+const formData =
+new FormData(
+form
+);
 
 
-    if (!projectName) {
-      return;
-    }
+const projectName =
+String(
+formData.get(
+"projectName"
+) || ""
+).trim();
 
 
-    category.projects.push(
-      {
-        id:
-          createId(
-            "project"
-          ),
-
-                name:
-          projectName,
-
-        allocationPercent:
-          0,
-
-        isCurrent:
-          true
-      }
-    );
+if (!projectName) {
+return;
+}
 
 
-    saveAppData();
+category.projects.push(
+{
+id:
+createId(
+"project"
+),
 
-    updateWorkTimeDisplay();
+name:
+projectName,
+
+allocationPercent:
+0,
+
+isCurrent:
+true
+}
+);
 
 
-    showStatusMessage(
-      "プロジェクトを追加しました。"
-    );
-  }
+saveAppData();
+
+updateWorkTimeDisplay();
+
+
+showStatusMessage(
+"プロジェクトを追加しました。"
+);
+}
 );
 
 
@@ -5177,199 +5177,199 @@ categoryList.addEventListener(
 // ========================================
 
 categoryList.addEventListener(
-  "click",
+"click",
 
-  function(event) {
-    const button =
-      event.target.closest(
-        "button[data-action]"
-      );
-
-
-    if (!button) {
-      return;
-    }
+function(event) {
+const button =
+event.target.closest(
+"button[data-action]"
+);
 
 
-    const action =
-      button.dataset.action;
+if (!button) {
+return;
+}
 
 
-    const categoryId =
-      button.dataset.categoryId;
+const action =
+button.dataset.action;
 
 
-    const projectId =
-      button.dataset.projectId;
+const categoryId =
+button.dataset.categoryId;
 
 
-    if (
-      action ===
-      "delete-category"
-    ) {
-      const category =
-        findCategory(
-          categoryId
-        );
+const projectId =
+button.dataset.projectId;
 
 
-      if (!category) {
-        return;
-      }
+if (
+action ===
+"delete-category"
+) {
+const category =
+findCategory(
+categoryId
+);
 
 
-      const projectIds =
-        new Set(
-          category.projects.map(
-            function(project) {
-              return project.id;
-            }
-          )
-        );
+if (!category) {
+return;
+}
 
 
-      const hasSavedRecords =
-        appData.sessions.some(
-          function(session) {
-            return projectIds.has(
-              session.projectId
-            );
-          }
-        );
+const projectIds =
+new Set(
+category.projects.map(
+function(project) {
+return project.id;
+}
+)
+);
 
 
-      const hasActiveRecord =
-        Boolean(
-          appData.activeSession &&
-          projectIds.has(
-            appData.activeSession.projectId
-          )
-        );
+const hasSavedRecords =
+appData.sessions.some(
+function(session) {
+return projectIds.has(
+session.projectId
+);
+}
+);
 
 
-      if (
-        hasSavedRecords ||
-        hasActiveRecord
-      ) {
-        window.alert(
-          "作業記録があるため、この大分類は削除できません。配下のプロジェクトをアーカイブへ移してください。"
-        );
-
-        return;
-      }
+const hasActiveRecord =
+Boolean(
+appData.activeSession &&
+projectIds.has(
+appData.activeSession.projectId
+)
+);
 
 
-      const shouldDelete =
-        window.confirm(
-          "この大分類と、その中のプロジェクトを削除しますか？"
-        );
+if (
+hasSavedRecords ||
+hasActiveRecord
+) {
+window.alert(
+"作業記録があるため、この大分類は削除できません。配下のプロジェクトをアーカイブへ移してください。"
+);
+
+return;
+}
 
 
-      if (!shouldDelete) {
-        return;
-      }
+const shouldDelete =
+window.confirm(
+"この大分類と、その中のプロジェクトを削除しますか？"
+);
 
 
-      appData.categories =
-        appData.categories.filter(
-          function(item) {
-            return (
-              item.id !==
-              categoryId
-            );
-          }
-        );
+if (!shouldDelete) {
+return;
+}
 
 
-      saveAppData();
-
-      updateWorkTimeDisplay();
-
-
-      showStatusMessage(
-        "大分類を削除しました。"
-      );
-    }
-
-
-    if (
-      action ===
-      "delete-project"
-    ) {
-      const category =
-        findCategory(
-          categoryId
-        );
+appData.categories =
+appData.categories.filter(
+function(item) {
+return (
+item.id !==
+categoryId
+);
+}
+);
 
 
-      if (!category) {
-        return;
-      }
+saveAppData();
+
+updateWorkTimeDisplay();
 
 
-      const hasSavedRecords =
-        appData.sessions.some(
-          function(session) {
-            return (
-              session.projectId ===
-              projectId
-            );
-          }
-        );
+showStatusMessage(
+"大分類を削除しました。"
+);
+}
 
 
-      const hasActiveRecord =
-        Boolean(
-          appData.activeSession &&
-          appData.activeSession.projectId ===
-            projectId
-        );
+if (
+action ===
+"delete-project"
+) {
+const category =
+findCategory(
+categoryId
+);
 
 
-      if (
-        hasSavedRecords ||
-        hasActiveRecord
-      ) {
-        window.alert(
-          "作業記録があるため、このプロジェクトは削除できません。「現在のプロジェクト」のチェックを外して、アーカイブへ移してください。"
-        );
-
-        return;
-      }
+if (!category) {
+return;
+}
 
 
-      const shouldDelete =
-        window.confirm(
-          "このプロジェクトを削除しますか？作業記録はありません。"
-        );
+const hasSavedRecords =
+appData.sessions.some(
+function(session) {
+return (
+session.projectId ===
+projectId
+);
+}
+);
 
 
-      if (!shouldDelete) {
-        return;
-      }
+const hasActiveRecord =
+Boolean(
+appData.activeSession &&
+appData.activeSession.projectId ===
+projectId
+);
 
 
-      category.projects =
-        category.projects.filter(
-          function(project) {
-            return (
-              project.id !==
-              projectId
-            );
-          }
-        );
+if (
+hasSavedRecords ||
+hasActiveRecord
+) {
+window.alert(
+"作業記録があるため、このプロジェクトは削除できません。「現在のプロジェクト」のチェックを外して、アーカイブへ移してください。"
+);
+
+return;
+}
 
 
-      saveAppData();
+const shouldDelete =
+window.confirm(
+"このプロジェクトを削除しますか？作業記録はありません。"
+);
 
-      updateWorkTimeDisplay();
+
+if (!shouldDelete) {
+return;
+}
 
 
-      showStatusMessage(
-        "プロジェクトを削除しました。"
-      );
-    }
-  }
+category.projects =
+category.projects.filter(
+function(project) {
+return (
+project.id !==
+projectId
+);
+}
+);
+
+
+saveAppData();
+
+updateWorkTimeDisplay();
+
+
+showStatusMessage(
+"プロジェクトを削除しました。"
+);
+}
+}
 );
 
 
@@ -5378,16 +5378,16 @@ categoryList.addEventListener(
 // ========================================
 
 function findCategory(
-  categoryId
+categoryId
 ) {
-  return appData.categories.find(
-    function(category) {
-      return (
-        category.id ===
-        categoryId
-      );
-    }
-  );
+return appData.categories.find(
+function(category) {
+return (
+category.id ===
+categoryId
+);
+}
+);
 }
 
 
@@ -5396,17 +5396,17 @@ function findCategory(
 // ========================================
 
 function findProject(
-  category,
-  projectId
+category,
+projectId
 ) {
-  return category.projects.find(
-    function(project) {
-      return (
-        project.id ===
-        projectId
-      );
-    }
-  );
+return category.projects.find(
+function(project) {
+return (
+project.id ===
+projectId
+);
+}
+);
 }
 
 
@@ -5415,31 +5415,31 @@ function findProject(
 // ========================================
 
 function normalizePercentage(
-  value
+value
 ) {
-  const number =
-    Number(
-      value
-    );
+const number =
+Number(
+value
+);
 
 
-  if (
-    !Number.isFinite(
-      number
-    )
-  ) {
-    return 0;
-  }
+if (
+!Number.isFinite(
+number
+)
+) {
+return 0;
+}
 
 
-  return Math.min(
-    100,
+return Math.min(
+100,
 
-    Math.max(
-      0,
-      number
-    )
-  );
+Math.max(
+0,
+number
+)
+);
 }
 
 
@@ -5448,26 +5448,26 @@ function normalizePercentage(
 // ========================================
 
 function getCurrentProjects(
-  category
+category
 ) {
-  if (
-    !category ||
-    !Array.isArray(
-      category.projects
-    )
-  ) {
-    return [];
-  }
+if (
+!category ||
+!Array.isArray(
+category.projects
+)
+) {
+return [];
+}
 
 
-  return category.projects.filter(
-    function(project) {
-      return (
-        project.isCurrent !==
-        false
-      );
-    }
-  );
+return category.projects.filter(
+function(project) {
+return (
+project.isCurrent !==
+false
+);
+}
+);
 }
 
 
@@ -5476,71 +5476,71 @@ function getCurrentProjects(
 // ========================================
 
 function renderTimerProjectOptions() {
-  const previousValue =
-    timerProjectSelect.value;
+const previousValue =
+timerProjectSelect.value;
 
 
-   const optionHtml =
-    appData.categories
-      .map(
-        function(category) {
-          const projects =
-            getCurrentProjects(
-              category
-            )
-              .map(
-                function(project) {
-                  return `
-                    <option value="${project.id}">
-                      ${escapeHtml(project.name)}
-                    </option>
-                  `;
-                }
-              )
-              .join("");
+const optionHtml =
+appData.categories
+.map(
+function(category) {
+const projects =
+getCurrentProjects(
+category
+)
+.map(
+function(project) {
+return `
+<option value="${project.id}">
+${escapeHtml(project.name)}
+</option>
+`;
+}
+)
+.join("");
 
 
-          if (!projects) {
-            return "";
-          }
+if (!projects) {
+return "";
+}
 
 
-          return `
-            <optgroup label="${escapeHtml(category.name)}">
-              ${projects}
-            </optgroup>
-          `;
-        }
-      )
-      .join("");
+return `
+<optgroup label="${escapeHtml(category.name)}">
+${projects}
+</optgroup>
+`;
+}
+)
+.join("");
 
 
-  timerProjectSelect.innerHTML = `
-    <option value="">
-      プロジェクトを選択
-    </option>
+timerProjectSelect.innerHTML = `
+<option value="">
+プロジェクトを選択
+</option>
 
-    ${optionHtml}
-  `;
-
-
-  const previousOptionExists =
-    Array.from(
-      timerProjectSelect.options
-    ).some(
-      function(option) {
-        return (
-          option.value ===
-          previousValue
-        );
-      }
-    );
+${optionHtml}
+`;
 
 
-  if (previousOptionExists) {
-    timerProjectSelect.value =
-      previousValue;
-  }
+const previousOptionExists =
+Array.from(
+timerProjectSelect.options
+).some(
+function(option) {
+return (
+option.value ===
+previousValue
+);
+}
+);
+
+
+if (previousOptionExists) {
+timerProjectSelect.value =
+previousValue;
+}
 }
 
 
@@ -5549,190 +5549,190 @@ function renderTimerProjectOptions() {
 // ========================================
 
 function renderProgressList() {
-  const currentCategories =
-    appData.categories.filter(
-      function(category) {
-        return (
-          getCurrentProjects(
-            category
-          ).length > 0
-        );
-      }
-    );
+const currentCategories =
+appData.categories.filter(
+function(category) {
+return (
+getCurrentProjects(
+category
+).length > 0
+);
+}
+);
 
 
-  if (
-    currentCategories.length === 0
-  ) {
-    progressList.innerHTML = `
-      <p class="empty-message">
-        現在のプロジェクトが設定されていません。
-      </p>
-    `;
-
-    return;
-  }
-
-
-  progressList.innerHTML =
-    currentCategories
-      .map(
-        function(category) {
-          const categoryPlannedSeconds =
-            getCategoryPlannedSeconds(
-              category.id
-            );
-
-          const categoryActualSeconds =
-            getCategoryActualSeconds(
-              category.id
-            );
-
-
-            const categoryProgressPercent =
-            calculateProgressPercent(
-              categoryActualSeconds,
-              categoryPlannedSeconds
-            );
-
-
-          const categoryProgressRate =
-            calculateProgressRate(
-              categoryActualSeconds,
-              categoryPlannedSeconds
-            );
-
-
-          const categoryStatus =
-            createProgressStatus(
-              categoryActualSeconds,
-              categoryPlannedSeconds
-            );
-
-
-                    const projectProgressHtml =
-            getCurrentProjects(
-              category
-            )
-              .map(
-                function(project) {
-                  const projectPlannedSeconds =
-                    getProjectPlannedSeconds(
-                      project.id
-                    );
-
-
-                  const projectActualSeconds =
-                    getProjectActualSeconds(
-                      project.id
-                    );
-
-
-                  const projectProgressPercent =
-                    calculateProgressPercent(
-                      projectActualSeconds,
-                      projectPlannedSeconds
-                    );
-
-
-                  const projectProgressRate =
-                    calculateProgressRate(
-                      projectActualSeconds,
-                      projectPlannedSeconds
-                    );
-
-
-                  const projectStatus =
-                    createProgressStatus(
-                      projectActualSeconds,
-                      projectPlannedSeconds
-                    );
-
-
-                  return `
-                    <div class="project-progress-item">
-                      <div class="progress-heading">
-                                                <span class="project-progress-name">
-                          └ ${escapeHtml(project.name)}
-
-                          <strong class="progress-percentage">
-                            ${projectProgressRate}
-                          </strong>
-                        </span>
-
-                        <span class="progress-time">
-                          実績
-                          ${formatSecondsAsText(projectActualSeconds)}
-                          ／
-                          予定
-                          ${formatSecondsAsText(projectPlannedSeconds)}
-                        </span>
-                      </div>
-
-                      <div class="progress-bar">
-                        <span
-                          class="progress-bar__value"
-                          style="width: ${projectProgressPercent}%"
-                        ></span>
-                      </div>
-
-                      <p
-                        class="progress-remaining${projectStatus.isOver ? " is-over" : ""}"
-                      >
-                        ${projectStatus.message}
-                      </p>
-                    </div>
-                  `;
-                }
-              )
-              .join("");
-
-
-          return `
-  <details class="progress-item">
-    <summary class="progress-category-summary">
-      <div class="progress-category-overview">
-        <div class="progress-heading">
-          <span class="progress-name">
-            ${escapeHtml(category.name)}
-
-            <strong class="progress-percentage">
-              ${categoryProgressRate}
-            </strong>
-          </span>
-
-          <span class="progress-time">
-            実績
-            ${formatSecondsAsText(categoryActualSeconds)}
-            ／
-            予定
-            ${formatSecondsAsText(categoryPlannedSeconds)}
-          </span>
-        </div>
-
-        <div class="progress-bar">
-          <span
-            class="progress-bar__value"
-            style="width: ${categoryProgressPercent}%"
-          ></span>
-        </div>
-
-        <p
-          class="progress-remaining${categoryStatus.isOver ? " is-over" : ""}"
-        >
-          ${categoryStatus.message}
-        </p>
-      </div>
-    </summary>
-
-    <div class="project-progress-list">
-      ${projectProgressHtml}
-    </div>
-  </details>
+if (
+currentCategories.length === 0
+) {
+progressList.innerHTML = `
+<p class="empty-message">
+現在のプロジェクトが設定されていません。
+</p>
 `;
-        }
-      )
-      .join("");
+
+return;
+}
+
+
+progressList.innerHTML =
+currentCategories
+.map(
+function(category) {
+const categoryPlannedSeconds =
+getCategoryPlannedSeconds(
+category.id
+);
+
+const categoryActualSeconds =
+getCategoryActualSeconds(
+category.id
+);
+
+
+const categoryProgressPercent =
+calculateProgressPercent(
+categoryActualSeconds,
+categoryPlannedSeconds
+);
+
+
+const categoryProgressRate =
+calculateProgressRate(
+categoryActualSeconds,
+categoryPlannedSeconds
+);
+
+
+const categoryStatus =
+createProgressStatus(
+categoryActualSeconds,
+categoryPlannedSeconds
+);
+
+
+const projectProgressHtml =
+getCurrentProjects(
+category
+)
+.map(
+function(project) {
+const projectPlannedSeconds =
+getProjectPlannedSeconds(
+project.id
+);
+
+
+const projectActualSeconds =
+getProjectActualSeconds(
+project.id
+);
+
+
+const projectProgressPercent =
+calculateProgressPercent(
+projectActualSeconds,
+projectPlannedSeconds
+);
+
+
+const projectProgressRate =
+calculateProgressRate(
+projectActualSeconds,
+projectPlannedSeconds
+);
+
+
+const projectStatus =
+createProgressStatus(
+projectActualSeconds,
+projectPlannedSeconds
+);
+
+
+return `
+<div class="project-progress-item">
+<div class="progress-heading">
+<span class="project-progress-name">
+└ ${escapeHtml(project.name)}
+
+<strong class="progress-percentage">
+${projectProgressRate}
+</strong>
+</span>
+
+<span class="progress-time">
+実績
+${formatSecondsAsText(projectActualSeconds)}
+／
+予定
+${formatSecondsAsText(projectPlannedSeconds)}
+</span>
+</div>
+
+<div class="progress-bar">
+<span
+class="progress-bar__value"
+style="width: ${projectProgressPercent}%"
+></span>
+</div>
+
+<p
+class="progress-remaining${projectStatus.isOver ? " is-over" : ""}"
+>
+${projectStatus.message}
+</p>
+</div>
+`;
+}
+)
+.join("");
+
+
+return `
+<details class="progress-item">
+<summary class="progress-category-summary">
+<div class="progress-category-overview">
+<div class="progress-heading">
+<span class="progress-name">
+${escapeHtml(category.name)}
+
+<strong class="progress-percentage">
+${categoryProgressRate}
+</strong>
+</span>
+
+<span class="progress-time">
+実績
+${formatSecondsAsText(categoryActualSeconds)}
+／
+予定
+${formatSecondsAsText(categoryPlannedSeconds)}
+</span>
+</div>
+
+<div class="progress-bar">
+<span
+class="progress-bar__value"
+style="width: ${categoryProgressPercent}%"
+></span>
+</div>
+
+<p
+class="progress-remaining${categoryStatus.isOver ? " is-over" : ""}"
+>
+${categoryStatus.message}
+</p>
+</div>
+</summary>
+
+<div class="project-progress-list">
+${projectProgressHtml}
+</div>
+</details>
+`;
+}
+)
+.join("");
 }
 
 
@@ -5742,45 +5742,45 @@ function renderProgressList() {
 // ========================================
 
 function createAllocationMessage(
-  totalPercentage
+totalPercentage
 ) {
-  const roundedTotal =
-    Math.round(
-      totalPercentage * 10
-    ) / 10;
+const roundedTotal =
+Math.round(
+totalPercentage * 10
+) / 10;
 
 
-  const difference =
-    Math.round(
-      Math.abs(
-        100 - roundedTotal
-      ) * 10
-    ) / 10;
+const difference =
+Math.round(
+Math.abs(
+100 - roundedTotal
+) * 10
+) / 10;
 
 
-  if (roundedTotal < 100) {
-    return (
-      "合計 " +
-      roundedTotal +
-      "%（未配分 " +
-      difference +
-      "%）"
-    );
-  }
+if (roundedTotal < 100) {
+return (
+"合計 " +
+roundedTotal +
+"%（未配分 " +
+difference +
+"%）"
+);
+}
 
 
-  if (roundedTotal > 100) {
-    return (
-      "合計 " +
-      roundedTotal +
-      "%（" +
-      difference +
-      "%超過）"
-    );
-  }
+if (roundedTotal > 100) {
+return (
+"合計 " +
+roundedTotal +
+"%（" +
+difference +
+"%超過）"
+);
+}
 
 
-  return "合計 100%";
+return "合計 100%";
 }
 
 
@@ -5790,7 +5790,7 @@ function createAllocationMessage(
 // ========================================
 
 var timerIntervalId =
-  null;
+null;
 
 
 // ========================================
@@ -5798,12 +5798,12 @@ var timerIntervalId =
 // ========================================
 
 function initializeTimer() {
-  renderTimer();
+renderTimer();
 
 
-  if (appData.activeSession) {
-    startTimerInterval();
-  }
+if (appData.activeSession) {
+startTimerInterval();
+}
 }
 
 
@@ -5812,11 +5812,11 @@ function initializeTimer() {
 // ========================================
 
 timerProjectSelect.addEventListener(
-  "change",
+"change",
 
-  function() {
-    renderTimer();
-  }
+function() {
+renderTimer();
+}
 );
 
 
@@ -5825,79 +5825,79 @@ timerProjectSelect.addEventListener(
 // ========================================
 
 startButton.addEventListener(
-  "click",
+"click",
 
-  function() {
-    const projectId =
-      timerProjectSelect.value;
-
-
-    if (!projectId) {
-      showStatusMessage(
-        "プロジェクトを選択してください。"
-      );
-
-      return;
-    }
+function() {
+const projectId =
+timerProjectSelect.value;
 
 
-    const projectInformation =
-      findProjectInformation(
-        projectId
-      );
+if (!projectId) {
+showStatusMessage(
+"プロジェクトを選択してください。"
+);
+
+return;
+}
 
 
-    if (!projectInformation) {
-      showStatusMessage(
-        "プロジェクトが見つかりません。"
-      );
-
-      return;
-    }
+const projectInformation =
+findProjectInformation(
+projectId
+);
 
 
-    if (appData.activeSession) {
-      showStatusMessage(
-        "すでに作業中です。"
-      );
+if (!projectInformation) {
+showStatusMessage(
+"プロジェクトが見つかりません。"
+);
 
-      return;
-    }
-
-
-    appData.activeSession = {
-      id:
-        createId(
-          "session"
-        ),
-
-      categoryId:
-        projectInformation.category.id,
-
-      projectId:
-        projectInformation.project.id,
-
-            startedAt:
-        Date.now(),
-
-      segmentStartedAt:
-        Date.now(),
-
-      notes: []
-    };
+return;
+}
 
 
-    saveAppData();
+if (appData.activeSession) {
+showStatusMessage(
+"すでに作業中です。"
+);
 
-    renderTimer();
+return;
+}
 
-    startTimerInterval();
+
+appData.activeSession = {
+id:
+createId(
+"session"
+),
+
+categoryId:
+projectInformation.category.id,
+
+projectId:
+projectInformation.project.id,
+
+startedAt:
+Date.now(),
+
+segmentStartedAt:
+Date.now(),
+
+notes: []
+};
 
 
-    showStatusMessage(
-      "作業を開始しました。"
-    );
-  }
+saveAppData();
+
+renderTimer();
+
+startTimerInterval();
+
+
+showStatusMessage(
+"作業を開始しました。"
+);
+}
 );
 
 
@@ -5906,51 +5906,51 @@ startButton.addEventListener(
 // ========================================
 
 stopButton.addEventListener(
-  "click",
+"click",
 
-  function() {
-    if (!appData.activeSession) {
-      return;
-    }
-
-
-    const endedAt =
-      Date.now();
+function() {
+if (!appData.activeSession) {
+return;
+}
 
 
-    const enteredWorkContent =
-      window.prompt(
-        "終了する作業の内容を入力してください。"
-      );
+const endedAt =
+Date.now();
 
 
-    if (enteredWorkContent === null) {
-      showStatusMessage(
-        "作業の終了を中止しました。タイマーは継続しています。"
-      );
-
-      return;
-    }
+const enteredWorkContent =
+window.prompt(
+"終了する作業の内容を入力してください。"
+);
 
 
-    const workContent =
-      enteredWorkContent.trim();
+if (enteredWorkContent === null) {
+showStatusMessage(
+"作業の終了を中止しました。タイマーは継続しています。"
+);
+
+return;
+}
 
 
-    if (!workContent) {
-      showStatusMessage(
-        "作業内容を入力してください。タイマーは継続しています。"
-      );
-
-      return;
-    }
+const workContent =
+enteredWorkContent.trim();
 
 
-    finishActiveSession(
-      endedAt,
-      workContent
-    );
-  }
+if (!workContent) {
+showStatusMessage(
+"作業内容を入力してください。タイマーは継続しています。"
+);
+
+return;
+}
+
+
+finishActiveSession(
+endedAt,
+workContent
+);
+}
 );
 
 
@@ -5962,116 +5962,116 @@ stopButton.addEventListener(
 // ========================================
 
 function finishActiveSession(
-  endedAt,
-  workContent
+endedAt,
+workContent
 ) {
-  if (!appData.activeSession) {
-    return;
-  }
+if (!appData.activeSession) {
+return;
+}
 
 
-  const elapsedSeconds =
-    Math.max(
-      1,
+const elapsedSeconds =
+Math.max(
+1,
 
-      Math.floor(
-        (
-          endedAt -
-          appData.activeSession.startedAt
-        ) /
-        1000
-      )
-    );
-
-
-  const savedNotes =
-    Array.isArray(
-      appData.activeSession.notes
-    )
-      ? [
-          ...appData.activeSession.notes
-        ]
-      : [];
+Math.floor(
+(
+endedAt -
+appData.activeSession.startedAt
+) /
+1000
+)
+);
 
 
-  const segmentStartedAt =
-    Number(
-      appData.activeSession
-        .segmentStartedAt
-    ) ||
-    Number(
-      appData.activeSession
-        .startedAt
-    );
+const savedNotes =
+Array.isArray(
+appData.activeSession.notes
+)
+? [
+...appData.activeSession.notes
+]
+: [];
 
 
-  savedNotes.push(
-    {
-      id:
-        createId(
-          "note"
-        ),
-
-      text:
-        workContent,
-
-      startedAt:
-        Math.min(
-          segmentStartedAt,
-          endedAt
-        ),
-
-      endedAt:
-        endedAt,
-
-      createdAt:
-        endedAt
-    }
-  );
+const segmentStartedAt =
+Number(
+appData.activeSession
+.segmentStartedAt
+) ||
+Number(
+appData.activeSession
+.startedAt
+);
 
 
-  appData.sessions.push(
-    {
-      id:
-        appData.activeSession.id,
+savedNotes.push(
+{
+id:
+createId(
+"note"
+),
 
-      categoryId:
-        appData.activeSession.categoryId,
+text:
+workContent,
 
-      projectId:
-        appData.activeSession.projectId,
+startedAt:
+Math.min(
+segmentStartedAt,
+endedAt
+),
 
-      startedAt:
-        appData.activeSession.startedAt,
+endedAt:
+endedAt,
 
-      endedAt:
-        endedAt,
-
-      elapsedSeconds:
-        elapsedSeconds,
-
-      notes:
-        savedNotes
-    }
-  );
-
-
-  appData.activeSession =
-    null;
+createdAt:
+endedAt
+}
+);
 
 
-  saveAppData();
+appData.sessions.push(
+{
+id:
+appData.activeSession.id,
 
-  stopTimerInterval();
+categoryId:
+appData.activeSession.categoryId,
 
-  renderTimer();
+projectId:
+appData.activeSession.projectId,
 
-  renderProgressList();
+startedAt:
+appData.activeSession.startedAt,
+
+endedAt:
+endedAt,
+
+elapsedSeconds:
+elapsedSeconds,
+
+notes:
+savedNotes
+}
+);
 
 
-  showStatusMessage(
-    "作業記録を保存しました。"
-  );
+appData.activeSession =
+null;
+
+
+saveAppData();
+
+stopTimerInterval();
+
+renderTimer();
+
+renderProgressList();
+
+
+showStatusMessage(
+"作業記録を保存しました。"
+);
 }
 
 
@@ -6080,19 +6080,19 @@ function finishActiveSession(
 // ========================================
 
 function startTimerInterval() {
-  stopTimerInterval();
+stopTimerInterval();
 
 
-  timerIntervalId =
-    setInterval(
-      function() {
-        renderTimer();
+timerIntervalId =
+setInterval(
+function() {
+renderTimer();
 
-        renderProgressList();
-      },
+renderProgressList();
+},
 
-      1000
-    );
+1000
+);
 }
 
 
@@ -6101,18 +6101,18 @@ function startTimerInterval() {
 // ========================================
 
 function stopTimerInterval() {
-  if (!timerIntervalId) {
-    return;
-  }
+if (!timerIntervalId) {
+return;
+}
 
 
-  clearInterval(
-    timerIntervalId
-  );
+clearInterval(
+timerIntervalId
+);
 
 
-  timerIntervalId =
-    null;
+timerIntervalId =
+null;
 }
 
 
@@ -6121,22 +6121,22 @@ function stopTimerInterval() {
 // ========================================
 
 function renderTimer() {
-  if (appData.activeSession) {
-    renderActiveTimer();
+if (appData.activeSession) {
+renderActiveTimer();
 
-    updateNoteInputState();
+updateNoteInputState();
 
-    renderCurrentNotes();
+renderCurrentNotes();
 
-    return;
-  }
+return;
+}
 
 
-  renderWaitingTimer();
+renderWaitingTimer();
 
-  updateNoteInputState();
+updateNoteInputState();
 
-  renderCurrentNotes();
+renderCurrentNotes();
 }
 
 
@@ -6145,70 +6145,70 @@ function renderTimer() {
 // ========================================
 
 function renderWaitingTimer() {
-  timerProjectSelect.disabled =
-    false;
+timerProjectSelect.disabled =
+false;
 
 
-  startButton.disabled =
-    false;
+startButton.disabled =
+false;
 
 
-  stopButton.disabled =
-    true;
+stopButton.disabled =
+true;
 
 
-  timerDisplay.textContent =
-    "00:00:00";
+timerDisplay.textContent =
+"00:00:00";
 
 
-  const projectId =
-    timerProjectSelect.value;
+const projectId =
+timerProjectSelect.value;
 
 
-  if (!projectId) {
-    timerCategoryName.textContent =
-      "";
+if (!projectId) {
+timerCategoryName.textContent =
+"";
 
 
-    timerProjectName.textContent =
-      "プロジェクトが選択されていません";
+timerProjectName.textContent =
+"プロジェクトが選択されていません";
 
 
-    remainingTime.textContent =
-      "残り時間：—";
+remainingTime.textContent =
+"残り時間：—";
 
 
-    remainingTime.classList.remove(
-      "is-over"
-    );
+remainingTime.classList.remove(
+"is-over"
+);
 
 
-    return;
-  }
+return;
+}
 
 
-  const projectInformation =
-    findProjectInformation(
-      projectId
-    );
+const projectInformation =
+findProjectInformation(
+projectId
+);
 
 
-  if (!projectInformation) {
-    return;
-  }
+if (!projectInformation) {
+return;
+}
 
 
-  timerCategoryName.textContent =
-    projectInformation.category.name;
+timerCategoryName.textContent =
+projectInformation.category.name;
 
 
-  timerProjectName.textContent =
-    projectInformation.project.name;
+timerProjectName.textContent =
+projectInformation.project.name;
 
 
-  updateRemainingTime(
-    projectId
-  );
+updateRemainingTime(
+projectId
+);
 }
 
 
@@ -6217,58 +6217,58 @@ function renderWaitingTimer() {
 // ========================================
 
 function renderActiveTimer() {
-  const activeSession =
-    appData.activeSession;
+const activeSession =
+appData.activeSession;
 
 
-  const projectInformation =
-    findProjectInformation(
-      activeSession.projectId
-    );
+const projectInformation =
+findProjectInformation(
+activeSession.projectId
+);
 
 
-  if (!projectInformation) {
-    timerCategoryName.textContent =
-      "削除されたプロジェクト";
+if (!projectInformation) {
+timerCategoryName.textContent =
+"削除されたプロジェクト";
 
 
-    timerProjectName.textContent =
-      "プロジェクト情報がありません";
-  } else {
-    timerCategoryName.textContent =
-      projectInformation.category.name;
+timerProjectName.textContent =
+"プロジェクト情報がありません";
+} else {
+timerCategoryName.textContent =
+projectInformation.category.name;
 
 
-    timerProjectName.textContent =
-      projectInformation.project.name;
-  }
+timerProjectName.textContent =
+projectInformation.project.name;
+}
 
 
-  timerProjectSelect.value =
-    activeSession.projectId;
+timerProjectSelect.value =
+activeSession.projectId;
 
 
-  timerProjectSelect.disabled =
-    true;
+timerProjectSelect.disabled =
+true;
 
 
-  startButton.disabled =
-    true;
+startButton.disabled =
+true;
 
 
-  stopButton.disabled =
-    false;
+stopButton.disabled =
+false;
 
 
-  timerDisplay.textContent =
-    formatTimerClock(
-      getActiveElapsedSeconds()
-    );
+timerDisplay.textContent =
+formatTimerClock(
+getActiveElapsedSeconds()
+);
 
 
-  updateRemainingTime(
-    activeSession.projectId
-  );
+updateRemainingTime(
+activeSession.projectId
+);
 }
 
 
@@ -6277,22 +6277,22 @@ function renderActiveTimer() {
 // ========================================
 
 function getActiveElapsedSeconds() {
-  if (!appData.activeSession) {
-    return 0;
-  }
+if (!appData.activeSession) {
+return 0;
+}
 
 
-  return Math.max(
-    0,
+return Math.max(
+0,
 
-    Math.floor(
-      (
-        Date.now() -
-        appData.activeSession.startedAt
-      ) /
-      1000
-    )
-  );
+Math.floor(
+(
+Date.now() -
+appData.activeSession.startedAt
+) /
+1000
+)
+);
 }
 
 
@@ -6301,43 +6301,43 @@ function getActiveElapsedSeconds() {
 // ========================================
 
 function formatTimerClock(
-  totalSeconds
+totalSeconds
 ) {
-  const hours =
-    Math.floor(
-      totalSeconds / 3600
-    );
+const hours =
+Math.floor(
+totalSeconds / 3600
+);
 
 
-  const minutes =
-    Math.floor(
-      (
-        totalSeconds % 3600
-      ) /
-      60
-    );
+const minutes =
+Math.floor(
+(
+totalSeconds % 3600
+) /
+60
+);
 
 
-  const seconds =
-    totalSeconds % 60;
+const seconds =
+totalSeconds % 60;
 
 
-  return [
-    hours,
-    minutes,
-    seconds
-  ]
-    .map(
-      function(number) {
-        return String(
-          number
-        ).padStart(
-          2,
-          "0"
-        );
-      }
-    )
-    .join(":");
+return [
+hours,
+minutes,
+seconds
+]
+.map(
+function(number) {
+return String(
+number
+).padStart(
+2,
+"0"
+);
+}
+)
+.join(":");
 }
 
 
@@ -6346,57 +6346,57 @@ function formatTimerClock(
 // ========================================
 
 function formatSecondsAsText(
-  totalSeconds
+totalSeconds
 ) {
-  if (totalSeconds < 60) {
-    return (
-      totalSeconds +
-      "秒"
-    );
-  }
+if (totalSeconds < 60) {
+return (
+totalSeconds +
+"秒"
+);
+}
 
 
-  const totalMinutes =
-    Math.floor(
-      totalSeconds / 60
-    );
+const totalMinutes =
+Math.floor(
+totalSeconds / 60
+);
 
 
-  const hours =
-    Math.floor(
-      totalMinutes / 60
-    );
+const hours =
+Math.floor(
+totalMinutes / 60
+);
 
 
-  const minutes =
-    totalMinutes % 60;
+const minutes =
+totalMinutes % 60;
 
 
-  if (
-    hours > 0 &&
-    minutes > 0
-  ) {
-    return (
-      hours +
-      "時間" +
-      minutes +
-      "分"
-    );
-  }
+if (
+hours > 0 &&
+minutes > 0
+) {
+return (
+hours +
+"時間" +
+minutes +
+"分"
+);
+}
 
 
-  if (hours > 0) {
-    return (
-      hours +
-      "時間"
-    );
-  }
+if (hours > 0) {
+return (
+hours +
+"時間"
+);
+}
 
 
-  return (
-    minutes +
-    "分"
-  );
+return (
+minutes +
+"分"
+);
 }
 
 
@@ -6405,36 +6405,36 @@ function formatSecondsAsText(
 // ========================================
 
 function findProjectInformation(
-  projectId
+projectId
 ) {
-  for (
-    const category of
-    appData.categories
-  ) {
-    const project =
-      category.projects.find(
-        function(item) {
-          return (
-            item.id ===
-            projectId
-          );
-        }
-      );
+for (
+const category of
+appData.categories
+) {
+const project =
+category.projects.find(
+function(item) {
+return (
+item.id ===
+projectId
+);
+}
+);
 
 
-    if (project) {
-      return {
-        category:
-          category,
+if (project) {
+return {
+category:
+category,
 
-        project:
-          project
-      };
-    }
-  }
+project:
+project
+};
+}
+}
 
 
-  return null;
+return null;
 }
 
 
@@ -6443,25 +6443,25 @@ function findProjectInformation(
 // ========================================
 
 function getCurrentPlanningPeriodRange() {
-  const now =
-    new Date();
+const now =
+new Date();
 
 
-  return {
-    start:
-      new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        1
-      ),
+return {
+start:
+new Date(
+now.getFullYear(),
+now.getMonth(),
+1
+),
 
-    end:
-      new Date(
-        now.getFullYear(),
-        now.getMonth() + 1,
-        1
-      )
-  };
+end:
+new Date(
+now.getFullYear(),
+now.getMonth() + 1,
+1
+)
+};
 }
 
 
@@ -6470,34 +6470,34 @@ function getCurrentPlanningPeriodRange() {
 // ========================================
 
 function findMonthlyCategoryPlan(
-  monthlyPlan,
-  categoryId
+monthlyPlan,
+categoryId
 ) {
-  if (
-    !monthlyPlan ||
-    !Array.isArray(
-      monthlyPlan.categories
-    )
-  ) {
-    return null;
-  }
+if (
+!monthlyPlan ||
+!Array.isArray(
+monthlyPlan.categories
+)
+) {
+return null;
+}
 
 
-  return (
-    monthlyPlan.categories.find(
-      function(categoryPlan) {
-        return (
-          String(
-            categoryPlan.categoryId
-          ) ===
-          String(
-            categoryId
-          )
-        );
-      }
-    ) ||
-    null
-  );
+return (
+monthlyPlan.categories.find(
+function(categoryPlan) {
+return (
+String(
+categoryPlan.categoryId
+) ===
+String(
+categoryId
+)
+);
+}
+) ||
+null
+);
 }
 
 
@@ -6506,53 +6506,53 @@ function findMonthlyCategoryPlan(
 // ========================================
 
 function findMonthlyProjectPlan(
-  monthlyPlan,
-  projectId
+monthlyPlan,
+projectId
 ) {
-  if (
-    !monthlyPlan ||
-    !Array.isArray(
-      monthlyPlan.categories
-    )
-  ) {
-    return null;
-  }
+if (
+!monthlyPlan ||
+!Array.isArray(
+monthlyPlan.categories
+)
+) {
+return null;
+}
 
 
-  for (
-    const categoryPlan of
-    monthlyPlan.categories
-  ) {
-    const projects =
-      Array.isArray(
-        categoryPlan.projects
-      )
-        ? categoryPlan.projects
-        : [];
+for (
+const categoryPlan of
+monthlyPlan.categories
+) {
+const projects =
+Array.isArray(
+categoryPlan.projects
+)
+? categoryPlan.projects
+: [];
 
 
-    const projectPlan =
-      projects.find(
-        function(project) {
-          return (
-            String(
-              project.projectId
-            ) ===
-            String(
-              projectId
-            )
-          );
-        }
-      );
+const projectPlan =
+projects.find(
+function(project) {
+return (
+String(
+project.projectId
+) ===
+String(
+projectId
+)
+);
+}
+);
 
 
-    if (projectPlan) {
-      return projectPlan;
-    }
-  }
+if (projectPlan) {
+return projectPlan;
+}
+}
 
 
-  return null;
+return null;
 }
 
 
@@ -6561,45 +6561,45 @@ function findMonthlyProjectPlan(
 // ========================================
 
 function getCategoryPlannedSeconds(
-  categoryId,
-  referenceDate = new Date()
+categoryId,
+referenceDate = new Date()
 ) {
-  const monthKey =
-    createMonthKey(
-      referenceDate
-    );
+const monthKey =
+createMonthKey(
+referenceDate
+);
 
 
-  const monthlyPlan =
-    appData.monthlyPlans &&
-    appData.monthlyPlans[
-      monthKey
-    ];
+const monthlyPlan =
+appData.monthlyPlans &&
+appData.monthlyPlans[
+monthKey
+];
 
 
-  const categoryPlan =
-    findMonthlyCategoryPlan(
-      monthlyPlan,
-      categoryId
-    );
+const categoryPlan =
+findMonthlyCategoryPlan(
+monthlyPlan,
+categoryId
+);
 
 
-  if (!categoryPlan) {
-    return 0;
-  }
+if (!categoryPlan) {
+return 0;
+}
 
 
-  return Math.max(
-    0,
+return Math.max(
+0,
 
-    Math.round(
-      Number(
-        categoryPlan.plannedMinutes ||
-        0
-      ) *
-      60
-    )
-  );
+Math.round(
+Number(
+categoryPlan.plannedMinutes ||
+0
+) *
+60
+)
+);
 }
 
 
@@ -6608,45 +6608,45 @@ function getCategoryPlannedSeconds(
 // ========================================
 
 function getProjectPlannedSeconds(
-  projectId,
-  referenceDate = new Date()
+projectId,
+referenceDate = new Date()
 ) {
-  const monthKey =
-    createMonthKey(
-      referenceDate
-    );
+const monthKey =
+createMonthKey(
+referenceDate
+);
 
 
-  const monthlyPlan =
-    appData.monthlyPlans &&
-    appData.monthlyPlans[
-      monthKey
-    ];
+const monthlyPlan =
+appData.monthlyPlans &&
+appData.monthlyPlans[
+monthKey
+];
 
 
-  const projectPlan =
-    findMonthlyProjectPlan(
-      monthlyPlan,
-      projectId
-    );
+const projectPlan =
+findMonthlyProjectPlan(
+monthlyPlan,
+projectId
+);
 
 
-  if (!projectPlan) {
-    return 0;
-  }
+if (!projectPlan) {
+return 0;
+}
 
 
-  return Math.max(
-    0,
+return Math.max(
+0,
 
-    Math.round(
-      Number(
-        projectPlan.plannedMinutes ||
-        0
-      ) *
-      60
-    )
-  );
+Math.round(
+Number(
+projectPlan.plannedMinutes ||
+0
+) *
+60
+)
+);
 }
 
 
@@ -6655,52 +6655,52 @@ function getProjectPlannedSeconds(
 // ========================================
 
 function getProjectActualSeconds(
-  projectId
+projectId
 ) {
-  let totalSeconds =
-    appData.sessions
-      .filter(
-        function(session) {
-          return (
-            session.projectId ===
-              projectId &&
-            isDateInSelectedPeriod(
-              session.startedAt
-            )
-          );
-        }
-      )
-      .reduce(
-        function(
-          total,
-          session
-        ) {
-          return (
-            total +
-            Number(
-              session.elapsedSeconds
-            )
-          );
-        },
+let totalSeconds =
+appData.sessions
+.filter(
+function(session) {
+return (
+session.projectId ===
+projectId &&
+isDateInSelectedPeriod(
+session.startedAt
+)
+);
+}
+)
+.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds
+)
+);
+},
 
-        0
-      );
-
-
-  if (
-    appData.activeSession &&
-    appData.activeSession.projectId ===
-      projectId &&
-    isDateInSelectedPeriod(
-      appData.activeSession.startedAt
-    )
-  ) {
-    totalSeconds +=
-      getActiveElapsedSeconds();
-  }
+0
+);
 
 
-  return totalSeconds;
+if (
+appData.activeSession &&
+appData.activeSession.projectId ===
+projectId &&
+isDateInSelectedPeriod(
+appData.activeSession.startedAt
+)
+) {
+totalSeconds +=
+getActiveElapsedSeconds();
+}
+
+
+return totalSeconds;
 }
 
 
@@ -6709,67 +6709,67 @@ function getProjectActualSeconds(
 // ========================================
 
 function isDateInSelectedPeriod(
-  timestamp
+timestamp
 ) {
-  const targetDate =
-    new Date(
-      timestamp
-    );
+const targetDate =
+new Date(
+timestamp
+);
 
 
-  const now =
-    new Date();
+const now =
+new Date();
 
 
-  const selectedPeriod =
-    appData.settings.selectedPeriod;
+const selectedPeriod =
+appData.settings.selectedPeriod;
 
 
-  if (selectedPeriod === "day") {
-    return (
-      targetDate.getFullYear() ===
-        now.getFullYear() &&
-      targetDate.getMonth() ===
-        now.getMonth() &&
-      targetDate.getDate() ===
-        now.getDate()
-    );
-  }
+if (selectedPeriod === "day") {
+return (
+targetDate.getFullYear() ===
+now.getFullYear() &&
+targetDate.getMonth() ===
+now.getMonth() &&
+targetDate.getDate() ===
+now.getDate()
+);
+}
 
 
-  if (selectedPeriod === "week") {
-    const weekStart =
-      getWeekStart(
-        now
-      );
+if (selectedPeriod === "week") {
+const weekStart =
+getWeekStart(
+now
+);
 
 
-    const nextWeekStart =
-      new Date(
-        weekStart
-      );
+const nextWeekStart =
+new Date(
+weekStart
+);
 
 
-    nextWeekStart.setDate(
-      weekStart.getDate() + 7
-    );
+nextWeekStart.setDate(
+weekStart.getDate() + 7
+);
 
 
-    return (
-      targetDate >=
-        weekStart &&
-      targetDate <
-        nextWeekStart
-    );
-  }
+return (
+targetDate >=
+weekStart &&
+targetDate <
+nextWeekStart
+);
+}
 
 
-  return (
-    targetDate.getFullYear() ===
-      now.getFullYear() &&
-    targetDate.getMonth() ===
-      now.getMonth()
-  );
+return (
+targetDate.getFullYear() ===
+now.getFullYear() &&
+targetDate.getMonth() ===
+now.getMonth()
+);
 }
 
 
@@ -6778,40 +6778,40 @@ function isDateInSelectedPeriod(
 // ========================================
 
 function getWeekStart(
-  date
+date
 ) {
-  const weekStart =
-    new Date(
-      date
-    );
+const weekStart =
+new Date(
+date
+);
 
 
-  weekStart.setHours(
-    0,
-    0,
-    0,
-    0
-  );
+weekStart.setHours(
+0,
+0,
+0,
+0
+);
 
 
-  const dayNumber =
-    weekStart.getDay();
+const dayNumber =
+weekStart.getDay();
 
 
-  const daysFromMonday =
-    (
-      dayNumber + 6
-    ) %
-    7;
+const daysFromMonday =
+(
+dayNumber + 6
+) %
+7;
 
 
-  weekStart.setDate(
-    weekStart.getDate() -
-    daysFromMonday
-  );
+weekStart.setDate(
+weekStart.getDate() -
+daysFromMonday
+);
 
 
-  return weekStart;
+return weekStart;
 }
 
 
@@ -6820,67 +6820,75 @@ function getWeekStart(
 // ========================================
 
 function updateRemainingTime(
-  projectId
+projectId
 ) {
-  const plannedSeconds =
-    getProjectPlannedSeconds(
-      projectId
-    );
+remainingTime.textContent =
+"";
+
+remainingTime.hidden =
+true;
+
+return;
+
+const plannedSeconds =
+getProjectPlannedSeconds(
+projectId
+);
 
 
-  const actualSeconds =
-    getProjectActualSeconds(
-      projectId
-    );
+const actualSeconds =
+getProjectActualSeconds(
+projectId
+);
 
 
-  if (plannedSeconds <= 0) {
-    remainingTime.textContent =
-      "予定時間：設定なし";
+if (plannedSeconds <= 0) {
+remainingTime.textContent =
+"予定時間：設定なし";
 
 
-    remainingTime.classList.remove(
-      "is-over"
-    );
+remainingTime.classList.remove(
+"is-over"
+);
 
-    return;
-  }
-
-
-  const difference =
-    plannedSeconds -
-    actualSeconds;
+return;
+}
 
 
-  if (difference >= 0) {
-    remainingTime.textContent =
-      "残り時間：" +
-      formatSecondsAsText(
-        difference
-      );
+const difference =
+plannedSeconds -
+actualSeconds;
 
 
-    remainingTime.classList.remove(
-      "is-over"
-    );
-
-    return;
-  }
-
-
-  remainingTime.textContent =
-    "予定時間を " +
-    formatSecondsAsText(
-      Math.abs(
-        difference
-      )
-    ) +
-    " 超過";
+if (difference >= 0) {
+remainingTime.textContent =
+"残り時間：" +
+formatSecondsAsText(
+difference
+);
 
 
-  remainingTime.classList.add(
-    "is-over"
-  );
+remainingTime.classList.remove(
+"is-over"
+);
+
+return;
+}
+
+
+remainingTime.textContent =
+"予定時間を " +
+formatSecondsAsText(
+Math.abs(
+difference
+)
+) +
+" 超過";
+
+
+remainingTime.classList.add(
+"is-over"
+);
 }
 
 
@@ -6890,102 +6898,102 @@ function updateRemainingTime(
 // ========================================
 
 workNoteForm.addEventListener(
-  "submit",
+"submit",
 
-  function(event) {
-    event.preventDefault();
-
-
-    if (!appData.activeSession) {
-      showStatusMessage(
-        "タイマーを開始してください。"
-      );
-
-      return;
-    }
+function(event) {
+event.preventDefault();
 
 
-    const noteText =
-      workNoteInput.value.trim();
+if (!appData.activeSession) {
+showStatusMessage(
+"タイマーを開始してください。"
+);
+
+return;
+}
 
 
-    if (!noteText) {
-      showStatusMessage(
-        "作業内容を入力してください。"
-      );
-
-      return;
-    }
+const noteText =
+workNoteInput.value.trim();
 
 
-    if (
-      !Array.isArray(
-        appData.activeSession.notes
-      )
-    ) {
-      appData.activeSession.notes =
-        [];
-    }
+if (!noteText) {
+showStatusMessage(
+"作業内容を入力してください。"
+);
+
+return;
+}
 
 
-        const segmentEndedAt =
-      Date.now();
+if (
+!Array.isArray(
+appData.activeSession.notes
+)
+) {
+appData.activeSession.notes =
+[];
+}
 
 
-    const segmentStartedAt =
-      Number(
-        appData.activeSession
-          .segmentStartedAt
-      ) ||
-      Number(
-        appData.activeSession
-          .startedAt
-      );
+const segmentEndedAt =
+Date.now();
 
 
-    appData.activeSession.notes.push(
-      {
-        id:
-          createId(
-            "note"
-          ),
-
-        text:
-          noteText,
-
-        startedAt:
-          segmentStartedAt,
-
-        endedAt:
-          segmentEndedAt,
-
-        createdAt:
-          segmentEndedAt
-      }
-    );
+const segmentStartedAt =
+Number(
+appData.activeSession
+.segmentStartedAt
+) ||
+Number(
+appData.activeSession
+.startedAt
+);
 
 
-    appData.activeSession.segmentStartedAt =
-      segmentEndedAt;
+appData.activeSession.notes.push(
+{
+id:
+createId(
+"note"
+),
+
+text:
+noteText,
+
+startedAt:
+segmentStartedAt,
+
+endedAt:
+segmentEndedAt,
+
+createdAt:
+segmentEndedAt
+}
+);
 
 
-    saveAppData();
+appData.activeSession.segmentStartedAt =
+segmentEndedAt;
 
 
-    workNoteInput.value =
-      "";
+saveAppData();
 
 
-    renderCurrentNotes();
+workNoteInput.value =
+"";
 
 
-    workNoteInput.focus();
+renderCurrentNotes();
 
 
-    showStatusMessage(
-      "作業内容を追加しました。"
-    );
-  }
+workNoteInput.focus();
+
+
+showStatusMessage(
+"作業内容を追加しました。"
+);
+}
 );
 
 
@@ -6994,27 +7002,27 @@ workNoteForm.addEventListener(
 // ========================================
 
 function updateNoteInputState() {
-  const isWorking =
-    Boolean(
-      appData.activeSession
-    );
+const isWorking =
+Boolean(
+appData.activeSession
+);
 
 
-  workNoteInput.disabled =
-    !isWorking;
+workNoteInput.disabled =
+!isWorking;
 
 
-  addNoteButton.disabled =
-    !isWorking;
+addNoteButton.disabled =
+!isWorking;
 
 
-  if (isWorking) {
-    workNoteInput.placeholder =
-      "現在の作業内容を入力";
-  } else {
-    workNoteInput.placeholder =
-      "タイマーを開始すると入力できます";
-  }
+if (isWorking) {
+workNoteInput.placeholder =
+"現在の作業内容を入力";
+} else {
+workNoteInput.placeholder =
+"タイマーを開始すると入力できます";
+}
 }
 
 
@@ -7023,58 +7031,58 @@ function updateNoteInputState() {
 // ========================================
 
 function renderCurrentNotes() {
-  if (!appData.activeSession) {
-    currentNoteList.innerHTML =
-      "";
+if (!appData.activeSession) {
+currentNoteList.innerHTML =
+"";
 
-    return;
-  }
-
-
-  const notes =
-    Array.isArray(
-      appData.activeSession.notes
-    )
-      ? appData.activeSession.notes
-      : [];
+return;
+}
 
 
-  if (notes.length === 0) {
-    currentNoteList.innerHTML = `
-      <li class="empty-message">
-        まだ作業内容は記録されていません。
-      </li>
-    `;
-
-    return;
-  }
+const notes =
+Array.isArray(
+appData.activeSession.notes
+)
+? appData.activeSession.notes
+: [];
 
 
-  currentNoteList.innerHTML =
-    notes
-      .map(
-        function(note) {
-          return `
-            <li class="note-item">
-              <time
-                class="note-time"
-                datetime="${new Date(
-                  note.createdAt
-                ).toISOString()}"
-              >
-                                ${formatWorkTimeRange(
-                  note
-                )}
-              </time>
+if (notes.length === 0) {
+currentNoteList.innerHTML = `
+<li class="empty-message">
+まだ作業内容は記録されていません。
+</li>
+`;
 
-              <span class="note-text">
-                ${escapeHtml(note.text)}
-              </span>
-            </li>
-          `;
-        }
-      )
-      .join("");
+return;
+}
+
+
+currentNoteList.innerHTML =
+notes
+.map(
+function(note) {
+return `
+<li class="note-item">
+<time
+class="note-time"
+datetime="${new Date(
+note.createdAt
+).toISOString()}"
+>
+${formatWorkTimeRange(
+note
+)}
+</time>
+
+<span class="note-text">
+${escapeHtml(note.text)}
+</span>
+</li>
+`;
+}
+)
+.join("");
 }
 
 
@@ -7083,23 +7091,23 @@ function renderCurrentNotes() {
 // ========================================
 
 function formatNoteTime(
-  timestamp
+timestamp
 ) {
-  return new Intl.DateTimeFormat(
-    "ja-JP",
+return new Intl.DateTimeFormat(
+"ja-JP",
 
-    {
-      hour:
-        "2-digit",
+{
+hour:
+"2-digit",
 
-      minute:
-        "2-digit"
-    }
-  ).format(
-    new Date(
-      timestamp
-    )
-  );
+minute:
+"2-digit"
+}
+).format(
+new Date(
+timestamp
+)
+);
 }
 
 
@@ -7109,77 +7117,77 @@ function formatNoteTime(
 // ========================================
 
 function getCategoryActualSeconds(
-  categoryId
+categoryId
 ) {
-  const category =
-    findCategory(
-      categoryId
-    );
+const category =
+findCategory(
+categoryId
+);
 
 
-  if (!category) {
-    return 0;
-  }
+if (!category) {
+return 0;
+}
 
 
-  const currentProjectIds =
-    new Set(
-      getCurrentProjects(
-        category
-      ).map(
-        function(project) {
-          return project.id;
-        }
-      )
-    );
+const currentProjectIds =
+new Set(
+getCurrentProjects(
+category
+).map(
+function(project) {
+return project.id;
+}
+)
+);
 
 
-  let totalSeconds =
-    appData.sessions
-      .filter(
-        function(session) {
-          return (
-            currentProjectIds.has(
-              session.projectId
-            ) &&
-            isDateInSelectedPeriod(
-              session.startedAt
-            )
-          );
-        }
-      )
-      .reduce(
-        function(
-          total,
-          session
-        ) {
-          return (
-            total +
-            Number(
-              session.elapsedSeconds
-            )
-          );
-        },
+let totalSeconds =
+appData.sessions
+.filter(
+function(session) {
+return (
+currentProjectIds.has(
+session.projectId
+) &&
+isDateInSelectedPeriod(
+session.startedAt
+)
+);
+}
+)
+.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds
+)
+);
+},
 
-        0
-      );
-
-
-  if (
-    appData.activeSession &&
-    currentProjectIds.has(
-      appData.activeSession.projectId
-    ) &&
-    isDateInSelectedPeriod(
-      appData.activeSession.startedAt
-    )
-  ) {
-    totalSeconds +=
-      getActiveElapsedSeconds();
-  }
+0
+);
 
 
-  return totalSeconds;
+if (
+appData.activeSession &&
+currentProjectIds.has(
+appData.activeSession.projectId
+) &&
+isDateInSelectedPeriod(
+appData.activeSession.startedAt
+)
+) {
+totalSeconds +=
+getActiveElapsedSeconds();
+}
+
+
+return totalSeconds;
 }
 
 
@@ -7188,32 +7196,32 @@ function getCategoryActualSeconds(
 // ========================================
 
 function calculateProgressPercent(
-  actualSeconds,
-  plannedSeconds
+actualSeconds,
+plannedSeconds
 ) {
-  if (plannedSeconds <= 0) {
-    return (
-      actualSeconds > 0
-        ? 100
-        : 0
-    );
-  }
+if (plannedSeconds <= 0) {
+return (
+actualSeconds > 0
+? 100
+: 0
+);
+}
 
 
-  const progressPercent =
-    actualSeconds /
-    plannedSeconds *
-    100;
+const progressPercent =
+actualSeconds /
+plannedSeconds *
+100;
 
 
-  return Math.min(
-    100,
+return Math.min(
+100,
 
-    Math.max(
-      0,
-      progressPercent
-    )
-  );
+Math.max(
+0,
+progressPercent
+)
+);
 }
 
 
@@ -7222,73 +7230,73 @@ function calculateProgressPercent(
 // ========================================
 
 function createProgressStatus(
-  actualSeconds,
-  plannedSeconds
+actualSeconds,
+plannedSeconds
 ) {
-  if (
-    plannedSeconds <= 0 &&
-    actualSeconds <= 0
-  ) {
-    return {
-      message:
-        "予定時間なし",
+if (
+plannedSeconds <= 0 &&
+actualSeconds <= 0
+) {
+return {
+message:
+"予定時間なし",
 
-      isOver:
-        false
-    };
-  }
-
-
-  if (
-    plannedSeconds <= 0 &&
-    actualSeconds > 0
-  ) {
-    return {
-      message:
-        "予定時間を設定せずに " +
-        formatSecondsAsText(
-          actualSeconds
-        ) +
-        " 作業",
-
-      isOver:
-        true
-    };
-  }
+isOver:
+false
+};
+}
 
 
-  const difference =
-    plannedSeconds -
-    actualSeconds;
+if (
+plannedSeconds <= 0 &&
+actualSeconds > 0
+) {
+return {
+message:
+"予定時間を設定せずに " +
+formatSecondsAsText(
+actualSeconds
+) +
+" 作業",
+
+isOver:
+true
+};
+}
 
 
-  if (difference >= 0) {
-    return {
-      message:
-        "残り " +
-        formatSecondsAsText(
-          difference
-        ),
-
-      isOver:
-        false
-    };
-  }
+const difference =
+plannedSeconds -
+actualSeconds;
 
 
-  return {
-    message:
-      "予定より " +
-      formatSecondsAsText(
-        Math.abs(
-          difference
-        )
-      ) +
-      " 超過",
+if (difference >= 0) {
+return {
+message:
+"残り " +
+formatSecondsAsText(
+difference
+),
 
-    isOver:
-      true
-  };
+isOver:
+false
+};
+}
+
+
+return {
+message:
+"予定より " +
+formatSecondsAsText(
+Math.abs(
+difference
+)
+) +
+" 超過",
+
+isOver:
+true
+};
 }
 
 // ========================================
@@ -7296,779 +7304,1040 @@ function createProgressStatus(
 // ========================================
 
 function initializeRecordNavigation() {
-  setRecordDateInputValues();
+setRecordDateInputValues();
 
 
-  recordPreviousPeriodButton.addEventListener(
-    "click",
+recordPreviousPeriodButton.addEventListener(
+"click",
 
-    function() {
-      moveRecordPeriod(
-        -1
-      );
-    }
-  );
-
-
-  recordNextPeriodButton.addEventListener(
-    "click",
-
-    function() {
-      moveRecordPeriod(
-        1
-      );
-    }
-  );
+function() {
+moveRecordPeriod(
+-1
+);
+}
+);
 
 
+recordNextPeriodButton.addEventListener(
+"click",
 
-  recordMonthInput.addEventListener(
-    "change",
+function() {
+moveRecordPeriod(
+1
+);
+}
+);
 
-    function() {
-      if (!recordMonthInput.value) {
-        return;
-      }
 
-      selectedRecordDate =
-        new Date(
-          recordMonthInput.value +
-          "-01T00:00:00"
-        );
 
-      setRecordDateInputValues();
-    }
-  );
+recordMonthInput.addEventListener(
+"change",
+
+function() {
+if (!recordMonthInput.value) {
+return;
+}
+
+selectedRecordDate =
+new Date(
+recordMonthInput.value +
+"-01T00:00:00"
+);
+
+setRecordDateInputValues();
+}
+);
 }
 
 
 
 function moveRecordPeriod(
-  direction
+direction
 ) {
-  selectedRecordDate =
-    new Date(
-      selectedRecordDate.getFullYear(),
-      selectedRecordDate.getMonth() +
-      direction,
-      1
-    );
+selectedRecordDate =
+new Date(
+selectedRecordDate.getFullYear(),
+selectedRecordDate.getMonth() +
+direction,
+1
+);
 
 
-  setRecordDateInputValues();
+setRecordDateInputValues();
 }
 
 
 
 
 function getRecordWeekStart(
-  date
+date
 ) {
-  const weekStart =
-    new Date(
-      date
-    );
+const weekStart =
+new Date(
+date
+);
 
-  weekStart.setHours(
-    0,
-    0,
-    0,
-    0
-  );
+weekStart.setHours(
+0,
+0,
+0,
+0
+);
 
-  const dayNumber =
-    weekStart.getDay();
+const dayNumber =
+weekStart.getDay();
 
-  const distanceFromMonday =
-    dayNumber === 0
-      ? 6
-      : dayNumber - 1;
+const distanceFromMonday =
+dayNumber === 0
+? 6
+: dayNumber - 1;
 
-  weekStart.setDate(
-    weekStart.getDate() -
-    distanceFromMonday
-  );
+weekStart.setDate(
+weekStart.getDate() -
+distanceFromMonday
+);
 
-  return weekStart;
+return weekStart;
 }
 
 
 function formatRecordDisplayDate(
-  date
+date
 ) {
-  return new Intl.DateTimeFormat(
-    "ja-JP",
+return new Intl.DateTimeFormat(
+"ja-JP",
 
-    {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      weekday: "short"
-    }
-  ).format(
-    date
-  );
+{
+year: "numeric",
+month: "long",
+day: "numeric",
+weekday: "short"
+}
+).format(
+date
+);
 }
 
 function setRecordDateInputValues() {
-  recordMonthInput.value =
-    formatRecordDateForInput(
-      selectedRecordDate
-    ).slice(
-      0,
-      7
-    );
+recordMonthInput.value =
+formatRecordDateForInput(
+selectedRecordDate
+).slice(
+0,
+7
+);
 
 
-  renderRecordSummary();
+renderRecordSummary();
 }
 
 // ========================================
-// 記録編集の集計
+// 実績だけのSUMMARY
+// ========================================
+
+function renderActualRecordSummary(
+sessions
+) {
+const totalSeconds =
+sessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds ||
+0
+)
+);
+},
+
+0
+);
+
+recordTotalTime.textContent =
+formatSecondsAsText(
+totalSeconds
+);
+
+recordPlannedWorkTotal.textContent =
+"";
+
+recordUnplannedWorkTotal.textContent =
+"";
+
+recordSummaryAllWorkDays.innerHTML =
+createRecordWorkDayHtml(
+groupRecordSessionsByDay(
+sessions
+),
+true
+);
+
+recordSummaryPlannedWorkDays.innerHTML =
+"";
+
+recordSummaryUnplannedWorkDays.innerHTML =
+"";
+
+const recordedProjectIds =
+new Set(
+sessions.map(
+function(session) {
+return String(
+session.projectId
+);
+}
+)
+);
+
+const periodCategories =
+appData.categories.filter(
+function(category) {
+const projects =
+Array.isArray(
+category.projects
+)
+? category.projects
+: [];
+
+return projects.some(
+function(project) {
+return recordedProjectIds.has(
+String(
+project.id
+)
+);
+}
+);
+}
+);
+
+if (
+periodCategories.length === 0
+) {
+recordCategorySummaryList.innerHTML = `
+<p class="empty-message">
+この期間の作業記録はありません。
+</p>
+`;
+
+return;
+}
+
+recordCategorySummaryList.innerHTML =
+periodCategories
+.map(
+function(category) {
+const allProjects =
+Array.isArray(
+category.projects
+)
+? category.projects
+: [];
+
+const projects =
+allProjects.filter(
+function(project) {
+return recordedProjectIds.has(
+String(
+project.id
+)
+);
+}
+);
+
+const projectIds =
+new Set(
+projects.map(
+function(project) {
+return String(
+project.id
+);
+}
+)
+);
+
+const categorySessions =
+sessions.filter(
+function(session) {
+return projectIds.has(
+String(
+session.projectId
+)
+);
+}
+);
+
+const categoryActualSeconds =
+categorySessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds ||
+0
+)
+);
+},
+
+0
+);
+
+const projectHtml =
+projects
+.map(
+function(project) {
+const projectSessions =
+categorySessions.filter(
+function(session) {
+return (
+String(
+session.projectId
+) ===
+String(
+project.id
+)
+);
+}
+);
+
+const projectActualSeconds =
+projectSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds ||
+0
+)
+);
+},
+
+0
+);
+
+const workDays =
+groupRecordSessionsByDay(
+projectSessions
+);
+
+const archiveLabel =
+project.isCurrent === false
+? `
+<span class="record-archive-label">
+アーカイブ
+</span>
+`
+: "";
+
+return `
+<details class="record-summary-project">
+<summary>
+<div class="record-summary-overview">
+<div class="progress-heading">
+<span class="progress-name">
+${escapeHtml(project.name)}
+${archiveLabel}
+</span>
+
+<span class="progress-time">
+${formatSecondsAsText(projectActualSeconds)}
+</span>
+</div>
+</div>
+</summary>
+
+<div class="record-summary-project-detail">
+${createRecordWorkDayHtml(workDays)}
+</div>
+</details>
+`;
+}
+)
+.join("");
+
+return `
+<details class="progress-item record-summary-category">
+<summary>
+<div class="record-summary-overview">
+<div class="progress-heading">
+<span class="progress-name">
+${escapeHtml(category.name)}
+</span>
+
+<span class="progress-time">
+${formatSecondsAsText(categoryActualSeconds)}
+</span>
+</div>
+</div>
+</summary>
+
+<div class="record-summary-project-list">
+${projectHtml}
+</div>
+</details>
+`;
+}
+)
+.join("");
+}
+
+
+// ========================================
+// 記録編集の旧計画判定
 // ========================================
 
 function isRecordSessionPlanned(
-  session
+session
 ) {
-  const sessionDate =
-    new Date(
-      Number(
-        session.startedAt
-      )
-    );
+const sessionDate =
+new Date(
+Number(
+session.startedAt
+)
+);
 
 
-  const monthKey =
-    createMonthKey(
-      sessionDate
-    );
+const monthKey =
+createMonthKey(
+sessionDate
+);
 
 
-  const monthlyPlan =
-    appData.monthlyPlans &&
-    appData.monthlyPlans[
-      monthKey
-    ];
+const monthlyPlan =
+appData.monthlyPlans &&
+appData.monthlyPlans[
+monthKey
+];
 
 
-  const projectPlan =
-    findMonthlyProjectPlan(
-      monthlyPlan,
-      session.projectId
-    );
+const projectPlan =
+findMonthlyProjectPlan(
+monthlyPlan,
+session.projectId
+);
 
 
-  return Boolean(
-    projectPlan &&
-    Number(
-      projectPlan.plannedMinutes ||
-      0
-    ) > 0
-  );
+return Boolean(
+projectPlan &&
+Number(
+projectPlan.plannedMinutes ||
+0
+) > 0
+);
 }
 
 
 function renderRecordSummary() {
-  const periodRange =
-    getRecordPeriodRange();
+const periodRange =
+getRecordPeriodRange();
 
 
-  const sessions =
-    appData.sessions.filter(
-      function(session) {
-        const startedAt =
-          Number(
-            session.startedAt
-          );
+const sessions =
+appData.sessions.filter(
+function(session) {
+const startedAt =
+Number(
+session.startedAt
+);
 
 
-        return (
-          startedAt >=
-            periodRange.start.getTime() &&
-          startedAt <
-            periodRange.end.getTime()
-        );
-      }
-    );
+return (
+startedAt >=
+periodRange.start.getTime() &&
+startedAt <
+periodRange.end.getTime()
+);
+}
+);
 
 
-  const totalSeconds =
-    sessions.reduce(
-      function(
-        total,
-        session
-      ) {
-        return (
-          total +
-          Number(
-            session.elapsedSeconds || 0
-          )
-        );
-      },
+renderActualRecordSummary(
+sessions
+);
 
-      0
-    );
+renderRecordProjectReports(
+appData.sessions
+);
 
+return;
 
-  const plannedSessions =
-    sessions.filter(
-      function(session) {
-        return isRecordSessionPlanned(
-          session
-        );
-      }
-    );
+const totalSeconds =
+sessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds || 0
+)
+);
+},
 
-
-  const unplannedSessions =
-    sessions.filter(
-      function(session) {
-        return !isRecordSessionPlanned(
-          session
-        );
-      }
-    );
+0
+);
 
 
-  const plannedActualSeconds =
-    plannedSessions.reduce(
-      function(
-        total,
-        session
-      ) {
-        return (
-          total +
-          Number(
-            session.elapsedSeconds || 0
-          )
-        );
-      },
-
-      0
-    );
+const plannedSessions =
+sessions.filter(
+function(session) {
+return isRecordSessionPlanned(
+session
+);
+}
+);
 
 
-  const unplannedActualSeconds =
-    unplannedSessions.reduce(
-      function(
-        total,
-        session
-      ) {
-        return (
-          total +
-          Number(
-            session.elapsedSeconds || 0
-          )
-        );
-      },
-
-      0
-    );
+const unplannedSessions =
+sessions.filter(
+function(session) {
+return !isRecordSessionPlanned(
+session
+);
+}
+);
 
 
-  const monthKey =
-    createMonthKey(
-      selectedRecordDate
-    );
+const plannedActualSeconds =
+plannedSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds || 0
+)
+);
+},
+
+0
+);
 
 
-  const monthlyPlan =
-    appData.monthlyPlans &&
-    appData.monthlyPlans[
-      monthKey
-    ];
+const unplannedActualSeconds =
+unplannedSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds || 0
+)
+);
+},
+
+0
+);
 
 
-  const plannedTotalSeconds =
-    monthlyPlan
-      ? Math.max(
-          0,
-
-          Math.round(
-            Number(
-              monthlyPlan.totalMinutes ||
-              0
-            ) *
-            60
-          )
-        )
-      : 0;
+const monthKey =
+createMonthKey(
+selectedRecordDate
+);
 
 
-  recordPeriodTitle.textContent =
-    createRecordPeriodTitle(
-      periodRange
-    );
+const monthlyPlan =
+appData.monthlyPlans &&
+appData.monthlyPlans[
+monthKey
+];
 
 
-  recordDateRange.hidden =
-    true;
+const plannedTotalSeconds =
+monthlyPlan
+? Math.max(
+0,
+
+Math.round(
+Number(
+monthlyPlan.totalMinutes ||
+0
+) *
+60
+)
+)
+: 0;
 
 
-  recordTotalTime.textContent =
-    formatSecondsAsText(
-      totalSeconds
-    ) +
-    " / " +
-    (
-      monthlyPlan
-        ? formatSecondsAsText(
-            plannedTotalSeconds
-          )
-        : "計画なし"
-    );
+recordPeriodTitle.textContent =
+createRecordPeriodTitle(
+periodRange
+);
 
 
-  recordPlannedWorkTotal.textContent =
-    formatSecondsAsText(
-      plannedActualSeconds
-    );
+recordDateRange.hidden =
+true;
 
 
-  recordUnplannedWorkTotal.textContent =
-    formatSecondsAsText(
-      unplannedActualSeconds
-    );
+recordTotalTime.textContent =
+formatSecondsAsText(
+totalSeconds
+);
+
+recordPlannedWorkTotal.textContent =
+formatSecondsAsText(
+plannedActualSeconds
+);
 
 
-  recordSummaryAllWorkDays.innerHTML =
-    createRecordWorkDayHtml(
-      groupRecordSessionsByDay(
-        sessions
-      ),
-
-      true
-    );
+recordUnplannedWorkTotal.textContent =
+formatSecondsAsText(
+unplannedActualSeconds
+);
 
 
-  recordSummaryPlannedWorkDays.innerHTML =
-    createRecordWorkDayHtml(
-      groupRecordSessionsByDay(
-        plannedSessions
-      ),
+recordSummaryAllWorkDays.innerHTML =
+createRecordWorkDayHtml(
+groupRecordSessionsByDay(
+sessions
+),
 
-      true
-    );
-
-
-  recordSummaryUnplannedWorkDays.innerHTML =
-    createRecordWorkDayHtml(
-      groupRecordSessionsByDay(
-        unplannedSessions
-      ),
-
-      true
-    );
+true
+);
 
 
-  renderRecordIntegratedSummary(
-    sessions
-  );
+recordSummaryPlannedWorkDays.innerHTML =
+createRecordWorkDayHtml(
+groupRecordSessionsByDay(
+plannedSessions
+),
+
+true
+);
 
 
-  renderRecordProjectReports(
-    appData.sessions
-  );
+recordSummaryUnplannedWorkDays.innerHTML =
+createRecordWorkDayHtml(
+groupRecordSessionsByDay(
+unplannedSessions
+),
+
+true
+);
+
+
+renderRecordIntegratedSummary(
+sessions
+);
+
+
+renderRecordProjectReports(
+appData.sessions
+);
 }
 
 function renderRecordIntegratedSummary(
-  sessions
+sessions
 ) {
-  const periodProjectIds =
-    new Set(
-      sessions.map(
-        function(session) {
-          return String(
-            session.projectId
-          );
-        }
-      )
-    );
-
-
-  const monthKey =
-    createMonthKey(
-      selectedRecordDate
-    );
-
-
-  const monthlyPlan =
-    appData.monthlyPlans &&
-    appData.monthlyPlans[
-      monthKey
-    ];
-
-
-  const plannedCategories =
-    monthlyPlan &&
-    Array.isArray(
-      monthlyPlan.categories
-    )
-      ? monthlyPlan.categories
-      : [];
-
-
-  const plannedCategoryIds =
-    new Set(
-      plannedCategories.map(
-        function(categoryPlan) {
-          return String(
-            categoryPlan.categoryId
-          );
-        }
-      )
-    );
-
-
-  const plannedProjectIds =
-    new Set();
-
-
-  plannedCategories.forEach(
-    function(categoryPlan) {
-      const projects =
-        Array.isArray(
-          categoryPlan.projects
-        )
-          ? categoryPlan.projects
-          : [];
-
-
-      projects.forEach(
-        function(projectPlan) {
-          if (
-            Number(
-              projectPlan.plannedMinutes ||
-              0
-            ) > 0
-          ) {
-            plannedProjectIds.add(
-              String(
-                projectPlan.projectId
-              )
-            );
-          }
-        }
-      );
-    }
-  );
-
-
-  const summaryProjectIds =
-    new Set(
-      [
-        ...periodProjectIds,
-        ...plannedProjectIds
-      ]
-    );
-
-
-  const periodCategories =
-    appData.categories.filter(
-      function(category) {
-        const projects =
-          Array.isArray(
-            category.projects
-          )
-            ? category.projects
-            : [];
-
-
-        return (
-          plannedCategoryIds.has(
-            String(
-              category.id
-            )
-          ) ||
-          projects.some(
-            function(project) {
-              return summaryProjectIds.has(
-                String(
-                  project.id
-                )
-              );
-            }
-          )
-        );
-      }
-    );
-
-
-  if (
-    periodCategories.length === 0
-  ) {
-    recordCategorySummaryList.innerHTML = `
-      <p class="empty-message">
-        この期間の作業記録はありません。
-      </p>
-    `;
-
-    return;
-  }
-
-
-
-  recordCategorySummaryList.innerHTML =
-    periodCategories
-      .map(
-        function(category) {
-          const allProjects =
-            Array.isArray(
-              category.projects
-            )
-              ? category.projects
-              : [];
-
-
-          const projects =
-            allProjects.filter(
-              function(project) {
-                return summaryProjectIds.has(
-                  String(
-                    project.id
-                  )
-                );
-              }
-            );
-
-
-          const projectIds =
-            new Set(
-              projects.map(
-                function(project) {
-                  return project.id;
-                }
-              )
-            );
-
-
-          const categorySessions =
-            sessions.filter(
-              function(session) {
-                return projectIds.has(
-                  session.projectId
-                );
-              }
-            );
-
-
-          const categoryActualSeconds =
-            categorySessions.reduce(
-              function(
-                total,
-                session
-              ) {
-                return (
-                  total +
-                  Number(
-                    session.elapsedSeconds || 0
-                  )
-                );
-              },
-
-              0
-            );
-
-
-          const categoryPlannedSeconds =
-            getCategoryPlannedSeconds(
-              category.id,
-              selectedRecordDate
-            );
-
-
-          const categoryProgressPercent =
-            calculateProgressPercent(
-              categoryActualSeconds,
-              categoryPlannedSeconds
-            );
-
-
-          const categoryProgressRate =
-            calculateProgressRate(
-              categoryActualSeconds,
-              categoryPlannedSeconds
-            );
-
-
-          const categoryStatus =
-            createProgressStatus(
-              categoryActualSeconds,
-              categoryPlannedSeconds
-            );
-
-
-          const projectHtml =
-            projects
-              .map(
-                function(project) {
-                  const projectSessions =
-                    categorySessions.filter(
-                      function(session) {
-                        return (
-                          session.projectId ===
-                          project.id
-                        );
-                      }
-                    );
-
-
-                  const projectActualSeconds =
-                    projectSessions.reduce(
-                      function(
-                        total,
-                        session
-                      ) {
-                        return (
-                          total +
-                          Number(
-                            session.elapsedSeconds || 0
-                          )
-                        );
-                      },
-
-                      0
-                    );
-
-
-                  const projectPlannedSeconds =
-                    getProjectPlannedSeconds(
-                      project.id,
-                      selectedRecordDate
-                    );
-
-
-                  const projectProgressPercent =
-                    calculateProgressPercent(
-                      projectActualSeconds,
-                      projectPlannedSeconds
-                    );
-
-
-                  const projectProgressRate =
-                    calculateProgressRate(
-                      projectActualSeconds,
-                      projectPlannedSeconds
-                    );
-
-
-                  const projectStatus =
-                    createProgressStatus(
-                      projectActualSeconds,
-                      projectPlannedSeconds
-                    );
-
-
-                  const workDays =
-                    groupRecordSessionsByDay(
-                      projectSessions
-                    );
-
-
-                  const archiveLabel =
-                    project.isCurrent === false
-                      ? `
-                        <span class="record-archive-label">
-                          アーカイブ
-                        </span>
-                      `
-                      : "";
-
-
-                  return `
-                    <details class="record-summary-project">
-                      <summary>
-                        <div class="record-summary-overview">
-                          <div class="progress-heading">
-                            <span class="progress-name">
-                              ${escapeHtml(project.name)}
-
-                              ${archiveLabel}
-
-                              <strong class="progress-percentage">
-                                ${projectProgressRate}
-                              </strong>
-                            </span>
-
-                            <span class="progress-time">
-                              実績
-                              ${formatSecondsAsText(projectActualSeconds)}
-                              ／
-                              予定
-                              ${formatSecondsAsText(projectPlannedSeconds)}
-                            </span>
-                          </div>
-
-                          <div class="progress-bar">
-                            <span
-                              class="progress-bar__value"
-                              style="width: ${projectProgressPercent}%"
-                            ></span>
-                          </div>
-
-                          <p
-                            class="progress-remaining${projectStatus.isOver ? " is-over" : ""}"
-                          >
-                            ${projectStatus.message}
-                          </p>
-                        </div>
-                      </summary>
-
-                      <div class="record-summary-project-detail">
-                        ${createRecordWorkDayHtml(workDays)}
-                      </div>
-                    </details>
-                  `;
-                }
-              )
-              .join("");
-
-
-          return `
-            <details class="progress-item record-summary-category">
-              <summary>
-                <div class="record-summary-overview">
-                  <div class="progress-heading">
-                    <span class="progress-name">
-                      ${escapeHtml(category.name)}
-
-                      <strong class="progress-percentage">
-                        ${categoryProgressRate}
-                      </strong>
-                    </span>
-
-                    <span class="progress-time">
-                      実績
-                      ${formatSecondsAsText(categoryActualSeconds)}
-                      ／
-                      予定
-                      ${formatSecondsAsText(categoryPlannedSeconds)}
-                    </span>
-                  </div>
-
-                  <div class="progress-bar">
-                    <span
-                      class="progress-bar__value"
-                      style="width: ${categoryProgressPercent}%"
-                    ></span>
-                  </div>
-
-                  <p
-                    class="progress-remaining${categoryStatus.isOver ? " is-over" : ""}"
-                  >
-                    ${categoryStatus.message}
-                  </p>
-                </div>
-              </summary>
-
-              <div class="record-summary-project-list">
-                ${projectHtml}
-              </div>
-            </details>
-          `;
-        }
-      )
-      .join("");
+const periodProjectIds =
+new Set(
+sessions.map(
+function(session) {
+return String(
+session.projectId
+);
+}
+)
+);
+
+
+const monthKey =
+createMonthKey(
+selectedRecordDate
+);
+
+
+const monthlyPlan =
+appData.monthlyPlans &&
+appData.monthlyPlans[
+monthKey
+];
+
+
+const plannedCategories =
+monthlyPlan &&
+Array.isArray(
+monthlyPlan.categories
+)
+? monthlyPlan.categories
+: [];
+
+
+const plannedCategoryIds =
+new Set(
+plannedCategories.map(
+function(categoryPlan) {
+return String(
+categoryPlan.categoryId
+);
+}
+)
+);
+
+
+const plannedProjectIds =
+new Set();
+
+
+plannedCategories.forEach(
+function(categoryPlan) {
+const projects =
+Array.isArray(
+categoryPlan.projects
+)
+? categoryPlan.projects
+: [];
+
+
+projects.forEach(
+function(projectPlan) {
+if (
+Number(
+projectPlan.plannedMinutes ||
+0
+) > 0
+) {
+plannedProjectIds.add(
+String(
+projectPlan.projectId
+)
+);
+}
+}
+);
+}
+);
+
+
+const summaryProjectIds =
+new Set(
+[
+...periodProjectIds,
+...plannedProjectIds
+]
+);
+
+
+const periodCategories =
+appData.categories.filter(
+function(category) {
+const projects =
+Array.isArray(
+category.projects
+)
+? category.projects
+: [];
+
+
+return (
+plannedCategoryIds.has(
+String(
+category.id
+)
+) ||
+projects.some(
+function(project) {
+return summaryProjectIds.has(
+String(
+project.id
+)
+);
+}
+)
+);
+}
+);
+
+
+if (
+periodCategories.length === 0
+) {
+recordCategorySummaryList.innerHTML = `
+<p class="empty-message">
+この期間の作業記録はありません。
+</p>
+`;
+
+return;
+}
+
+
+
+recordCategorySummaryList.innerHTML =
+periodCategories
+.map(
+function(category) {
+const allProjects =
+Array.isArray(
+category.projects
+)
+? category.projects
+: [];
+
+
+const projects =
+allProjects.filter(
+function(project) {
+return summaryProjectIds.has(
+String(
+project.id
+)
+);
+}
+);
+
+
+const projectIds =
+new Set(
+projects.map(
+function(project) {
+return project.id;
+}
+)
+);
+
+
+const categorySessions =
+sessions.filter(
+function(session) {
+return projectIds.has(
+session.projectId
+);
+}
+);
+
+
+const categoryActualSeconds =
+categorySessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds || 0
+)
+);
+},
+
+0
+);
+
+
+const categoryPlannedSeconds =
+getCategoryPlannedSeconds(
+category.id,
+selectedRecordDate
+);
+
+
+const categoryProgressPercent =
+calculateProgressPercent(
+categoryActualSeconds,
+categoryPlannedSeconds
+);
+
+
+const categoryProgressRate =
+calculateProgressRate(
+categoryActualSeconds,
+categoryPlannedSeconds
+);
+
+
+const categoryStatus =
+createProgressStatus(
+categoryActualSeconds,
+categoryPlannedSeconds
+);
+
+
+const projectHtml =
+projects
+.map(
+function(project) {
+const projectSessions =
+categorySessions.filter(
+function(session) {
+return (
+session.projectId ===
+project.id
+);
+}
+);
+
+
+const projectActualSeconds =
+projectSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds || 0
+)
+);
+},
+
+0
+);
+
+
+const projectPlannedSeconds =
+getProjectPlannedSeconds(
+project.id,
+selectedRecordDate
+);
+
+
+const projectProgressPercent =
+calculateProgressPercent(
+projectActualSeconds,
+projectPlannedSeconds
+);
+
+
+const projectProgressRate =
+calculateProgressRate(
+projectActualSeconds,
+projectPlannedSeconds
+);
+
+
+const projectStatus =
+createProgressStatus(
+projectActualSeconds,
+projectPlannedSeconds
+);
+
+
+const workDays =
+groupRecordSessionsByDay(
+projectSessions
+);
+
+
+const archiveLabel =
+project.isCurrent === false
+? `
+<span class="record-archive-label">
+アーカイブ
+</span>
+`
+: "";
+
+
+return `
+<details class="record-summary-project">
+<summary>
+<div class="record-summary-overview">
+<div class="progress-heading">
+<span class="progress-name">
+${escapeHtml(project.name)}
+
+${archiveLabel}
+
+<strong class="progress-percentage">
+${projectProgressRate}
+</strong>
+</span>
+
+<span class="progress-time">
+実績
+${formatSecondsAsText(projectActualSeconds)}
+／
+予定
+${formatSecondsAsText(projectPlannedSeconds)}
+</span>
+</div>
+
+<div class="progress-bar">
+<span
+class="progress-bar__value"
+style="width: ${projectProgressPercent}%"
+></span>
+</div>
+
+<p
+class="progress-remaining${projectStatus.isOver ? " is-over" : ""}"
+>
+${projectStatus.message}
+</p>
+</div>
+</summary>
+
+<div class="record-summary-project-detail">
+${createRecordWorkDayHtml(workDays)}
+</div>
+</details>
+`;
+}
+)
+.join("");
+
+
+return `
+<details class="progress-item record-summary-category">
+<summary>
+<div class="record-summary-overview">
+<div class="progress-heading">
+<span class="progress-name">
+${escapeHtml(category.name)}
+
+<strong class="progress-percentage">
+${categoryProgressRate}
+</strong>
+</span>
+
+<span class="progress-time">
+実績
+${formatSecondsAsText(categoryActualSeconds)}
+／
+予定
+${formatSecondsAsText(categoryPlannedSeconds)}
+</span>
+</div>
+
+<div class="progress-bar">
+<span
+class="progress-bar__value"
+style="width: ${categoryProgressPercent}%"
+></span>
+</div>
+
+<p
+class="progress-remaining${categoryStatus.isOver ? " is-over" : ""}"
+>
+${categoryStatus.message}
+</p>
+</div>
+</summary>
+
+<div class="record-summary-project-list">
+${projectHtml}
+</div>
+</details>
+`;
+}
+)
+.join("");
 }
 
 
@@ -8077,537 +8346,537 @@ function renderRecordIntegratedSummary(
 // ========================================
 
 function renderRecordProjectReports(
-  sessions
+sessions
 ) {
-  const categoryItems =
-    [];
+const categoryItems =
+[];
 
 
-  appData.categories.forEach(
-    function(category) {
-      const projects =
-        Array.isArray(
-          category.projects
-        )
-          ? category.projects.filter(
-              function(project) {
-                return (
-                  project.isCurrent ===
-                  false
-                );
-              }
-            )
-          : [];
+appData.categories.forEach(
+function(category) {
+const projects =
+Array.isArray(
+category.projects
+)
+? category.projects.filter(
+function(project) {
+return (
+project.isCurrent ===
+false
+);
+}
+)
+: [];
 
 
-      if (projects.length === 0) {
-        return;
-      }
+if (projects.length === 0) {
+return;
+}
 
 
-      const projectItems =
-        projects
-          .map(
-            function(project) {
-              const projectSessions =
-                sessions.filter(
-                  function(session) {
-                    return (
-                      session.projectId ===
-                      project.id
-                    );
-                  }
-                );
+const projectItems =
+projects
+.map(
+function(project) {
+const projectSessions =
+sessions.filter(
+function(session) {
+return (
+session.projectId ===
+project.id
+);
+}
+);
 
 
-              const totalSeconds =
-                projectSessions.reduce(
-                  function(
-                    total,
-                    session
-                  ) {
-                    return (
-                      total +
-                      Number(
-                        session.elapsedSeconds || 0
-                      )
-                    );
-                  },
+const totalSeconds =
+projectSessions.reduce(
+function(
+total,
+session
+) {
+return (
+total +
+Number(
+session.elapsedSeconds || 0
+)
+);
+},
 
-                  0
-                );
-
-
-              const workDays =
-                groupRecordSessionsByDay(
-                  projectSessions
-                );
+0
+);
 
 
-              return `
-                <details class="project-report-item">
-                  <summary>
-                    <span class="project-name">
-                      ${escapeHtml(project.name)}
-                    </span>
-
-                    <span class="project-total-information">
-                      <span class="project-total-time">
-                        ${formatSecondsAsText(totalSeconds)}
-                      </span>
-
-                      <span class="project-work-days">
-                        作業日数：
-                        ${workDays.length}日
-                      </span>
-                    </span>
-                  </summary>
-
-                  <div class="project-detail">
-                    ${createRecordWorkDayHtml(workDays)}
-                  </div>
-                </details>
-              `;
-            }
-          )
-          .join("");
+const workDays =
+groupRecordSessionsByDay(
+projectSessions
+);
 
 
-      categoryItems.push(`
-        <details class="record-archive-category">
-          <summary>
-            <strong>
-              ${escapeHtml(category.name)}
-            </strong>
-          </summary>
+return `
+<details class="project-report-item">
+<summary>
+<span class="project-name">
+${escapeHtml(project.name)}
+</span>
 
-          <div class="record-archive-project-list">
-            ${projectItems}
-          </div>
-        </details>
-      `);
-    }
-  );
+<span class="project-total-information">
+<span class="project-total-time">
+${formatSecondsAsText(totalSeconds)}
+</span>
+
+<span class="project-work-days">
+作業日数：
+${workDays.length}日
+</span>
+</span>
+</summary>
+
+<div class="project-detail">
+${createRecordWorkDayHtml(workDays)}
+</div>
+</details>
+`;
+}
+)
+.join("");
 
 
-  if (
-    categoryItems.length === 0
-  ) {
-    recordProjectList.innerHTML = `
-      <p class="empty-message">
-        アーカイブされたプロジェクトはありません。
-      </p>
-    `;
+categoryItems.push(`
+<details class="record-archive-category">
+<summary>
+<strong>
+${escapeHtml(category.name)}
+</strong>
+</summary>
 
-    return;
-  }
+<div class="record-archive-project-list">
+${projectItems}
+</div>
+</details>
+`);
+}
+);
 
 
-  recordProjectList.innerHTML =
-    categoryItems.join("");
+if (
+categoryItems.length === 0
+) {
+recordProjectList.innerHTML = `
+<p class="empty-message">
+アーカイブされたプロジェクトはありません。
+</p>
+`;
+
+return;
+}
+
+
+recordProjectList.innerHTML =
+categoryItems.join("");
 }
 
 function groupRecordSessionsByDay(
-  sessions
+sessions
 ) {
-  const workDayMap =
-    new Map();
+const workDayMap =
+new Map();
 
-  sessions.forEach(
-    function(session) {
-      const sessionDate =
-        new Date(
-          Number(
-            session.startedAt
-          )
-        );
-
-
-      const projectInformation =
-        findProjectInformation(
-          session.projectId
-        );
+sessions.forEach(
+function(session) {
+const sessionDate =
+new Date(
+Number(
+session.startedAt
+)
+);
 
 
-      const categoryName =
-        projectInformation
-          ? projectInformation.category.name
-          : "分類情報なし";
+const projectInformation =
+findProjectInformation(
+session.projectId
+);
 
 
-      const projectName =
-        projectInformation
-          ? projectInformation.project.name
-          : "プロジェクト情報なし";
+const categoryName =
+projectInformation
+? projectInformation.category.name
+: "分類情報なし";
 
 
-      const dateKey =
-        formatRecordDateForInput(
-          sessionDate
-        );
+const projectName =
+projectInformation
+? projectInformation.project.name
+: "プロジェクト情報なし";
 
-      if (!workDayMap.has(dateKey)) {
-        const date =
-          new Date(
-            sessionDate
-          );
 
-        date.setHours(
-          0,
-          0,
-          0,
-          0
-        );
+const dateKey =
+formatRecordDateForInput(
+sessionDate
+);
 
-        workDayMap.set(
-          dateKey,
+if (!workDayMap.has(dateKey)) {
+const date =
+new Date(
+sessionDate
+);
 
-          {
-            date:
-              date,
+date.setHours(
+0,
+0,
+0,
+0
+);
 
-            totalSeconds:
-              0,
+workDayMap.set(
+dateKey,
 
-            records:
-              []
-          }
-        );
-      }
+{
+date:
+date,
 
-      const workDay =
-        workDayMap.get(
-          dateKey
-        );
+totalSeconds:
+0,
 
-      workDay.totalSeconds +=
-        Number(
-          session.elapsedSeconds || 0
-        );
+records:
+[]
+}
+);
+}
 
-      const notes =
-        Array.isArray(
-          session.notes
-        )
-          ? session.notes
-          : [];
+const workDay =
+workDayMap.get(
+dateKey
+);
 
-      if (notes.length === 0) {
-        workDay.records.push(
-          {
-            sessionId:
-              session.id,
+workDay.totalSeconds +=
+Number(
+session.elapsedSeconds || 0
+);
 
-            noteIndex:
-              null,
+const notes =
+Array.isArray(
+session.notes
+)
+? session.notes
+: [];
 
-            categoryName:
-              categoryName,
+if (notes.length === 0) {
+workDay.records.push(
+{
+sessionId:
+session.id,
 
-            projectName:
-              projectName,
+noteIndex:
+null,
 
-            text:
-              "作業内容の記録なし",
+categoryName:
+categoryName,
 
-            startedAt:
-              Number(
-                session.startedAt
-              ),
+projectName:
+projectName,
 
-            endedAt:
-              Number(
-                session.endedAt
-              ) ||
-              Number(
-                session.startedAt
-              )
-          }
-        );
-      } else {
-        notes.forEach(
-          function(
-            note,
-            noteIndex
-          ) {
-            workDay.records.push(
-              {
-                sessionId:
-                  session.id,
+text:
+"作業内容の記録なし",
 
-                noteIndex:
-                  noteIndex,
+startedAt:
+Number(
+session.startedAt
+),
 
-                categoryName:
-                  categoryName,
+endedAt:
+Number(
+session.endedAt
+) ||
+Number(
+session.startedAt
+)
+}
+);
+} else {
+notes.forEach(
+function(
+note,
+noteIndex
+) {
+workDay.records.push(
+{
+sessionId:
+session.id,
 
-                projectName:
-                  projectName,
+noteIndex:
+noteIndex,
 
-                text:
-                  note.text ||
-                  "作業内容の記録なし",
+categoryName:
+categoryName,
 
-                startedAt:
-                  Number(
-                    note.startedAt
-                  ) ||
-                  Number(
-                    session.startedAt
-                  ),
+projectName:
+projectName,
 
-                endedAt:
-                  Number(
-                    note.endedAt
-                  ) ||
-                  Number(
-                    note.createdAt
-                  ) ||
-                  Number(
-                    session.endedAt
-                  ) ||
-                  Number(
-                    session.startedAt
-                  )
-              }
-            );
-          }
-        );
-      }
-    }
-  );
+text:
+note.text ||
+"作業内容の記録なし",
 
-  return Array.from(
-    workDayMap.values()
-  ).sort(
-    function(a, b) {
-      return (
-        a.date -
-        b.date
-      );
-    }
-  );
+startedAt:
+Number(
+note.startedAt
+) ||
+Number(
+session.startedAt
+),
+
+endedAt:
+Number(
+note.endedAt
+) ||
+Number(
+note.createdAt
+) ||
+Number(
+session.endedAt
+) ||
+Number(
+session.startedAt
+)
+}
+);
+}
+);
+}
+}
+);
+
+return Array.from(
+workDayMap.values()
+).sort(
+function(a, b) {
+return (
+a.date -
+b.date
+);
+}
+);
 }
 
 
 function createRecordWorkDayHtml(
-  workDays,
-  showProjectInformation = false
+workDays,
+showProjectInformation = false
 ) {
-  if (workDays.length === 0) {
-    return `
-      <p class="empty-message">
-        この期間の作業記録はありません。
-      </p>
-    `;
-  }
+if (workDays.length === 0) {
+return `
+<p class="empty-message">
+この期間の作業記録はありません。
+</p>
+`;
+}
 
-  return workDays
-    .map(
-      function(workDay) {
-        const recordHtml =
-          workDay.records
-            .sort(
-              function(a, b) {
-                return (
-                  a.startedAt -
-                  b.startedAt
-                );
-              }
-            )
-            .map(
-              function(record) {
-                return `
-                  <li>
-                    <time
-                      class="work-time-range"
-                      datetime="${new Date(
-                        record.startedAt
-                      ).toISOString()}"
-                    >
-                      ${formatWorkTimeRange(record)}
-                    </time>
+return workDays
+.map(
+function(workDay) {
+const recordHtml =
+workDay.records
+.sort(
+function(a, b) {
+return (
+a.startedAt -
+b.startedAt
+);
+}
+)
+.map(
+function(record) {
+return `
+<li>
+<time
+class="work-time-range"
+datetime="${new Date(
+record.startedAt
+).toISOString()}"
+>
+${formatWorkTimeRange(record)}
+</time>
 
-                    ${
-                      showProjectInformation
-                        ? `
-                          <strong class="summary-work-project">
-                            【${escapeHtml(record.categoryName)}/${escapeHtml(record.projectName)}】
-                          </strong>
-                        `
-                        : ""
-                    }
+${
+showProjectInformation
+? `
+<strong class="summary-work-project">
+【${escapeHtml(record.categoryName)}/${escapeHtml(record.projectName)}】
+</strong>
+`
+: ""
+}
 
-                    <span class="work-content-text">
-                      ${escapeHtml(record.text)}
-                    </span>
+<span class="work-content-text">
+${escapeHtml(record.text)}
+</span>
 
 <span class="record-item-actions">
-  <button
-    class="record-edit-button secondary-button"
-    type="button"
-    data-session-id="${escapeHtml(
-      String(
-        record.sessionId
-      )
-    )}"
-    data-note-index="${
-      record.noteIndex === null
-        ? ""
-        : record.noteIndex
-    }"
-  >
-    編集
-  </button>
+<button
+class="record-edit-button secondary-button"
+type="button"
+data-session-id="${escapeHtml(
+String(
+record.sessionId
+)
+)}"
+data-note-index="${
+record.noteIndex === null
+? ""
+: record.noteIndex
+}"
+>
+編集
+</button>
 
-  <button
-    class="record-delete-button danger-button"
-    type="button"
-    data-session-id="${escapeHtml(
-      String(
-        record.sessionId
-      )
-    )}"
-    data-note-index="${
-      record.noteIndex === null
-        ? ""
-        : record.noteIndex
-    }"
-  >
-    削除
-  </button>
+<button
+class="record-delete-button danger-button"
+type="button"
+data-session-id="${escapeHtml(
+String(
+record.sessionId
+)
+)}"
+data-note-index="${
+record.noteIndex === null
+? ""
+: record.noteIndex
+}"
+>
+削除
+</button>
 </span>
-                  </li>
-                `;
-              }
-            )
-            .join("");
+</li>
+`;
+}
+)
+.join("");
 
-        return `
-          <details class="work-day-item is-collapsible">
-            <summary>
-              <time
-                class="work-day-date"
-                datetime="${formatRecordDateForInput(
-                  workDay.date
-                )}"
-              >
-                ${formatRecordDisplayDate(
-                  workDay.date
-                )}
-              </time>
+return `
+<details class="work-day-item is-collapsible">
+<summary>
+<time
+class="work-day-date"
+datetime="${formatRecordDateForInput(
+workDay.date
+)}"
+>
+${formatRecordDisplayDate(
+workDay.date
+)}
+</time>
 
-              <span class="work-day-total">
-                合計
-                ${formatSecondsAsText(
-                  workDay.totalSeconds
-                )}
-              </span>
-            </summary>
+<span class="work-day-total">
+合計
+${formatSecondsAsText(
+workDay.totalSeconds
+)}
+</span>
+</summary>
 
-            <div class="work-day-content">
-              <ul class="work-content-list">
-                ${recordHtml}
-              </ul>
-            </div>
-          </details>
-        `;
-      }
-    )
-    .join("");
+<div class="work-day-content">
+<ul class="work-content-list">
+${recordHtml}
+</ul>
+</div>
+</details>
+`;
+}
+)
+.join("");
 }
 
 function getRecordPeriodRange() {
-  const start =
-    new Date(
-      selectedRecordDate.getFullYear(),
-      selectedRecordDate.getMonth(),
-      1
-    );
+const start =
+new Date(
+selectedRecordDate.getFullYear(),
+selectedRecordDate.getMonth(),
+1
+);
 
 
-  const end =
-    new Date(
-      selectedRecordDate.getFullYear(),
-      selectedRecordDate.getMonth() + 1,
-      1
-    );
+const end =
+new Date(
+selectedRecordDate.getFullYear(),
+selectedRecordDate.getMonth() + 1,
+1
+);
 
 
-  return {
-    start:
-      start,
+return {
+start:
+start,
 
-    end:
-      end
-  };
+end:
+end
+};
 }
 
 
 function createRecordPeriodTitle() {
-  return (
-    selectedRecordDate.getFullYear() +
-    "年" +
-    (
-      selectedRecordDate.getMonth() + 1
-    ) +
-    "月の集計"
-  );
+return (
+selectedRecordDate.getFullYear() +
+"年" +
+(
+selectedRecordDate.getMonth() + 1
+) +
+"月の集計"
+);
 }
 
 
 function createRecordDateRangeText(
-  periodRange
+periodRange
 ) {
-  const rangeEnd =
-    new Date(
-      periodRange.end
-    );
+const rangeEnd =
+new Date(
+periodRange.end
+);
 
-  rangeEnd.setMilliseconds(
-    rangeEnd.getMilliseconds() - 1
-  );
+rangeEnd.setMilliseconds(
+rangeEnd.getMilliseconds() - 1
+);
 
-  return (
-    formatRecordDisplayDate(
-      periodRange.start
-    ) +
-    "〜" +
-    formatRecordDisplayDate(
-      rangeEnd
-    )
-  );
+return (
+formatRecordDisplayDate(
+periodRange.start
+) +
+"〜" +
+formatRecordDisplayDate(
+rangeEnd
+)
+);
 }
 
 function formatRecordDateForInput(
-  date
+date
 ) {
-  const year =
-    date.getFullYear();
+const year =
+date.getFullYear();
 
-  const month =
-    String(
-      date.getMonth() + 1
-    ).padStart(
-      2,
-      "0"
-    );
+const month =
+String(
+date.getMonth() + 1
+).padStart(
+2,
+"0"
+);
 
-  const day =
-    String(
-      date.getDate()
-    ).padStart(
-      2,
-      "0"
-    );
+const day =
+String(
+date.getDate()
+).padStart(
+2,
+"0"
+);
 
-  return (
-    year +
-    "-" +
-    month +
-    "-" +
-    day
-  );
+return (
+year +
+"-" +
+month +
+"-" +
+day
+);
 }
 
 // ========================================
@@ -8615,990 +8884,990 @@ function formatRecordDateForInput(
 // ========================================
 
 function initializeRecordForm() {
-  renderRecordProjectOptions();
+renderRecordProjectOptions();
 
 
-  addRecordButton.addEventListener(
-    "click",
+addRecordButton.addEventListener(
+"click",
 
-    function() {
-      openAddRecordDialog();
-    }
-  );
-
-
-   recordsPanel.addEventListener(
-  "click",
-
-  function(event) {
-    const editButton =
-      event.target.closest(
-        ".record-edit-button"
-      );
-
-    if (editButton) {
-      openEditRecordDialog(
-        editButton.dataset.sessionId,
-        editButton.dataset.noteIndex
-      );
-
-      return;
-    }
-
-    const deleteButton =
-      event.target.closest(
-        ".record-delete-button"
-      );
-
-    if (deleteButton) {
-      deleteRecord(
-        deleteButton.dataset.sessionId,
-        deleteButton.dataset.noteIndex
-      );
-    }
-  }
+function() {
+openAddRecordDialog();
+}
 );
 
 
-  recordDialogCloseButton.addEventListener(
-    "click",
+recordsPanel.addEventListener(
+"click",
 
-    closeRecordDialog
-  );
+function(event) {
+const editButton =
+event.target.closest(
+".record-edit-button"
+);
 
+if (editButton) {
+openEditRecordDialog(
+editButton.dataset.sessionId,
+editButton.dataset.noteIndex
+);
 
-  recordCancelButton.addEventListener(
-    "click",
+return;
+}
 
-    closeRecordDialog
-  );
+const deleteButton =
+event.target.closest(
+".record-delete-button"
+);
 
-
-  recordEditStartTimeInput.addEventListener(
-    "input",
-
-    function() {
-      formatRecordTimeWhileTyping(
-        recordEditStartTimeInput
-      );
-    }
-  );
-
-
-  recordEditStartTimeInput.addEventListener(
-    "blur",
-
-    function() {
-      normalizeRecordTimeInput(
-        recordEditStartTimeInput
-      );
-    }
-  );
+if (deleteButton) {
+deleteRecord(
+deleteButton.dataset.sessionId,
+deleteButton.dataset.noteIndex
+);
+}
+}
+);
 
 
-  recordEditEndTimeInput.addEventListener(
-    "input",
+recordDialogCloseButton.addEventListener(
+"click",
 
-    function() {
-      formatRecordTimeWhileTyping(
-        recordEditEndTimeInput
-      );
-    }
-  );
+closeRecordDialog
+);
 
 
-  recordEditEndTimeInput.addEventListener(
-    "blur",
+recordCancelButton.addEventListener(
+"click",
 
-    function() {
-      normalizeRecordTimeInput(
-        recordEditEndTimeInput
-      );
-    }
-  );
+closeRecordDialog
+);
 
 
-  recordForm.addEventListener(
-  "submit",
+recordEditStartTimeInput.addEventListener(
+"input",
 
-  function(event) {
-    event.preventDefault();
+function() {
+formatRecordTimeWhileTyping(
+recordEditStartTimeInput
+);
+}
+);
 
-    saveRecordForm();
-  }
+
+recordEditStartTimeInput.addEventListener(
+"blur",
+
+function() {
+normalizeRecordTimeInput(
+recordEditStartTimeInput
+);
+}
+);
+
+
+recordEditEndTimeInput.addEventListener(
+"input",
+
+function() {
+formatRecordTimeWhileTyping(
+recordEditEndTimeInput
+);
+}
+);
+
+
+recordEditEndTimeInput.addEventListener(
+"blur",
+
+function() {
+normalizeRecordTimeInput(
+recordEditEndTimeInput
+);
+}
+);
+
+
+recordForm.addEventListener(
+"submit",
+
+function(event) {
+event.preventDefault();
+
+saveRecordForm();
+}
 );
 }
 
 
 function formatRecordTimeWhileTyping(
-  input
+input
 ) {
-  const value =
-    input.value.trim();
+const value =
+input.value.trim();
 
 
-  if (!/^\d{4}$/.test(value)) {
-    return;
-  }
+if (!/^\d{4}$/.test(value)) {
+return;
+}
 
 
-  normalizeRecordTimeInput(
-    input
-  );
+normalizeRecordTimeInput(
+input
+);
 }
 
 
 function normalizeRecordTimeInput(
-  input
+input
 ) {
-  const currentValue =
-    input.value.trim();
+const currentValue =
+input.value.trim();
 
 
-  if (
-    /^([01]\d|2[0-3]):[0-5]\d$/.test(
-      currentValue
-    )
-  ) {
-    return true;
-  }
+if (
+/^([01]\d|2[0-3]):[0-5]\d$/.test(
+currentValue
+)
+) {
+return true;
+}
 
 
-  let digits =
-    currentValue.replace(
-      /\D/g,
-      ""
-    );
+let digits =
+currentValue.replace(
+/\D/g,
+""
+);
 
 
-  if (digits.length === 3) {
-    digits =
-      digits.padStart(
-        4,
-        "0"
-      );
-  }
+if (digits.length === 3) {
+digits =
+digits.padStart(
+4,
+"0"
+);
+}
 
 
-  if (digits.length !== 4) {
-    return false;
-  }
+if (digits.length !== 4) {
+return false;
+}
 
 
-  const hours =
-    Number(
-      digits.slice(
-        0,
-        2
-      )
-    );
+const hours =
+Number(
+digits.slice(
+0,
+2
+)
+);
 
 
-  const minutes =
-    Number(
-      digits.slice(
-        2,
-        4
-      )
-    );
+const minutes =
+Number(
+digits.slice(
+2,
+4
+)
+);
 
 
-  if (
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59
-  ) {
-    return false;
-  }
+if (
+hours < 0 ||
+hours > 23 ||
+minutes < 0 ||
+minutes > 59
+) {
+return false;
+}
 
 
-  input.value =
-    String(
-      hours
-    ).padStart(
-      2,
-      "0"
-    ) +
-    ":" +
-    String(
-      minutes
-    ).padStart(
-      2,
-      "0"
-    );
+input.value =
+String(
+hours
+).padStart(
+2,
+"0"
+) +
+":" +
+String(
+minutes
+).padStart(
+2,
+"0"
+);
 
 
-  return true;
+return true;
 }
 
 
 function renderRecordProjectOptions(
-  includedProjectId = ""
+includedProjectId = ""
 ) {
-  const optionHtml = [];
+const optionHtml = [];
 
 
-  appData.categories.forEach(
-    function(category) {
-      const projects =
-        Array.isArray(
-          category.projects
-        )
-          ? category.projects
-          : [];
+appData.categories.forEach(
+function(category) {
+const projects =
+Array.isArray(
+category.projects
+)
+? category.projects
+: [];
 
 
-      projects
-        .filter(
-          function(project) {
-            return (
-              project.isCurrent !==
-                false ||
-              String(project.id) ===
-                String(includedProjectId)
-            );
-          }
-        )
-        .forEach(
-          function(project) {
-            const archiveLabel =
-              project.isCurrent === false
-                ? "（アーカイブ）"
-                : "";
+projects
+.filter(
+function(project) {
+return (
+project.isCurrent !==
+false ||
+String(project.id) ===
+String(includedProjectId)
+);
+}
+)
+.forEach(
+function(project) {
+const archiveLabel =
+project.isCurrent === false
+? "（アーカイブ）"
+: "";
 
 
-            optionHtml.push(`
-              <option value="${escapeHtml(project.id)}">
-                ${escapeHtml(category.name)}
-                ＞
-                ${escapeHtml(project.name)}
-                ${archiveLabel}
-              </option>
-            `);
-          }
-        );
-    }
-  );
+optionHtml.push(`
+<option value="${escapeHtml(project.id)}">
+${escapeHtml(category.name)}
+＞
+${escapeHtml(project.name)}
+${archiveLabel}
+</option>
+`);
+}
+);
+}
+);
 
 
-  recordEditProjectSelect.innerHTML = `
-    <option value="">
-      プロジェクトを選択
-    </option>
+recordEditProjectSelect.innerHTML = `
+<option value="">
+プロジェクトを選択
+</option>
 
-    ${optionHtml.join("")}
-  `;
+${optionHtml.join("")}
+`;
 }
 
 
 function openAddRecordDialog() {
-  recordForm.reset();
+recordForm.reset();
 
-  recordSessionIdInput.value =
-    "";
+recordSessionIdInput.value =
+"";
 
-  recordNoteIndexInput.value =
-    "";
+recordNoteIndexInput.value =
+"";
 
-  recordDialogTitle.textContent =
-    "作業を追加";
+recordDialogTitle.textContent =
+"作業を追加";
 
-  recordFormError.textContent =
-    "";
+recordFormError.textContent =
+"";
 
-  recordEditDateInput.value =
-    formatRecordDateForInput(
-      selectedRecordDate
-    );
+recordEditDateInput.value =
+formatRecordDateForInput(
+selectedRecordDate
+);
 
-  const startDate =
-    new Date();
+const startDate =
+new Date();
 
-  startDate.setSeconds(
-    0,
-    0
-  );
+startDate.setSeconds(
+0,
+0
+);
 
-  const endDate =
-    new Date(
-      startDate
-    );
+const endDate =
+new Date(
+startDate
+);
 
-  endDate.setMinutes(
-    endDate.getMinutes() + 30
-  );
+endDate.setMinutes(
+endDate.getMinutes() + 30
+);
 
-  recordEditStartTimeInput.value =
-    formatRecordTimeForInput(
-      startDate
-    );
+recordEditStartTimeInput.value =
+formatRecordTimeForInput(
+startDate
+);
 
-  recordEditEndTimeInput.value =
-    formatRecordTimeForInput(
-      endDate
-    );
+recordEditEndTimeInput.value =
+formatRecordTimeForInput(
+endDate
+);
 
-  renderRecordProjectOptions();
+renderRecordProjectOptions();
 
-  recordDialog.showModal();
+recordDialog.showModal();
 }
 
 
 function openEditRecordDialog(
-  sessionId,
-  noteIndexText
+sessionId,
+noteIndexText
 ) {
-  const session =
-    appData.sessions.find(
-      function(item) {
-        return (
-          String(item.id) ===
-          String(sessionId)
-        );
-      }
-    );
+const session =
+appData.sessions.find(
+function(item) {
+return (
+String(item.id) ===
+String(sessionId)
+);
+}
+);
 
-  if (!session) {
-    showStatusMessage(
-      "編集する作業記録が見つかりません。"
-    );
+if (!session) {
+showStatusMessage(
+"編集する作業記録が見つかりません。"
+);
 
-    return;
-  }
+return;
+}
 
-  const hasNoteIndex =
-    noteIndexText !== "";
+const hasNoteIndex =
+noteIndexText !== "";
 
-  const noteIndex =
-    hasNoteIndex
-      ? Number(noteIndexText)
-      : null;
+const noteIndex =
+hasNoteIndex
+? Number(noteIndexText)
+: null;
 
-  const note =
-    noteIndex !== null &&
-    Array.isArray(session.notes)
-      ? session.notes[noteIndex]
-      : null;
+const note =
+noteIndex !== null &&
+Array.isArray(session.notes)
+? session.notes[noteIndex]
+: null;
 
-  const startedAt =
-    Number(
-      note?.startedAt
-    ) ||
-    Number(
-      session.startedAt
-    );
+const startedAt =
+Number(
+note?.startedAt
+) ||
+Number(
+session.startedAt
+);
 
-  const endedAt =
-    Number(
-      note?.endedAt
-    ) ||
-    Number(
-      note?.createdAt
-    ) ||
-    Number(
-      session.endedAt
-    ) ||
-    startedAt;
+const endedAt =
+Number(
+note?.endedAt
+) ||
+Number(
+note?.createdAt
+) ||
+Number(
+session.endedAt
+) ||
+startedAt;
 
-  recordForm.reset();
+recordForm.reset();
 
-  recordSessionIdInput.value =
-    String(
-      session.id
-    );
+recordSessionIdInput.value =
+String(
+session.id
+);
 
-  recordNoteIndexInput.value =
-    noteIndex === null
-      ? ""
-      : String(
-          noteIndex
-        );
+recordNoteIndexInput.value =
+noteIndex === null
+? ""
+: String(
+noteIndex
+);
 
-  recordDialogTitle.textContent =
-    "作業を編集";
+recordDialogTitle.textContent =
+"作業を編集";
 
-  recordFormError.textContent =
-    "";
+recordFormError.textContent =
+"";
 
-    recordEditDateInput.value =
-    formatRecordDateForInput(
-      new Date(
-        startedAt
-      )
-    );
+recordEditDateInput.value =
+formatRecordDateForInput(
+new Date(
+startedAt
+)
+);
 
-  renderRecordProjectOptions(
-    session.projectId
-  );
+renderRecordProjectOptions(
+session.projectId
+);
 
-  recordEditProjectSelect.value =
-    session.projectId;
+recordEditProjectSelect.value =
+session.projectId;
 
-  recordEditStartTimeInput.value =
-    formatRecordTimeForInput(
-      new Date(
-        startedAt
-      )
-    );
+recordEditStartTimeInput.value =
+formatRecordTimeForInput(
+new Date(
+startedAt
+)
+);
 
-  recordEditEndTimeInput.value =
-    formatRecordTimeForInput(
-      new Date(
-        endedAt
-      )
-    );
+recordEditEndTimeInput.value =
+formatRecordTimeForInput(
+new Date(
+endedAt
+)
+);
 
-  recordEditContentInput.value =
-    note?.text || "";
+recordEditContentInput.value =
+note?.text || "";
 
-  recordDialog.showModal();
+recordDialog.showModal();
 }
 
 function deleteRecord(
-  sessionId,
-  noteIndexText
+sessionId,
+noteIndexText
 ) {
-  const sessionIndex =
-    appData.sessions.findIndex(
-      function(session) {
-        return (
-          String(session.id) ===
-          String(sessionId)
-        );
-      }
-    );
+const sessionIndex =
+appData.sessions.findIndex(
+function(session) {
+return (
+String(session.id) ===
+String(sessionId)
+);
+}
+);
 
-  if (sessionIndex < 0) {
-    showStatusMessage(
-      "削除する作業記録が見つかりません。"
-    );
+if (sessionIndex < 0) {
+showStatusMessage(
+"削除する作業記録が見つかりません。"
+);
 
-    return;
-  }
+return;
+}
 
-  const session =
-    appData.sessions[
-      sessionIndex
-    ];
+const session =
+appData.sessions[
+sessionIndex
+];
 
-  const notes =
-    Array.isArray(
-      session.notes
-    )
-      ? session.notes
-      : [];
+const notes =
+Array.isArray(
+session.notes
+)
+? session.notes
+: [];
 
-  const hasNoteIndex =
-    noteIndexText !== "";
+const hasNoteIndex =
+noteIndexText !== "";
 
-  const noteIndex =
-    hasNoteIndex
-      ? Number(noteIndexText)
-      : null;
+const noteIndex =
+hasNoteIndex
+? Number(noteIndexText)
+: null;
 
-  let workContent =
-    "作業内容の記録なし";
+let workContent =
+"作業内容の記録なし";
 
-  if (
-    noteIndex !== null &&
-    notes[noteIndex]
-  ) {
-    workContent =
-      notes[noteIndex].text ||
-      workContent;
-  } else if (
-    notes.length === 1
-  ) {
-    workContent =
-      notes[0].text ||
-      workContent;
-  }
+if (
+noteIndex !== null &&
+notes[noteIndex]
+) {
+workContent =
+notes[noteIndex].text ||
+workContent;
+} else if (
+notes.length === 1
+) {
+workContent =
+notes[0].text ||
+workContent;
+}
 
-  const confirmed =
-    window.confirm(
-      "次の作業記録を削除します。\n\n" +
-      workContent +
-      "\n\nこの操作を続けますか？"
-    );
+const confirmed =
+window.confirm(
+"次の作業記録を削除します。\n\n" +
+workContent +
+"\n\nこの操作を続けますか？"
+);
 
-  if (!confirmed) {
-    return;
-  }
+if (!confirmed) {
+return;
+}
 
-  if (
-    noteIndex !== null &&
-    notes.length > 1 &&
-    notes[noteIndex]
-  ) {
-    notes.splice(
-      noteIndex,
-      1
-    );
+if (
+noteIndex !== null &&
+notes.length > 1 &&
+notes[noteIndex]
+) {
+notes.splice(
+noteIndex,
+1
+);
 
-    session.notes =
-      notes;
+session.notes =
+notes;
 
-    recalculateSessionFromNotes(
-      session
-    );
-  } else {
-    appData.sessions.splice(
-      sessionIndex,
-      1
-    );
-  }
+recalculateSessionFromNotes(
+session
+);
+} else {
+appData.sessions.splice(
+sessionIndex,
+1
+);
+}
 
-  saveAppData();
+saveAppData();
 
-  renderRecordSummary();
+renderRecordSummary();
 
-  renderProgressList();
+renderProgressList();
 
-  showStatusMessage(
-    "作業記録を削除しました。"
-  );
+showStatusMessage(
+"作業記録を削除しました。"
+);
 }
 
 function saveRecordForm() {
-  const startTimeIsValid =
-    normalizeRecordTimeInput(
-      recordEditStartTimeInput
-    );
+const startTimeIsValid =
+normalizeRecordTimeInput(
+recordEditStartTimeInput
+);
 
 
-  const endTimeIsValid =
-    normalizeRecordTimeInput(
-      recordEditEndTimeInput
-    );
+const endTimeIsValid =
+normalizeRecordTimeInput(
+recordEditEndTimeInput
+);
 
 
-  if (
-    !startTimeIsValid ||
-    !endTimeIsValid
-  ) {
-    recordFormError.textContent =
-      "時刻は0930や18:45の形式で入力してください。";
+if (
+!startTimeIsValid ||
+!endTimeIsValid
+) {
+recordFormError.textContent =
+"時刻は0930や18:45の形式で入力してください。";
 
-    return;
-  }
+return;
+}
 
 
-  const projectId =
-    recordEditProjectSelect.value;
+const projectId =
+recordEditProjectSelect.value;
 
-  const projectInformation =
-    findProjectInformation(
-      projectId
-    );
+const projectInformation =
+findProjectInformation(
+projectId
+);
 
-  const workDate =
-    recordEditDateInput.value;
+const workDate =
+recordEditDateInput.value;
 
-  const startTime =
-    recordEditStartTimeInput.value;
+const startTime =
+recordEditStartTimeInput.value;
 
-  const endTime =
-    recordEditEndTimeInput.value;
+const endTime =
+recordEditEndTimeInput.value;
 
-  const workContent =
-    recordEditContentInput.value.trim();
+const workContent =
+recordEditContentInput.value.trim();
 
-  if (!projectInformation) {
-    recordFormError.textContent =
-      "プロジェクトを選択してください。";
+if (!projectInformation) {
+recordFormError.textContent =
+"プロジェクトを選択してください。";
 
-    return;
-  }
+return;
+}
 
-  if (
-    !workDate ||
-    !startTime ||
-    !endTime
-  ) {
-    recordFormError.textContent =
-      "作業日と時刻を入力してください。";
+if (
+!workDate ||
+!startTime ||
+!endTime
+) {
+recordFormError.textContent =
+"作業日と時刻を入力してください。";
 
-    return;
-  }
+return;
+}
 
-  if (!workContent) {
-    recordFormError.textContent =
-      "作業内容を入力してください。";
+if (!workContent) {
+recordFormError.textContent =
+"作業内容を入力してください。";
 
-    return;
-  }
+return;
+}
 
-  const startedAt =
-    new Date(
-      workDate +
-      "T" +
-      startTime +
-      ":00"
-    ).getTime();
+const startedAt =
+new Date(
+workDate +
+"T" +
+startTime +
+":00"
+).getTime();
 
-  const endedAt =
-    new Date(
-      workDate +
-      "T" +
-      endTime +
-      ":00"
-    ).getTime();
+const endedAt =
+new Date(
+workDate +
+"T" +
+endTime +
+":00"
+).getTime();
 
-  if (
-    !Number.isFinite(startedAt) ||
-    !Number.isFinite(endedAt)
-  ) {
-    recordFormError.textContent =
-      "日付または時刻が正しくありません。";
+if (
+!Number.isFinite(startedAt) ||
+!Number.isFinite(endedAt)
+) {
+recordFormError.textContent =
+"日付または時刻が正しくありません。";
 
-    return;
-  }
+return;
+}
 
-  if (endedAt <= startedAt) {
-    recordFormError.textContent =
-      "終了時刻は開始時刻より後にしてください。";
+if (endedAt <= startedAt) {
+recordFormError.textContent =
+"終了時刻は開始時刻より後にしてください。";
 
-    return;
-  }
+return;
+}
 
-  const recordData = {
-    categoryId:
-      projectInformation.category.id,
+const recordData = {
+categoryId:
+projectInformation.category.id,
 
-    projectId:
-      projectInformation.project.id,
+projectId:
+projectInformation.project.id,
 
-    startedAt:
-      startedAt,
+startedAt:
+startedAt,
 
-    endedAt:
-      endedAt,
+endedAt:
+endedAt,
 
-    elapsedSeconds:
-      Math.max(
-        1,
+elapsedSeconds:
+Math.max(
+1,
 
-        Math.floor(
-          (
-            endedAt -
-            startedAt
-          ) /
-          1000
-        )
-      ),
+Math.floor(
+(
+endedAt -
+startedAt
+) /
+1000
+)
+),
 
-    text:
-      workContent
-  };
+text:
+workContent
+};
 
-  const sessionId =
-    recordSessionIdInput.value;
+const sessionId =
+recordSessionIdInput.value;
 
-  const noteIndexText =
-    recordNoteIndexInput.value;
+const noteIndexText =
+recordNoteIndexInput.value;
 
-  if (sessionId) {
-    updateExistingRecord(
-      sessionId,
-      noteIndexText,
-      recordData
-    );
-  } else {
-    appData.sessions.push(
-      createRecordSession(
-        recordData
-      )
-    );
-  }
+if (sessionId) {
+updateExistingRecord(
+sessionId,
+noteIndexText,
+recordData
+);
+} else {
+appData.sessions.push(
+createRecordSession(
+recordData
+)
+);
+}
 
-  selectedRecordDate =
-    new Date(
-      startedAt
-    );
+selectedRecordDate =
+new Date(
+startedAt
+);
 
-  saveAppData();
+saveAppData();
 
-  setRecordDateInputValues();
+setRecordDateInputValues();
 
-  renderProgressList();
+renderProgressList();
 
-  closeRecordDialog();
+closeRecordDialog();
 
-  showStatusMessage(
-    sessionId
-      ? "作業記録を更新しました。"
-      : "作業記録を追加しました。"
-  );
+showStatusMessage(
+sessionId
+? "作業記録を更新しました。"
+: "作業記録を追加しました。"
+);
 }
 
 
 function updateExistingRecord(
-  sessionId,
-  noteIndexText,
-  recordData
+sessionId,
+noteIndexText,
+recordData
 ) {
-  const sessionIndex =
-    appData.sessions.findIndex(
-      function(session) {
-        return (
-          String(session.id) ===
-          String(sessionId)
-        );
-      }
-    );
+const sessionIndex =
+appData.sessions.findIndex(
+function(session) {
+return (
+String(session.id) ===
+String(sessionId)
+);
+}
+);
 
-  if (sessionIndex < 0) {
-    recordFormError.textContent =
-      "編集する作業記録が見つかりません。";
+if (sessionIndex < 0) {
+recordFormError.textContent =
+"編集する作業記録が見つかりません。";
 
-    return;
-  }
+return;
+}
 
-  const session =
-    appData.sessions[
-      sessionIndex
-    ];
+const session =
+appData.sessions[
+sessionIndex
+];
 
-  const notes =
-    Array.isArray(
-      session.notes
-    )
-      ? session.notes
-      : [];
+const notes =
+Array.isArray(
+session.notes
+)
+? session.notes
+: [];
 
-  const hasNoteIndex =
-    noteIndexText !== "";
+const hasNoteIndex =
+noteIndexText !== "";
 
-  const noteIndex =
-    hasNoteIndex
-      ? Number(noteIndexText)
-      : null;
+const noteIndex =
+hasNoteIndex
+? Number(noteIndexText)
+: null;
 
-  if (
-    noteIndex !== null &&
-    notes.length > 1 &&
-    notes[noteIndex]
-  ) {
-    notes.splice(
-      noteIndex,
-      1
-    );
+if (
+noteIndex !== null &&
+notes.length > 1 &&
+notes[noteIndex]
+) {
+notes.splice(
+noteIndex,
+1
+);
 
-    session.notes =
-      notes;
+session.notes =
+notes;
 
-    recalculateSessionFromNotes(
-      session
-    );
+recalculateSessionFromNotes(
+session
+);
 
-    appData.sessions.push(
-      createRecordSession(
-        recordData
-      )
-    );
+appData.sessions.push(
+createRecordSession(
+recordData
+)
+);
 
-    return;
-  }
+return;
+}
 
-  session.categoryId =
-    recordData.categoryId;
+session.categoryId =
+recordData.categoryId;
 
-  session.projectId =
-    recordData.projectId;
+session.projectId =
+recordData.projectId;
 
-  session.startedAt =
-    recordData.startedAt;
+session.startedAt =
+recordData.startedAt;
 
-  session.endedAt =
-    recordData.endedAt;
+session.endedAt =
+recordData.endedAt;
 
-  session.elapsedSeconds =
-    recordData.elapsedSeconds;
+session.elapsedSeconds =
+recordData.elapsedSeconds;
 
-  session.notes = [
-    {
-      text:
-        recordData.text,
+session.notes = [
+{
+text:
+recordData.text,
 
-      startedAt:
-        recordData.startedAt,
+startedAt:
+recordData.startedAt,
 
-      endedAt:
-        recordData.endedAt,
+endedAt:
+recordData.endedAt,
 
-      createdAt:
-        recordData.endedAt
-    }
-  ];
+createdAt:
+recordData.endedAt
+}
+];
 }
 
 
 function createRecordSession(
-  recordData
+recordData
 ) {
-  return {
-    id:
-      createId(
-        "session"
-      ),
+return {
+id:
+createId(
+"session"
+),
 
-    categoryId:
-      recordData.categoryId,
+categoryId:
+recordData.categoryId,
 
-    projectId:
-      recordData.projectId,
+projectId:
+recordData.projectId,
 
-    startedAt:
-      recordData.startedAt,
+startedAt:
+recordData.startedAt,
 
-    endedAt:
-      recordData.endedAt,
+endedAt:
+recordData.endedAt,
 
-    elapsedSeconds:
-      recordData.elapsedSeconds,
+elapsedSeconds:
+recordData.elapsedSeconds,
 
-    notes: [
-      {
-        text:
-          recordData.text,
+notes: [
+{
+text:
+recordData.text,
 
-        startedAt:
-          recordData.startedAt,
+startedAt:
+recordData.startedAt,
 
-        endedAt:
-          recordData.endedAt,
+endedAt:
+recordData.endedAt,
 
-        createdAt:
-          recordData.endedAt
-      }
-    ]
-  };
+createdAt:
+recordData.endedAt
+}
+]
+};
 }
 
 
 function recalculateSessionFromNotes(
-  session
+session
 ) {
-  const notes =
-    Array.isArray(
-      session.notes
-    )
-      ? session.notes
-      : [];
+const notes =
+Array.isArray(
+session.notes
+)
+? session.notes
+: [];
 
-  if (notes.length === 0) {
-    return;
-  }
+if (notes.length === 0) {
+return;
+}
 
-  const startedTimes =
-    notes.map(
-      function(note) {
-        return Number(
-          note.startedAt
-        );
-      }
-    );
+const startedTimes =
+notes.map(
+function(note) {
+return Number(
+note.startedAt
+);
+}
+);
 
-  const endedTimes =
-    notes.map(
-      function(note) {
-        return (
-          Number(
-            note.endedAt
-          ) ||
-          Number(
-            note.createdAt
-          ) ||
-          Number(
-            note.startedAt
-          )
-        );
-      }
-    );
+const endedTimes =
+notes.map(
+function(note) {
+return (
+Number(
+note.endedAt
+) ||
+Number(
+note.createdAt
+) ||
+Number(
+note.startedAt
+)
+);
+}
+);
 
-  session.startedAt =
-    Math.min(
-      ...startedTimes
-    );
+session.startedAt =
+Math.min(
+...startedTimes
+);
 
-  session.endedAt =
-    Math.max(
-      ...endedTimes
-    );
+session.endedAt =
+Math.max(
+...endedTimes
+);
 
-  session.elapsedSeconds =
-    notes.reduce(
-      function(
-        total,
-        note
-      ) {
-        const noteStartedAt =
-          Number(
-            note.startedAt
-          );
+session.elapsedSeconds =
+notes.reduce(
+function(
+total,
+note
+) {
+const noteStartedAt =
+Number(
+note.startedAt
+);
 
-        const noteEndedAt =
-          Number(
-            note.endedAt
-          ) ||
-          Number(
-            note.createdAt
-          ) ||
-          noteStartedAt;
+const noteEndedAt =
+Number(
+note.endedAt
+) ||
+Number(
+note.createdAt
+) ||
+noteStartedAt;
 
-        return (
-          total +
-          Math.max(
-            1,
+return (
+total +
+Math.max(
+1,
 
-            Math.floor(
-              (
-                noteEndedAt -
-                noteStartedAt
-              ) /
-              1000
-            )
-          )
-        );
-      },
+Math.floor(
+(
+noteEndedAt -
+noteStartedAt
+) /
+1000
+)
+)
+);
+},
 
-      0
-    );
+0
+);
 }
 
 function closeRecordDialog() {
-  recordDialog.close();
+recordDialog.close();
 
-  recordFormError.textContent =
-    "";
+recordFormError.textContent =
+"";
 }
 
 
 function formatRecordTimeForInput(
-  date
+date
 ) {
-  const hours =
-    String(
-      date.getHours()
-    ).padStart(
-      2,
-      "0"
-    );
+const hours =
+String(
+date.getHours()
+).padStart(
+2,
+"0"
+);
 
-  const minutes =
-    String(
-      date.getMinutes()
-    ).padStart(
-      2,
-      "0"
-    );
+const minutes =
+String(
+date.getMinutes()
+).padStart(
+2,
+"0"
+);
 
-  return (
-    hours +
-    ":" +
-    minutes
-  );
+return (
+hours +
+":" +
+minutes
+);
 }
 
 // ========================================
@@ -9606,37 +9875,37 @@ function formatRecordTimeForInput(
 // ========================================
 
 screenTabButtons.forEach(
-  function(screenTabButton) {
-    screenTabButton.addEventListener(
-      "click",
+function(screenTabButton) {
+screenTabButton.addEventListener(
+"click",
 
-      function() {
-        const selectedScreen =
-          screenTabButton.dataset.screen;
+function() {
+const selectedScreen =
+screenTabButton.dataset.screen;
 
-        const allowedScreens = [
-          "work",
-          "settings",
-          "records"
-        ];
+const allowedScreens = [
+"work",
+"settings",
+"records"
+];
 
-        if (
-          !allowedScreens.includes(
-            selectedScreen
-          )
-        ) {
-          return;
-        }
+if (
+!allowedScreens.includes(
+selectedScreen
+)
+) {
+return;
+}
 
-        appData.settings.selectedScreen =
-          selectedScreen;
+appData.settings.selectedScreen =
+selectedScreen;
 
-        saveDisplaySettingsLocally();
+saveDisplaySettingsLocally();
 
-        updateScreenTabs();
-      }
-    );
-  }
+updateScreenTabs();
+}
+);
+}
 );
 
 
@@ -9645,63 +9914,63 @@ screenTabButtons.forEach(
 // ========================================
 
 function updateScreenTabs() {
-  const allowedScreens = [
-    "work",
-    "settings",
-    "records"
-  ];
+const allowedScreens = [
+"work",
+"settings",
+"records"
+];
 
-  const requestedScreen =
-    appData.settings.selectedScreen;
+const requestedScreen =
+appData.settings.selectedScreen;
 
-  const selectedScreen =
-    allowedScreens.includes(
-      requestedScreen
-    )
-      ? requestedScreen
-      : "work";
-
-
-  screenTabButtons.forEach(
-    function(screenTabButton) {
-      const isSelected =
-        screenTabButton.dataset.screen ===
-        selectedScreen;
-
-      screenTabButton.classList.toggle(
-        "is-active",
-        isSelected
-      );
-
-      screenTabButton.setAttribute(
-        "aria-selected",
-        String(
-          isSelected
-        )
-      );
-    }
-  );
+const selectedScreen =
+allowedScreens.includes(
+requestedScreen
+)
+? requestedScreen
+: "work";
 
 
-  workPanel.hidden =
-    selectedScreen !==
-    "work";
+screenTabButtons.forEach(
+function(screenTabButton) {
+const isSelected =
+screenTabButton.dataset.screen ===
+selectedScreen;
 
-  settingsPanel.hidden =
-    selectedScreen !==
-    "settings";
+screenTabButton.classList.toggle(
+"is-active",
+isSelected
+);
 
-  recordsPanel.hidden =
-    selectedScreen !==
-    "records";
+screenTabButton.setAttribute(
+"aria-selected",
+String(
+isSelected
+)
+);
+}
+);
 
 
-  if (
-    selectedScreen ===
-    "records"
-  ) {
-    renderRecordSummary();
-  }
+workPanel.hidden =
+selectedScreen !==
+"work";
+
+settingsPanel.hidden =
+selectedScreen !==
+"settings";
+
+recordsPanel.hidden =
+selectedScreen !==
+"records";
+
+
+if (
+selectedScreen ===
+"records"
+) {
+renderRecordSummary();
+}
 }
 
 
@@ -9711,36 +9980,36 @@ function updateScreenTabs() {
 // ========================================
 
 function calculateProgressRate(
-  actualSeconds,
-  plannedSeconds
+actualSeconds,
+plannedSeconds
 ) {
-  if (plannedSeconds <= 0) {
-    if (actualSeconds > 0) {
-      return "計算不可";
-    }
+if (plannedSeconds <= 0) {
+if (actualSeconds > 0) {
+return "計算不可";
+}
 
 
-    return "0%";
-  }
+return "0%";
+}
 
 
-  const progressRate =
-    actualSeconds /
-    plannedSeconds *
-    100;
+const progressRate =
+actualSeconds /
+plannedSeconds *
+100;
 
 
-  const roundedRate =
-    Math.round(
-      progressRate * 10
-    ) /
-    10;
+const roundedRate =
+Math.round(
+progressRate * 10
+) /
+10;
 
 
-  return (
-    roundedRate +
-    "%"
-  );
+return (
+roundedRate +
+"%"
+);
 }
 
 
@@ -9750,35 +10019,35 @@ function calculateProgressRate(
 // ========================================
 
 function formatWorkTimeRange(
-  note
+note
 ) {
-  const startedAt =
-    Number(
-      note.startedAt
-    );
+const startedAt =
+Number(
+note.startedAt
+);
 
 
-  const endedAt =
-    Number(
-      note.endedAt ||
-      note.createdAt
-    );
+const endedAt =
+Number(
+note.endedAt ||
+note.createdAt
+);
 
 
-  if (!startedAt) {
-    return formatNoteTime(
-      endedAt
-    );
-  }
+if (!startedAt) {
+return formatNoteTime(
+endedAt
+);
+}
 
 
-  return (
-    formatNoteTime(
-      startedAt
-    ) +
-    "〜" +
-    formatNoteTime(
-      endedAt
-    )
-  );
+return (
+formatNoteTime(
+startedAt
+) +
+"〜" +
+formatNoteTime(
+endedAt
+)
+);
 }

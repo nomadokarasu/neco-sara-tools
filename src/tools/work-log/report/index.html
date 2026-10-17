@@ -1,276 +1,244 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
 
-  <title>JUNOTA 作業日報</title>
+<title>JUNOTA 作業日報</title>
 
-  <link
-    rel="stylesheet"
-    href="./style.css"
-  >
+<link
+rel="stylesheet"
+href="./style.css"
+>
 </head>
 
 <body>
-  <header class="site-header">
-    <div class="site-header__inner">
-      <p class="site-label">
-        JUNOTA WORK REPORT
-      </p>
+<header class="site-header">
+<div class="site-header__inner">
+<p class="site-label">
+JUNOTA WORK REPORT
+</p>
 
-      <h1>
-        JUNOTA 作業日報
-      </h1>
+<h1>
+JUNOTA 作業日報
+</h1>
 
-      <p class="site-description">
-        作品やウェブツールをつくる日々の作業記録です。
-      </p>
-    </div>
-  </header>
+<p class="site-description">
+作品やウェブツールをつくる日々の作業記録です。
+</p>
+</div>
+</header>
 
-  <main class="main-content">
-    <!-- ========================================
-         表示期間
-    ========================================= -->
-    <div class="sticky-controls">
-      <section class="period-panel">
+<main class="main-content">
+<!-- ========================================
+表示期間
+========================================= -->
+<div class="sticky-controls">
+<section class="period-panel">
 
 
-        <div class="date-selection">
-          <button
-            id="previous-period-button"
-            class="date-move-button"
-            type="button"
-            aria-label="前の期間"
-          >
-            ←
-          </button>
+<div class="date-selection">
+<button
+id="previous-period-button"
+class="date-move-button"
+type="button"
+aria-label="前の期間"
+>
+←
+</button>
 
 
 
 <label for="report-month">
-  表示する月
+表示する月
 
-  <input
-    id="report-month"
-    type="month"
-  >
+<input
+id="report-month"
+type="month"
+>
 </label>
 
-          <button
-            id="next-period-button"
-            class="date-move-button"
-            type="button"
-            aria-label="次の期間"
-          >
-            →
-          </button>
-        </div>
-      </section>
-    </div>
+<button
+id="next-period-button"
+class="date-move-button"
+type="button"
+aria-label="次の期間"
+>
+→
+</button>
+</div>
+</section>
+</div>
 
-    <!-- ========================================
-         現在作業中の内容
-    ========================================= -->
-    <section
-      id="active-work-panel"
-      class="panel active-work-panel"
-      hidden
-    >
-      <div>
-        <p class="section-label">
-          現在作業中
-        </p>
+<!-- ========================================
+現在作業中の内容
+========================================= -->
+<section
+id="active-work-panel"
+class="panel active-work-panel"
+hidden
+>
+<div>
+<p class="section-label">
+現在作業中
+</p>
 
-        <p
-          id="active-category-name"
-          class="active-category-name"
-        >
-        </p>
+<p
+id="active-category-name"
+class="active-category-name"
+>
+</p>
 
-        <h2 id="active-project-name">
-        </h2>
-      </div>
+<h2 id="active-project-name">
+</h2>
+</div>
 
-      <p
-        id="active-timer"
-        class="active-timer"
-      >
-        00:00:00
-      </p>
-    </section>
+<p
+id="active-timer"
+class="active-timer"
+>
+00:00:00
+</p>
+</section>
 
-    <!-- ========================================
-         期間全体の集計
-    ========================================= -->
-    <section class="panel">
-      <div class="section-heading">
-        <div>
-          <p class="section-label">
-            SUMMARY
-          </p>
+<!-- ========================================
+期間全体の集計
+========================================= -->
+<section class="panel">
+<div class="section-heading">
+<div>
+<p class="section-label">
+SUMMARY
+</p>
 
-          <h2 id="report-period-title">
-            今月の集計
-          </h2>
-        </div>
-      </div>
+<h2 id="report-period-title">
+今月の集計
+</h2>
+</div>
+</div>
 
-      <p
-        id="report-date-range"
-        class="report-date-range"
-        hidden
-      >
-      </p>
+<p
+id="report-date-range"
+class="report-date-range"
+hidden
+>
+</p>
 
-      <div class="summary-work-accordions">
-        <details class="summary-work-accordion">
-          <summary>
-            <span>
-              総作業時間
-            </span>
+<div class="summary-work-accordions">
+<details class="summary-work-accordion">
+<summary>
+<span>
+総作業時間
+</span>
 
-            <strong id="report-total-time">
-              0時間
-            </strong>
-          </summary>
+<strong id="report-total-time">
+0時間
+</strong>
+</summary>
 
-          <div
-            id="summary-all-work-days"
-            class="summary-work-day-list"
-          >
-            <p class="empty-message">
-              この期間の作業記録はありません。
-            </p>
-          </div>
-        </details>
+<div
+id="summary-all-work-days"
+class="summary-work-day-list"
+>
+<p class="empty-message">
+この期間の作業記録はありません。
+</p>
+</div>
+</details>
 
-        <details class="summary-work-accordion">
-          <summary>
-            <span>
-              計画内作業
-            </span>
+<div
+hidden
+aria-hidden="true"
+>
+<strong id="planned-work-total"></strong>
+<strong id="unplanned-work-total"></strong>
+<div id="summary-planned-work-days"></div>
+<div id="summary-unplanned-work-days"></div>
+</div>
+</div>
 
-            <strong id="planned-work-total">
-              0時間
-            </strong>
-          </summary>
+<p class="summary-description">
+大分類を押すとプロジェクト一覧を表示します。プロジェクトを押すと作業記録を確認できます。
+</p>
 
-          <div
-            id="summary-planned-work-days"
-            class="summary-work-day-list"
-          >
-            <p class="empty-message">
-              この期間の計画内作業はありません。
-            </p>
-          </div>
-        </details>
-
-        <details class="summary-work-accordion">
-          <summary>
-            <span>
-              計画外作業
-            </span>
-
-            <strong id="unplanned-work-total">
-              0時間
-            </strong>
-          </summary>
-
-          <div
-            id="summary-unplanned-work-days"
-            class="summary-work-day-list"
-          >
-            <p class="empty-message">
-              この期間の計画外作業はありません。
-            </p>
-          </div>
-        </details>
-      </div>
-
-      <p class="summary-description">
-        大分類を押すとプロジェクト一覧を表示します。プロジェクトを押すと作業記録を確認できます。
-      </p>
-
-      <div
-        id="category-summary-list"
-        class="category-summary-list"
-      >
-        <p class="empty-message">
-          作業記録はまだありません。
-        </p>
-      </div>
-    </section>
+<div
+id="category-summary-list"
+class="category-summary-list"
+>
+<p class="empty-message">
+作業記録はまだありません。
+</p>
+</div>
+</section>
 
 
-    <!-- ========================================
-         現在のプロジェクト
-    ========================================= -->
-    <section class="panel">
-      <div class="section-heading">
-        <div>
-          <p class="section-label">
-            CURRENT PROJECTS
-          </p>
+<!-- ========================================
+現在のプロジェクト
+========================================= -->
+<section class="panel">
+<div class="section-heading">
+<div>
+<p class="section-label">
+CURRENT PROJECTS
+</p>
 
-          <h2>
-            現在のプロジェクト
-          </h2>
+<h2>
+現在のプロジェクト
+</h2>
 
-          <p class="section-description">
-            現在進行中のプロジェクトと、これまでの累計作業時間です。
-          </p>
-        </div>
-      </div>
+<p class="section-description">
+現在進行中のプロジェクトと、これまでの累計作業時間です。
+</p>
+</div>
+</div>
 
-      <div
-        id="current-project-list"
-        class="project-report-list"
-      >
-        <p class="empty-message">
-          現在のプロジェクトはありません。
-        </p>
-      </div>
-    </section>
+<div
+id="current-project-list"
+class="project-report-list"
+>
+<p class="empty-message">
+現在のプロジェクトはありません。
+</p>
+</div>
+</section>
 
-    <!-- ========================================
-         アーカイブ
-    ========================================= -->
-    <section class="panel">
-      <div class="section-heading">
-        <div>
-          <p class="section-label">
-            ARCHIVE
-          </p>
+<!-- ========================================
+アーカイブ
+========================================= -->
+<section class="panel">
+<div class="section-heading">
+<div>
+<p class="section-label">
+ARCHIVE
+</p>
 
-          <h2>
-            完了したプロジェクト
-          </h2>
-        </div>
-      </div>
+<h2>
+完了したプロジェクト
+</h2>
+</div>
+</div>
 
-      <div
-        id="project-report-list"
-        class="project-report-list"
-      >
-        <p class="empty-message">
-          アーカイブされたプロジェクトはありません。
-        </p>
-      </div>
-    </section>
-  </main>
+<div
+id="project-report-list"
+class="project-report-list"
+>
+<p class="empty-message">
+アーカイブされたプロジェクトはありません。
+</p>
+</div>
+</section>
+</main>
 
-  <footer class="site-footer">
-    <p>
-      © JUNOTA
-    </p>
-  </footer>
+<footer class="site-footer">
+<p>
+© JUNOTA
+</p>
+</footer>
 
-  <script src="./report.js"></script>
+<script src="./report.js"></script>
 </body>
 </html>
