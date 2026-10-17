@@ -1,6 +1,70 @@
 const workspace=document.getElementById('workspace');
+const workspaceScene=document.getElementById('workspaceScene');
 const nodesLayer=document.getElementById('nodesLayer');
 const connectionsSvg=document.getElementById('connections');
+
+const workspaceCamera={
+x:0,
+y:0,
+scale:1,
+drag:null
+};
+
+function updateWorkspaceCamera(){
+const camera=workspaceCamera;
+workspaceScene.style.transform=`translate(${camera.x}px,${camera.y}px) scale(${camera.scale})`;
+workspace.style.backgroundPosition=`${camera.x}px ${camera.y}px`;
+workspace.style.backgroundSize=`${20*camera.scale}px ${20*camera.scale}px`;
+}
+
+function screenToWorkspace(x,y){
+return{
+x:(x-workspaceCamera.x)/workspaceCamera.scale,
+y:(y-workspaceCamera.y)/workspaceCamera.scale
+};
+}
+
+function workspaceToScreen(x,y){
+return{
+x:x*workspaceCamera.scale+workspaceCamera.x,
+y:y*workspaceCamera.scale+workspaceCamera.y
+};
+}
+
+function getWorkspaceTool(e){
+if(e.button!==0)return null;
+if(state.pressedKeys.has(' '))return 'pan';
+if(state.pressedKeys.has('z'))return 'zoom';
+return null;
+}
+
+function finishWorkspaceCameraDrag(){
+workspaceCamera.drag=null;
+workspace.classList.remove('is-panning','is-zooming');
+}
+
+function startWorkspaceCameraDrag(e){
+const mode=getWorkspaceTool(e);
+if(!mode)return false;
+
+workspaceCamera.drag={
+mode,
+pointerId:e.pointerId,
+startX:e.clientX,
+startY:e.clientY,
+x:workspaceCamera.x,
+y:workspaceCamera.y,
+scale:workspaceCamera.scale
+};
+
+workspace.classList.toggle('is-panning',mode==='pan');
+workspace.classList.toggle('is-zooming',mode==='zoom');
+
+workspace.setPointerCapture(e.pointerId);
+e.preventDefault();
+e.stopPropagation();
+return true;
+}
 const contextMenu=document.getElementById('contextMenu');
 const materialMenu=document.getElementById('materialMenu');
 const triggerMenu=document.getElementById('triggerMenu');
@@ -130,15 +194,17 @@ ratioWidthInput.addEventListener('change',updateActiveLayout);
 ratioHeightInput.addEventListener('change',updateActiveLayout);
 
 window.addEventListener('keydown',e=>{
+const target=e.target;
+const typing=target instanceof HTMLElement&&(
+target.isContentEditable||
+['INPUT','TEXTAREA','SELECT'].includes(target.tagName)
+);
+
+if(typing)return;
+
 state.pressedKeys.add(e.key.toLowerCase());
 
-if(
-e.code==='Space'&&
-state.selectedNodeId&&
-getNode(state.selectedNodeId)?.type==='click'&&
-document.activeElement?.tagName!=='INPUT'&&
-document.activeElement?.tagName!=='TEXTAREA'
-){
+if(e.code==='Space'){
 e.preventDefault();
 }
 });
@@ -149,6 +215,7 @@ state.pressedKeys.delete(e.key.toLowerCase());
 
 window.addEventListener('blur',()=>{
 state.pressedKeys.clear();
+finishWorkspaceCameraDrag();
 });
 
 function addNode(type,x,y){
@@ -297,9 +364,12 @@ requestAnimationFrame(renderConnections);
 
 function attachNodeEvents(el,node){
 el.addEventListener('pointerdown',e=>{
+if(getWorkspaceTool(e))return;
+if(e.button!==0)return;
+
 const port=e.target.closest('.port');
 if(port){
-if(port.dataset.port==='output') startConnection(e,node.id,el);
+if(port.dataset.port==='output')startConnection(e,node.id,el);
 return;
 }
 
@@ -329,19 +399,8 @@ e.preventDefault();
 el.addEventListener('pointermove',e=>{
 if(!state.dragging||state.dragging.id!==node.id)return;
 
-const rect=workspace.getBoundingClientRect();
-const nextX=state.dragging.originX+(e.clientX-state.dragging.startX);
-const nextY=state.dragging.originY+(e.clientY-state.dragging.startY);
-
-node.x=Math.max(
-0,
-Math.min(rect.width-el.offsetWidth,nextX)
-);
-
-node.y=Math.max(
-0,
-Math.min(rect.height-el.offsetHeight,nextY)
-);
+node.x=state.dragging.originX+(e.clientX-state.dragging.startX)/workspaceCamera.scale;
+node.y=state.dragging.originY+(e.clientY-state.dragging.startY)/workspaceCamera.scale;
 
 el.style.left=`${node.x}px`;
 el.style.top=`${node.y}px`;
@@ -2687,11 +2746,13 @@ updatePreview();
 
 function workspacePointFromEvent(e){
 const rect=workspace.getBoundingClientRect();
-return{x:e.clientX-rect.left,y:e.clientY-rect.top};
+return screenToWorkspace(e.clientX-rect.left,e.clientY-rect.top);
 }
 
 workspace.addEventListener('pointerdown',e=>{
-if(e.target===workspace||e.target===nodesLayer){
+if(startWorkspaceCameraDrag(e))return;
+
+if(e.target===workspace||e.target===nodesLayer||e.target===workspaceScene){
 if(e.button!==0)return;
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
@@ -2700,15 +2761,57 @@ renderSettings();
 }
 });
 
+workspace.addEventListener('pointermove',e=>{
+const drag=workspaceCamera.drag;
+if(!drag||drag.pointerId!==e.pointerId)return;
+
+if(drag.mode==='pan'){
+workspaceCamera.x=drag.x+e.clientX-drag.startX;
+workspaceCamera.y=drag.y+e.clientY-drag.startY;
+}
+
+if(drag.mode==='zoom'){
+const nextScale=Math.max(
+0.25,
+Math.min(3,drag.scale*Math.exp((drag.startY-e.clientY)*0.008))
+);
+
+const rect=workspace.getBoundingClientRect();
+const centerX=drag.startX-rect.left;
+const centerY=drag.startY-rect.top;
+const factor=nextScale/drag.scale;
+
+workspaceCamera.scale=nextScale;
+workspaceCamera.x=centerX-(centerX-drag.x)*factor;
+workspaceCamera.y=centerY-(centerY-drag.y)*factor;
+}
+
+updateWorkspaceCamera();
+});
+
+workspace.addEventListener('pointerup',e=>{
+if(workspaceCamera.drag?.pointerId!==e.pointerId)return;
+finishWorkspaceCameraDrag();
+});
+
+workspace.addEventListener('pointercancel',e=>{
+if(workspaceCamera.drag?.pointerId!==e.pointerId)return;
+finishWorkspaceCameraDrag();
+});
+
+workspace.addEventListener('lostpointercapture',()=>{
+finishWorkspaceCameraDrag();
+});
+
 workspace.addEventListener('contextmenu',e=>{
 if(e.target.closest('.node')||e.target.closest('.context-menu'))return;
 e.preventDefault();
-const p=workspacePointFromEvent(e);
-openContextMenu(p.x,p.y);
+const rect=workspace.getBoundingClientRect();
+openContextMenu(e.clientX-rect.left,e.clientY-rect.top);
 });
 
 function openContextMenu(x,y,connection=null){
-state.menuPoint={x,y};
+state.menuPoint=screenToWorkspace(x,y);
 state.insertConnection=connection;
 contextMenu.style.left=`${x}px`;
 contextMenu.style.top=`${y}px`;
@@ -3067,7 +3170,10 @@ renderSettings();
 function getPortCenter(port){
 const wr=workspace.getBoundingClientRect();
 const r=port.getBoundingClientRect();
-return{x:r.left+r.width/2-wr.left,y:r.top+r.height/2-wr.top};
+return screenToWorkspace(
+r.left+r.width/2-wr.left,
+r.top+r.height/2-wr.top
+);
 }
 
 function curvePath(a,b){
@@ -3259,7 +3365,8 @@ g.addEventListener('click',e=>{
 e.preventDefault();
 e.stopPropagation();
 
-openContextMenu(mid.x,mid.y,c);
+const position=workspaceToScreen(mid.x,mid.y);
+openContextMenu(position.x,position.y,c);
 });
 
 connectionsSvg.appendChild(g);
