@@ -781,18 +781,9 @@ return;
 }
 
 if(node.type==='dialogue'){
-const previousWorld=findPreviousWorldNode(node.id);
+const previousMedia=findPreviousClickMediaNode(node.id);
 
-const dialogueWorld=previousWorld||{
-world:{
-image:null,
-yaw:0,
-pitch:0,
-zoom:1
-}
-};
-
-ensureDialogueView(node,dialogueWorld);
+ensureDialogueView(node,previousMedia);
 
 const editors=node.dialoguePages.map((text,index)=>`<div class="dialogue-editor"><div class="setting-label">ダイアローグ ${index+1}</div><textarea class="dialogue-textarea" data-dialogue-index="${index}" maxlength="60">${escapeHtml(text)}</textarea><div class="dialogue-count" data-dialogue-count="${index}">${text.length}/60</div></div>`).join('');
 const hasDialogue=node.dialoguePages.length>0;
@@ -1074,6 +1065,7 @@ alert(`${file.name} の読み込みに失敗しました。\n${error.message}`);
 }
 
 worldFileInput.value='';
+if(files.length>0)setMediaPanelOpen(false);
 });
 
 animationFileInput.addEventListener('change',async e=>{
@@ -1089,6 +1081,7 @@ alert(`${file.name} の読み込みに失敗しました。\n${error.message}`);
 }
 
 animationFileInput.value='';
+if(files.length>0)setMediaPanelOpen(false);
 });
 
 renderMediaList();
@@ -2787,27 +2780,58 @@ return String(value)
 .replace(/>/g,'&gt;');
 }
 
-function ensureDialogueView(node,worldNode){
-if(node.dialogueView.initialized)return;
+function ensureDialogueView(node,sourceNode){
+if(!sourceNode)return;
 
-const view=getWorldInitialView(worldNode);
+let view=null;
 
+if(sourceNode.type==='world'){
+view=getWorldInitialView(sourceNode);
+}
+
+if(sourceNode.type==='animation'){
+view=sourceNode.animation.views?.[state.displayMode]||{
+yaw:0,
+pitch:0,
+zoom:1
+};
+}
+
+const sourceKey=`${sourceNode.id}:${state.displayMode}`;
+
+if(view&&node.dialogueSourceKey!==sourceKey){
 node.dialogueView.yaw=view.yaw;
 node.dialogueView.pitch=view.pitch;
 node.dialogueView.zoom=view.zoom;
 node.dialogueView.initialized=true;
+node.dialogueSourceKey=sourceKey;
+}
 }
 
-function getDialogueViewWorld(node,worldNode){
+function getDialogueViewWorld(node,sourceNode){
+let image=null;
+
+if(sourceNode?.type==='world'){
+image=sourceNode.world.image;
+}
+
+if(sourceNode?.type==='animation'){
+const media=mediaLibrary.find(item=>
+item.id===sourceNode.animation.mediaId&&
+item.fileType==='mp4'
+);
+image=media?.video||null;
+}
+
 return{
-image:worldNode.world.image,
+image,
 yaw:node.dialogueView.yaw,
 pitch:node.dialogueView.pitch,
 zoom:node.dialogueView.zoom
 };
 }
 
-function setupDialogueTriggerPreview(node,worldNode){
+function setupDialogueTriggerPreview(node,sourceNode){
 const canvas=document.getElementById('dialoguePreviewCanvas');
 const addButton=document.getElementById('addDialogueBtn');
 const previewBox=document.getElementById('dialoguePreviewBox');
@@ -2817,8 +2841,34 @@ if(!canvas||!addButton)return;
 let drag=null;
 
 const draw=()=>{
-drawPanoramaPreview(canvas,getDialogueViewWorld(node,worldNode));
+drawPanoramaPreview(canvas,getDialogueViewWorld(node,sourceNode));
 };
+
+if(sourceNode?.type==='animation'){
+const media=mediaLibrary.find(item=>
+item.id===sourceNode.animation.mediaId&&
+item.fileType==='mp4'
+);
+
+const video=media?.video;
+
+if(video){
+video.pause();
+
+const startTime=Number(sourceNode.animation.startTime)||0;
+
+if(video.readyState>=2){
+try{
+video.currentTime=startTime;
+}catch(error){
+console.warn(error);
+}
+}
+
+video.addEventListener('seeked',draw,{once:true});
+video.addEventListener('loadeddata',draw,{once:true});
+}
+}
 
 const updatePreview=()=>{
 if(!previewBox||!previewText)return;
