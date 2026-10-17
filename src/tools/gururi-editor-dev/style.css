@@ -306,3 +306,95 @@ a.editor-home__item:hover{background:transparent;opacity:.65}
 /* 管理画面から切り離したエディタの固定ロゴ */
 html[lang="ja"] #editorHomeLogoEn,
 html[lang="en"] #editorHomeLogoJa { display: none !important; }
+
+
+/* トップページ：ぐるりペイントと表示形式を統一 */
+
+/* 非表示のセクション */
+.editor-home__section[hidden] {
+    display: none;
+}
+
+/* 重要なお知らせ・製品情報：2列のカード */
+#editorHomeImportantList,
+#editorHomeProducts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+#editorHomeImportantList .editor-home__item,
+#editorHomeProducts .editor-home__item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid #bcbcb7;
+    border-radius: 4px;
+    background: transparent;
+    color: #181818;
+    text-decoration: none;
+    line-height: 1.6;
+}
+
+#editorHomeImportantList .editor-home__item strong,
+#editorHomeProducts .editor-home__item strong {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#editorHomeProducts .editor-home__item span {
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+#editorHomeImportantList a.editor-home__item:hover,
+#editorHomeProducts a.editor-home__item:hover {
+    background: #181818;
+    color: #fff;
+}
+
+/* お知らせ：カード枠なし・縦1列 */
+#editorHomeNoticeList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#editorHomeNoticeList .editor-home__item {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #181818;
+    font-size: 15px;
+    line-height: 1.8;
+    text-decoration: none;
+}
+
+#editorHomeNoticeList .editor-home__item strong {
+    font-weight: 400;
+}
+
+#editorHomeNoticeList a.editor-home__item {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+}
+
+#editorHomeNoticeList a.editor-home__item:hover {
+    opacity: 0.6;
+}
+
+/* スマートフォン：カードを1列に */
+@media (max-width: 700px) {
+    #editorHomeImportantList,
+    #editorHomeProducts,
+    #editorHomeLinks {
+        grid-template-columns: 1fr;
+    }
+}
