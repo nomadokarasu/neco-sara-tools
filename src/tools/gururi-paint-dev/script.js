@@ -2316,6 +2316,26 @@ homeTitleImage.src =
 ? "./" + managedLogoImage
 : defaultTitleImage;
 
+const homeHeader =
+document.querySelector(".home-page__header");
+
+const managedHeroImage =
+typeof languageContent.heroImage === "string"
+? languageContent.heroImage
+: "";
+
+const hasHeroImage =
+/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(managedHeroImage);
+
+if (homeHeader) {
+    if (hasHeroImage) {
+        homeHeader.style.backgroundImage =
+        `url("./${managedHeroImage}")`;
+    } else {
+        homeHeader.style.removeProperty("background-image");
+    }
+}
+
 homeDescription.textContent =
 languageContent.description || "";
 
