@@ -2809,7 +2809,7 @@ workspaceCamera.y=drag.y+e.clientY-drag.startY;
 
 if(drag.mode==='zoom'){
 const nextScale=Math.max(
-0.25,
+0.01,
 Math.min(3,drag.scale*Math.exp((drag.startY-e.clientY)*0.008))
 );
 
@@ -3325,9 +3325,16 @@ const d=connectionCurve(points);
 
 const path=document.createElementNS('http://www.w3.org/2000/svg','path');
 path.setAttribute('d',d);
+const isSelectedConnection=
+state.selectedConnectionId===c.id||
+(
+state.selectedNodeIds.has(c.from)&&
+state.selectedNodeIds.has(c.to)
+);
+
 path.setAttribute(
 'class',
-state.selectedConnectionId===c.id
+isSelectedConnection
 ?'connection-path selected'
 :'connection-path'
 );
@@ -3419,7 +3426,7 @@ dot.setAttribute('cx',anchor.x);
 dot.setAttribute('cy',anchor.y);
 dot.setAttribute('r','7');
 dot.setAttribute('fill','#ffffff');
-dot.setAttribute('stroke','#3b82f6');
+dot.setAttribute('stroke','#f97316');
 dot.setAttribute('stroke-width','2.5');
 
 dot.style.pointerEvents='auto';

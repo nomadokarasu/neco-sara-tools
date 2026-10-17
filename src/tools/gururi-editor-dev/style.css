@@ -23,7 +23,7 @@ button{cursor:pointer}
 .workspace.is-panning .node,.workspace.is-zooming .node{cursor:inherit}
 .node{position:absolute;min-width:150px;background:#fff;border:1px solid #b8bec7;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);user-select:none;pointer-events:auto;cursor:grab;touch-action:none}
 .node:active{cursor:grabbing}
-.node.selected{outline:2px solid #3b82f6;outline-offset:1px}
+.node.selected{outline:2px solid #f97316;outline-offset:1px}
 .node.start-node{min-width:110px}
 .node-header{padding:10px 12px;font-size:14px;font-weight:700;border-bottom:1px solid #e4e7eb}
 .node-body{padding:9px 12px;font-size:12px;color:#666}
@@ -32,7 +32,7 @@ button{cursor:pointer}
 .port.input{left:-16px}
 .port.output{right:-16px}
 .connection-path{fill:none;stroke:#69707a;stroke-width:2}
-.connection-path.selected{stroke:#3b82f6;stroke-width:3}
+.connection-path.selected{stroke:#f97316;stroke-width:3}
 .connection-hit{fill:none;stroke:transparent;stroke-width:22;pointer-events:stroke;cursor:pointer}
 .connection-plus{pointer-events:auto;cursor:pointer}
 .connection-plus circle{fill:#fff;stroke:#7b828c;stroke-width:1.5}
@@ -45,6 +45,7 @@ button{cursor:pointer}
 .submenu button{padding-left:14px}
 .hidden{display:none!important}
 .topbar-brand{display:flex;align-items:center;gap:14px;min-width:0}
+.editor-version{font-size:11px;color:#888;white-space:nowrap}
 .browse-media-btn{padding:8px 14px;background:#fff;border:1px solid #c7ccd3;border-radius:7px;white-space:nowrap}
 .browse-media-btn:hover,.browse-media-btn[aria-expanded="true"]{background:#edf2f8}
 .editor-sidebar{display:flex;flex-direction:column;min-height:0;background:#fff;border-left:1px solid #d9dde3}
