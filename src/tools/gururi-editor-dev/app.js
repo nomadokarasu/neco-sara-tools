@@ -79,6 +79,7 @@ const materialMenu=document.getElementById('materialMenu');
 const triggerMenu=document.getElementById('triggerMenu');
 const effectMenu=document.getElementById('effectMenu');
 const cameraMenu=document.getElementById('cameraMenu');
+const panelMenu=document.getElementById('panelMenu');
 const settingsPanel=document.getElementById('settingsPanel');
 const worldFileInput=document.getElementById('worldFileInput');
 const animationFileInput=document.getElementById('animationFileInput');
@@ -2986,96 +2987,50 @@ const rect=workspace.getBoundingClientRect();
 openContextMenu(e.clientX-rect.left,e.clientY-rect.top);
 });
 
+const nodeMenuCategories={
+material:{label:'素材',element:materialMenu},
+trigger:{label:'トリガー',element:triggerMenu},
+effect:{label:'効果',element:effectMenu},
+camera:{label:'カメラ',element:cameraMenu},
+panel:{label:'パネル',element:panelMenu}
+};
+
+function updateNodeMenuCategories(openCategory=null){
+for(const [key,category] of Object.entries(nodeMenuCategories)){
+const isOpen=key===openCategory;
+category.element.classList.toggle('hidden',!isOpen);
+
+const button=contextMenu.querySelector(`[data-menu="${key}"]`);
+if(button){
+button.textContent=`${isOpen?'▼':'▶'} ${category.label}`;
+}
+}
+}
+
 function openContextMenu(x,y,connection=null){
 state.menuPoint=screenToWorkspace(x,y);
 state.insertConnection=connection;
 contextMenu.style.left=`${x}px`;
 contextMenu.style.top=`${y}px`;
 contextMenu.classList.remove('hidden');
-materialMenu.classList.add('hidden');
-triggerMenu.classList.add('hidden');
-effectMenu.classList.add('hidden');
-cameraMenu.classList.add('hidden');
-
-const materialButton=contextMenu.querySelector('[data-menu="material"]');
-const triggerButton=contextMenu.querySelector('[data-menu="trigger"]');
-const effectButton=contextMenu.querySelector('[data-menu="effect"]');
-const cameraButton=contextMenu.querySelector('[data-menu="camera"]');
-
-if(materialButton)materialButton.textContent='▶ 素材';
-if(triggerButton)triggerButton.textContent='▶ トリガー';
-if(effectButton)effectButton.textContent='▶ 効果';
-if(cameraButton)cameraButton.textContent='▶ カメラ';
+updateNodeMenuCategories();
 }
 
 contextMenu.addEventListener('click',e=>{
 const parent=e.target.closest('[data-menu]');
+
 if(parent){
-const materialButton=contextMenu.querySelector('[data-menu="material"]');
-const triggerButton=contextMenu.querySelector('[data-menu="trigger"]');
-const effectButton=contextMenu.querySelector('[data-menu="effect"]');
-const cameraButton=contextMenu.querySelector('[data-menu="camera"]');
+const key=parent.dataset.menu;
+const category=nodeMenuCategories[key];
+if(!category)return;
 
-if(parent.dataset.menu==='material'){
-const willOpen=materialMenu.classList.contains('hidden');
-
-materialMenu.classList.toggle('hidden',!willOpen);
-triggerMenu.classList.add('hidden');
-effectMenu.classList.add('hidden');
-cameraMenu.classList.add('hidden');
-
-if(materialButton)materialButton.textContent=willOpen?'▼ 素材':'▶ 素材';
-if(triggerButton)triggerButton.textContent='▶ トリガー';
-if(effectButton)effectButton.textContent='▶ 効果';
-if(cameraButton)cameraButton.textContent='▶ カメラ';
-}
-
-if(parent.dataset.menu==='trigger'){
-const willOpen=triggerMenu.classList.contains('hidden');
-
-triggerMenu.classList.toggle('hidden',!willOpen);
-materialMenu.classList.add('hidden');
-effectMenu.classList.add('hidden');
-cameraMenu.classList.add('hidden');
-
-if(triggerButton)triggerButton.textContent=willOpen?'▼ トリガー':'▶ トリガー';
-if(materialButton)materialButton.textContent='▶ 素材';
-if(effectButton)effectButton.textContent='▶ 効果';
-if(cameraButton)cameraButton.textContent='▶ カメラ';
-}
-
-if(parent.dataset.menu==='effect'){
-const willOpen=effectMenu.classList.contains('hidden');
-
-effectMenu.classList.toggle('hidden',!willOpen);
-materialMenu.classList.add('hidden');
-triggerMenu.classList.add('hidden');
-cameraMenu.classList.add('hidden');
-
-if(effectButton)effectButton.textContent=willOpen?'▼ 効果':'▶ 効果';
-if(materialButton)materialButton.textContent='▶ 素材';
-if(triggerButton)triggerButton.textContent='▶ トリガー';
-if(cameraButton)cameraButton.textContent='▶ カメラ';
-}
-
-if(parent.dataset.menu==='camera'){
-const willOpen=cameraMenu.classList.contains('hidden');
-
-cameraMenu.classList.toggle('hidden',!willOpen);
-materialMenu.classList.add('hidden');
-triggerMenu.classList.add('hidden');
-effectMenu.classList.add('hidden');
-
-if(cameraButton)cameraButton.textContent=willOpen?'▼ カメラ':'▶ カメラ';
-if(materialButton)materialButton.textContent='▶ 素材';
-if(triggerButton)triggerButton.textContent='▶ トリガー';
-if(effectButton)effectButton.textContent='▶ 効果';
-}
-
+const willOpen=category.element.classList.contains('hidden');
+updateNodeMenuCategories(willOpen?key:null);
 return;
 }
 
 const create=e.target.closest('[data-create]');
+
 if(create){
 if(state.insertConnection){
 insertNodeIntoConnection(
@@ -3091,6 +3046,7 @@ state.menuPoint.x,
 state.menuPoint.y
 );
 }
+
 contextMenu.classList.add('hidden');
 }
 });
