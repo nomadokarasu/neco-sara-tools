@@ -458,3 +458,14 @@ html[lang="en"] #editorHomeLogoJa { display: none !important; }
 @media(max-width:700px){
  #editorHomeImportantList,#editorHomeProducts,#editorHomeLinks{grid-template-columns:1fr}
 }
+
+/* 関連ページ：通常時は黒文字、ホバー時は白文字 */
+#editorHomeLinks .editor-home__item--link,
+#editorHomeLinks .editor-home__item--link span {
+    color: #181818;
+}
+
+#editorHomeLinks .editor-home__item--link:not(.is-disabled):hover,
+#editorHomeLinks .editor-home__item--link:not(.is-disabled):hover span {
+    color: #ffffff;
+}
