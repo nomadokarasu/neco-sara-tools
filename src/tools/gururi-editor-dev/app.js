@@ -254,6 +254,8 @@ clickView:{yaw:0,pitch:0,zoom:1,initialized:false},
 dialoguePages:[],
 dialogueEditIndex:0,
 dialogueView:{yaw:0,pitch:0,zoom:1,initialized:false},
+dialogueThumbnail:null,
+dialogueFontSize:18,
 animation:{
 fileName:'',
 raw:null,
@@ -787,8 +789,43 @@ ensureDialogueView(node,previousMedia);
 
 const editors=node.dialoguePages.map((text,index)=>`<div class="dialogue-editor"><div class="setting-label">ダイアローグ ${index+1}</div><textarea class="dialogue-textarea" data-dialogue-index="${index}" maxlength="60">${escapeHtml(text)}</textarea><div class="dialogue-count" data-dialogue-count="${index}">${text.length}/60</div></div>`).join('');
 const hasDialogue=node.dialoguePages.length>0;
-settingsPanel.innerHTML=`<div class="settings-title">ダイアローグ</div><div class="setting-group"><button id="addDialogueBtn" class="add-world-btn" type="button">＋</button></div><div class="setting-group"><div class="dialogue-preview-wrap"><canvas id="dialoguePreviewCanvas" class="world-preview" width="320" height="320"></canvas><div id="dialoguePreviewBox" class="dialogue-preview-box ${hasDialogue?'':'hidden'}"><div id="dialoguePreviewText" class="dialogue-preview-text"></div><div class="dialogue-arrow">▼</div></div></div></div><div id="dialogueEditors">${editors}</div>`;
+const fontSize=Number(node.dialogueFontSize)||18;
+
+settingsPanel.innerHTML=`
+<div class="settings-title">ダイアローグ</div>
+<div class="setting-group">
+<div class="setting-label">サムネイル</div>
+<div class="dialogue-thumbnail-controls">
+<button id="dialogueThumbnailAddBtn" class="add-world-btn" type="button">＋</button>
+<img id="dialogueThumbnailSettingsImage" class="dialogue-thumbnail-settings-image hidden" alt="サムネイル">
+<button id="dialogueThumbnailRemoveBtn" type="button" class="hidden">削除</button>
+</div>
+<input id="dialogueThumbnailFileInput" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" hidden>
+</div>
+<div class="setting-group">
+<div class="setting-label">フォントサイズ（px）</div>
+<input id="dialogueFontSizeInput" class="number-input" type="number" min="10" max="36" step="1" value="${fontSize}">
+</div>
+<div class="setting-group">
+<div class="setting-label">ダイアローグ</div>
+<button id="addDialogueBtn" class="add-world-btn" type="button">＋</button>
+</div>
+<div class="setting-group">
+<div class="dialogue-preview-wrap">
+<canvas id="dialoguePreviewCanvas" class="world-preview" width="320" height="320"></canvas>
+<div id="dialoguePreviewBox" class="dialogue-preview-box ${hasDialogue?'':'hidden'}">
+<div class="dialogue-panel-content">
+<img id="dialoguePreviewThumbnail" class="dialogue-panel-thumbnail hidden" alt="">
+<div id="dialoguePreviewText" class="dialogue-preview-text"></div>
+</div>
+<div class="dialogue-arrow">▼</div>
+</div>
+</div>
+</div>
+<div id="dialogueEditors">${editors}</div>`;
+
 setupDialogueTriggerPreview(node,previousMedia);
+setupDialogueAppearance(node);
 return;
 }
 settingsPanel.innerHTML=`<div class="settings-title">ビュー（2:1 PNG）</div><div class="setting-group"><div class="setting-label">メディアを選択</div><select id="worldMediaSelect" class="number-input">${getMediaOptions('media',node.world.mediaId)}</select></div><div class="setting-group"><div class="setting-label">初期カメラ位置 <label style="margin-left:12px;font-size:12px;font-weight:normal;white-space:nowrap"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div><canvas id="worldPreviewCanvas" class="world-preview" width="320" height="320"></canvas></div>`;
@@ -2831,6 +2868,127 @@ zoom:node.dialogueView.zoom
 };
 }
 
+function setupDialogueAppearance(node){
+const addButton=document.getElementById('dialogueThumbnailAddBtn');
+const fileInput=document.getElementById('dialogueThumbnailFileInput');
+const removeButton=document.getElementById('dialogueThumbnailRemoveBtn');
+const settingsImage=document.getElementById('dialogueThumbnailSettingsImage');
+const fontInput=document.getElementById('dialogueFontSizeInput');
+
+const updateAppearance=()=>{
+const previewImage=document.getElementById('dialoguePreviewThumbnail');
+const previewText=document.getElementById('dialoguePreviewText');
+const fontSize=Number(node.dialogueFontSize)||18;
+
+if(previewText){
+previewText.style.fontSize=`${fontSize}px`;
+}
+
+if(previewImage){
+previewImage.classList.toggle('hidden',!node.dialogueThumbnail);
+if(node.dialogueThumbnail){
+previewImage.src=node.dialogueThumbnail;
+}
+}
+
+settingsImage.classList.toggle('hidden',!node.dialogueThumbnail);
+removeButton.classList.toggle('hidden',!node.dialogueThumbnail);
+
+if(node.dialogueThumbnail){
+settingsImage.src=node.dialogueThumbnail;
+}
+};
+
+addButton.addEventListener('click',()=>{
+fileInput.click();
+});
+
+fileInput.addEventListener('change',async()=>{
+const file=fileInput.files?.[0];
+fileInput.value='';
+if(!file)return;
+
+if(!['image/png','image/jpeg'].includes(file.type)){
+alert('PNGまたはJPG画像を選択してください。');
+return;
+}
+
+if(file.size>10*1024*1024){
+alert('10MB以下の画像を選択してください。');
+return;
+}
+
+const url=URL.createObjectURL(file);
+
+try{
+const image=await new Promise((resolve,reject)=>{
+const img=new Image();
+img.onload=()=>resolve(img);
+img.onerror=()=>reject(new Error('画像を読み込めませんでした。'));
+img.src=url;
+});
+
+const canvas=document.createElement('canvas');
+canvas.width=256;
+canvas.height=256;
+
+const ctx=canvas.getContext('2d');
+if(!ctx)throw new Error('画像を処理できませんでした。');
+
+ctx.clearRect(0,0,256,256);
+
+const scale=Math.min(
+256/image.naturalWidth,
+256/image.naturalHeight
+);
+
+const width=image.naturalWidth*scale;
+const height=image.naturalHeight*scale;
+
+ctx.drawImage(
+image,
+(256-width)/2,
+(256-height)/2,
+width,
+height
+);
+
+node.dialogueThumbnail=canvas.toDataURL('image/png');
+updateAppearance();
+}catch(error){
+console.error(error);
+alert(error.message);
+}finally{
+URL.revokeObjectURL(url);
+}
+});
+
+removeButton.addEventListener('click',()=>{
+node.dialogueThumbnail=null;
+updateAppearance();
+});
+
+fontInput.addEventListener('input',()=>{
+const value=Number(fontInput.value);
+if(!Number.isFinite(value))return;
+if(value<10||value>36)return;
+
+node.dialogueFontSize=value;
+updateAppearance();
+});
+
+fontInput.addEventListener('change',()=>{
+node.dialogueFontSize=Math.max(
+10,
+Math.min(36,Number(fontInput.value)||18)
+);
+fontInput.value=node.dialogueFontSize;
+updateAppearance();
+});
+
+updateAppearance();
+}
+
 function setupDialogueTriggerPreview(node,sourceNode){
 const canvas=document.getElementById('dialoguePreviewCanvas');
 const addButton=document.getElementById('addDialogueBtn');
@@ -3740,7 +3898,37 @@ renderSettings();
 
 playBtn.addEventListener('click',startPreview);
 closePreviewBtn.addEventListener('click',stopPreview);
-dialogueOverlay.addEventListener('click',advanceDialogue);
+
+gameViewport.addEventListener('click',e=>{
+if(gamePreview.classList.contains('hidden'))return;
+if(!state.previewDialogueNodeId)return;
+if(e.button!==0)return;
+
+e.preventDefault();
+advanceDialogue();
+});
+
+document.addEventListener('keydown',e=>{
+if(gamePreview.classList.contains('hidden'))return;
+if(!state.previewDialogueNodeId)return;
+if(e.isComposing||e.key==='Process'||e.keyCode===229)return;
+if(e.repeat||e.ctrlKey||e.altKey||e.metaKey)return;
+
+const target=e.target;
+
+if(target instanceof HTMLElement&&(
+target.isContentEditable||
+['INPUT','TEXTAREA','SELECT'].includes(target.tagName)
+)){
+return;
+}
+
+if(!['Enter','Space','KeyZ'].includes(e.code))return;
+
+e.preventDefault();
+e.stopImmediatePropagation();
+advanceDialogue();
+},true);
 
 let gamePreviewDrag=null;
 
@@ -4491,6 +4679,35 @@ state.effectAnimationFrame=requestAnimationFrame(animate);
 
 function showDialoguePage(node,index){
 stopDialogueTyping();
+
+const fontSize=Math.max(
+10,
+Math.min(36,Number(node.dialogueFontSize)||18)
+);
+
+dialogueText.style.fontSize=`calc(${fontSize}px * var(--dialogue-scale,1))`;
+
+let thumbnail=dialogueOverlay.querySelector('#gameDialogueThumbnail');
+
+if(!thumbnail){
+const content=document.createElement('div');
+content.className='dialogue-panel-content';
+
+thumbnail=document.createElement('img');
+thumbnail.id='gameDialogueThumbnail';
+thumbnail.className='dialogue-panel-thumbnail hidden';
+thumbnail.alt='';
+
+dialogueText.parentNode.insertBefore(content,dialogueText);
+content.appendChild(thumbnail);
+content.appendChild(dialogueText);
+}
+
+thumbnail.classList.toggle('hidden',!node.dialogueThumbnail);
+
+if(node.dialogueThumbnail){
+thumbnail.src=node.dialogueThumbnail;
+}
 
 const text=node.dialoguePages[index]||'';
 const characters=[...text];

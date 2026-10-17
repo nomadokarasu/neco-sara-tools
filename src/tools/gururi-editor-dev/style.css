@@ -95,6 +95,14 @@ button{cursor:pointer}
 .dialogue-preview-wrap .world-preview{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}
 .dialogue-preview-box{position:absolute;left:0;bottom:0;right:auto;height:140px;padding:20px 48px 28px 24px;background:rgba(0,0,0,.76);color:#fff;border-top:1px solid rgba(255,255,255,.38);overflow:hidden;transform-origin:left bottom;pointer-events:none}
 .dialogue-preview-text{font-size:18px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.dialogue-panel-content{display:flex;align-items:flex-start;gap:16px;min-width:0;width:100%}
+.dialogue-panel-thumbnail{display:block;width:92px;height:92px;flex:0 0 92px;object-fit:contain}
+.dialogue-panel-thumbnail.hidden{visibility:hidden}
+.dialogue-panel-content .dialogue-preview-text,.dialogue-panel-content .game-dialogue-text{flex:1;min-width:0}
+.dialogue-thumbnail-controls{display:flex;align-items:center;gap:10px}
+.dialogue-thumbnail-settings-image{width:64px;height:64px;object-fit:contain;background:#eee;border:1px solid #c7ccd3;border-radius:4px}
+.game-dialogue .dialogue-panel-content{gap:calc(16px * var(--dialogue-scale,1))}
+.game-dialogue .dialogue-panel-thumbnail{width:calc(92px * var(--dialogue-scale,1));height:calc(92px * var(--dialogue-scale,1));flex-basis:calc(92px * var(--dialogue-scale,1))}
 .dialogue-editor{margin-bottom:14px}
 .dialogue-textarea{display:block;width:100%;min-height:92px;resize:vertical;padding:9px 10px;border:1px solid #c7ccd3;border-radius:6px;font:inherit;line-height:1.6}
 .dialogue-count{text-align:right;margin-top:4px;font-size:11px;color:#777}
