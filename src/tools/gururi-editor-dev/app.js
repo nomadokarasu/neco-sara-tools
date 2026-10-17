@@ -2872,11 +2872,21 @@ video.addEventListener('loadeddata',draw,{once:true});
 
 const updatePreview=()=>{
 if(!previewBox||!previewText)return;
+
+const layout=getActiveLayout();
+const referenceWidth=layout.width>=layout.height?1280:720;
+const previewWidth=previewBox.parentElement.clientWidth;
+const scale=previewWidth/referenceWidth;
+
+previewBox.style.width=`${referenceWidth}px`;
+previewBox.style.transform=`scale(${scale})`;
+
 if(node.dialoguePages.length===0){
 previewBox.classList.add('hidden');
 previewText.textContent='';
 return;
 }
+
 node.dialogueEditIndex=clamp(node.dialogueEditIndex,0,node.dialoguePages.length-1);
 previewBox.classList.remove('hidden');
 previewText.textContent=node.dialoguePages[node.dialogueEditIndex]||'';
@@ -4768,6 +4778,10 @@ width=height*aspect;
 
 gameViewport.style.width=`${Math.max(1,width)}px`;
 gameViewport.style.height=`${Math.max(1,height)}px`;
+
+const referenceWidth=layout.width>=layout.height?1280:720;
+const dialogueScale=width/referenceWidth;
+gameViewport.style.setProperty('--dialogue-scale',String(dialogueScale));
 
 gameCanvas.width=Math.max(1,Math.floor(width));
 gameCanvas.height=Math.max(1,Math.floor(height));

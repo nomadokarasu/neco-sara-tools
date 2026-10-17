@@ -93,12 +93,13 @@ button{cursor:pointer}
 .click-handle.se{right:-8px;bottom:-8px;cursor:nwse-resize}
 .dialogue-preview-wrap{position:relative;width:100%;aspect-ratio:var(--game-aspect,16/9);overflow:hidden;border-radius:8px;background:#111}
 .dialogue-preview-wrap .world-preview{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}
-.dialogue-preview-box{position:absolute;left:0;right:0;bottom:0;height:78px;padding:10px 32px 18px 12px;background:rgba(0,0,0,.72);color:#fff;border-top:1px solid rgba(255,255,255,.35);overflow:hidden}
-.dialogue-preview-text{font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.dialogue-preview-box{position:absolute;left:0;bottom:0;right:auto;height:140px;padding:20px 48px 28px 24px;background:rgba(0,0,0,.76);color:#fff;border-top:1px solid rgba(255,255,255,.38);overflow:hidden;transform-origin:left bottom;pointer-events:none}
+.dialogue-preview-text{font-size:18px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
 .dialogue-editor{margin-bottom:14px}
 .dialogue-textarea{display:block;width:100%;min-height:92px;resize:vertical;padding:9px 10px;border:1px solid #c7ccd3;border-radius:6px;font:inherit;line-height:1.6}
 .dialogue-count{text-align:right;margin-top:4px;font-size:11px;color:#777}
 .dialogue-arrow{position:absolute;right:12px;bottom:7px;font-size:14px;animation:dialogueArrowBlink .8s steps(1,end) infinite}
+.dialogue-preview-box .dialogue-arrow{right:24px;bottom:14px;font-size:18px}
 @keyframes dialogueArrowBlink{0%,49%{opacity:1}50%,100%{opacity:.15}}
 .file-name{font-size:12px;color:#666;margin-top:8px;word-break:break-all}
 .number-input{width:100%;padding:8px 10px;border:1px solid #c7ccd3;border-radius:6px}
@@ -106,8 +107,9 @@ button{cursor:pointer}
 .game-viewport{position:relative;background:#000;overflow:hidden}
 .game-viewport canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .fade-overlay{position:absolute;inset:0;z-index:3;background:#000;opacity:0;pointer-events:none}
-.game-dialogue{position:absolute;left:0;right:0;bottom:0;z-index:4;height:140px;padding:20px 48px 28px 24px;background:rgba(0,0,0,.76);color:#fff;border-top:1px solid rgba(255,255,255,.38);cursor:pointer;user-select:none;overflow:hidden}
-.game-dialogue-text{font-size:18px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.game-dialogue{position:absolute;left:0;right:0;bottom:0;z-index:4;height:calc(140px * var(--dialogue-scale,1));padding:calc(20px * var(--dialogue-scale,1)) calc(48px * var(--dialogue-scale,1)) calc(28px * var(--dialogue-scale,1)) calc(24px * var(--dialogue-scale,1));background:rgba(0,0,0,.76);color:#fff;border-top:1px solid rgba(255,255,255,.38);cursor:pointer;user-select:none;overflow:hidden}
+.game-dialogue-text{font-size:calc(18px * var(--dialogue-scale,1));line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.game-dialogue .dialogue-arrow{right:calc(24px * var(--dialogue-scale,1));bottom:calc(14px * var(--dialogue-scale,1));font-size:calc(18px * var(--dialogue-scale,1))}
 .close-preview{position:absolute;right:14px;top:14px;z-index:5;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.86);font-size:24px}
 .preview-message{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);padding:8px 12px;border-radius:6px;background:rgba(0,0,0,.55);color:#fff;font-size:13px;pointer-events:none}
 @media(max-width:800px){.main-layout{grid-template-columns:minmax(0,1fr) 260px}}
