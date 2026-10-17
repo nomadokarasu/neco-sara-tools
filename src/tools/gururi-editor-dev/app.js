@@ -32,11 +32,20 @@ y:y*workspaceCamera.scale+workspaceCamera.y
 }
 
 function getWorkspaceTool(e){
+if(e.button===1)return 'pan';
 if(e.button!==0)return null;
 if(state.pressedKeys.has(' '))return 'pan';
 if(state.pressedKeys.has('z'))return 'zoom';
 return null;
 }
+
+workspace.addEventListener('auxclick',e=>{
+if(e.button===1)e.preventDefault();
+});
+
+workspace.addEventListener('mousedown',e=>{
+if(e.button===1)e.preventDefault();
+});
 
 function finishWorkspaceCameraDrag(){
 workspaceCamera.drag=null;
@@ -91,6 +100,7 @@ const state={
 nodes:[],
 connections:[],
 selectedNodeId:null,
+selectedNodeIds:new Set(),
 selectedConnectionId:null,
 menuPoint:{x:0,y:0},
 connecting:null,
@@ -330,7 +340,7 @@ function renderNodes(){
 nodesLayer.innerHTML='';
 for(const node of state.nodes){
 const el=document.createElement('div');
-el.className=`node ${node.type==='start'?'start-node':''} ${state.selectedNodeId===node.id?'selected':''}`;
+el.className=`node ${node.type==='start'?'start-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''}`;
 el.dataset.id=node.id;
 el.style.left=`${node.x}px`;
 el.style.top=`${node.y}px`;
@@ -374,6 +384,7 @@ return;
 }
 
 state.selectedNodeId=node.id;
+state.selectedNodeIds.clear();
 state.selectedConnectionId=null;
 
 nodesLayer.querySelectorAll('.node').forEach(nodeEl=>{
@@ -431,6 +442,7 @@ state.dragging=null;
 
 function selectNode(id){
 state.selectedNodeId=id;
+state.selectedNodeIds.clear();
 state.selectedConnectionId=null;
 renderNodes();
 renderSettings();
@@ -2755,11 +2767,36 @@ if(startWorkspaceCameraDrag(e))return;
 if(e.target===workspace||e.target===nodesLayer||e.target===workspaceScene){
 if(e.button!==0)return;
 state.selectedNodeId=null;
+state.selectedNodeIds.clear();
 state.selectedConnectionId=null;
 renderNodes();
 renderSettings();
 }
 });
+
+workspace.addEventListener('wheel',e=>{
+if(e.target.closest('.context-menu'))return;
+
+e.preventDefault();
+
+const rect=workspace.getBoundingClientRect();
+const centerX=e.clientX-rect.left;
+const centerY=e.clientY-rect.top;
+
+const previousScale=workspaceCamera.scale;
+const nextScale=Math.max(
+0.01,
+Math.min(3,previousScale*Math.exp(-e.deltaY*0.001))
+);
+
+const factor=nextScale/previousScale;
+
+workspaceCamera.scale=nextScale;
+workspaceCamera.x=centerX-(centerX-workspaceCamera.x)*factor;
+workspaceCamera.y=centerY-(centerY-workspaceCamera.y)*factor;
+
+updateWorkspaceCamera();
+},{passive:false});
 
 workspace.addEventListener('pointermove',e=>{
 const drag=workspaceCamera.drag;
@@ -2974,6 +3011,73 @@ return;
 
 const selectedNode=getNode(state.selectedNodeId);
 const key=e.key.toLowerCase();
+
+if((e.ctrlKey||e.metaKey)&&!e.altKey&&key==='a'){
+e.preventDefault();
+
+state.selectedNodeIds=new Set(state.nodes.map(node=>node.id));
+state.selectedNodeId=null;
+state.selectedConnectionId=null;
+
+renderNodes();
+renderSettings();
+
+if(state.nodes.length===0)return;
+
+let minX=Infinity;
+let minY=Infinity;
+let maxX=-Infinity;
+let maxY=-Infinity;
+
+for(const node of state.nodes){
+const el=Array.from(nodesLayer.querySelectorAll('.node')).find(item=>item.dataset.id===node.id);
+if(!el)continue;
+
+minX=Math.min(minX,node.x);
+minY=Math.min(minY,node.y);
+maxX=Math.max(maxX,node.x+el.offsetWidth);
+maxY=Math.max(maxY,node.y+el.offsetHeight);
+}
+
+for(const connection of state.connections){
+if(!Array.isArray(connection.anchors))continue;
+
+for(const anchor of connection.anchors){
+minX=Math.min(minX,anchor.x);
+minY=Math.min(minY,anchor.y);
+maxX=Math.max(maxX,anchor.x);
+maxY=Math.max(maxY,anchor.y);
+}
+}
+
+if(!Number.isFinite(minX))return;
+
+const padding=100;
+const contentWidth=Math.max(1,maxX-minX);
+const contentHeight=Math.max(1,maxY-minY);
+
+const viewportWidth=workspace.clientWidth;
+const viewportHeight=workspace.clientHeight;
+
+const availableWidth=Math.max(1,viewportWidth-padding*2);
+const availableHeight=Math.max(1,viewportHeight-padding*2);
+
+const scale=Math.min(
+3,
+availableWidth/contentWidth,
+availableHeight/contentHeight
+);
+
+workspaceCamera.scale=Math.max(0.01,scale);
+
+workspaceCamera.x=viewportWidth/2-(minX+contentWidth/2)*workspaceCamera.scale;
+workspaceCamera.y=viewportHeight/2-(minY+contentHeight/2)*workspaceCamera.scale;
+
+updateWorkspaceCamera();
+renderConnections();
+
+return;
+}
 
 if(selectedNode?.type==='click'&&(e.ctrlKey||e.metaKey)&&!e.altKey){
 if(key==='z'||key==='y'){
