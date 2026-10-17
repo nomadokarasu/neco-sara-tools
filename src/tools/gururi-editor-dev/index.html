@@ -177,6 +177,22 @@ for(const item of items){
 const card=document.createElement(item.url?'a':'div');
 card.className='editor-home__item';
 if(item.url){card.href=item.url;card.target='_blank';card.rel='noopener noreferrer';}
+
+if(
+typeof item.thumbnail==='string' &&
+/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(item.thumbnail)
+){
+const img=document.createElement('img');
+img.src='./'+item.thumbnail;
+img.alt='';
+img.style.width='100%';
+img.style.height='auto';
+img.style.display='block';
+img.style.marginBottom='10px';
+img.style.borderRadius='6px';
+card.append(img);
+}
+
 const title=document.createElement('strong');title.textContent=item.title;card.append(title);
 if(item.description){const detail=document.createElement('span');detail.textContent=item.description;card.append(detail);}
 target.append(card);
@@ -239,7 +255,8 @@ const localized=item[lang]||item.ja||{};
 return {
 title:localized.title||localized.text||'',
 description:localized.description||'',
-url:localized.url||item.url||''
+url:localized.url||item.url||'',
+thumbnail:item.thumbnail||''
 };
 }).filter(item=>item.title.trim())
 :[];
