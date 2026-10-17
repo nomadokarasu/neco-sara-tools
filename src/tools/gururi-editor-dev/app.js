@@ -365,11 +365,101 @@ node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
 '開始';
-el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body">${body}</div><div class="port output" data-port="output"></div>`;
+el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div><div class="port output" data-port="output"></div>`;
+
+const bodyEl=el.querySelector('.node-body');
+bodyEl.textContent=node.customBody===undefined?body:node.customBody;
+
 attachNodeEvents(el,node);
+attachNodeBodyEditor(el,node);
 nodesLayer.appendChild(el);
 }
 requestAnimationFrame(renderConnections);
+}
+
+function attachNodeBodyEditor(el,node){
+const body=el.querySelector('.node-body');
+if(!body)return;
+
+body.addEventListener('dblclick',e=>{
+e.preventDefault();
+e.stopPropagation();
+
+if(body.querySelector('textarea'))return;
+
+const originalText=body.textContent;
+const editor=document.createElement('textarea');
+
+editor.className='node-body-editor';
+editor.maxLength=160;
+editor.value=originalText;
+editor.rows=1;
+editor.placeholder='文章を入力';
+
+body.textContent='';
+body.appendChild(editor);
+
+const resize=()=>{
+editor.style.height='auto';
+editor.style.height=`${editor.scrollHeight}px`;
+requestAnimationFrame(renderConnections);
+};
+
+let finished=false;
+
+const finish=save=>{
+if(finished)return;
+finished=true;
+
+if(save){
+const value=editor.value.trim();
+node.customBody=value||undefined;
+}
+
+body.textContent=save
+?(node.customBody===undefined?originalText:node.customBody)
+:originalText;
+
+requestAnimationFrame(renderConnections);
+};
+
+editor.addEventListener('pointerdown',event=>{
+event.stopPropagation();
+});
+
+editor.addEventListener('click',event=>{
+event.stopPropagation();
+});
+
+editor.addEventListener('dblclick',event=>{
+event.stopPropagation();
+});
+
+editor.addEventListener('input',resize);
+
+editor.addEventListener('keydown',event=>{
+event.stopPropagation();
+
+if(event.key==='Escape'){
+event.preventDefault();
+finish(false);
+return;
+}
+
+if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){
+event.preventDefault();
+finish(true);
+}
+});
+
+editor.addEventListener('blur',()=>{
+finish(true);
+});
+
+editor.focus();
+editor.select();
+resize();
+});
 }
 
 function attachNodeEvents(el,node){

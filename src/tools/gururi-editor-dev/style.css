@@ -26,7 +26,10 @@ button{cursor:pointer}
 .node.selected{outline:2px solid #f97316;outline-offset:1px}
 .node.start-node{min-width:110px}
 .node-header{padding:10px 12px;font-size:14px;font-weight:700;border-bottom:1px solid #e4e7eb}
-.node-body{padding:9px 12px;font-size:12px;color:#666}
+.node-body{padding:9px 12px;font-size:12px;color:#666;white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;line-height:1.6;cursor:text}
+.node{width:170px;min-width:170px;box-sizing:border-box}
+.node.start-node{width:170px;min-width:170px}
+.node-body-editor{display:block;width:100%;min-height:28px;box-sizing:border-box;padding:4px;border:1px solid #f97316;border-radius:4px;background:#fff;color:#333;font:inherit;line-height:1.6;resize:none;overflow:hidden;overflow-wrap:anywhere;outline:none}
 .port{position:absolute;top:50%;width:30px;height:30px;margin-top:-15px;background:transparent;border:0;z-index:4;cursor:crosshair}
 .port::after{content:"";position:absolute;left:50%;top:50%;width:14px;height:14px;transform:translate(-50%,-50%);border-radius:50%;background:#fff;border:2px solid #555}
 .port.input{left:-16px}
