@@ -2032,6 +2032,11 @@ document.getElementById(
 "homeTitleImage"
 );
 
+const homeTitleText =
+document.getElementById(
+"homeTitleText"
+);
+
 const homeDescription =
 document.getElementById(
 "homeDescription"
@@ -2301,20 +2306,33 @@ homeTitle.setAttribute(
 languageContent.title || ""
 );
 
-const defaultTitleImage =
-currentLanguage === "en"
-? "./images/home-title-en.png"
-: "./images/home-title-ja.png";
-
 const managedLogoImage =
 typeof languageContent.logoImage === "string"
 ? languageContent.logoImage
 : "";
 
-homeTitleImage.src =
-/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(managedLogoImage)
-? "./" + managedLogoImage
-: defaultTitleImage;
+const hasLogoImage =
+/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(managedLogoImage);
+
+homeTitleText.textContent =
+languageContent.title ||
+(currentLanguage === "en"
+? "Gururi Paint"
+: "ぐるりペイント");
+
+homeTitleText.hidden = hasLogoImage;
+homeTitleImage.hidden = !hasLogoImage;
+
+homeTitle.classList.toggle(
+"home-page__title--text",
+!hasLogoImage
+);
+
+if (hasLogoImage) {
+    homeTitleImage.src = "./" + managedLogoImage;
+} else {
+    homeTitleImage.removeAttribute("src");
+}
 
 const homeHeader =
 document.querySelector(".home-page__header");
@@ -2328,12 +2346,10 @@ const hasHeroImage =
 /^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(managedHeroImage);
 
 if (homeHeader) {
-    if (hasHeroImage) {
-        homeHeader.style.backgroundImage =
-        `url("./${managedHeroImage}")`;
-    } else {
-        homeHeader.style.removeProperty("background-image");
-    }
+    homeHeader.style.backgroundImage =
+    hasHeroImage
+    ? `url("./${managedHeroImage}")`
+    : "none";
 }
 
 homeDescription.textContent =
