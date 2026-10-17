@@ -172,31 +172,31 @@ console.warn('お知らせの取得に失敗しました',error);
 }
 
 function renderCards(target,items){
-target.replaceChildren();
-for(const item of items){
-const card=document.createElement(item.url?'a':'div');
-card.className='editor-home__item';
-if(item.url){card.href=item.url;card.target='_blank';card.rel='noopener noreferrer';}
-
-if(
-typeof item.thumbnail==='string' &&
-/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(item.thumbnail)
-){
-const img=document.createElement('img');
-img.src='./'+item.thumbnail;
-img.alt='';
-img.style.width='100%';
-img.style.height='auto';
-img.style.display='block';
-img.style.marginBottom='10px';
-img.style.borderRadius='6px';
-card.append(img);
-}
-
-const title=document.createElement('strong');title.textContent=item.title;card.append(title);
-if(item.description){const detail=document.createElement('span');detail.textContent=item.description;card.append(detail);}
-target.append(card);
-}
+ target.replaceChildren();
+ const type=target.id==='editorHomeNoticeList'?'notice':target.id==='editorHomeLinks'?'link':'simple';
+ for(const item of items){
+  const card=document.createElement(item.url?'a':'div');
+  card.className='editor-home__item editor-home__item--'+type+(item.url?'':' is-disabled');
+  if(item.url){card.href=item.url;card.target=item.newTab?'_blank':'_self';if(item.newTab)card.rel='noopener noreferrer';}
+  if(type==='link'){
+   if(item.thumbnail){
+    const thumb=document.createElement('span');thumb.className='editor-home__link-thumbnail';
+    const img=document.createElement('img');img.src=item.thumbnail;img.alt='';img.loading='lazy';
+    img.addEventListener('error',()=>thumb.remove());thumb.append(img);card.append(thumb);
+   }
+   const text=document.createElement('span');text.className='editor-home__link-text';
+   const title=document.createElement('span');title.className='editor-home__link-title';title.textContent=item.title;
+   text.append(title);
+   const desc=document.createElement('span');desc.className='editor-home__link-description';desc.textContent=item.description||'';text.append(desc);
+   card.append(text);
+  }else if(type==='notice'){
+   card.textContent=item.title;
+  }else{
+   const title=document.createElement('span');title.className='editor-home__simple-title';title.textContent=item.title;card.append(title);
+   if(item.description){const desc=document.createElement('span');desc.className='editor-home__simple-description';desc.textContent=item.description;card.append(desc);}
+  }
+  target.append(card);
+ }
 }
 function setLanguage(lang){
 const t=data[lang]||data.ja;

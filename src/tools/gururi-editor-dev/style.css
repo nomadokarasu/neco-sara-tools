@@ -411,3 +411,50 @@ html[lang="en"] #editorHomeLogoJa { display: none !important; }
         grid-template-columns: 1fr;
     }
 }
+
+/* GURURI_EDITOR_HOME_MATCH_PAINT_V1 */
+/* ペイントのホーム（2026-10-17）と同じ数値・ホバー動作 */
+.editor-home__section[hidden]{display:none}
+#editorHomeImportantList,#editorHomeProducts,#editorHomeLinks{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+#editorHomeNoticeList{display:flex;flex-direction:column;gap:10px}
+#editorHomeNoticeList>.editor-home__item--notice{
+ display:block;width:fit-content;max-width:100%;padding:0;border:0;border-radius:0;
+ background:transparent;color:#181818;font-size:15px;line-height:1.8;
+ text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;
+}
+#editorHomeNoticeList>.editor-home__item--notice:hover{background:transparent;opacity:.6}
+#editorHomeNoticeList>.editor-home__item--notice.is-disabled{text-decoration:none;cursor:default;pointer-events:none;opacity:1}
+#editorHomeImportantList>.editor-home__item--simple,
+#editorHomeProducts>.editor-home__item--simple{
+ display:flex;flex-direction:column;gap:8px;min-width:0;padding:20px;
+ border:1px solid #bcbcb7;border-radius:4px;background:transparent;color:#181818;
+ text-decoration:none;line-height:normal;opacity:1;
+ transition:background .15s ease,color .15s ease;
+}
+#editorHomeImportantList>.editor-home__item--simple:not(.is-disabled):hover,
+#editorHomeProducts>.editor-home__item--simple:not(.is-disabled):hover{
+ background:#181818;color:#fff;opacity:1;
+}
+#editorHomeImportantList>.editor-home__item--simple.is-disabled,
+#editorHomeProducts>.editor-home__item--simple.is-disabled{cursor:default;opacity:.45;pointer-events:none}
+#editorHomeImportantList .editor-home__simple-title,#editorHomeProducts .editor-home__simple-title{display:block;font-size:16px;font-weight:600;color:inherit}
+#editorHomeImportantList .editor-home__simple-description,#editorHomeProducts .editor-home__simple-description{display:block;font-size:13px;line-height:1.6;color:inherit}
+#editorHomeLinks>.editor-home__item--link{
+ display:flex;flex-direction:column;min-width:0;overflow:hidden;gap:0;
+ padding:0;border:1px solid #bcbcb7;border-radius:4px;background:transparent;
+ color:#181818;text-decoration:none;line-height:normal;opacity:1;
+ transition:background .15s ease,color .15s ease;
+}
+#editorHomeLinks>.editor-home__item--link:not(.is-disabled):hover{background:#181818;color:#fff;opacity:1}
+#editorHomeLinks>.editor-home__item--link.is-disabled{cursor:default;opacity:.45;pointer-events:none}
+#editorHomeLinks .editor-home__link-thumbnail{display:block;width:100%;aspect-ratio:16/9;overflow:hidden;border-bottom:1px solid #bcbcb7;background:#ddd}
+#editorHomeLinks .editor-home__link-thumbnail img{display:block;width:100%;height:100%;object-fit:cover;transform:none;transition:transform .2s ease}
+#editorHomeLinks>.editor-home__item--link:not(.is-disabled):hover .editor-home__link-thumbnail img{transform:scale(1.025)}
+#editorHomeLinks .editor-home__link-text{display:flex;flex:1;flex-direction:column;gap:8px;min-height:112px;padding:20px}
+#editorHomeLinks .editor-home__link-title{display:block;font-size:16px;font-weight:600;color:inherit}
+#editorHomeLinks .editor-home__link-description{display:block;font-size:13px;line-height:1.6;color:inherit}
+@media(max-width:700px){
+ #editorHomeImportantList,#editorHomeProducts,#editorHomeLinks{grid-template-columns:1fr}
+}
