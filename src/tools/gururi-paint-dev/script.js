@@ -2306,14 +2306,14 @@ currentLanguage === "en"
 ? "./images/home-title-en.png"
 : "./images/home-title-ja.png";
 
-const managedTitleImage =
-typeof languageContent.heroImage === "string"
-? languageContent.heroImage
+const managedLogoImage =
+typeof languageContent.logoImage === "string"
+? languageContent.logoImage
 : "";
 
 homeTitleImage.src =
-/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(managedTitleImage)
-? "./" + managedTitleImage
+/^home-thumbnails\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(managedLogoImage)
+? "./" + managedLogoImage
 : defaultTitleImage;
 
 homeDescription.textContent =

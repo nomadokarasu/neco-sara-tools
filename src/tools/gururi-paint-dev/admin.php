@@ -61,6 +61,7 @@ $defaultContent = [
 'title' => 'Gururi Paint',
 'description' => 'You can draw while spinning the camera around.',
 'heroImage' => '',
+'logoImage' => '',
 'startButton' => 'START',
 'importantHeading' => 'Important',
 'noticeHeading' => 'News',
