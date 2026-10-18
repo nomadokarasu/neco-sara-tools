@@ -112,6 +112,7 @@ previewTimer:null,
 previewNodeId:null,
 previewWorldNodeId:null,
 previewAnimation:null,
+panVideo:null,
 previewClickTriggerIds:[],
 previewDialogueNodeId:null,
 previewDialoguePageIndex:0,
@@ -628,10 +629,10 @@ return;
 }
 
 if(node.type==='pan'){
-const previousWorld=findPreviousWorldNode(node.id);
+const previousWorld=findPreviousClickMediaNode(node.id);
 
 if(!previousWorld){
-settingsPanel.innerHTML='<div class="settings-title">パン</div><div class="settings-empty">このノードより前にビューノードを接続してください。</div>';
+settingsPanel.innerHTML='<div class="settings-title">パン</div><div class="settings-empty">このノードより前にビューまたはアニメーションノードを接続してください。</div>';
 return;
 }
 
@@ -1554,6 +1555,17 @@ zoom:previous.clickView.zoom
 };
 }
 
+if(previous.type==='animation'){
+const view=previous.animation.views?.[state.displayMode]||previous.animation.views?.pc;
+if(view){
+return{
+yaw:view.yaw,
+pitch:view.pitch,
+zoom:view.zoom
+};
+}
+}
+
 if(previous.type==='world'){
 const view=getWorldInitialView(previous);
 
@@ -1619,7 +1631,9 @@ return null;
 function ensurePanView(node,worldNode){
 const startView=
 getCameraViewBeforeNode(node.id)||
-getWorldInitialView(worldNode);
+(worldNode.type==='animation'
+?(worldNode.animation.views?.[state.displayMode]||worldNode.animation.views?.pc)
+:getWorldInitialView(worldNode));
 
 if(!startView)return;
 
@@ -1645,8 +1659,20 @@ node.panPath[0]=startPoint;
 }
 
 function getPanPreviewWorld(node,worldNode){
+let image=null;
+
+if(worldNode.type==='animation'){
+const media=mediaLibrary.find(item=>
+item.id===worldNode.animation.mediaId&&item.fileType==='mp4'
+);
+
+image=media?.video?.readyState>=2?media.video:null;
+}else{
+image=worldNode.world.image;
+}
+
 return{
-image:worldNode.world.image,
+image,
 yaw:node.panView.yaw,
 pitch:node.panView.pitch,
 zoom:node.panView.zoom
@@ -1660,6 +1686,30 @@ const pathCanvas=document.getElementById('panPathCanvas');
 if(!previewCanvas||!pathCanvas)return;
 
 ensurePanView(node,worldNode);
+
+if(worldNode.type==='animation'){
+const media=mediaLibrary.find(item=>
+item.id===worldNode.animation.mediaId&&item.fileType==='mp4'
+);
+
+if(media?.video){
+const video=media.video;
+video.pause();
+
+const startTime=Math.max(
+0,
+Math.min(media.duration-0.001,Number(worldNode.animation.startTime)||0)
+);
+
+video.addEventListener('seeked',()=>{
+if(previewCanvas.isConnected){
+drawPanoramaPreview(previewCanvas,getPanPreviewWorld(node,worldNode));
+}
+},{once:true});
+
+video.currentTime=startTime;
+}
+}
 
 let drawing=false;
 let cameraDrag=null;
@@ -4553,6 +4603,13 @@ if(state.cameraAnimationFrame){
 cancelAnimationFrame(state.cameraAnimationFrame);
 state.cameraAnimationFrame=null;
 }
+
+if(state.panVideo){
+state.panVideo.pause();
+state.panVideo.removeAttribute('src');
+state.panVideo.load();
+state.panVideo=null;
+}
 }
 
 function runPan(node,worldNode,onComplete){
@@ -5024,28 +5081,105 @@ return;
 if(node.type==='pan'){
 previewMessage.textContent='';
 
-const worldNode=
+const sourceNode=
 getNode(state.previewWorldNodeId)||
-findPreviousWorldNode(node.id);
+findPreviousClickMediaNode(node.id);
 
 const next=state.connections.find(c=>c.from===node.id);
 
-if(!worldNode){
+const complete=()=>{
+stopCameraAnimation();
+
 if(next){
 showPreviewNode(next.to);
 }
+};
 
+if(!sourceNode){
+complete();
 return;
 }
 
-state.previewWorldNodeId=worldNode.id;
-
-runPan(node,worldNode,()=>{
-if(next){
-showPreviewNode(next.to);
+if(sourceNode.type==='world'){
+state.previewWorldNodeId=sourceNode.id;
+runPan(node,sourceNode,complete);
+return;
 }
+
+if(sourceNode.type==='animation'){
+const media=mediaLibrary.find(item=>
+item.id===sourceNode.animation.mediaId&&item.fileType==='mp4'
+);
+
+if(!media?.url){
+complete();
+return;
+}
+
+stopCameraAnimation();
+
+const video=document.createElement('video');
+video.muted=true;
+video.playsInline=true;
+video.preload='auto';
+video.loop=true;
+video.src=media.url;
+
+state.panVideo=video;
+state.previewWorldNodeId=null;
+
+const view=sourceNode.animation.views?.[state.displayMode]||
+sourceNode.animation.views?.pc||
+{yaw:0,pitch:0,zoom:1};
+
+const panWorld={
+world:{
+image:video,
+yaw:view.yaw,
+pitch:view.pitch,
+zoom:view.zoom
+}
+};
+
+video.addEventListener('loadeddata',async()=>{
+if(state.panVideo!==video)return;
+
+try{
+const startTime=Math.max(
+0,
+Math.min(media.duration-0.001,Number(sourceNode.animation.startTime)||0)
+);
+
+if(startTime>0){
+video.currentTime=startTime;
+
+await new Promise(resolve=>{
+video.addEventListener('seeked',resolve,{once:true});
+});
+}
+
+if(state.panVideo!==video)return;
+
+await video.play();
+
+if(state.panVideo!==video)return;
+
+runPan(node,panWorld,complete);
+}catch(error){
+console.error('パン中のMP4再生に失敗しました',error);
+if(state.panVideo===video)complete();
+}
+},{once:true});
+
+video.addEventListener('error',()=>{
+if(state.panVideo===video)complete();
 });
 
+video.load();
+return;
+}
+
+complete();
 return;
 }
 
