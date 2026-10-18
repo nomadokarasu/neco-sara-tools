@@ -46,6 +46,8 @@ $defaultContent = [
 'ja' => [
 'title' => 'ぐるりペイント',
 'description' => 'カメラをぐるぐる回しながらお絵描きできます。',
+'heroImage' => '',
+'logoImage' => '',
 'startButton' => 'はじめる',
 'importantHeading' => '重要なお知らせ',
 'noticeHeading' => 'お知らせ',
@@ -56,6 +58,8 @@ $defaultContent = [
 'en' => [
 'title' => 'Gururi Paint',
 'description' => 'You can draw while spinning the camera around.',
+'heroImage' => '',
+'logoImage' => '',
 'startButton' => 'START',
 'importantHeading' => 'Important',
 'noticeHeading' => 'News',
@@ -731,6 +735,16 @@ $languagePost,
 $languagePost,
 'description'
 ),
+'heroImage' => isset($languagePost['removeHeroImage'])
+? ''
+: (string) (
+$content['languages'][$language]['heroImage'] ?? ''
+),
+'logoImage' => isset($languagePost['removeLogoImage'])
+? ''
+: (string) (
+$content['languages'][$language]['logoImage'] ?? ''
+),
 'startButton' => postedText(
 $languagePost,
 'startButton'
@@ -756,6 +770,52 @@ $languagePost,
 'footer'
 )
 ];
+}
+
+foreach (['ja', 'en'] as $language) {
+    $uploadedFile = $_FILES['heroImages'] ?? [];
+    $file = [
+        'name' => $uploadedFile['name'][$language] ?? '',
+        'type' => $uploadedFile['type'][$language] ?? '',
+        'tmp_name' => $uploadedFile['tmp_name'][$language] ?? '',
+        'error' => $uploadedFile['error'][$language] ?? UPLOAD_ERR_NO_FILE,
+        'size' => $uploadedFile['size'][$language] ?? 0
+    ];
+
+    try {
+        $newHeroImage = saveThumbnail(
+            $file,
+            $thumbnailDirectory,
+            $thumbnailFolder
+        );
+
+        if ($newHeroImage !== '') {
+            $newContent['languages'][$language]['heroImage'] = $newHeroImage;
+        }
+
+        $uploadedLogo = $_FILES['logoImages'] ?? [];
+
+        $logoFile = [
+            'name' => $uploadedLogo['name'][$language] ?? '',
+            'type' => $uploadedLogo['type'][$language] ?? '',
+            'tmp_name' => $uploadedLogo['tmp_name'][$language] ?? '',
+            'error' => $uploadedLogo['error'][$language] ?? UPLOAD_ERR_NO_FILE,
+            'size' => $uploadedLogo['size'][$language] ?? 0
+        ];
+
+        $newLogoImage = saveThumbnail(
+            $logoFile,
+            $thumbnailDirectory,
+            $thumbnailFolder
+        );
+
+        if ($newLogoImage !== '') {
+            $newContent['languages'][$language]['logoImage'] = $newLogoImage;
+        }
+    } catch (RuntimeException $exception) {
+        $error = 'トップ画像（' . $language . '）：' . $exception->getMessage();
+        break;
+    }
 }
 
 $postedImportantNotices =

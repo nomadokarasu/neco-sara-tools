@@ -695,6 +695,8 @@ margin: 0;
 cursor: pointer;
 }
 
+
+
 .eye-height-control {
 display: flex;
 align-items: center;
@@ -3788,7 +3790,7 @@ min-height: 0;
 margin: 0 -32px;
 border-bottom: 1px solid #bcbcb7;
 background-color: #efffc0;
-background-image: url("./images/gururi-paint-hero.png");
+background-image: none;
 background-position: center center;
 background-repeat: no-repeat;
 background-size: contain;
@@ -4169,4 +4171,25 @@ padding: 30px 0;
 grid-template-columns: 1fr;
 }
 
+}
+
+/* 管理画面のロゴ画像・文字タイトル */
+
+#homeTitleImage[hidden],
+#homeTitleText[hidden] {
+    display: none;
+}
+
+.home-page__title--text {
+    width: min(90%, 620px);
+    line-height: 1.25;
+    text-align: center;
+    font-size: clamp(22px, 4vw, 48px);
+}
+
+@media (max-width: 700px) {
+    .home-page__title--text {
+        width: 90%;
+        font-size: clamp(20px, 6vw, 36px);
+    }
 }

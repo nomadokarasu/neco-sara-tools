@@ -42,7 +42,7 @@ href="https://tools.neco-sara.com/tools/gururi-paint/"
 
 <title>ぐるりペイント｜無料の360°お絵描きツール</title>
 
-<link rel="stylesheet" href="./style.css?v=2.0.15">
+<link rel="stylesheet" href="./style.css?v=2.0.16">
 </head>
 
 <body>
@@ -79,7 +79,7 @@ English
 
 </div>
 
-<header class="home-page__header">
+<header class="home-page__header" style="background-image:url('./images/gururi-paint-hero.png')">
 
 <p
 id="appVersion"
@@ -92,10 +92,14 @@ class="home-page__title"
 aria-label="ぐるりペイント"
 >
 
+<span id="homeTitleText" hidden>ぐるりペイント</span>
+
 <img
 id="homeTitleImage"
 class="home-page__title-image"
 src="./images/home-title-ja.png"
+data-ja-src="./images/home-title-ja.png"
+data-en-src="./images/home-title-en.png"
 alt=""
 aria-hidden="true"
 >
@@ -505,6 +509,8 @@ checked
 </span>
 
 </label>
+
+
 
 
 </div>
@@ -1990,7 +1996,7 @@ type="button"
 
 <script
 type="module"
-src="./script.js?v=2.0.15"
+src="./script.js?v=2.0.16"
 ></script>
 
 </body>

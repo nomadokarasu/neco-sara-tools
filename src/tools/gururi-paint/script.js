@@ -1,3 +1,4 @@
+
 import * as THREE from
 "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
@@ -64,7 +65,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.15";
+"2.0.16";
 
 
 const appVersionElements =
@@ -2032,6 +2033,11 @@ document.getElementById(
 "homeTitleImage"
 );
 
+const homeTitleText =
+document.getElementById(
+"homeTitleText"
+);
+
 const homeDescription =
 document.getElementById(
 "homeDescription"
@@ -2301,10 +2307,18 @@ homeTitle.setAttribute(
 languageContent.title || ""
 );
 
+// ロゴはHTMLに指定された固定画像を使う。
+// 日本語・英語の切替時だけ、画像のパスを切り替える。
 homeTitleImage.src =
 currentLanguage === "en"
-? "./images/home-title-en.png"
-: "./images/home-title-ja.png";
+? homeTitleImage.dataset.enSrc
+: homeTitleImage.dataset.jaSrc;
+
+homeTitleImage.hidden = false;
+homeTitleText.hidden = true;
+homeTitle.classList.remove("home-page__title--text");
+
+// 背景画像はHTMLのstyle属性で固定する。
 
 homeDescription.textContent =
 languageContent.description || "";
@@ -2967,10 +2981,7 @@ drawScale
 );
 
 const stampSize =
-diameter %
-2 === 0
-? diameter + 1
-: diameter;
+diameter;
 
 const key =
 `${diameter}:${color}`;
@@ -3131,25 +3142,17 @@ drawCanvas.width
 ) %
 drawCanvas.width;
 
-const halfWidth =
-(
-stamp.width -
-1
-) / 2;
-
-const halfHeight =
-(
-stamp.height -
-1
-) / 2;
-
 const left =
+Math.round(
 wrappedCenterX -
-halfWidth;
+stamp.width / 2
+);
 
 const top =
+Math.round(
 centerY -
-halfHeight;
+stamp.height / 2
+);
 
 drawContext.imageSmoothingEnabled =
 false;
@@ -6003,6 +6006,7 @@ let yaw = 0;
 let pitch = 0;
 
 
+
 /* ================================
 ペン描画
 ================================ */
@@ -7666,7 +7670,7 @@ currentTool === "eraser"
 ) {
 
 renderer.domElement.style.cursor =
-"none";
+"default";
 
 return;
 }
@@ -19357,7 +19361,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.15",
+"./service-worker.js?v=2.0.16",
 {
 updateViaCache: "none"
 }
