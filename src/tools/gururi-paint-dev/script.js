@@ -18710,13 +18710,18 @@ return;
 
 
 /*
-描画を開始したポインター以外の
-移動では線を描かない
+マウス入力ではFirefox等で
+pointerIdが変化する場合があるため、
+IDが違っても描画を継続する。
+
+タッチ・ペン入力では
+従来のID判定を維持する。
 */
 
 if (
 isDrawing &&
 currentStroke &&
+event.pointerType !== "mouse" &&
 event.pointerId !==
 currentStroke.pointerId
 ) {
@@ -19109,13 +19114,17 @@ return;
 
 
 /*
-描画を開始したポインター以外では
-ストロークを終了しない
+マウス入力ではpointerIdが
+変化しても描画を終了できるようにする。
+
+タッチ・ペン入力では
+従来のID判定を維持する。
 */
 
 if (
 isDrawing &&
 currentStroke &&
+event.pointerType !== "mouse" &&
 event.pointerId !==
 currentStroke.pointerId
 ) {
