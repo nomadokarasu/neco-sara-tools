@@ -6005,90 +6005,7 @@ let previousMouseY = 0;
 let yaw = 0;
 let pitch = 0;
 
-const cameraAngleH =
-document.getElementById("cameraAngleH");
 
-const cameraAngleV =
-document.getElementById("cameraAngleV");
-
-const cameraAngleF =
-document.getElementById("cameraAngleF");
-
-const CAMERA_DEG =
-180 / Math.PI;
-
-const CAMERA_RAD =
-Math.PI / 180;
-
-function updateCameraAngleInputs() {
-const values = [
-((yaw * CAMERA_DEG + 180) % 360 + 360) % 360 - 180,
-pitch * CAMERA_DEG,
-camera.fov
-];
-
-[
-cameraAngleH,
-cameraAngleV,
-cameraAngleF
-].forEach((input, index) => {
-if (document.activeElement === input) {
-return;
-}
-const value =
-String(Math.round(values[index] * 10) / 10);
-if (input.value !== value) {
-input.value = value;
-}
-});
-}
-
-function applyCameraAngleInputs() {
-const h = Number(cameraAngleH.value);
-const v = Number(cameraAngleV.value);
-const f = Number(cameraAngleF.value);
-
-if (
-!Number.isFinite(h) ||
-!Number.isFinite(v) ||
-!Number.isFinite(f)
-) {
-updateCameraAngleInputs();
-return;
-}
-
-const pitchLimit =
-Math.PI / 2 - 0.01;
-
-yaw = h * CAMERA_RAD;
-
-pitch = Math.max(
--pitchLimit,
-Math.min(pitchLimit, v * CAMERA_RAD)
-);
-
-camera.fov = Math.max(
-20,
-Math.min(120, f)
-);
-
-camera.updateProjectionMatrix();
-updateCameraAngleInputs();
-}
-
-[
-cameraAngleH,
-cameraAngleV,
-cameraAngleF
-].forEach((input) => {
-input.addEventListener(
-"change",
-() => {
-input.blur();
-applyCameraAngleInputs();
-}
-);
-});
 
 /* ================================
 ペン描画
@@ -19398,8 +19315,6 @@ now;
 
 
 updateCameraDirection();
-
-updateCameraAngleInputs();
 
 renderer.render(
 scene,

@@ -491,14 +491,32 @@ checked
 
 </label>
 
-<div class="camera-angle-control">
-<label title="水平角度" for="cameraAngleH">H</label>
-<input id="cameraAngleH" type="number" step="0.1" value="0" title="水平角度">
-<label title="垂直角度" for="cameraAngleV">V</label>
-<input id="cameraAngleV" type="number" step="0.1" min="-89.4" max="89.4" value="0" title="垂直角度">
-<label title="カメラ画角（FOV）" for="cameraAngleF">F</label>
-<input id="cameraAngleF" type="number" step="0.1" min="20" max="120" value="85" title="カメラ画角（FOV）">
-</div>
+.camera-angle-control {
+display: flex;
+align-items: center;
+gap: 4px;
+margin-left: 8px;
+flex-shrink: 0;
+white-space: nowrap;
+font-size: 13px;
+color: #ddd;
+}
+
+.camera-angle-control label {
+font-size: 13px;
+}
+
+.camera-angle-control input {
+width: 55px;
+height: 27px;
+padding: 2px 4px;
+border: 1px solid #666;
+border-radius: 4px;
+background: #333;
+color: #fff;
+font-size: 12px;
+text-align: center;
+}
 
 
 </div>
