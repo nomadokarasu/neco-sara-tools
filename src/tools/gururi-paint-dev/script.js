@@ -7669,7 +7669,7 @@ currentTool === "eraser"
 ) {
 
 renderer.domElement.style.cursor =
-"none";
+"default";
 
 return;
 }
