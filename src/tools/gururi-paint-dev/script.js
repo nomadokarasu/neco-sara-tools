@@ -2981,10 +2981,7 @@ drawScale
 );
 
 const stampSize =
-diameter %
-2 === 0
-? diameter + 1
-: diameter;
+diameter;
 
 const key =
 `${diameter}:${color}`;
@@ -3145,25 +3142,17 @@ drawCanvas.width
 ) %
 drawCanvas.width;
 
-const halfWidth =
-(
-stamp.width -
-1
-) / 2;
-
-const halfHeight =
-(
-stamp.height -
-1
-) / 2;
-
 const left =
+Math.round(
 wrappedCenterX -
-halfWidth;
+stamp.width / 2
+);
 
 const top =
+Math.round(
 centerY -
-halfHeight;
+stamp.height / 2
+);
 
 drawContext.imageSmoothingEnabled =
 false;
