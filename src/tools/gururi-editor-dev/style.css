@@ -496,3 +496,7 @@ html[lang="en"] #editorHomeLogoJa { display: none !important; }
 .dialogue-speaker.hidden{display:none}
 .game-dialogue .dialogue-speaker{font-size:calc(20px * var(--dialogue-scale,1));padding:calc(8px * var(--dialogue-scale,1)) calc(20px * var(--dialogue-scale,1))}
 .dialogue-preview-wrap .dialogue-preview-box{overflow:visible}
+
+.click-inherit-row{display:flex;justify-content:flex-end;align-items:center;min-height:24px;margin:0 0 5px}
+.click-inherit-control{display:flex;align-items:center;gap:5px;font-size:12px;color:#555;cursor:pointer;white-space:nowrap}
+.click-inherit-control input{margin:0;cursor:pointer}

@@ -251,6 +251,7 @@ mobile:{yaw:0,pitch:0,zoom:1}
 timeSeconds:1,
 clickTarget:{yaw:0,pitch:0,width:0.5,height:0.35,initialized:false},
 clickView:{yaw:0,pitch:0,zoom:1,initialized:false},
+clickInheritRegions:true,
 dialoguePages:[],
 dialogueEditIndex:0,
 dialogueView:{yaw:0,pitch:0,zoom:1,initialized:false},
@@ -667,7 +668,7 @@ if(!node.clickAnimationMode||node.clickSourceMediaId!==media.id){
 node.clickAnimationMode=true;
 node.clickSourceMediaId=media.id;
 node.clickFrameIndex=0;
-node.clickFrameFps=8;
+node.clickFrameFps=media.fps||8;
 node.clickFrameRegions={};
 node.clickPolygon=[];
 node.clickRegions=[];
@@ -675,7 +676,9 @@ node.clickUndoStack=[];
 node.clickRedoStack=[];
 }
 
-if(!Number.isFinite(node.clickFrameFps)||node.clickFrameFps<=0){
+if(Number.isFinite(media.fps)&&media.fps>0){
+node.clickFrameFps=media.fps;
+}else if(!Number.isFinite(node.clickFrameFps)||node.clickFrameFps<=0){
 node.clickFrameFps=8;
 }
 }else{
@@ -693,10 +696,14 @@ frameCount-1
 );
 
 const frameControls=isAnimation
-?`<div class="setting-group"><div class="setting-label">素材FPS（コマ送り用）</div><input id="clickFrameFpsInput" class="number-input" type="number" min="1" max="120" step="1" value="${node.clickFrameFps}"></div><div class="setting-group"><div class="setting-label">コマ送り</div><div class="click-frame-controls"><button id="clickPreviousFrameBtn" type="button">◀ 前</button><span id="clickFrameLabel">${node.clickFrameIndex+1} / ${frameCount}</span><button id="clickNextFrameBtn" type="button">次 ▶</button></div><input id="clickFrameRange" type="range" min="0" max="${frameCount-1}" step="1" value="${node.clickFrameIndex}" style="width:100%"><div id="clickFrameTimeLabel" class="settings-empty"></div></div>`
+?`<div class="setting-group"><div class="setting-label">コマ送り</div><div class="click-frame-controls"><button id="clickPreviousFrameBtn" type="button">◀ 前</button><span id="clickFrameLabel">${node.clickFrameIndex+1} / ${frameCount}</span><button id="clickNextFrameBtn" type="button">次 ▶</button></div><input id="clickFrameRange" type="range" min="0" max="${frameCount-1}" step="1" value="${node.clickFrameIndex}" style="width:100%"><div id="clickFrameTimeLabel" class="settings-empty"></div></div>`
 :'';
 
-settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameControls}<div class="setting-group"><div class="setting-label">クリック範囲（投げ縄）</div><div class="click-preview-wrap"><canvas id="clickPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="clickLassoCanvas" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="clickLassoAddBtn" class="click-lasso-mode active" type="button" title="選択範囲に追加" aria-pressed="true">＋</button><button id="clickLassoSubtractBtn" class="click-lasso-mode" type="button" title="選択範囲から削除" aria-pressed="false">－</button></div></div><div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div><div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
+const inheritControl=isAnimation
+?`<label class="click-inherit-control"><input id="clickInheritRegionsInput" type="checkbox" ${node.clickInheritRegions!==false?'checked':''}> 選択範囲を継承</label>`
+:'';
+
+settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameControls}<div class="setting-group"><div class="setting-label">クリック範囲を指定</div><div class="click-inherit-row">${inheritControl}</div><div class="click-preview-wrap"><canvas id="clickPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="clickLassoCanvas" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="clickLassoAddBtn" class="click-lasso-mode active" type="button" title="選択範囲に追加" aria-pressed="true">＋</button><button id="clickLassoSubtractBtn" class="click-lasso-mode" type="button" title="選択範囲から削除" aria-pressed="false">－</button></div></div><div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div><div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
 
 setupClickTriggerPreview(node,sourceNode);
 
@@ -1011,6 +1018,103 @@ renderNodes();
 renderSettings();
 }
 
+async function readMp4FrameRate(file){
+const buffer=await file.arrayBuffer();
+const view=new DataView(buffer);
+const decoder=new TextDecoder('ascii');
+
+function boxes(start,end){
+const result=[];
+let position=start;
+
+while(position+8<=end){
+let size=view.getUint32(position);
+const type=decoder.decode(new Uint8Array(buffer,position+4,4));
+let headerSize=8;
+
+if(size===1){
+if(position+16>end)break;
+const high=view.getUint32(position+8);
+const low=view.getUint32(position+12);
+size=high*4294967296+low;
+headerSize=16;
+}else if(size===0){
+size=end-position;
+}
+
+if(!Number.isSafeInteger(size)||size<headerSize||position+size>end)break;
+
+result.push({
+type,
+start:position+headerSize,
+end:position+size
+});
+
+position+=size;
+}
+
+return result;
+}
+
+function child(parent,type){
+return boxes(parent.start,parent.end).find(box=>box.type===type);
+}
+
+const moov=boxes(0,buffer.byteLength).find(box=>box.type==='moov');
+if(!moov)return null;
+
+for(const trak of boxes(moov.start,moov.end).filter(box=>box.type==='trak')){
+const mdia=child(trak,'mdia');
+if(!mdia)continue;
+
+const hdlr=child(mdia,'hdlr');
+if(!hdlr||hdlr.start+12>hdlr.end)continue;
+
+const handler=decoder.decode(new Uint8Array(buffer,hdlr.start+8,4));
+if(handler!=='vide')continue;
+
+const mdhd=child(mdia,'mdhd');
+if(!mdhd)continue;
+
+const version=view.getUint8(mdhd.start);
+const timescaleOffset=version===1?20:12;
+if(mdhd.start+timescaleOffset+4>mdhd.end)continue;
+
+const timescale=view.getUint32(mdhd.start+timescaleOffset);
+if(!timescale)continue;
+
+const minf=child(mdia,'minf');
+const stbl=minf?child(minf,'stbl'):null;
+const stts=stbl?child(stbl,'stts'):null;
+if(!stts||stts.start+8>stts.end)continue;
+
+const entryCount=view.getUint32(stts.start+4);
+let sampleCount=0;
+let durationTicks=0;
+let offset=stts.start+8;
+
+for(let i=0;i<entryCount;i++){
+if(offset+8>stts.end)break;
+
+const count=view.getUint32(offset);
+const delta=view.getUint32(offset+4);
+
+sampleCount+=count;
+durationTicks+=count*delta;
+offset+=8;
+}
+
+if(sampleCount>0&&durationTicks>0){
+const fps=sampleCount*timescale/durationTicks;
+if(Number.isFinite(fps)&&fps>0&&fps<=240){
+return fps;
+}
+}
+}
+
+return null;
+}
+
 async function importMediaFile(file){
 const extension=file.name.toLowerCase();
 const isPng=extension.endsWith('.png');
@@ -1032,6 +1136,7 @@ url:null,
 raw:null,
 frames:[],
 duration:0,
+fps:null,
 width:0,
 height:0
 };
@@ -1055,6 +1160,7 @@ URL.revokeObjectURL(url);
 }
 
 if(isMp4){
+media.fps=await readMp4FrameRate(file);
 const url=URL.createObjectURL(file);
 const video=document.createElement('video');
 
@@ -2084,6 +2190,10 @@ media.fileType==='mp4'
 function getClickFrameRegions(node,frameIndex){
 const frames=node.clickFrameRegions||{};
 
+if(node.clickInheritRegions===false){
+return cloneClickRegions(frames[frameIndex]||[]);
+}
+
 const keys=Object.keys(frames)
 .map(Number)
 .filter(index=>Number.isInteger(index)&&index<=frameIndex)
@@ -2465,6 +2575,24 @@ if(!previewCanvas||!lassoCanvas||!clearButton||!addModeButton||!subtractModeButt
 
 ensureClickLassoHistory(node);
 
+const inheritInput=document.getElementById('clickInheritRegionsInput');
+
+if(inheritInput){
+inheritInput.addEventListener('change',()=>{
+node.clickInheritRegions=inheritInput.checked;
+
+setClickLassoRegions(
+node,
+getClickFrameRegions(node,node.clickFrameIndex||0)
+);
+
+node.clickUndoStack=[];
+node.clickRedoStack=[];
+
+drawClickLassoOverlay(node,worldNode);
+});
+}
+
 if(node.clickLassoMode!=='add'&&node.clickLassoMode!=='subtract'){
 node.clickLassoMode='add';
 }
@@ -2502,7 +2630,7 @@ const previousButton=document.getElementById('clickPreviousFrameBtn');
 const nextButton=document.getElementById('clickNextFrameBtn');
 const label=document.getElementById('clickFrameLabel');
 const timeLabel=document.getElementById('clickFrameTimeLabel');
-const fpsInput=document.getElementById('clickFrameFpsInput');
+
 
 const frameCount=()=>Math.max(
 1,
@@ -2563,33 +2691,7 @@ range.addEventListener('input',()=>{
 showFrame(Number(range.value));
 });
 
-fpsInput.addEventListener('change',()=>{
-const fps=Number(fpsInput.value);
 
-if(!Number.isInteger(fps)||fps<1||fps>120){
-fpsInput.value=String(node.clickFrameFps);
-return;
-}
-
-if(fps===node.clickFrameFps)return;
-
-const previousFps=node.clickFrameFps;
-const previousFrames=node.clickFrameRegions||{};
-const converted={};
-
-for(const [frame,regions] of Object.entries(previousFrames)){
-const time=Number(frame)/previousFps;
-const nextFrame=Math.round(time*fps);
-converted[nextFrame]=cloneClickRegions(regions);
-}
-
-node.clickFrameRegions=converted;
-node.clickFrameIndex=Math.round(node.clickFrameIndex/previousFps*fps);
-node.clickFrameFps=fps;
-
-range.max=String(frameCount()-1);
-showFrame(node.clickFrameIndex);
-});
 
 video.addEventListener('seeked',()=>{
 if(!document.getElementById('clickPreviewCanvas'))return;
