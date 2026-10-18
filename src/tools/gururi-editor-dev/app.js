@@ -268,6 +268,7 @@ loop:false
 effectSeconds:1,
 panSeconds:3,
 panPath:[],
+panKeyframes:[],
 panView:{yaw:0,pitch:0,zoom:1,initialized:false},
 panUndoStack:[],
 panRedoStack:[]
@@ -636,14 +637,49 @@ settingsPanel.innerHTML='<div class="settings-title">パン</div><div class="set
 return;
 }
 
-settingsPanel.innerHTML=`<div class="settings-title">パン</div><div class="setting-group"><div class="setting-label">カメラ経路</div><div class="pan-preview-wrap"><canvas id="panPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="panPathCanvas" class="pan-path-canvas" width="320" height="320"></canvas></div><div class="pan-help">ドラッグ：経路描画 / 中クリック＋ドラッグ：カメラ回転 / Z＋ドラッグ：ズーム / Ctrl＋Z：Undo / Ctrl＋Y：Redo</div></div><div class="setting-group"><div class="setting-label">移動時間（秒）</div><input id="panSecondsInput" class="number-input" type="number" min="0" step="0.1" value="${node.panSeconds}"></div>`;
+const isVideoPan=previousWorld.type==='animation';
+const duration=Math.max(0.1,Number(node.panSeconds)||3);
 
-document.getElementById('panSecondsInput').addEventListener('input',e=>{
-node.panSeconds=Math.max(0,Number(e.target.value)||0);
+const timeControls=isVideoPan?`
+<div class="setting-group">
+<div class="setting-label">再生位置</div>
+<input id="panTimeRange" type="range" min="0" max="${duration}" step="0.01" value="0" style="width:100%">
+<div id="panTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} 秒</div>
+</div>
+<div class="setting-group">
+<button id="panAddKeyframeBtn" class="add-world-btn" type="button" title="現在の位置にキーフレームを登録">＋</button>
+<div id="panKeyframeList" class="pan-keyframe-list"></div>
+</div>`:'';
+
+settingsPanel.innerHTML=`
+<div class="settings-title">パン</div>
+<div class="setting-group">
+<div class="setting-label">${isVideoPan?'カメラ位置':'カメラ経路'}</div>
+<div class="pan-preview-wrap">
+<canvas id="panPreviewCanvas" class="world-preview" width="320" height="320"></canvas>
+<canvas id="panPathCanvas" class="pan-path-canvas" width="320" height="320"></canvas>
+</div>
+<div class="pan-help">${isVideoPan?'ドラッグ：カメラ回転 / ホイール：ズーム / ＋：現在の時刻とカメラ位置を登録':'ドラッグ：経路描画 / 中クリック＋ドラッグ：カメラ回転 / Z＋ドラッグ：ズーム / Ctrl＋Z：Undo / Ctrl＋Y：Redo'}</div>
+</div>
+${timeControls}
+<div class="setting-group">
+<div class="setting-label">移動時間（秒）</div>
+<input id="panSecondsInput" class="number-input" type="number" min="0.1" step="0.1" value="${duration}">
+</div>`;
+
+const secondsInput=document.getElementById('panSecondsInput');
+
+secondsInput.addEventListener('change',()=>{
+node.panSeconds=Math.max(0.1,Number(secondsInput.value)||3);
 renderNodes();
+renderSettings();
 });
 
+if(isVideoPan){
+setupTimedPanPreview(node,previousWorld);
+}else{
 setupPanPreview(node,previousWorld);
+}
 
 return;
 }
@@ -1677,6 +1713,254 @@ yaw:node.panView.yaw,
 pitch:node.panView.pitch,
 zoom:node.panView.zoom
 };
+}
+
+function getTimedPanView(node,time){
+const frames=[...(node.panKeyframes||[])]
+.filter(frame=>Number.isFinite(frame.time))
+.sort((a,b)=>a.time-b.time);
+
+if(frames.length===0){
+return{
+yaw:node.panView.yaw||0,
+pitch:node.panView.pitch||0,
+zoom:node.panView.zoom||1
+};
+}
+
+if(time<=frames[0].time)return {...frames[0]};
+
+const last=frames[frames.length-1];
+if(time>=last.time)return {...last};
+
+for(let i=1;i<frames.length;i++){
+const a=frames[i-1];
+const b=frames[i];
+
+if(time>b.time)continue;
+
+const t=clamp(
+(time-a.time)/(b.time-a.time),
+0,
+1
+);
+
+return{
+yaw:normalizeAngle(a.yaw+angleDiff(b.yaw,a.yaw)*t),
+pitch:a.pitch+(b.pitch-a.pitch)*t,
+zoom:a.zoom+(b.zoom-a.zoom)*t
+};
+}
+
+return {...last};
+}
+
+function setupTimedPanPreview(node,sourceNode){
+const canvas=document.getElementById('panPreviewCanvas');
+const pathCanvas=document.getElementById('panPathCanvas');
+const range=document.getElementById('panTimeRange');
+const label=document.getElementById('panTimeLabel');
+const addButton=document.getElementById('panAddKeyframeBtn');
+const list=document.getElementById('panKeyframeList');
+
+if(!canvas||!range||!label||!addButton||!list)return;
+
+pathCanvas.style.pointerEvents='none';
+
+const media=mediaLibrary.find(item=>
+item.id===sourceNode.animation.mediaId&&item.fileType==='mp4'
+);
+
+const video=media?.video;
+if(!video)return;
+
+video.pause();
+
+ensurePanView(node,sourceNode);
+
+const duration=Math.max(0.1,Number(node.panSeconds)||3);
+
+if(!Array.isArray(node.panKeyframes)){
+node.panKeyframes=[];
+}
+
+if(node.panKeyframes.length===0){
+node.panKeyframes.push({
+time:0,
+yaw:node.panView.yaw,
+pitch:node.panView.pitch,
+zoom:node.panView.zoom
+});
+}
+
+const view={
+yaw:0,
+pitch:0,
+zoom:1
+};
+
+const controller=new AbortController();
+const signal=controller.signal;
+
+cleanupAnimationSettingsPreview=()=>{
+controller.abort();
+};
+
+let currentTime=0;
+let drag=null;
+
+const draw=()=>{
+if(!canvas.isConnected)return;
+
+drawPanoramaPreview(canvas,{
+image:video.readyState>=2?video:null,
+yaw:view.yaw,
+pitch:view.pitch,
+zoom:view.zoom
+});
+};
+
+const seek=time=>{
+currentTime=clamp(time,0,duration);
+range.value=String(currentTime);
+label.textContent=`${currentTime.toFixed(2)} / ${duration.toFixed(2)} 秒`;
+
+Object.assign(view,getTimedPanView(node,currentTime));
+
+const videoDuration=Number(media.duration)||0;
+const startTime=Number(sourceNode.animation.startTime)||0;
+
+if(videoDuration>0){
+const targetTime=Math.max(
+0,
+Math.min(
+videoDuration-0.001,
+(startTime+currentTime)%videoDuration
+)
+);
+
+if(Math.abs(video.currentTime-targetTime)>0.001){
+video.currentTime=targetTime;
+}else{
+draw();
+}
+}else{
+draw();
+}
+};
+
+const updateList=()=>{
+list.innerHTML='';
+
+const frames=[...node.panKeyframes].sort((a,b)=>a.time-b.time);
+
+for(const frame of frames){
+const row=document.createElement('div');
+row.className='pan-keyframe-row';
+
+const select=document.createElement('button');
+select.type='button';
+select.textContent=`◆ ${frame.time.toFixed(2)} 秒`;
+select.addEventListener('click',()=>{
+seek(frame.time);
+});
+
+const remove=document.createElement('button');
+remove.type='button';
+remove.textContent='削除';
+remove.addEventListener('click',()=>{
+node.panKeyframes=node.panKeyframes.filter(item=>item!==frame);
+updateList();
+seek(currentTime);
+});
+
+row.appendChild(select);
+row.appendChild(remove);
+list.appendChild(row);
+}
+};
+
+range.addEventListener('input',()=>{
+seek(Number(range.value));
+},{signal});
+
+video.addEventListener('seeked',draw,{signal});
+video.addEventListener('loadeddata',draw,{signal});
+
+canvas.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+
+drag={
+x:e.clientX,
+y:e.clientY,
+yaw:view.yaw,
+pitch:view.pitch
+};
+
+canvas.setPointerCapture(e.pointerId);
+},{signal});
+
+canvas.addEventListener('pointermove',e=>{
+if(!drag)return;
+
+view.yaw=normalizeAngle(
+drag.yaw-(e.clientX-drag.x)*0.008
+);
+
+view.pitch=clamp(
+drag.pitch+(e.clientY-drag.y)*0.008,
+-Math.PI/2+0.02,
+Math.PI/2-0.02
+);
+
+draw();
+},{signal});
+
+const finishDrag=()=>{
+drag=null;
+};
+
+canvas.addEventListener('pointerup',finishDrag,{signal});
+canvas.addEventListener('pointercancel',finishDrag,{signal});
+
+canvas.addEventListener('wheel',e=>{
+e.preventDefault();
+
+view.zoom=clamp(
+view.zoom+(e.deltaY>0?-0.1:0.1),
+0.6,
+2.2
+);
+
+draw();
+},{passive:false,signal});
+
+addButton.addEventListener('click',()=>{
+const time=Number(currentTime.toFixed(2));
+
+const frame={
+time,
+yaw:view.yaw,
+pitch:view.pitch,
+zoom:view.zoom
+};
+
+const existing=node.panKeyframes.findIndex(item=>
+Math.abs(item.time-time)<0.005
+);
+
+if(existing>=0){
+node.panKeyframes[existing]=frame;
+}else{
+node.panKeyframes.push(frame);
+}
+
+node.panKeyframes.sort((a,b)=>a.time-b.time);
+updateList();
+},{signal});
+
+updateList();
+seek(0);
 }
 
 function setupPanPreview(node,worldNode){
@@ -4612,6 +4896,49 @@ state.panVideo=null;
 }
 }
 
+function runTimedPan(node,worldNode,video,onComplete){
+const duration=Math.max(0.1,Number(node.panSeconds)||3);
+const durationMs=duration*1000;
+
+const frames=node.panKeyframes||[];
+
+if(frames.length===0){
+onComplete();
+return;
+}
+
+const start=performance.now();
+
+const animate=now=>{
+if(state.panVideo!==video)return;
+
+const elapsed=Math.min(
+duration,
+(now-start)/1000
+);
+
+const view=getTimedPanView(node,elapsed);
+
+worldNode.world.yaw=view.yaw;
+worldNode.world.pitch=view.pitch;
+worldNode.world.zoom=view.zoom;
+
+drawPanoramaPreview(
+gameCanvas,
+worldNode.world
+);
+
+if((now-start)<durationMs){
+state.cameraAnimationFrame=requestAnimationFrame(animate);
+}else{
+state.cameraAnimationFrame=null;
+onComplete();
+}
+};
+
+state.cameraAnimationFrame=requestAnimationFrame(animate);
+}
+
 function runPan(node,worldNode,onComplete){
 stopCameraAnimation();
 
@@ -5164,7 +5491,7 @@ await video.play();
 
 if(state.panVideo!==video)return;
 
-runPan(node,panWorld,complete);
+runTimedPan(node,panWorld,video,complete);
 }catch(error){
 console.error('パン中のMP4再生に失敗しました',error);
 if(state.panVideo===video)complete();
