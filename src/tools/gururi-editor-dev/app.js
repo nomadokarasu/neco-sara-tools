@@ -910,7 +910,24 @@ const signal=controller.signal;
 cleanupAnimationSettingsPreview=()=>controller.abort();
 let second=0,drag=null;
 const view={...getMediaCameraAt(node,0)};
-const draw=()=>{if(canvas.isConnected)drawPanoramaPreview(canvas,{image:source?.readyState!==undefined&&source.readyState<2?null:source,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});};
+
+let syncCameraInputs=()=>{};
+
+const draw=()=>{
+if(canvas.isConnected){
+drawPanoramaPreview(canvas,{
+image:source?.readyState!==undefined&&source.readyState<2?null:source,
+yaw:view.yaw,
+pitch:view.pitch,
+zoom:view.zoom
+});
+}
+
+syncCameraInputs();
+};
+
+syncCameraInputs=setupCameraNumberInputs(canvas,view,draw);
+
 const seek=t=>{
 second=clamp(Number(t)||0,0,duration);
 range.value=String(second);
