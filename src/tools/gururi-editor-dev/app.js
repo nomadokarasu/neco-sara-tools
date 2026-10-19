@@ -4292,41 +4292,28 @@ renderConnections();
 function onConnectionEnd(e){
 window.removeEventListener('pointermove',onConnectionMove);
 if(!state.connecting)return;
+
 const target=document.elementFromPoint(e.clientX,e.clientY);
-const input=target&&target.closest&&target.closest('.port.input');
+const input=target?.closest?.('.port.input');
+
 if(input){
 const nodeEl=input.closest('.node');
-const to=nodeEl&&nodeEl.dataset.id;
-if(to&&to!==state.connecting.from){
-const fromId=state.connecting.from;
-const targetNode=getNode(to);
+const to=nodeEl?.dataset.id;
+const from=state.connecting.from;
 
-if(targetNode?.type==='click'){
-state.connections=state.connections.filter(c=>{
-if(c.from!==fromId)return true;
-const existingTarget=getNode(c.to);
-return existingTarget?.type==='click';
-});
-
-const alreadyConnected=state.connections.some(c=>c.from===fromId&&c.to===to);
+if(to&&to!==from&&getNode(from)&&getNode(to)){
+const alreadyConnected=state.connections.some(c=>c.from===from&&c.to===to);
 
 if(!alreadyConnected){
 state.connections.push({
 id:uid('conn'),
-from:fromId,
-to
-});
-}
-}else{
-state.connections=state.connections.filter(c=>c.from!==fromId);
-state.connections.push({
-id:uid('conn'),
-from:fromId,
+from,
 to
 });
 }
 }
 }
+
 state.connecting=null;
 renderConnections();
 renderSettings();
