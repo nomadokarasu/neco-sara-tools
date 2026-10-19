@@ -5791,9 +5791,38 @@ state.previewDialogueNodeId=node.id;
 showDialoguePage(node,0);
 return;
 }
-if(node.type==='fadeIn'||node.type==='fadeOut'){
-const isIn=node.type==='fadeIn';
-runFadeEffect(node,isIn?1:0,isIn?0:1,()=>previewOutgoing(node.id));
+if(node.type==='fadeIn'){
+stopEffectAnimation();
+
+fadeOverlay.classList.remove('hidden');
+fadeOverlay.style.opacity='1';
+fadeOverlay.style.pointerEvents='none';
+
+const nextNodes=state.connections
+.filter(c=>c.from===node.id)
+.map(c=>getNode(c.to))
+.filter(Boolean);
+
+const nextVideo=nextNodes.find(n=>n.type==='animation');
+
+if(nextVideo){
+state.pendingAnimationFade={
+nodeId:nextVideo.id,
+seconds:Math.max(0,Number(node.effectSeconds)||0)
+};
+}
+
+previewOutgoing(node.id);
+
+if(!nextVideo){
+runFadeEffect(node,1,0,()=>{});
+}
+
+return;
+}
+
+if(node.type==='fadeOut'){
+runFadeEffect(node,0,1,()=>previewOutgoing(node.id));
 return;
 }
 if(node.type==='pan'){
