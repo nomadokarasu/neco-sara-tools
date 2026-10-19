@@ -77,6 +77,7 @@ button{cursor:pointer}
 .setting-group{margin-bottom:18px}
 .setting-label{font-size:12px;color:#666;margin-bottom:7px}
 .add-world-btn{width:42px;height:42px;border-radius:7px;border:1px solid #c7ccd3;background:#fff;font-size:24px;line-height:1}
+#mediaCameraAdd{width:100%;height:38px;padding:0 12px;font-size:13px;line-height:1.4;white-space:nowrap;text-align:center}
 .world-preview{width:100%;aspect-ratio:var(--game-aspect,16/9);border:1px solid #c7ccd3;border-radius:8px;background:#111;display:block;cursor:grab}
 .world-preview:active{cursor:grabbing}
 .pan-preview-wrap{position:relative;width:100%;aspect-ratio:var(--game-aspect,16/9);overflow:hidden;border-radius:8px;background:#111}
@@ -505,3 +506,46 @@ html[lang="en"] #editorHomeLogoJa { display: none !important; }
 .click-inherit-row{display:flex;justify-content:flex-end;align-items:center;min-height:24px;margin:0 0 5px}
 .click-inherit-control{display:flex;align-items:center;gap:5px;font-size:12px;color:#555;cursor:pointer;white-space:nowrap}
 .click-inherit-control input{margin:0;cursor:pointer}
+
+/* メディア設定の折りたたみ */
+.media-section-list{display:flex;flex-direction:column;gap:8px}
+.media-section-list details{border:1px solid #c7ccd3;border-radius:6px;overflow:hidden}
+.media-section-list summary{padding:11px 12px;cursor:pointer;font-weight:600;background:#f7f7f7;user-select:none}
+.media-section-body{padding:12px}
+.media-section-body .setting-group:last-child{margin-bottom:0}
+
+.media-camera-time-header{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:8px;
+margin-bottom:6px;
+}
+
+.media-camera-time-header .setting-label{
+margin-bottom:0;
+}
+
+.media-camera-step-buttons{
+display:flex;
+align-items:center;
+gap:5px;
+}
+
+.media-camera-step-buttons button{
+width:32px;
+height:28px;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:0;
+background:#fff;
+border:1px solid #c7ccd3;
+border-radius:5px;
+font-size:12px;
+cursor:pointer;
+}
+
+.media-camera-step-buttons button:hover{
+background:#f0f0f0;
+}

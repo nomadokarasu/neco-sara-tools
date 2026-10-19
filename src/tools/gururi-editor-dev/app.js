@@ -870,7 +870,7 @@ const section=node.mediaSettingsOpened||{basic:true,camera:true,loop:false};
 const collapsible=(id,label,contents)=>`<details data-media-section="${id}" ${section[id]?'open':''}><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
 const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
 const basic=mediaSelect+(videoMode?`<div class="setting-group"><div class="setting-label">素材の長さ</div><div class="file-name">${(media?.duration||0).toFixed(2)} 秒</div></div><div class="setting-group"><div class="setting-label">再生開始位置（秒）</div><input id="mediaStartInput" class="number-input" type="number" min="0" max="${Math.max(0,(media?.duration||0)-0.001)}" step="0.01" value="${Math.max(0,start)}"></div>`:'')+`<div class="setting-group"><div class="setting-label">${videoMode?'再生時間':'表示時間'}（秒）</div><input id="mediaDurationInput" class="number-input" type="number" min="0.1" step="0.1" value="${duration}"></div>`;
-const camera=`<div class="setting-group"><div class="setting-label">カメラ（${state.displayMode==='pc'?'PC':'スマホ'}） <label style="margin-left:8px;font-weight:normal;font-size:12px"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div><canvas id="mediaCameraCanvas" class="world-preview" width="320" height="320"></canvas><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div><div class="setting-group"><div class="setting-label">再生位置</div><input id="mediaCameraTime" type="range" min="0" max="${duration}" step="0.01" value="0" style="width:100%"><div id="mediaCameraTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} 秒</div></div><div class="setting-group"><button id="mediaCameraAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button><div id="mediaCameraFrames" class="pan-keyframe-list"></div></div>`;
+const camera=`<div class="setting-group"><div class="setting-label">カメラ（${state.displayMode==='pc'?'PC':'スマホ'}） <label style="margin-left:8px;font-weight:normal;font-size:12px"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div><canvas id="mediaCameraCanvas" class="world-preview" width="320" height="320"></canvas><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div><div class="setting-group"><div class="media-camera-time-header"><div class="setting-label">再生位置</div><div class="media-camera-step-buttons"><button id="mediaCameraPreviousFrame" type="button" title="1コマ戻る">◀</button><button id="mediaCameraNextFrame" type="button" title="1コマ進む">▶</button></div></div><input id="mediaCameraTime" type="range" min="0" max="${duration}" step="0.01" value="0" style="width:100%"><div id="mediaCameraTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} 秒</div></div><div class="setting-group"><button id="mediaCameraAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button><div id="mediaCameraFrames" class="pan-keyframe-list"></div></div>`;
 const loops=videoMode?`<div class="setting-group"><label><input id="mediaInfiniteLoop" type="checkbox" ${node.animation.infiniteLoop?'checked':''}> 無限ループ（トリガー発火まで再生）</label></div><div class="setting-group"><div class="setting-label">ループ回数</div><input id="mediaLoopCount" class="number-input" type="number" min="0.01" step="0.01" value="${Number(node.animation.loopCount)||1}"></div>`:`<div class="setting-group"><label><input id="mediaWorldInfinite" type="checkbox" ${node.worldInfiniteLoop?'checked':''}> 無限表示（トリガー発火まで表示）</label></div>`;
 settingsPanel.innerHTML=`<div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div><div class="media-section-list">${collapsible('basic','基本設定',basic)}${collapsible('camera','カメラ',camera)}${collapsible('loop','ループ',loops)}</div>`;
 settingsPanel.querySelectorAll('[data-media-section]').forEach(detail=>detail.addEventListener('toggle',()=>{
@@ -910,9 +910,7 @@ const signal=controller.signal;
 cleanupAnimationSettingsPreview=()=>controller.abort();
 let second=0,drag=null;
 const view={...getMediaCameraAt(node,0)};
-
 let syncCameraInputs=()=>{};
-
 const draw=()=>{
 if(canvas.isConnected){
 drawPanoramaPreview(canvas,{
@@ -922,12 +920,9 @@ pitch:view.pitch,
 zoom:view.zoom
 });
 }
-
 syncCameraInputs();
 };
-
 syncCameraInputs=setupCameraNumberInputs(canvas,view,draw);
-
 const seek=t=>{
 second=clamp(Number(t)||0,0,duration);
 range.value=String(second);
@@ -949,6 +944,34 @@ row.append(select,remove);list.appendChild(row);
 }
 };
 range.addEventListener('input',()=>seek(range.value),{signal});
+const previousFrameButton=document.getElementById('mediaCameraPreviousFrame');
+const nextFrameButton=document.getElementById('mediaCameraNextFrame');
+const isVideo=node.type==='animation';
+const fps=Number(media?.fps);
+const hasFps=Number.isFinite(fps)&&fps>0;
+const frameStep=isVideo&&hasFps?1/fps:0.01;
+if(isVideo&&!hasFps){
+previousFrameButton.disabled=true;
+nextFrameButton.disabled=true;
+const notice=document.createElement('div');
+notice.className='settings-empty';
+notice.textContent='素材のFPSを取得できませんでした。コマ送りは使用できません。';
+range.insertAdjacentElement('afterend',notice);
+}
+const stepFrame=direction=>{
+if(isVideo&&!hasFps)return;
+let nextTime;
+if(isVideo){
+// Round to the nearest frame index before stepping, to avoid floating-point drift.
+const frameIndex=Math.round(second*fps);
+nextTime=(frameIndex+direction)/fps;
+}else{
+nextTime=Math.round((second+direction*frameStep)*100)/100;
+}
+seek(clamp(nextTime,0,duration));
+};
+previousFrameButton.addEventListener('click',()=>stepFrame(-1),{signal});
+nextFrameButton.addEventListener('click',()=>stepFrame(1),{signal});
 if(source?.addEventListener&&node.type==='animation'){
 source.addEventListener('seeked',draw,{signal});source.addEventListener('loadeddata',draw,{signal});
 }
