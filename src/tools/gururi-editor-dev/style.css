@@ -505,3 +505,10 @@ html[lang="en"] #editorHomeLogoJa { display: none !important; }
 .click-inherit-row{display:flex;justify-content:flex-end;align-items:center;min-height:24px;margin:0 0 5px}
 .click-inherit-control{display:flex;align-items:center;gap:5px;font-size:12px;color:#555;cursor:pointer;white-space:nowrap}
 .click-inherit-control input{margin:0;cursor:pointer}
+
+/* メディア設定の折りたたみ */
+.media-section-list{display:flex;flex-direction:column;gap:8px}
+.media-section-list details{border:1px solid #c7ccd3;border-radius:6px;overflow:hidden}
+.media-section-list summary{padding:11px 12px;cursor:pointer;font-weight:600;background:#f7f7f7;user-select:none}
+.media-section-body{padding:12px}
+.media-section-body .setting-group:last-child{margin-bottom:0}
