@@ -1045,7 +1045,7 @@ const nextFrameButton=document.getElementById('mediaCameraNextFrame');
 const isVideo=node.type==='animation';
 const fps=Number(media?.fps);
 const hasFps=Number.isFinite(fps)&&fps>0;
-const frameStep=isVideo&&hasFps?1/fps:0.01;
+const frameStep=isVideo&&hasFps?1/fps:1/8;
 if(isVideo&&!hasFps){
 previousFrameButton.disabled=true;
 nextFrameButton.disabled=true;
@@ -1062,7 +1062,8 @@ if(isVideo){
 const frameIndex=Math.round(second*fps);
 nextTime=(frameIndex+direction)/fps;
 }else{
-nextTime=Math.round((second+direction*frameStep)*100)/100;
+const frameIndex=Math.round(second*8);
+nextTime=(frameIndex+direction)/8;
 }
 seek(clamp(nextTime,0,duration));
 };
