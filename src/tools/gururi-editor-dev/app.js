@@ -886,8 +886,8 @@ settingsPanel.innerHTML=`
 <div class="setting-group"><div class="setting-label">参照メディア</div><div class="file-name">${escapeHtml(videoMode?sourceNode.animation.fileName:sourceNode.world.fileName)}</div></div>
 <div class="setting-group"><canvas id="keyframeCameraCanvas" class="world-preview" width="320" height="320"></canvas><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div>
 <div class="setting-group"><div class="media-camera-time-header"><div class="setting-label">再生位置</div><div class="media-camera-step-buttons"><button id="keyframePrevious" type="button">◀</button><button id="keyframeNext" type="button">▶</button></div></div><input id="keyframeTime" type="range" min="0" max="${duration}" step="0.001" value="0" style="width:100%"><div id="keyframeTimeLabel" class="settings-empty"></div></div>
-<div id="keyframeAngleFields" class="setting-group"></div>
-<div class="setting-group"><button id="keyframeAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button><div id="keyframeList" class="pan-keyframe-list"></div></div>`;
+<div class="setting-group"><button id="keyframeAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button><div id="keyframeList" class="pan-keyframe-list"></div></div>
+<div id="keyframeAngleFields" class="setting-group"></div>`;
 const canvas=document.getElementById('keyframeCameraCanvas');
 const range=document.getElementById('keyframeTime');
 const label=document.getElementById('keyframeTimeLabel');
@@ -1049,14 +1049,26 @@ const previewControls=`
 
 const inheritControl=`<div class="setting-group"><label class="media-camera-inherit"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div>`;
 const angleInfo=`<div class="setting-group"><div class="setting-label">画角情報</div><div id="mediaCameraAngleFields"></div></div>`;
-const loops=videoMode?`<div class="setting-group"><label><input id="mediaInfiniteLoop" type="checkbox" ${node.animation.infiniteLoop?'checked':''}> 無限ループ（トリガー発火まで再生）</label></div><div class="setting-group"><div class="setting-label">ループ回数</div><input id="mediaLoopCount" class="number-input" type="number" min="0.01" step="0.01" value="${Number(node.animation.loopCount)||1}"></div>`:`<div class="setting-group"><label><input id="mediaWorldInfinite" type="checkbox" ${node.worldInfiniteLoop?'checked':''}> 無限表示（トリガー発火まで表示）</label></div>`;
+const loops=videoMode?`
+<div class="setting-group">
+<div class="setting-label">ループ回数</div>
+<input id="mediaLoopCount" class="number-input" type="number" min="0.01" step="0.01" value="${Number(node.animation.loopCount)||1}">
+</div>
+<div class="setting-group">
+<label>
+<input id="mediaInfiniteLoop" type="checkbox" ${node.animation.infiniteLoop?'checked':''}>
+無限ループ（トリガー発火まで再生）
+</label>
+</div>`:'';
 settingsPanel.innerHTML=`
 <div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div>
 ${mediaSelect}
 ${pngSettings}
 ${inheritControl}
 ${previewControls}
+<hr class="media-settings-divider">
 ${videoMode?loops:''}
+<hr class="media-settings-divider">
 ${angleInfo}`;
 
 document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
