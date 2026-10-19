@@ -4916,13 +4916,13 @@ return getKeyframeNodeFrames(controller.node).length>0;
 }
 
 gameCanvas.addEventListener('pointerdown',e=>{
-if(isPreviewCameraLocked())return;
 if(state.previewDialogueNodeId)return;
 if(e.button!==0)return;
 
 const world=getActivePreviewWorld();
 if(!world)return;
 
+if(isPreviewCameraLocked())return;
 gamePreviewDrag={
 x:e.clientX,
 y:e.clientY,
