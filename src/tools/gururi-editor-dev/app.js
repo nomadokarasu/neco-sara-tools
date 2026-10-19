@@ -6274,8 +6274,7 @@ c=>c.from===node.id&&c.to==='start'
 );
 
 if(returnToStart){
-cancelPreviewScene();
-showPreviewNode('start');
+startPreview();
 return;
 }
 
