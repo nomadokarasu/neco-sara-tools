@@ -2904,8 +2904,22 @@ if(!node.clickFrameRegions){
 node.clickFrameRegions={};
 }
 
-node.clickFrameRegions[node.clickFrameIndex||0]=
-cloneClickRegions(node.clickRegions);
+const currentIndex=node.clickFrameIndex||0;
+const regions=cloneClickRegions(node.clickRegions);
+
+node.clickFrameRegions[currentIndex]=regions;
+
+if(node.clickInheritRegions!==false){
+const media=mediaLibrary.find(m=>m.id===node.clickSourceMediaId);
+const fps=Number(node.clickFrameFps)||8;
+const frameCount=media?.duration
+?Math.max(1,Math.ceil(media.duration*fps))
+:currentIndex+1;
+
+for(let index=currentIndex+1;index<frameCount;index++){
+node.clickFrameRegions[index]=cloneClickRegions(regions);
+}
+}
 }
 
 function getTriggerPreviewTime(nodeId,sourceNode){
@@ -3078,10 +3092,34 @@ node.clickLassoMode='add';
 updateClickRegionState(node);
 }
 
+function snapshotClickLasso(node){
+return{
+frameIndex:node.clickFrameIndex||0,
+regions:cloneClickRegions(node.clickRegions),
+frameRegions:Object.fromEntries(
+Object.entries(node.clickFrameRegions||{}).map(([index,regions])=>[
+index,
+cloneClickRegions(regions)
+])
+)
+};
+}
+
+function restoreClickLasso(node,snapshot){
+node.clickFrameIndex=snapshot.frameIndex;
+node.clickFrameRegions=Object.fromEntries(
+Object.entries(snapshot.frameRegions).map(([index,regions])=>[
+index,
+cloneClickRegions(regions)
+])
+);
+setClickLassoRegions(node,snapshot.regions);
+}
+
 function saveClickLassoHistory(node){
 ensureClickLassoHistory(node);
 
-node.clickUndoStack.push(cloneClickRegions(node.clickRegions));
+node.clickUndoStack.push(snapshotClickLasso(node));
 
 if(node.clickUndoStack.length>100){
 node.clickUndoStack.shift();
@@ -3288,15 +3326,18 @@ const inheritInput=document.getElementById('clickInheritRegionsInput');
 
 if(inheritInput){
 inheritInput.addEventListener('change',()=>{
+saveClickLassoHistory(node);
+
 node.clickInheritRegions=inheritInput.checked;
+
+if(node.clickInheritRegions){
+saveCurrentClickFramePolygon(node);
+}
 
 setClickLassoRegions(
 node,
 getClickFrameRegions(node,node.clickFrameIndex||0)
 );
-
-node.clickUndoStack=[];
-node.clickRedoStack=[];
 
 drawClickLassoOverlay(node,worldNode);
 });
@@ -3360,9 +3401,6 @@ setClickLassoRegions(
 node,
 getClickFrameRegions(node,nextIndex)
 );
-
-node.clickUndoStack=[];
-node.clickRedoStack=[];
 }
 
 range.value=String(node.clickFrameIndex);
@@ -3373,8 +3411,11 @@ node.clickFrameIndex/node.clickFrameFps,
 Math.max(0,media.duration-0.001)
 );
 
-// Reset the click editing camera to the referenced media camera at this frame.
-Object.assign(node.clickView,getReferenceCamera(node,worldNode,time));
+// 最初のフレームだけ、参照メディアの画角を使用する。
+// 2フレーム目以降は直前まで表示していた画角を維持する。
+if(node.clickFrameIndex===0){
+Object.assign(node.clickView,getReferenceCamera(node,worldNode,0));
+}
 
 timeLabel.textContent=`${time.toFixed(3)} 秒`;
 
@@ -4208,7 +4249,7 @@ const key=e.key.toLowerCase();
 if(key!=='z'&&key!=='y')return;
 const selected=getNode(state.selectedNodeId);
 // Existing lasso and drawn-pan histories retain their own shortcut handling.
-if(selected?.type==='click'&&(selected.clickUndoStack?.length||selected.clickRedoStack?.length))return;
+if(selected?.type==='click')return;
 if(selected?.type==='pan'&&(selected.panUndoStack?.length||selected.panRedoStack?.length))return;
 const active=document.activeElement;
 if(active&&active!==document.body&&active instanceof HTMLElement&&!settingsPanel.contains(active)&&['INPUT','TEXTAREA'].includes(active.tagName))return;
@@ -4347,9 +4388,8 @@ const destination=undo?selectedNode.clickRedoStack:selectedNode.clickUndoStack;
 
 if(source.length===0)return;
 
-destination.push(cloneClickRegions(selectedNode.clickRegions));
-setClickLassoRegions(selectedNode,source.pop());
-saveCurrentClickFramePolygon(selectedNode);
+destination.push(snapshotClickLasso(selectedNode));
+restoreClickLasso(selectedNode,source.pop());
 
 renderSettings();
 return;
