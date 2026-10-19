@@ -5008,11 +5008,27 @@ stopCameraAnimation();
 stopPreviewAnimation();
 state.previewWorldNodeId=null;
 }
-function previewOutgoing(nodeId){
-const targets=state.connections.filter(c=>c.from===nodeId).map(c=>getNode(c.to)).filter(Boolean);
-// When a new scene starts, establish its background before starting overlay branches.
-targets.sort((a,b)=>Number(['world','animation'].includes(b.type))-Number(['world','animation'].includes(a.type)));
-for(const target of targets)showPreviewNode(target.id);
+function previewOutgoing(nodeId,phase='start'){
+const source=getNode(nodeId);
+const sourceIsMedia=source?.type==='world'||source?.type==='animation';
+
+const targets=state.connections
+.filter(c=>c.from===nodeId)
+.map(c=>getNode(c.to))
+.filter(Boolean)
+.filter(target=>{
+if(!sourceIsMedia)return true;
+
+const targetIsMedia=target.type==='world'||target.type==='animation';
+
+if(phase==='end')return targetIsMedia;
+
+return !targetIsMedia;
+});
+
+for(const target of targets){
+showPreviewNode(target.id);
+}
 }
 function schedulePreviewBranch(seconds,callback){
 const epoch=previewSceneEpoch;
@@ -5194,8 +5210,8 @@ console.warn('最終フレームへの移動に失敗しました',error);
 
 drawPanoramaPreview(gameCanvas,world);
 
-// 再生終了後、次のノードを実行する
-previewOutgoing(node.id);
+// 再生終了時に接続先のメディアを開始する
+previewOutgoing(node.id,'end');
 };
 
 const draw=now=>{
