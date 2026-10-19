@@ -879,24 +879,24 @@ function renderMediaNodeSettings(node){
 const videoMode=node.type==='animation';
 const media=mediaLibrary.find(m=>m.id===(videoMode?node.animation.mediaId:node.world.mediaId));
 const duration=getMediaPlaybackDuration(node,media);
-const start=Math.max(0,Math.min((media?.duration||0)-0.001,Number(node.animation.startTime)||0));
-const section=node.mediaSettingsOpened||{basic:false,camera:false,loop:false};
-const collapsible=(id,label,contents)=>`<details data-media-section="${id}" ${section[id]?'open':''}><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
-const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
-const basic=mediaSelect+(videoMode?`<div class="setting-group"><div class="setting-label">素材の長さ</div><div class="file-name">${(media?.duration||0).toFixed(2)} 秒</div></div><div class="setting-group"><div class="setting-label">再生開始位置（秒）</div><input id="mediaStartInput" class="number-input" type="number" min="0" max="${Math.max(0,(media?.duration||0)-0.001)}" step="0.01" value="${Math.max(0,start)}"></div>`:'')+`<div class="setting-group"><div class="setting-label">${videoMode?'再生時間':'表示時間'}（秒）</div><input id="mediaDurationInput" class="number-input" type="number" min="0.1" step="0.1" value="${duration}"></div>`;
-const camera=`
-<div class="setting-group">
-<label class="media-camera-inherit">
-<input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}>
-画角を継承
-</label>
-</div>
 
+const collapsible=(id,label,contents)=>`<details data-media-section="${id}"><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
+const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
+const basic=mediaSelect+
+(videoMode?`
+<div class="setting-group">
+<div class="setting-label">素材の長さ</div>
+<div class="file-name">${(media?.duration||0).toFixed(2)} 秒</div>
+</div>`:'')+
+`<div class="setting-group">
+<div class="setting-label">${videoMode?'再生時間':'表示時間'}（秒）</div>
+<input id="mediaDurationInput" class="number-input" type="number" min="0.1" step="0.1" value="${duration}">
+</div>`;
+const previewControls=`
 <div class="setting-group">
 <canvas id="mediaCameraCanvas" class="world-preview" width="320" height="320"></canvas>
 <div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div>
 </div>
-
 <div class="setting-group">
 <div class="media-camera-time-header">
 <div class="setting-label">再生位置</div>
@@ -907,16 +907,19 @@ const camera=`
 </div>
 <input id="mediaCameraTime" type="range" min="0" max="${duration}" step="0.01" value="0" style="width:100%">
 <div id="mediaCameraTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} 秒</div>
+</div>`;
+
+const camera=`
+<div class="setting-group">
+<label class="media-camera-inherit">
+<input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}>
+画角を継承
+</label>
 </div>
 
 <div class="media-camera-subsections">
 
-<details data-camera-subsection="angles" ${node.mediaCameraSubsections?.angles?'open':''}>
-<summary>画角設定</summary>
-<div id="mediaCameraAngleFields" class="media-camera-subsection-body"></div>
-</details>
-
-<details data-camera-subsection="keyframes" ${node.mediaCameraSubsections?.keyframes?'open':''}>
+<details data-camera-subsection="keyframes">
 <summary>カメラワーク</summary>
 <div class="media-camera-subsection-body">
 <button id="mediaCameraAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button>
@@ -924,13 +927,22 @@ const camera=`
 </div>
 </details>
 
+<details data-camera-subsection="angles">
+<summary>画角設定</summary>
+<div id="mediaCameraAngleFields" class="media-camera-subsection-body"></div>
+</details>
+
 </div>`;
 const loops=videoMode?`<div class="setting-group"><label><input id="mediaInfiniteLoop" type="checkbox" ${node.animation.infiniteLoop?'checked':''}> 無限ループ（トリガー発火まで再生）</label></div><div class="setting-group"><div class="setting-label">ループ回数</div><input id="mediaLoopCount" class="number-input" type="number" min="0.01" step="0.01" value="${Number(node.animation.loopCount)||1}"></div>`:`<div class="setting-group"><label><input id="mediaWorldInfinite" type="checkbox" ${node.worldInfiniteLoop?'checked':''}> 無限表示（トリガー発火まで表示）</label></div>`;
-settingsPanel.innerHTML=`<div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div><div class="media-section-list">${collapsible('basic','基本設定',basic)}${collapsible('camera','カメラ',camera)}${collapsible('loop','ループ',loops)}</div>`;
-settingsPanel.querySelectorAll('[data-media-section]').forEach(detail=>detail.addEventListener('toggle',()=>{
-if(!node.mediaSettingsOpened)node.mediaSettingsOpened={basic:false,camera:false,loop:false};
-node.mediaSettingsOpened[detail.dataset.mediaSection]=detail.open;
-}));
+settingsPanel.innerHTML=`
+<div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div>
+${previewControls}
+<div class="media-section-list">
+${collapsible('basic','基本設定',basic)}
+${collapsible('camera','カメラ',camera)}
+${collapsible('loop','ループ',loops)}
+</div>`;
+
 document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
 document.getElementById('mediaDurationInput').addEventListener('change',e=>{
 const value=Math.max(0.1,Number(e.target.value)||3);
@@ -940,24 +952,13 @@ e.target.value=value;
 renderSettings();
 });
 if(videoMode){
-document.getElementById('mediaStartInput').addEventListener('change',e=>{node.animation.startTime=clamp(Number(e.target.value)||0,0,Math.max(0,(media?.duration||0)-0.001));renderSettings();});
+node.animation.startTime=0;
 document.getElementById('mediaInfiniteLoop').addEventListener('change',e=>node.animation.infiniteLoop=e.target.checked);
 document.getElementById('mediaLoopCount').addEventListener('change',e=>{node.animation.loopCount=Math.max(.01,Number(e.target.value)||1);node.animation.playDuration=(media?.duration||0)*node.animation.loopCount;renderSettings();});
 }else{
 document.getElementById('mediaWorldInfinite').addEventListener('change',e=>node.worldInfiniteLoop=e.target.checked);
 }
-settingsPanel.querySelectorAll('[data-camera-subsection]').forEach(detail=>{
-detail.addEventListener('toggle',()=>{
-if(!node.mediaCameraSubsections){
-node.mediaCameraSubsections={
-angles:false,
-keyframes:false
-};
-}
 
-node.mediaCameraSubsections[detail.dataset.cameraSubsection]=detail.open;
-});
-});
 
 setupMediaCameraInheritance(node);
 setupSharedMediaCamera(node,media,duration);
@@ -999,6 +1000,12 @@ angleFields&&
 cameraInputs?.classList.contains('camera-number-settings')
 ){
 angleFields.appendChild(cameraInputs);
+
+const copyButton=cameraInputs.querySelector('.camera-copy-view');
+
+if(copyButton){
+cameraInputs.appendChild(copyButton);
+}
 }
 
 const seek=t=>{
