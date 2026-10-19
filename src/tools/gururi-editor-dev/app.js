@@ -4837,14 +4837,114 @@ d+=` C ${x1} ${y1}, ${x2} ${y2}, ${p2.x} ${p2.y}`;
 return d;
 }
 
+function getVisibleConnectionNode(id){
+let node=getNode(id);
+const visited=new Set();
+
+while(node&&!visited.has(node.id)){
+visited.add(node.id);
+
+if((node.folderId||null)===currentFolderId){
+return node;
+}
+
+if(!node.folderId)return null;
+
+node=getNode(node.folderId);
+}
+
+return null;
+}
+
+function getVisibleConnectionPort(node,side){
+if(!node)return null;
+
+const port=nodesLayer.querySelector(
+`.node[data-id="${node.id}"] .port.${side}`
+);
+
+return port?getPortCenter(port):null;
+}
+
+function drawFolderConnectionLine(a,b){
+const path=document.createElementNS(
+'http://www.w3.org/2000/svg',
+'path'
+);
+
+path.setAttribute('d',curvePath(a,b));
+path.setAttribute('class','connection-path');
+connectionsSvg.appendChild(path);
+}
+
+function drawFolderBoundaryPoint(point){
+const circle=document.createElementNS(
+'http://www.w3.org/2000/svg',
+'circle'
+);
+
+circle.setAttribute('cx',point.x);
+circle.setAttribute('cy',point.y);
+circle.setAttribute('r','6');
+circle.setAttribute('fill','#ffffff');
+circle.setAttribute('stroke','#739ad2');
+circle.setAttribute('stroke-width','2');
+
+connectionsSvg.appendChild(circle);
+}
+
 function renderConnections(){
 connectionsSvg.innerHTML='';
 
-for(const c of state.connections){
-const fromEl=nodesLayer.querySelector(`.node[data-id="${c.from}"] .port.output`);
-const toEl=nodesLayer.querySelector(`.node[data-id="${c.to}"] .port.input`);
+const drawnFolderConnections=new Set();
 
-if(!fromEl||!toEl)continue;
+for(const c of state.connections){
+const fromNode=getVisibleConnectionNode(c.from);
+const toNode=getVisibleConnectionNode(c.to);
+
+if(!fromNode&&!toNode)continue;
+if(fromNode&&toNode&&fromNode.id===toNode.id)continue;
+
+const fromEl=fromNode
+?nodesLayer.querySelector(`.node[data-id="${fromNode.id}"] .port.output`)
+:null;
+
+const toEl=toNode
+?nodesLayer.querySelector(`.node[data-id="${toNode.id}"] .port.input`)
+:null;
+
+const isFolderConnection=
+!fromEl||
+!toEl||
+fromNode.id!==c.from||
+toNode.id!==c.to;
+
+if(isFolderConnection){
+const key=`${fromNode?.id||'outside'}:${toNode?.id||'outside'}`;
+
+if(drawnFolderConnections.has(key))continue;
+drawnFolderConnections.add(key);
+
+const fromPoint=fromEl?getPortCenter(fromEl):null;
+const toPoint=toEl?getPortCenter(toEl):null;
+
+const boundaryY=fromPoint?.y??toPoint?.y??0;
+
+const leftX=screenToWorkspace(20,0).x;
+const rightX=screenToWorkspace(
+workspace.clientWidth-20,0
+).x;
+
+const a=fromPoint||{x:leftX,y:boundaryY};
+const b=toPoint||{x:rightX,y:boundaryY};
+
+drawFolderConnectionLine(a,b);
+
+if(!fromPoint)drawFolderBoundaryPoint(a);
+if(!toPoint)drawFolderBoundaryPoint(b);
+
+continue;
+}
 
 const a=getPortCenter(fromEl);
 const b=getPortCenter(toEl);

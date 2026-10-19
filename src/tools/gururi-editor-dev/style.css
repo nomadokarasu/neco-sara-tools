@@ -628,5 +628,14 @@ width:100%;
 .folder-breadcrumb button:disabled{color:#555;cursor:default;font-weight:700}
 .node.folder-node{background:#e8f1ff;border-color:#739ad2}
 .node.folder-node .node-header{color:#1e477d}
-.node.folder-node .port{display:none}
+.node.folder-node .port{
+display:block;
+pointer-events:none;
+}
+
+.node.folder-node .port.input,
+.node.folder-node .port.output{
+background:#fff;
+border:2px solid #739ad2;
+}
 .node.folder-node .node-body{cursor:grab}
