@@ -115,6 +115,7 @@ previewWorldNodeId:null,
 previewAnimation:null,
 panVideo:null,
 previewClickTriggerIds:[],
+previewFrameInIds:[],
 previewDialogueNodeId:null,
 previewDialoguePageIndex:0,
 dialogueTypeTimer:null,
@@ -255,6 +256,14 @@ timeSeconds:1,
 clickTarget:{yaw:0,pitch:0,width:0.5,height:0.35,initialized:false},
 clickView:{yaw:0,pitch:0,zoom:1,initialized:false},
 clickInheritRegions:true,
+frameInMode:'contain',
+frameInTool:'target',
+frameInView:{yaw:0,pitch:0,zoom:1,initialized:false},
+frameInReferenceKey:null,
+frameInTarget:[],
+frameInFrame:[],
+frameInUndo:[],
+frameInRedo:[],
 dialoguePages:[],
 dialogueEditIndex:0,
 dialogueView:{yaw:0,pitch:0,zoom:1,initialized:false},
@@ -366,6 +375,7 @@ node.type==='start'?'START':
 node.type==='media'||node.type==='world'||node.type==='animation'?'メディア':
 node.type==='time'?'時間':
 node.type==='click'?'クリック':
+node.type==='frameIn'?'フレームイン':
 node.type==='dialogue'?'ダイアローグ':
 node.type==='media2d'?'2Dメディア':
 node.type==='fadeIn'?'フェードイン':
@@ -380,6 +390,7 @@ node.type==='world'?(node.world.fileName||'素材未設定'):
 node.type==='animation'?(node.animation.fileName||'素材未設定'):
 node.type==='time'?`${node.timeSeconds} 秒`:
 node.type==='click'?'範囲クリック':
+node.type==='frameIn'?'カメラ範囲トリガー':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='media2d'?'画像・動画を重ねて表示':
 node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
@@ -701,6 +712,10 @@ if(node.type==='media2d'){
 renderMedia2DNodeSettings(node);
 return;
 }
+if(node.type==='frameIn'){
+renderFrameInSettings(node);
+return;
+}
 if(node.type==='click'){
 const sourceNode=findPreviousClickMediaNode(node.id);
 
@@ -952,6 +967,194 @@ const wrap=document.createElement('div');
 wrap.style.cssText=`position:absolute;left:${layout.x}%;top:${layout.y}%;width:${layout.w}%;height:${layout.h}%;pointer-events:none;`;
 wrap.appendChild(el);media2DLayer.appendChild(wrap);
 if(el.tagName==='VIDEO')el.play().catch(error=>console.warn('2D動画を再生できませんでした',error));
+}
+
+// Frame-in: target is sphere-anchored; frame is viewport-anchored.
+function frameInCopy(regions){return regions.map(r=>({mode:r.mode,points:r.points.map(p=>({...p}))}));}
+function frameInHistory(node){
+if(!Array.isArray(node.frameInTarget))node.frameInTarget=[];
+if(!Array.isArray(node.frameInFrame))node.frameInFrame=[];
+if(!Array.isArray(node.frameInUndo))node.frameInUndo=[];
+if(!Array.isArray(node.frameInRedo))node.frameInRedo=[];
+}
+function frameInSnapshot(node){return {target:frameInCopy(node.frameInTarget),frame:frameInCopy(node.frameInFrame)};}
+function frameInRestore(node,snap){node.frameInTarget=frameInCopy(snap.target);node.frameInFrame=frameInCopy(snap.frame);}
+function frameInPush(node){frameInHistory(node);node.frameInUndo.push(frameInSnapshot(node));if(node.frameInUndo.length>100)node.frameInUndo.shift();node.frameInRedo=[];}
+function frameInStep(node,redo){
+frameInHistory(node);
+const from=redo?node.frameInRedo:node.frameInUndo;
+if(!from.length)return false;
+const to=redo?node.frameInUndo:node.frameInRedo;
+to.push(frameInSnapshot(node));frameInRestore(node,from.pop());return true;
+}
+function frameInView(node,source){
+if(!node.frameInView)node.frameInView={yaw:0,pitch:0,zoom:1,initialized:false};
+const key=`${source.id}:${state.displayMode}`;
+if(!node.frameInView.initialized||node.frameInReferenceKey!==key){
+Object.assign(node.frameInView,getReferenceCamera(node,source,getTriggerPreviewTime(node.id,source)),{initialized:true});
+node.frameInReferenceKey=key;
+}
+return node.frameInView;
+}
+function frameInTrace(ctx,points,project){
+if(points.length<3)return false;
+const projected=points.map(project);
+if(projected.some(p=>!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)))return false;
+ctx.beginPath();ctx.moveTo(projected[0].x,projected[0].y);
+for(let i=1;i<projected.length;i++)ctx.lineTo(projected[i].x,projected[i].y);
+ctx.closePath();return true;
+}
+function paintFrameInRegions(ctx,regions,project){
+for(const region of regions){
+if(!frameInTrace(ctx,region.points,project))continue;
+ctx.globalCompositeOperation=region.mode==='subtract'?'destination-out':'source-over';
+ctx.fillStyle='#fff';ctx.fill();
+}
+ctx.globalCompositeOperation='source-over';
+}
+function frameInMasks(node,canvas,view,width,height){
+frameInHistory(node);
+const target=document.createElement('canvas');target.width=width;target.height=height;
+const frame=document.createElement('canvas');frame.width=width;frame.height=height;
+const rect=canvas.getBoundingClientRect();
+const tx=target.getContext('2d',{willReadFrequently:true});
+const fx=frame.getContext('2d',{willReadFrequently:true});
+const projectWorld=p=>{
+const q=projectWorldAnglesToScreen(canvas,view,p.yaw,p.pitch);
+return q?{x:q.x/(rect.width||1)*width,y:q.y/(rect.height||1)*height}:null;
+};
+const projectFrame=p=>({x:p.x*width,y:p.y*height});
+paintFrameInRegions(tx,node.frameInTarget,projectWorld);
+paintFrameInRegions(fx,node.frameInFrame,projectFrame);
+return {target:tx.getImageData(0,0,width,height).data,frame:fx.getImageData(0,0,width,height).data};
+}
+function isFrameInTriggered(node,canvas,view){
+if(!node.frameInTarget?.some(r=>r.mode==='add'&&r.points.length>=3)||!node.frameInFrame?.some(r=>r.mode==='add'&&r.points.length>=3))return false;
+const {target,frame}=frameInMasks(node,canvas,view,192,108);
+let hit=false,total=0,inside=0;
+for(let i=3;i<target.length;i+=4){
+if(target[i]<128)continue;
+total++;
+if(frame[i]>=128){inside++;hit=true;}
+}
+if(node.frameInMode==='touch')return hit;
+return total>0&&inside===total;
+}
+function drawFrameInOverlay(node,canvas,overlay,view,draft=[]){
+const rect=canvas.getBoundingClientRect();const w=rect.width,h=rect.height;
+const dpr=window.devicePixelRatio||1;
+overlay.width=Math.max(1,Math.round(w*dpr));overlay.height=Math.max(1,Math.round(h*dpr));
+const ctx=overlay.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+const project=(type,p)=>type==='target'?projectWorldAnglesToScreen(canvas,view,p.yaw,p.pitch):{x:p.x*w,y:p.y*h};
+for(const type of ['target','frame']){
+const regions=type==='target'?node.frameInTarget:node.frameInFrame;
+const color=type==='target'?'#ff8a00':'#39cb65';
+const mask=document.createElement('canvas');mask.width=overlay.width;mask.height=overlay.height;
+const mc=mask.getContext('2d');mc.setTransform(dpr,0,0,dpr,0,0);
+paintFrameInRegions(mc,regions,p=>project(type,p));
+const tinted=document.createElement('canvas');tinted.width=overlay.width;tinted.height=overlay.height;
+const tint=tinted.getContext('2d');
+tint.fillStyle=color;tint.fillRect(0,0,tinted.width,tinted.height);
+tint.globalCompositeOperation='destination-in';tint.drawImage(mask,0,0);
+ctx.save();ctx.globalAlpha=.26;ctx.drawImage(tinted,0,0,w,h);ctx.restore();
+ctx.save();ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineJoin='round';
+for(const r of regions){if(frameInTrace(ctx,r.points,p=>project(type,p)))ctx.stroke();}
+if(node.frameInTool===type&&draft.length>1){
+const pts=draft.map(p=>project(type,p)).filter(Boolean);
+if(pts.length){ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(const q of pts.slice(1))ctx.lineTo(q.x,q.y);ctx.stroke();}
+}
+ctx.restore();
+}
+}
+function renderFrameInSettings(node){
+const source=findPreviousClickMediaNode(node.id);
+if(!source){settingsPanel.innerHTML='<div class="settings-title">フレームイン</div><div class="settings-empty">参照できる360°メディアを接続してください。</div>';return;}
+frameInHistory(node);
+const view=frameInView(node,source);
+const media=source.type==='animation'?getClickAnimationMedia(source):null;
+const image=source.type==='world'?source.world.image:media?.video;
+settingsPanel.innerHTML=`<div class="settings-title">フレームイン</div>
+<div class="setting-group framein-checks"><label><input id="frameInContain" type="checkbox" ${node.frameInMode!=='touch'?'checked':''}> 内包したら発火</label><label><input id="frameInTouch" type="checkbox" ${node.frameInMode==='touch'?'checked':''}> 接触したら発火</label></div>
+<div class="setting-group"><div class="click-preview-wrap"><canvas id="frameInPreview" class="world-preview" width="320" height="320"></canvas><canvas id="frameInOverlay" class="click-lasso-canvas" width="320" height="320"></canvas></div>
+<div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div>
+<div class="setting-group framein-tools"><button type="button" id="frameInTargetButton">ターゲット</button><button type="button" id="frameInFrameButton">フレーム</button></div>
+<div class="setting-group"><button type="button" id="frameInAdd">＋ 追加</button><button type="button" id="frameInSubtract">－ 削除</button></div>`;
+const preview=document.getElementById('frameInPreview');
+const overlay=document.getElementById('frameInOverlay');
+const targetBtn=document.getElementById('frameInTargetButton');
+const frameBtn=document.getElementById('frameInFrameButton');
+const addBtn=document.getElementById('frameInAdd');
+const subBtn=document.getElementById('frameInSubtract');
+node.frameInTool=node.frameInTool==='frame'?'frame':'target';
+node.frameInBrush=node.frameInBrush==='subtract'?'subtract':'add';
+let draft=[],drag=null;
+const sync=()=>{
+targetBtn.classList.toggle('active',node.frameInTool==='target');frameBtn.classList.toggle('active',node.frameInTool==='frame');
+addBtn.classList.toggle('active',node.frameInBrush==='add');subBtn.classList.toggle('active',node.frameInBrush==='subtract');
+};
+const draw=()=>{
+drawPanoramaPreview(preview,{image,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});
+drawFrameInOverlay(node,preview,overlay,view,draft);
+};
+const switchTool=tool=>{node.frameInTool=tool;draft=[];sync();draw();};
+targetBtn.addEventListener('click',()=>switchTool('target'));
+frameBtn.addEventListener('click',()=>switchTool('frame'));
+addBtn.addEventListener('click',()=>{node.frameInBrush='add';sync();});
+subBtn.addEventListener('click',()=>{node.frameInBrush='subtract';sync();});
+const setMode=mode=>{node.frameInMode=mode;document.getElementById('frameInContain').checked=mode==='contain';document.getElementById('frameInTouch').checked=mode==='touch';};
+document.getElementById('frameInContain').addEventListener('change',()=>setMode('contain'));
+document.getElementById('frameInTouch').addEventListener('change',()=>setMode('touch'));
+const addPoint=e=>{
+const rect=overlay.getBoundingClientRect();
+const p=node.frameInTool==='target'
+?screenPointToWorldAngles(overlay,view,e.clientX,e.clientY)
+:{x:(e.clientX-rect.left)/rect.width,y:(e.clientY-rect.top)/rect.height};
+if(!p)return;
+const prev=draft[draft.length-1];
+if(prev&&Math.hypot(...(node.frameInTool==='target'?[angleDiff(prev.yaw,p.yaw),prev.pitch-p.pitch]:[prev.x-p.x,prev.y-p.y]))<.003)return;
+draft.push(p);draw();
+};
+overlay.addEventListener('pointerdown',e=>{
+const rotate=e.button===1||(e.button===0&&state.pressedKeys.has(' '));
+const zoom=e.button===0&&state.pressedKeys.has('z');
+if(e.button!==0&&e.button!==1)return;
+if(rotate)drag={mode:'rotate',id:e.pointerId,x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch};
+else if(zoom)drag={mode:'zoom',id:e.pointerId,y:e.clientY,zoom:view.zoom};
+else {frameInPush(node);draft=[];drag={mode:'lasso',id:e.pointerId};addPoint(e);}
+overlay.setPointerCapture(e.pointerId);e.preventDefault();
+});
+overlay.addEventListener('pointermove',e=>{
+if(!drag||e.pointerId!==drag.id)return;
+if(drag.mode==='rotate'){
+view.yaw=drag.yaw-(e.clientX-drag.x)*.008;
+view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*.008,-Math.PI/2+.02,Math.PI/2-.02);draw();
+}else if(drag.mode==='zoom'){
+view.zoom=clamp(drag.zoom-(e.clientY-drag.y)*.005,.6,2.2);draw();
+}else addPoint(e);
+});
+const finish=e=>{
+if(!drag||e.pointerId!==drag.id)return;
+if(drag.mode==='lasso'){
+addPoint(e);
+if(draft.length>=3){const regions=node.frameInTool==='target'?node.frameInTarget:node.frameInFrame;
+regions.push({mode:node.frameInBrush,points:draft.map(p=>({...p}))});}
+}
+draft=[];drag=null;if(overlay.hasPointerCapture(e.pointerId))overlay.releasePointerCapture(e.pointerId);draw();
+};
+overlay.addEventListener('pointerup',finish);
+overlay.addEventListener('pointercancel',e=>{draft=[];drag=null;draw();});
+overlay.addEventListener('wheel',e=>{e.preventDefault();view.zoom=clamp(view.zoom+(e.deltaY>0?-.1:.1),.6,2.2);draw();},{passive:false});
+if(image?.tagName==='VIDEO'){
+const listener=()=>{if(preview.isConnected)draw();};
+image.addEventListener('seeked',listener);
+const prior=cleanupAnimationSettingsPreview;
+cleanupAnimationSettingsPreview=()=>{image.removeEventListener('seeked',listener);node.frameInUndoAction=null;node.frameInRedoAction=null;prior?.();};
+}
+node.frameInUndoAction=()=>{if(frameInStep(node,false))draw();};
+node.frameInRedoAction=()=>{if(frameInStep(node,true))draw();};
+const previousCleanup=cleanupAnimationSettingsPreview;
+cleanupAnimationSettingsPreview=()=>{node.frameInUndoAction=null;node.frameInRedoAction=null;previousCleanup?.();};
+sync();requestAnimationFrame(draw);
 }
 
 function getKeyframeNodeFrames(node){
@@ -2923,6 +3126,7 @@ gl.uniform1f(renderer.pitch,world.pitch);
 gl.uniform1f(renderer.fov,fov);
 gl.uniform1f(renderer.aspect,canvas.width/canvas.height);
 gl.drawArrays(gl.TRIANGLES,0,6);
+if(canvas===gameCanvas)checkActiveFrameInTriggers();
 }
 
 function clamp(value,min,max){
@@ -4308,7 +4512,7 @@ return {nodes:cloneEditorValue(state.nodes),connections:cloneEditorValue(state.c
 }
 function editorHistorySignature(snapshot){
 return JSON.stringify({nodes:snapshot.nodes,connections:snapshot.connections},(key,value)=>{
-if(['panUndoStack','panRedoStack','clickUndoStack','clickRedoStack','panPath'].includes(key))return undefined;
+if(['panUndoStack','panRedoStack','clickUndoStack','clickRedoStack','frameInUndo','frameInRedo','panPath'].includes(key))return undefined;
 if(value instanceof Element)return '[media-element]';
 if(value instanceof Blob)return '[binary-file]';
 return value;
@@ -4371,7 +4575,7 @@ const key=e.key.toLowerCase();
 if(key!=='z'&&key!=='y')return;
 const selected=getNode(state.selectedNodeId);
 // Existing lasso and drawn-pan histories retain their own shortcut handling.
-if(selected?.type==='click')return;
+if(selected?.type==='click'||selected?.type==='frameIn')return;
 if(selected?.type==='pan'&&(selected.panUndoStack?.length||selected.panRedoStack?.length))return;
 const active=document.activeElement;
 if(active&&active!==document.body&&active instanceof HTMLElement&&!settingsPanel.contains(active)&&['INPUT','TEXTAREA'].includes(active.tagName))return;
@@ -4495,6 +4699,13 @@ workspaceCamera.y=viewportHeight/2-(minY+contentHeight/2)*workspaceCamera.scale;
 updateWorkspaceCamera();
 renderConnections();
 
+return;
+}
+
+if(selectedNode?.type==='frameIn'&&(e.ctrlKey||e.metaKey)&&!e.altKey&&(key==='z'||key==='y')){
+e.preventDefault();
+if(key==='y'||(key==='z'&&e.shiftKey))selectedNode.frameInRedoAction?.();
+else selectedNode.frameInUndoAction?.();
 return;
 }
 
@@ -5172,6 +5383,7 @@ previewSceneEpoch++;
 clearPreviewBranchTimers();
 previewVisited.clear();
 state.previewClickTriggerIds=[];
+state.previewFrameInIds=[];
 state.previewDialogueNodeId=null;
 clearMedia2DLayer();
 stopDialogueTyping();
@@ -5209,6 +5421,24 @@ previewBranchTimers.delete(timer);
 if(epoch===previewSceneEpoch&&!gamePreview.classList.contains('hidden'))callback();
 },Math.max(0,seconds)*1000);
 previewBranchTimers.add(timer);
+}
+let checkingFrameIn=false;
+function checkActiveFrameInTriggers(){
+if(checkingFrameIn||!state.previewFrameInIds?.length)return;
+if(gamePreview.classList.contains('hidden'))return;
+const view=getActivePreviewWorld();if(!view)return;
+checkingFrameIn=true;
+try{
+for(const id of [...state.previewFrameInIds]){
+const node=getNode(id);if(!node)continue;
+if(!isFrameInTriggered(node,gameCanvas,view))continue;
+state.previewFrameInIds=[];
+clearPreviewBranchTimers();
+previewOutgoing(id);
+if(!state.connections.some(c=>c.from===id))previewMessage.textContent='フレームイン発火・接続先なし';
+break;
+}
+}finally{checkingFrameIn=false;}
 }
 function canUsePreviewClick(node){
 return Boolean(node.clickTarget?.initialized||Object.values(node.clickFrameRegions||{}).some(regions=>Array.isArray(regions)&&regions.some(r=>r.mode==='add'&&r.points?.length>=3)));
@@ -6001,6 +6231,11 @@ return;
 if(node.type==='media2d'){
 showMedia2D(node);
 previewOutgoing(node.id);
+return;
+}
+if(node.type==='frameIn'){
+if(!state.previewFrameInIds.includes(node.id))state.previewFrameInIds.push(node.id);
+checkActiveFrameInTriggers();
 return;
 }
 if(node.type==='click'){

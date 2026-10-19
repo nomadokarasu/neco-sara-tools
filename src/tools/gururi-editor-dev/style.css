@@ -615,3 +615,13 @@ width:100%;
 .media2d-handle-sw{left:-6px;bottom:-6px;cursor:nesw-resize}
 .media2d-handle-se{right:-6px;bottom:-6px;cursor:nwse-resize}
 .media2d-layer{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+
+/* Frame-in editor */
+.framein-checks{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.framein-checks label{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}
+.framein-tools{display:flex;gap:8px}
+.framein-tools button,.framein-tools+.setting-group button{flex:1;padding:8px 4px;border-radius:5px;border:1px solid #666;background:#292929;color:#fff;cursor:pointer}
+.framein-tools button.active{background:#4d4d4d;border-color:#eee}
+.framein-tools+.setting-group{display:flex;gap:8px}
+.framein-tools+.setting-group button.active{border-color:#ff8a00}
+#frameInOverlay{touch-action:none;cursor:crosshair}
