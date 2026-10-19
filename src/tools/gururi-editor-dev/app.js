@@ -1181,7 +1181,8 @@ settingsPanel.innerHTML=`<div class="settings-title">フレームイン</div>
 <div class="setting-group framein-checks"><label><input id="frameInContain" type="checkbox" ${node.frameInMode!=='touch'?'checked':''}> 内包したら発火</label><label><input id="frameInTouch" type="checkbox" ${node.frameInMode==='touch'?'checked':''}> 接触したら発火</label></div>
 <div class="setting-group"><div class="click-preview-wrap framein-preview-wrap"><canvas id="frameInPreview" class="world-preview" width="320" height="320"></canvas><canvas id="frameInOverlay" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="frameInAdd" class="click-lasso-mode" type="button" title="選択範囲に追加">＋</button><button id="frameInSubtract" class="click-lasso-mode" type="button" title="選択範囲から削除">－</button></div></div>
 <div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div>
-<div class="setting-group framein-tools"><button type="button" id="frameInTargetButton">ターゲット</button><button type="button" id="frameInFrameButton">フレーム</button></div>`;
+<div class="setting-group framein-tools"><button type="button" id="frameInTargetButton">ターゲット</button><button type="button" id="frameInFrameButton">フレーム</button></div>
+<div class="setting-group"><button id="clearFrameInBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
 const preview=document.getElementById('frameInPreview');
 const overlay=document.getElementById('frameInOverlay');
 const targetBtn=document.getElementById('frameInTargetButton');
@@ -1204,6 +1205,20 @@ targetBtn.addEventListener('click',()=>switchTool('target'));
 frameBtn.addEventListener('click',()=>switchTool('frame'));
 addBtn.addEventListener('click',()=>{node.frameInBrush='add';sync();});
 subBtn.addEventListener('click',()=>{node.frameInBrush='subtract';sync();});
+
+document.getElementById('clearFrameInBtn').addEventListener('click',()=>{
+const regions=node.frameInTool==='target'
+?node.frameInTarget
+:node.frameInFrame;
+
+if(regions.length===0)return;
+
+frameInPush(node);
+regions.length=0;
+draft=[];
+draw();
+});
+
 const setMode=mode=>{node.frameInMode=mode;document.getElementById('frameInContain').checked=mode==='contain';document.getElementById('frameInTouch').checked=mode==='touch';};
 document.getElementById('frameInContain').addEventListener('change',()=>setMode('contain'));
 document.getElementById('frameInTouch').addEventListener('change',()=>setMode('touch'));
