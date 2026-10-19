@@ -880,7 +880,7 @@ const videoMode=node.type==='animation';
 const media=mediaLibrary.find(m=>m.id===(videoMode?node.animation.mediaId:node.world.mediaId));
 const duration=getMediaPlaybackDuration(node,media);
 const start=Math.max(0,Math.min((media?.duration||0)-0.001,Number(node.animation.startTime)||0));
-const section=node.mediaSettingsOpened||{basic:true,camera:true,loop:false};
+const section=node.mediaSettingsOpened||{basic:false,camera:false,loop:false};
 const collapsible=(id,label,contents)=>`<details data-media-section="${id}" ${section[id]?'open':''}><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
 const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
 const basic=mediaSelect+(videoMode?`<div class="setting-group"><div class="setting-label">素材の長さ</div><div class="file-name">${(media?.duration||0).toFixed(2)} 秒</div></div><div class="setting-group"><div class="setting-label">再生開始位置（秒）</div><input id="mediaStartInput" class="number-input" type="number" min="0" max="${Math.max(0,(media?.duration||0)-0.001)}" step="0.01" value="${Math.max(0,start)}"></div>`:'')+`<div class="setting-group"><div class="setting-label">${videoMode?'再生時間':'表示時間'}（秒）</div><input id="mediaDurationInput" class="number-input" type="number" min="0.1" step="0.1" value="${duration}"></div>`;
@@ -916,7 +916,7 @@ const camera=`
 <div id="mediaCameraAngleFields" class="media-camera-subsection-body"></div>
 </details>
 
-<details data-camera-subsection="keyframes" ${node.mediaCameraSubsections?.keyframes!==false?'open':''}>
+<details data-camera-subsection="keyframes" ${node.mediaCameraSubsections?.keyframes?'open':''}>
 <summary>カメラワーク</summary>
 <div class="media-camera-subsection-body">
 <button id="mediaCameraAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button>
@@ -928,7 +928,7 @@ const camera=`
 const loops=videoMode?`<div class="setting-group"><label><input id="mediaInfiniteLoop" type="checkbox" ${node.animation.infiniteLoop?'checked':''}> 無限ループ（トリガー発火まで再生）</label></div><div class="setting-group"><div class="setting-label">ループ回数</div><input id="mediaLoopCount" class="number-input" type="number" min="0.01" step="0.01" value="${Number(node.animation.loopCount)||1}"></div>`:`<div class="setting-group"><label><input id="mediaWorldInfinite" type="checkbox" ${node.worldInfiniteLoop?'checked':''}> 無限表示（トリガー発火まで表示）</label></div>`;
 settingsPanel.innerHTML=`<div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div><div class="media-section-list">${collapsible('basic','基本設定',basic)}${collapsible('camera','カメラ',camera)}${collapsible('loop','ループ',loops)}</div>`;
 settingsPanel.querySelectorAll('[data-media-section]').forEach(detail=>detail.addEventListener('toggle',()=>{
-if(!node.mediaSettingsOpened)node.mediaSettingsOpened={basic:true,camera:true,loop:false};
+if(!node.mediaSettingsOpened)node.mediaSettingsOpened={basic:false,camera:false,loop:false};
 node.mediaSettingsOpened[detail.dataset.mediaSection]=detail.open;
 }));
 document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
@@ -951,7 +951,7 @@ detail.addEventListener('toggle',()=>{
 if(!node.mediaCameraSubsections){
 node.mediaCameraSubsections={
 angles:false,
-keyframes:true
+keyframes:false
 };
 }
 
