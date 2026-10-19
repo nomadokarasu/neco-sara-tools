@@ -80,6 +80,7 @@ const triggerMenu=document.getElementById('triggerMenu');
 const effectMenu=document.getElementById('effectMenu');
 const cameraMenu=document.getElementById('cameraMenu');
 const panelMenu=document.getElementById('panelMenu');
+const managementMenu=document.getElementById('managementMenu');
 const settingsPanel=document.getElementById('settingsPanel');
 const worldFileInput=document.getElementById('worldFileInput');
 const animationFileInput=document.getElementById('animationFileInput');
@@ -103,6 +104,7 @@ nodes:[],
 connections:[],
 selectedNodeId:null,
 selectedNodeIds:new Set(),
+activeFolderId:null,
 selectedConnectionId:null,
 menuPoint:{x:0,y:0},
 connecting:null,
@@ -231,6 +233,64 @@ state.pressedKeys.clear();
 finishWorkspaceCameraDrag();
 });
 
+// Organizational folders are editor-only; playback connections still refer to the original node IDs.
+const folderToolbar=document.createElement('div');
+folderToolbar.className='folder-toolbar';
+workspace.appendChild(folderToolbar);
+function getVisibleFolderNodes(){return state.nodes.filter(n=>(n.folderId||null)===(state.activeFolderId||null));}
+function renderFolderToolbar(){
+if(!folderToolbar)return;
+folderToolbar.replaceChildren();
+const path=[];let id=state.activeFolderId;const visited=new Set();
+while(id&&!visited.has(id)){
+visited.add(id);const item=getNode(id);if(!item)break;
+path.unshift(item);id=item.folderId||null;
+}
+const crumb=document.createElement('div');crumb.className='folder-breadcrumb';
+const root=document.createElement('button');root.type='button';root.textContent='すべてのノード';root.addEventListener('click',()=>openNodeFolder(null));crumb.appendChild(root);
+for(const item of path){
+const sep=document.createElement('span');sep.textContent=' › ';crumb.appendChild(sep);
+const button=document.createElement('button');button.type='button';button.textContent=item.folderName||'フォルダ';button.addEventListener('click',()=>openNodeFolder(item.id));crumb.appendChild(button);
+}
+folderToolbar.appendChild(crumb);
+const ids=[...state.selectedNodeIds].filter(n=>getNode(n)&&n!=='start');
+if(ids.length){
+const move=document.createElement('select');move.className='folder-move-select';
+const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent=`選択ノードを移動（${ids.length}件）`;move.appendChild(placeholder);
+const outside=document.createElement('option');outside.value='__root__';outside.textContent='すべてのノードへ移動';move.appendChild(outside);
+for(const folder of state.nodes.filter(n=>n.type==='folder'&&!ids.includes(n.id))){
+const option=document.createElement('option');option.value=folder.id;option.textContent=`📁 ${folder.folderName||'フォルダ'}`;move.appendChild(option);
+}
+move.addEventListener('change',()=>{
+const destination=move.value==='__root__'?null:move.value;
+if(!move.value)return;
+// Prevent a folder being moved into its own descendant.
+for(const selectedId of ids){let cursor=destination;const visited=new Set();
+while(cursor&&!visited.has(cursor)){
+if(cursor===selectedId){alert('フォルダを自分自身の中に移動することはできません。');move.value='';return;}
+visited.add(cursor);cursor=getNode(cursor)?.folderId||null;
+}}
+const before=editorSnapshot();
+for(const selectedId of ids){getNode(selectedId).folderId=destination;}
+state.selectedNodeIds.clear();state.selectedNodeId=null;
+commitEditorHistory(before);renderNodes();renderSettings();renderFolderToolbar();
+});folderToolbar.appendChild(move);
+}
+if(state.activeFolderId){
+const count=state.selectedNodeIds.size;
+if(count){const button=document.createElement('button');button.textContent='選択ノードを外へ出す';button.addEventListener('click',()=>{
+const parent=getNode(state.activeFolderId)?.folderId||null;
+const before=editorSnapshot();for(const id of state.selectedNodeIds){const n=getNode(id);if(n)n.folderId=parent;}
+state.selectedNodeIds.clear();commitEditorHistory(before);renderNodes();renderSettings();renderFolderToolbar();
+});folderToolbar.appendChild(button);}
+}
+}
+function openNodeFolder(folderId){
+if(folderId&&getNode(folderId)?.type!=='folder')return;
+state.activeFolderId=folderId||null;
+state.selectedNodeId=null;state.selectedNodeIds.clear();state.selectedConnectionId=null;
+renderNodes();renderSettings();renderFolderToolbar();
+}
 function addNode(type,x,y){
 const editBefore=editorSnapshot();
 const node={
@@ -238,6 +298,8 @@ id:uid(type),
 type,
 x,
 y,
+folderId:state.activeFolderId,
+folderName:type==='folder'?'新しいフォルダ':undefined,
 world:{
 fileName:'',
 fileType:'',
@@ -356,6 +418,7 @@ return null;
 function renderNodes(){
 nodesLayer.innerHTML='';
 for(const node of state.nodes){
+if((node.folderId||null)!==(state.activeFolderId||null))continue;
 const el=document.createElement('div');
 el.className=`node ${node.type==='start'?'start-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''}`;
 el.dataset.id=node.id;
@@ -368,6 +431,7 @@ node.type==='time'?'時間':
 node.type==='click'?'クリック':
 node.type==='dialogue'?'ダイアローグ':
 node.type==='media2d'?'2Dメディア':
+node.type==='folder'?'フォルダ':
 node.type==='fadeIn'?'フェードイン':
 node.type==='fadeOut'?'フェードアウト':
 node.type==='pan'?'パン':
@@ -382,6 +446,7 @@ node.type==='time'?`${node.timeSeconds} 秒`:
 node.type==='click'?'範囲クリック':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='media2d'?'画像・動画を重ねて表示':
+node.type==='folder'?`${node.folderName||'新しいフォルダ'}（${state.nodes.filter(n=>n.folderId===node.id).length}）`:
 node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
 node.type==='keyframe'?'カメラワーク':
@@ -392,12 +457,17 @@ const bodyEl=el.querySelector('.node-body');
 bodyEl.textContent=node.customBody===undefined?body:node.customBody;
 
 attachNodeEvents(el,node);
+if(node.type==='folder'){
+el.classList.add('folder-node');
+el.addEventListener('dblclick',event=>{event.preventDefault();event.stopPropagation();openNodeFolder(node.id);});
+}
 nodesLayer.appendChild(el);
 }
 requestAnimationFrame(renderConnections);
 }
 
 function attachNodeBodyEditor(el,node){
+if(node.type==='folder')return;
 const body=el.querySelector('.node-body');
 if(!body)return;
 
@@ -493,6 +563,16 @@ if(port.dataset.port==='output')startConnection(e,node.id,el);
 return;
 }
 
+if(e.shiftKey){
+if(node.type!=='start'){
+if(state.selectedNodeIds.has(node.id))state.selectedNodeIds.delete(node.id);
+else state.selectedNodeIds.add(node.id);
+}
+state.selectedNodeId=null;
+state.selectedConnectionId=null;
+renderNodes();renderSettings();renderFolderToolbar();
+return;
+}
 state.selectedNodeId=node.id;
 state.selectedNodeIds.clear();
 state.selectedConnectionId=null;
@@ -515,6 +595,7 @@ e.preventDefault();
 
 renderConnections();
 renderSettings();
+renderFolderToolbar();
 });
 
 el.addEventListener('pointermove',e=>{
@@ -556,6 +637,7 @@ state.selectedNodeIds.clear();
 state.selectedConnectionId=null;
 renderNodes();
 renderSettings();
+renderFolderToolbar();
 }
 
 function renderSettings(){
@@ -616,6 +698,12 @@ settingsPanel.appendChild(group);
 }
 
 if(!node){settingsPanel.innerHTML='<div class="settings-empty">ノードを選択してください</div>';return}
+if(node.type==='folder'){
+settingsPanel.innerHTML=`<div class="settings-title">フォルダ</div><div class="setting-group"><div class="setting-label">フォルダ名</div><input id="folderNameInput" class="number-input" type="text" maxlength="80" value="${escapeHtml(node.folderName||'新しいフォルダ').replace(/&quot;/g,'&quot;').replace(/"/g,'&quot;')}"></div><div class="setting-group"><button type="button" id="openFolderButton" class="add-world-btn">フォルダを開く</button></div><div class="settings-empty">Shift＋クリックで複数選択し、画面左上の「選択ノードを移動」からこのフォルダへ移動できます。</div>`;
+document.getElementById('folderNameInput').addEventListener('input',e=>{node.folderName=e.target.value;renderNodes();renderFolderToolbar();});
+document.getElementById('openFolderButton').addEventListener('click',()=>openNodeFolder(node.id));
+return;
+}
 if(node.type==='start'){
 settingsPanel.innerHTML='<div class="settings-title">START</div><div class="settings-empty">ゲーム開始地点です。</div>';
 return;
@@ -4141,6 +4229,7 @@ state.selectedNodeIds.clear();
 state.selectedConnectionId=null;
 renderNodes();
 renderSettings();
+renderFolderToolbar();
 }
 });
 
@@ -4222,7 +4311,8 @@ material:{label:'素材',element:materialMenu},
 trigger:{label:'トリガー',element:triggerMenu},
 effect:{label:'効果',element:effectMenu},
 camera:{label:'カメラ',element:cameraMenu},
-panel:{label:'パネル',element:panelMenu}
+panel:{label:'パネル',element:panelMenu},
+management:{label:'ノード管理',element:managementMenu}
 };
 
 function updateNodeMenuCategories(openCategory=null){
@@ -4335,9 +4425,10 @@ state.nodes=cloneEditorValue(snapshot.nodes);
 state.connections=cloneEditorValue(snapshot.connections);
 state.selectedNodeId=snapshot.selectedNodeId&&state.nodes.some(n=>n.id===snapshot.selectedNodeId)?snapshot.selectedNodeId:null;
 state.selectedNodeIds.clear();
+if(state.activeFolderId&&!state.nodes.some(n=>n.id===state.activeFolderId&&n.type==='folder'))state.activeFolderId=null;
 state.selectedConnectionId=snapshot.selectedConnectionId;
 state.connecting=null;state.dragging=null;state.connectionAnchorDrag=null;
-renderNodes();renderSettings();renderConnections();renderMediaList();
+renderNodes();renderSettings();renderConnections();renderMediaList();renderFolderToolbar();
 editorHistory.restoring=false;
 }
 function stepEditorHistory(redo){
@@ -4434,21 +4525,21 @@ const key=e.key.toLowerCase();
 if((e.ctrlKey||e.metaKey)&&!e.altKey&&key==='a'){
 e.preventDefault();
 
-state.selectedNodeIds=new Set(state.nodes.map(node=>node.id));
+state.selectedNodeIds=new Set(getVisibleFolderNodes().filter(node=>node.type!=='start').map(node=>node.id));
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
 
 renderNodes();
-renderSettings();
+renderSettings();renderFolderToolbar();
 
-if(state.nodes.length===0)return;
+if(state.selectedNodeIds.size===0)return;
 
 let minX=Infinity;
 let minY=Infinity;
 let maxX=-Infinity;
 let maxY=-Infinity;
 
-for(const node of state.nodes){
+for(const node of getVisibleFolderNodes()){
 const el=Array.from(nodesLayer.querySelectorAll('.node')).find(item=>item.dataset.id===node.id);
 if(!el)continue;
 
@@ -4614,10 +4705,9 @@ state.selectedNodeId;
 
 if(!id||id==='start')return;
 
-state.nodes=
-state.nodes.filter(
-n=>n.id!==id
-);
+const deleting=getNode(id);
+if(deleting?.type==='folder')for(const child of state.nodes.filter(n=>n.folderId===id))child.folderId=deleting.folderId||null;
+state.nodes=state.nodes.filter(n=>n.id!==id);
 
 state.connections=
 state.connections.filter(
@@ -4658,7 +4748,7 @@ const input=target?.closest?.('.port.input');
 if(input){
 const to=input.closest('.node')?.dataset.id;
 const from=state.connecting.from;
-if(to&&to!==from&&getNode(from)&&getNode(to)&&!state.connections.some(c=>c.from===from&&c.to===to)){
+if(to&&to!==from&&getNode(from)?.type!=='folder'&&getNode(to)?.type!=='folder'&&getNode(from)&&getNode(to)&&!state.connections.some(c=>c.from===from&&c.to===to)){
 state.connections.push({id:uid('conn'),from,to});
 }
 }
@@ -6279,6 +6369,7 @@ if(node.animation)node.animation.raw=null;
 cancelPreviewScene();
 state.nodes=data.nodes;
 state.connections=data.connections;
+state.activeFolderId=null;
 resetEditorHistory();
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
@@ -6290,7 +6381,7 @@ mediaLibrary.splice(0,previousMedia.length);
 updateLayoutControls();
 renderMediaList();
 renderNodes();
-renderSettings();
+renderSettings();renderFolderToolbar();
 }catch(error){
 console.error(error);
 for(const media of mediaLibrary.slice(previousMedia.length)){
@@ -6450,6 +6541,7 @@ if(node.animation)node.animation.raw=null;
 mediaLibrary.splice(0,mediaLibrary.length,...loaded);
 state.nodes=data.nodes;
 state.connections=data.connections;
+state.activeFolderId=null;
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
 state.displayMode=['pc','mobile'].includes(data.displayMode)?data.displayMode:'pc';
@@ -6571,3 +6663,5 @@ applyGameAspectRatio();
 updateLayoutControls();
 addStartNode();
 renderSettings();
+
+renderFolderToolbar();
