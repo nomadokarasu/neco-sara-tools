@@ -3411,11 +3411,9 @@ node.clickFrameIndex/node.clickFrameFps,
 Math.max(0,media.duration-0.001)
 );
 
-// 最初のフレームだけ、参照メディアの画角を使用する。
-// 2フレーム目以降は直前まで表示していた画角を維持する。
-if(node.clickFrameIndex===0){
-Object.assign(node.clickView,getReferenceCamera(node,worldNode,0));
-}
+// 画角はクリックノード内で保持する。
+// 初回の画角設定は ensureClickView() に任せる。
+// フレーム切り替え時には画角を上書きしない。
 
 timeLabel.textContent=`${time.toFixed(3)} 秒`;
 
