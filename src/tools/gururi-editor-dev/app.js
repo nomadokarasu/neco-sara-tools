@@ -882,16 +882,7 @@ const duration=getMediaPlaybackDuration(node,media);
 
 const collapsible=(id,label,contents)=>`<details data-media-section="${id}"><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
 const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
-const durationSettings=
-(videoMode?`
-<div class="setting-group">
-<div class="setting-label">素材の長さ</div>
-<div class="file-name">${(media?.duration||0).toFixed(2)} 秒</div>
-</div>`:'')+
-`<div class="setting-group">
-<div class="setting-label">${videoMode?'再生時間':'表示時間'}（秒）</div>
-<input id="mediaDurationInput" class="number-input" type="number" min="0.1" step="0.1" value="${duration}">
-</div>`;
+const durationSettings='';
 const previewControls=`
 <div class="setting-group">
 <canvas id="mediaCameraCanvas" class="world-preview" width="320" height="320"></canvas>
@@ -945,13 +936,9 @@ ${collapsible('loop','ループ',loops)}
 </div>`;
 
 document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
-document.getElementById('mediaDurationInput').addEventListener('change',e=>{
-const value=Math.max(0.1,Number(e.target.value)||3);
-if(videoMode){node.animation.playDuration=value;node.animation.loopCount=(media?.duration>0)?value/media.duration:1;}
-else node.worldDuration=value;
-e.target.value=value;
-renderSettings();
-});
+if(videoMode&&media?.duration>0){
+node.animation.playDuration=media.duration*(Number(node.animation.loopCount)||1);
+}
 if(videoMode){
 node.animation.startTime=0;
 document.getElementById('mediaInfiniteLoop').addEventListener('change',e=>node.animation.infiniteLoop=e.target.checked);
