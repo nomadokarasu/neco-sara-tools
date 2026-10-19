@@ -882,7 +882,7 @@ const duration=getMediaPlaybackDuration(node,media);
 
 const collapsible=(id,label,contents)=>`<details data-media-section="${id}"><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
 const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
-const basic=mediaSelect+
+const durationSettings=
 (videoMode?`
 <div class="setting-group">
 <div class="setting-label">素材の長さ</div>
@@ -928,7 +928,7 @@ const camera=`
 </details>
 
 <details data-camera-subsection="angles">
-<summary>画角設定</summary>
+<summary>画角情報</summary>
 <div id="mediaCameraAngleFields" class="media-camera-subsection-body"></div>
 </details>
 
@@ -936,9 +936,10 @@ const camera=`
 const loops=videoMode?`<div class="setting-group"><label><input id="mediaInfiniteLoop" type="checkbox" ${node.animation.infiniteLoop?'checked':''}> 無限ループ（トリガー発火まで再生）</label></div><div class="setting-group"><div class="setting-label">ループ回数</div><input id="mediaLoopCount" class="number-input" type="number" min="0.01" step="0.01" value="${Number(node.animation.loopCount)||1}"></div>`:`<div class="setting-group"><label><input id="mediaWorldInfinite" type="checkbox" ${node.worldInfiniteLoop?'checked':''}> 無限表示（トリガー発火まで表示）</label></div>`;
 settingsPanel.innerHTML=`
 <div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div>
+${mediaSelect}
 ${previewControls}
+${durationSettings}
 <div class="media-section-list">
-${collapsible('basic','基本設定',basic)}
 ${collapsible('camera','カメラ',camera)}
 ${collapsible('loop','ループ',loops)}
 </div>`;
