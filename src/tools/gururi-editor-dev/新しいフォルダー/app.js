@@ -4292,28 +4292,15 @@ renderConnections();
 function onConnectionEnd(e){
 window.removeEventListener('pointermove',onConnectionMove);
 if(!state.connecting)return;
-
 const target=document.elementFromPoint(e.clientX,e.clientY);
 const input=target?.closest?.('.port.input');
-
 if(input){
-const nodeEl=input.closest('.node');
-const to=nodeEl?.dataset.id;
+const to=input.closest('.node')?.dataset.id;
 const from=state.connecting.from;
-
-if(to&&to!==from&&getNode(from)&&getNode(to)){
-const alreadyConnected=state.connections.some(c=>c.from===from&&c.to===to);
-
-if(!alreadyConnected){
-state.connections.push({
-id:uid('conn'),
-from,
-to
-});
+if(to&&to!==from&&getNode(from)&&getNode(to)&&!state.connections.some(c=>c.from===from&&c.to===to)){
+state.connections.push({id:uid('conn'),from,to});
 }
 }
-}
-
 state.connecting=null;
 renderConnections();
 renderSettings();
@@ -4758,13 +4745,10 @@ if(!isClickTargetHit(trigger,world,e.clientX,e.clientY,regions)){
 continue;
 }
 
-const next=state.connections.find(c=>c.from===trigger.id);
-
+clearPreviewBranchTimers();
 state.previewClickTriggerIds=[];
-
-if(next){
-showPreviewNode(next.to);
-}else{
+previewOutgoing(trigger.id);
+if(!state.connections.some(c=>c.from===trigger.id)){
 previewMessage.textContent='クリック発火・接続先なし';
 }
 
@@ -4798,58 +4782,72 @@ worldNode.world
 );
 },{passive:false});
 
-function startPreview(){
-stopPreviewTimer();
-stopEffectAnimation();
+// Parallel preview: media owns the background; triggers run independently.
+let previewSceneEpoch=0;
+const previewBranchTimers=new Set();
+const previewVisited=new Set();
+function clearPreviewBranchTimers(){
+for(const timer of previewBranchTimers)clearTimeout(timer);
+previewBranchTimers.clear();
+if(state.previewTimer){clearTimeout(state.previewTimer);state.previewTimer=null;}
+}
+function cancelPreviewScene(){
+previewSceneEpoch++;
+clearPreviewBranchTimers();
+previewVisited.clear();
+state.previewClickTriggerIds=[];
+state.previewDialogueNodeId=null;
+stopDialogueTyping();
+dialogueOverlay.classList.add('hidden');
 stopCameraAnimation();
+stopPreviewAnimation();
+state.previewWorldNodeId=null;
+}
+function previewOutgoing(nodeId){
+const targets=state.connections.filter(c=>c.from===nodeId).map(c=>getNode(c.to)).filter(Boolean);
+// When a new scene starts, establish its background before starting overlay branches.
+targets.sort((a,b)=>Number(['world','animation'].includes(b.type))-Number(['world','animation'].includes(a.type)));
+for(const target of targets)showPreviewNode(target.id);
+}
+function schedulePreviewBranch(seconds,callback){
+const epoch=previewSceneEpoch;
+const timer=setTimeout(()=>{
+previewBranchTimers.delete(timer);
+if(epoch===previewSceneEpoch&&!gamePreview.classList.contains('hidden'))callback();
+},Math.max(0,seconds)*1000);
+previewBranchTimers.add(timer);
+}
+function canUsePreviewClick(node){
+return Boolean(node.clickTarget?.initialized||Object.values(node.clickFrameRegions||{}).some(regions=>Array.isArray(regions)&&regions.some(r=>r.mode==='add'&&r.points?.length>=3)));
+}
 
+function startPreview(){
+cancelPreviewScene();
+stopEffectAnimation();
 state.previewNodeId=null;
 state.lastCameraView=null;
 state.pendingAnimationFade=null;
-state.previewWorldNodeId=null;
-state.previewClickTriggerIds=[];
-
 fadeOverlay.style.opacity=0;
 fadeOverlay.style.pointerEvents='none';
-
-const startConn=state.connections.find(c=>c.from==='start');
-
-if(!startConn){
-alert('STARTからノードへ接続してください。');
-return;
+if(!state.connections.some(c=>c.from==='start')){
+alert('STARTからノードへ接続してください。');return;
 }
-
 gamePreview.classList.remove('hidden');
-
 resizeGameCanvas();
-
-drawPanoramaPreview(gameCanvas,{
-image:null,
-yaw:0,
-pitch:0,
-zoom:1
-});
-
-showPreviewNode(startConn.to);
+drawPanoramaPreview(gameCanvas,{image:null,yaw:0,pitch:0,zoom:1});
+previewOutgoing('start');
 }
+
 
 function stopPreview(){
-stopPreviewTimer();
-stopDialogueTyping();
+cancelPreviewScene();
 stopEffectAnimation();
-stopCameraAnimation();
-
-state.previewClickTriggerIds=[];
-state.previewDialogueNodeId=null;
-state.previewWorldNodeId=null;
-
-dialogueOverlay.classList.add('hidden');
-
+state.previewNodeId=null;
 fadeOverlay.style.opacity=0;
 fadeOverlay.style.pointerEvents='none';
-
 gamePreview.classList.add('hidden');
 }
+
 
 function stopPreviewTimer(){
 if(state.previewTimer){
@@ -4912,7 +4910,7 @@ video.loop=false;
 video.src=media.url;
 
 video.addEventListener('ended',()=>{
-if(state.previewAnimation?.video!==video)return;
+if(state.previewAnimation?.video!==video||state.previewAnimation.finished)return;
 
 video.currentTime=0;
 
@@ -4975,63 +4973,15 @@ startedAt:null
 state.previewAnimation=playback;
 state.previewWorldNodeId=null;
 
-state.previewClickTriggerIds=state.connections
-.filter(connection=>connection.from===node.id)
-.map(connection=>getNode(connection.to))
-.filter(trigger=>
-trigger?.type==='click'&&(
-trigger.clickTarget.initialized||
-Object.values(trigger.clickFrameRegions||{}).some(regions=>
-regions.some(region=>region.mode==='add'&&region.points.length>=3)
-)
-)
-)
-.map(trigger=>trigger.id);
-
-state.previewDialogueNodeId=null;
-
-dialogueOverlay.classList.add('hidden');
-
 previewMessage.textContent=media.fileName;
-
-if(node.animation.infiniteLoop){
-const outgoing=state.connections.filter(c=>c.from===node.id);
-
-const timeConnection=outgoing.find(c=>{
-return getNode(c.to)?.type==='time';
-});
-
-if(timeConnection){
-const timeNode=getNode(timeConnection.to);
-const delay=Math.max(0,Number(timeNode.timeSeconds)||0);
-
-state.previewTimer=setTimeout(()=>{
-if(state.previewAnimation!==playback)return;
-
-const next=state.connections.find(c=>c.from===timeNode.id);
-
-if(next){
-showPreviewNode(next.to);
-}else{
-stopPreviewAnimation();
-previewMessage.textContent='時間トリガー発火・接続先なし';
-}
-},delay*1000);
-}
-}
 
 const finish=()=>{
 if(state.previewAnimation!==playback)return;
-
-stopPreviewAnimation();
-
-const next=state.connections.find(c=>c.from===node.id);
-
-if(next){
-showPreviewNode(next.to);
-}else{
-previewMessage.textContent='アニメーション再生終了';
-}
+// Keep the final video frame as background for dialogue and click triggers.
+video.pause();
+playback.finished=true;
+try{video.currentTime=Math.max(0,media.duration-0.001);}catch(error){}
+drawPanoramaPreview(gameCanvas,world);
 };
 
 const draw=now=>{
@@ -5042,14 +4992,11 @@ stopPreviewAnimation();
 return;
 }
 
-if(!node.animation.infiniteLoop&&playback.startedAt!==null){
-if(now-playback.startedAt>=playDuration*1000){
-finish();
-return;
-}
+if(!node.animation.infiniteLoop&&playback.startedAt!==null&&!playback.finished){
+if(now-playback.startedAt>=playDuration*1000)finish();
 }
 
-if(playback.startedAt!==null){
+if(playback.startedAt!==null&&!playback.finished){
 const elapsed=(now-playback.startedAt)/1000;
 const cameraTime=getMediaCameraLoopTime(node,media,elapsed);
 const camera=getMediaCameraAt(node,cameraTime);
@@ -5059,6 +5006,7 @@ world.pitch=camera.pitch;
 world.zoom=camera.zoom;
 }
 drawPanoramaPreview(gameCanvas,world);
+if(playback.finished)return;
 
 const pendingFade=state.pendingAnimationFade;
 
@@ -5563,328 +5511,76 @@ return;
 dialogueOverlay.classList.add('hidden');
 state.previewDialogueNodeId=null;
 
-const outgoing=
-state.connections.filter(c=>c.from===node.id);
-
-const clickTriggers=outgoing
-.map(c=>getNode(c.to))
-.filter(
-nextNode=>
-nextNode?.type==='click'&&
-nextNode.clickTarget.initialized
-);
-
-if(clickTriggers.length>0){
-state.previewClickTriggerIds=
-clickTriggers.map(trigger=>trigger.id);
-
-previewMessage.textContent='クリック待ち';
-return;
+previewOutgoing(node.id);
 }
-
-const next=outgoing[0];
-
-if(next){
-showPreviewNode(next.to);
-}
-}
-
 function showPreviewNode(nodeId){
-stopPreviewTimer();
 const node=getNode(nodeId);
-if(!node)return;
-state.previewNodeId=nodeId;
-
-if(node.type==='start'){
-const next=state.connections.find(c=>c.from===node.id);
-
-if(next){
-setTimeout(()=>{
-if(gamePreview.classList.contains('hidden'))return;
-if(state.previewNodeId!==node.id)return;
-showPreviewNode(next.to);
-},0);
-}
-
-return;
-}
-
+if(!node||gamePreview.classList.contains('hidden'))return;
+// A branch converging on an already-active node is executed only once per scene.
+if(previewVisited.has(node.id))return;
+previewVisited.add(node.id);
+if(node.type==='start'){previewOutgoing(node.id);return;}
+if(node.type==='world'||node.type==='animation'){
+// Only one 360-degree scene is shown at a time.
+cancelPreviewScene();
+previewVisited.add(node.id);
+state.previewNodeId=node.id;
 if(node.type==='animation'){
 playPreviewAnimation(node);
-return;
-}
-
-if(node.type==='world'){
+}else{
 state.previewWorldNodeId=node.id;
-state.previewClickTriggerIds=[];
-state.previewDialogueNodeId=null;
-dialogueOverlay.classList.add('hidden');
-
-previewMessage.textContent=node.world.fileName||'ビュー素材未設定';
-
 applyWorldInitialView(node);
-
+previewMessage.textContent=node.world.fileName||'ビュー素材未設定';
 drawPanoramaPreview(gameCanvas,node.world);
-
-const outgoing=state.connections.filter(c=>c.from===node.id);
-
-const clickTriggers=outgoing
-.map(c=>getNode(c.to))
-.filter(nextNode=>nextNode?.type==='click'&&nextNode.clickTarget.initialized);
-
-if(clickTriggers.length>0){
-state.previewClickTriggerIds=clickTriggers.map(trigger=>trigger.id);
-previewMessage.textContent='クリック待ち';
-}
-
-const next=outgoing[0];
-
-if(getMediaCameraFrames(node).length||(!node.worldInfiniteLoop&&next&&clickTriggers.length===0)){
+const epoch=previewSceneEpoch;
+const duration=getMediaPlaybackDuration(node,null);
+const hasFrames=getMediaCameraFrames(node).length>0;
+if(hasFrames){
 const started=performance.now();
-const duration=getMediaPlaybackDuration(node,null)*1000;
 const tick=now=>{
-if(gamePreview.classList.contains('hidden')||state.previewNodeId!==node.id)return;
-const elapsed=Math.min(duration,now-started)/1000;
+if(epoch!==previewSceneEpoch||gamePreview.classList.contains('hidden'))return;
+const elapsed=Math.min(duration,(now-started)/1000);
 Object.assign(node.world,getMediaCameraAt(node,elapsed));
 drawPanoramaPreview(gameCanvas,node.world);
-if(now-started<duration){state.cameraAnimationFrame=requestAnimationFrame(tick);}
-else{
-state.cameraAnimationFrame=null;
-if(!node.worldInfiniteLoop&&next&&getNode(next.to)?.type!=='click')showPreviewNode(next.to);
-}
+if(elapsed<duration)state.cameraAnimationFrame=requestAnimationFrame(tick);
+else state.cameraAnimationFrame=null;
 };
-stopCameraAnimation();
 state.cameraAnimationFrame=requestAnimationFrame(tick);
-return;
-}
-
-if(clickTriggers.length>0)return;
-
-if(next){
-const nextNode=getNode(next.to);
-
-if(
-nextNode?.type==='time'||
-nextNode?.type==='dialogue'||
-nextNode?.type==='fadeIn'||
-nextNode?.type==='fadeOut'||
-nextNode?.type==='pan'
-){
-showPreviewNode(nextNode.id);
 }
 }
-
-return;
-}
-
-if(node.type==='pan'){
-previewMessage.textContent='';
-
-const sourceNode=
-getNode(state.previewWorldNodeId)||
-findPreviousClickMediaNode(node.id);
-
-const next=state.connections.find(c=>c.from===node.id);
-
-const complete=()=>{
-stopCameraAnimation();
-
-if(next){
-showPreviewNode(next.to);
-}
-};
-
-if(!sourceNode){
-complete();
-return;
-}
-
-if(sourceNode.type==='world'){
-state.previewWorldNodeId=sourceNode.id;
-runPan(node,sourceNode,complete);
-return;
-}
-
-if(sourceNode.type==='animation'){
-const media=mediaLibrary.find(item=>
-item.id===sourceNode.animation.mediaId&&item.fileType==='mp4'
-);
-
-if(!media?.url){
-complete();
-return;
-}
-
-stopCameraAnimation();
-
-const video=document.createElement('video');
-video.muted=true;
-video.playsInline=true;
-video.preload='auto';
-video.loop=true;
-video.src=media.url;
-
-state.panVideo=video;
-state.previewWorldNodeId=null;
-
-const view=sourceNode.animation.views?.[state.displayMode]||
-sourceNode.animation.views?.pc||
-{yaw:0,pitch:0,zoom:1};
-
-const panWorld={
-world:{
-image:video,
-yaw:view.yaw,
-pitch:view.pitch,
-zoom:view.zoom
-}
-};
-
-video.addEventListener('loadeddata',async()=>{
-if(state.panVideo!==video)return;
-
-try{
-const startTime=Math.max(
-0,
-Math.min(media.duration-0.001,Number(sourceNode.animation.startTime)||0)
-);
-
-if(startTime>0){
-video.currentTime=startTime;
-
-await new Promise(resolve=>{
-video.addEventListener('seeked',resolve,{once:true});
-});
-}
-
-if(state.panVideo!==video)return;
-
-await video.play();
-
-if(state.panVideo!==video)return;
-
-runTimedPan(node,panWorld,video,complete);
-}catch(error){
-console.error('パン中のMP4再生に失敗しました',error);
-if(state.panVideo===video)complete();
-}
-},{once:true});
-
-video.addEventListener('error',()=>{
-if(state.panVideo===video)complete();
-});
-
-video.load();
-return;
-}
-
-complete();
-return;
-}
-
-if(node.type==='fadeIn'){
-previewMessage.textContent='';
-
-const next=state.connections.find(c=>c.from===node.id);
-
-if(next){
-const nextNode=getNode(next.to);
-
-if(nextNode?.type==='animation'){
-state.pendingAnimationFade={
-nodeId:nextNode.id,
-seconds:node.effectSeconds
-};
-
-fadeOverlay.style.opacity='1';
-fadeOverlay.style.pointerEvents='none';
-
-showPreviewNode(next.to);
-return;
-}
-
-if(nextNode?.type==='world'){
-applyWorldInitialView(nextNode);
-state.previewWorldNodeId=nextNode.id;
-drawPanoramaPreview(gameCanvas,nextNode.world);
-}
-}
-
-runFadeEffect(node,1,0,()=>{
-if(next){
-showPreviewNode(next.to);
-}
-});
-
-return;
-}
-
-if(node.type==='fadeOut'){
-previewMessage.textContent='';
-
-const next=state.connections.find(c=>c.from===node.id);
-
-runFadeEffect(node,0,1,()=>{
-if(next){
-showPreviewNode(next.to);
-}
-});
-
-return;
-}
-
-if(node.type==='time'){
-previewMessage.textContent=`${node.timeSeconds} 秒待機`;
-const next=state.connections.find(c=>c.from===node.id);
-state.previewTimer=setTimeout(()=>{
-if(next)showPreviewNode(next.to);
-},node.timeSeconds*1000);
+previewOutgoing(node.id);
 return;
 }
 if(node.type==='click'){
-if(!node.clickTarget.initialized){
-const next=state.connections.find(c=>c.from===node.id);
-if(next)showPreviewNode(next.to);
-return;
-}
-
-state.previewClickTriggerIds=[node.id];
+if(!canUsePreviewClick(node)){previewOutgoing(node.id);return;}
+if(!state.previewClickTriggerIds.includes(node.id))state.previewClickTriggerIds.push(node.id);
 previewMessage.textContent='クリック待ち';
 return;
 }
-
+if(node.type==='time'){
+schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
+return;
+}
 if(node.type==='dialogue'){
-state.previewClickTriggerIds=[];
+if(node.dialoguePages.length===0){previewOutgoing(node.id);return;}
 state.previewDialogueNodeId=node.id;
-previewMessage.textContent='';
-
-if(node.dialoguePages.length===0){
-const outgoing=state.connections.filter(c=>c.from===node.id);
-
-const clickTriggers=outgoing
-.map(c=>getNode(c.to))
-.filter(nextNode=>nextNode?.type==='click'&&nextNode.clickTarget.initialized);
-
-state.previewDialogueNodeId=null;
-
-if(clickTriggers.length>0){
-state.previewClickTriggerIds=clickTriggers.map(trigger=>trigger.id);
-previewMessage.textContent='クリック待ち';
-return;
-}
-
-const next=outgoing[0];
-
-if(next){
-showPreviewNode(next.to);
-}
-
-return;
-}
-
 showDialoguePage(node,0);
+return;
 }
+if(node.type==='fadeIn'||node.type==='fadeOut'){
+const isIn=node.type==='fadeIn';
+runFadeEffect(node,isIn?1:0,isIn?0:1,()=>previewOutgoing(node.id));
+return;
 }
+if(node.type==='pan'){
+const sourceNode=getNode(state.previewWorldNodeId)||findPreviousClickMediaNode(node.id);
+if(sourceNode?.type==='world')runPan(node,sourceNode,()=>previewOutgoing(node.id));
+else previewOutgoing(node.id);
+return;
+}
+previewOutgoing(node.id);
+}
+
 
 function resizeGameCanvas(){
 const rect=gamePreview.getBoundingClientRect();
@@ -6099,7 +5795,7 @@ node.world.raw=null;
 }
 if(node.animation)node.animation.raw=null;
 }
-stopPreviewTimer();
+cancelPreviewScene();
 state.nodes=data.nodes;
 state.connections=data.connections;
 state.selectedNodeId=null;
