@@ -4922,7 +4922,6 @@ if(e.button!==0)return;
 const world=getActivePreviewWorld();
 if(!world)return;
 
-if(isPreviewCameraLocked())return;
 gamePreviewDrag={
 x:e.clientX,
 y:e.clientY,
@@ -4938,20 +4937,19 @@ gameCanvas.setPointerCapture(e.pointerId);
 gameCanvas.addEventListener('pointermove',e=>{
 if(!gamePreviewDrag)return;
 
-if(isPreviewCameraLocked()){
-gamePreviewDrag=null;
-return;
-}
-
-const world=getActivePreviewWorld();
-if(!world)return;
-
 const dx=e.clientX-gamePreviewDrag.x;
 const dy=e.clientY-gamePreviewDrag.y;
 
 if(Math.hypot(dx,dy)>4){
 gamePreviewDrag.moved=true;
 }
+
+// キーフレーム制御中はカメラを回転させない
+// ただしクリック判定用の情報は保持する
+if(isPreviewCameraLocked())return;
+
+const world=getActivePreviewWorld();
+if(!world)return;
 
 world.yaw=gamePreviewDrag.yaw-dx*0.008;
 
