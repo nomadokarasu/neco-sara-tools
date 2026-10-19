@@ -231,6 +231,7 @@ finishWorkspaceCameraDrag();
 });
 
 function addNode(type,x,y){
+const editBefore=editorSnapshot();
 const node={
 id:uid(type),
 type,
@@ -277,6 +278,7 @@ panUndoStack:[],
 panRedoStack:[]
 };
 state.nodes.push(node);
+commitEditorHistory(editBefore);
 renderNodes();
 selectNode(node.id);
 return node;
@@ -4042,6 +4044,96 @@ document.addEventListener('pointerdown',e=>{
 if(!contextMenu.contains(e.target)&&!workspace.contains(e.target.closest?.('.context-menu')||null))contextMenu.classList.add('hidden');
 });
 
+// Workspace and node-edit history (separate from lasso/path stroke history).
+const editorHistory={undo:[],redo:[],pending:null,restoring:false,limit:80};
+function cloneEditorValue(value,seen=new WeakMap()){
+if(value===null||typeof value!=='object')return value;
+if(value instanceof Element||value instanceof Blob||value instanceof ImageBitmap)return value;
+if(seen.has(value))return seen.get(value);
+if(value instanceof Set){const copy=new Set();seen.set(value,copy);for(const item of value)copy.add(cloneEditorValue(item,seen));return copy;}
+if(value instanceof Map){const copy=new Map();seen.set(value,copy);for(const [key,item] of value)copy.set(key,cloneEditorValue(item,seen));return copy;}
+if(Array.isArray(value)){const copy=[];seen.set(value,copy);for(const item of value)copy.push(cloneEditorValue(item,seen));return copy;}
+if(Object.getPrototypeOf(value)!==Object.prototype)return value;
+const copy={};seen.set(value,copy);
+for(const [key,item] of Object.entries(value))copy[key]=cloneEditorValue(item,seen);
+return copy;
+}
+function editorSnapshot(){
+return {nodes:cloneEditorValue(state.nodes),connections:cloneEditorValue(state.connections),selectedNodeId:state.selectedNodeId,selectedConnectionId:state.selectedConnectionId};
+}
+function editorHistorySignature(snapshot){
+return JSON.stringify({nodes:snapshot.nodes,connections:snapshot.connections},(key,value)=>{
+if(['panUndoStack','panRedoStack','clickUndoStack','clickRedoStack','panPath'].includes(key))return undefined;
+if(value instanceof Element)return '[media-element]';
+if(value instanceof Blob)return '[binary-file]';
+return value;
+});
+}
+function commitEditorHistory(before){
+if(!before||editorHistory.restoring)return;
+if(editorHistorySignature(before)===editorHistorySignature(editorSnapshot()))return;
+editorHistory.undo.push(before);
+if(editorHistory.undo.length>editorHistory.limit)editorHistory.undo.shift();
+editorHistory.redo=[];
+}
+function beginEditorHistory(){if(!editorHistory.restoring&&!editorHistory.pending)editorHistory.pending=editorSnapshot();}
+function finishEditorHistory(){
+if(!editorHistory.pending)return;
+const before=editorHistory.pending;editorHistory.pending=null;
+commitEditorHistory(before);
+}
+function resetEditorHistory(){editorHistory.undo=[];editorHistory.redo=[];editorHistory.pending=null;}
+function applyEditorHistory(snapshot){
+editorHistory.restoring=true;
+if(typeof cancelPreviewScene==='function')cancelPreviewScene();
+state.nodes=cloneEditorValue(snapshot.nodes);
+state.connections=cloneEditorValue(snapshot.connections);
+state.selectedNodeId=snapshot.selectedNodeId&&state.nodes.some(n=>n.id===snapshot.selectedNodeId)?snapshot.selectedNodeId:null;
+state.selectedNodeIds.clear();
+state.selectedConnectionId=snapshot.selectedConnectionId;
+state.connecting=null;state.dragging=null;state.connectionAnchorDrag=null;
+renderNodes();renderSettings();renderConnections();renderMediaList();
+editorHistory.restoring=false;
+}
+function stepEditorHistory(redo){
+finishEditorHistory();
+const source=redo?editorHistory.redo:editorHistory.undo;
+if(!source.length)return;
+const current=editorSnapshot();
+const next=source.pop();
+const dest=redo?editorHistory.undo:editorHistory.redo;
+dest.push(current);
+applyEditorHistory(next);
+}
+// Group continuous number/text edits into one history entry per focus session.
+document.addEventListener('focusin',e=>{
+if(settingsPanel.contains(e.target)&&e.target.matches('input,textarea,select'))beginEditorHistory();
+},true);
+document.addEventListener('focusout',e=>{
+if(settingsPanel.contains(e.target))setTimeout(finishEditorHistory,0);
+},true);
+// Capture settings button/checkbox changes, node drags, connection handles and line controls.
+document.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+if(settingsPanel.contains(e.target)||workspace.contains(e.target)||connectionsSvg.contains(e.target))beginEditorHistory();
+},true);
+window.addEventListener('pointerup',()=>setTimeout(finishEditorHistory,0));
+window.addEventListener('pointercancel',()=>setTimeout(finishEditorHistory,0));
+// For keyboard-based changes to select boxes / fields, commit when the field blurs.
+document.addEventListener('keydown',e=>{
+if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
+const key=e.key.toLowerCase();
+if(key!=='z'&&key!=='y')return;
+const selected=getNode(state.selectedNodeId);
+// Existing lasso and drawn-pan histories retain their own shortcut handling.
+if(selected?.type==='click'&&(selected.clickUndoStack?.length||selected.clickRedoStack?.length))return;
+if(selected?.type==='pan'&&(selected.panUndoStack?.length||selected.panRedoStack?.length))return;
+const active=document.activeElement;
+if(active&&active!==document.body&&active instanceof HTMLElement&&!settingsPanel.contains(active)&&['INPUT','TEXTAREA'].includes(active.tagName))return;
+e.preventDefault();e.stopImmediatePropagation();
+stepEditorHistory(key==='y'||(key==='z'&&e.shiftKey));
+},true);
+
 let copiedNodeData=null;
 let pasteOffset=0;
 
@@ -4198,12 +4290,14 @@ e.preventDefault();
 
 pasteOffset+=40;
 
+const editBefore=editorSnapshot();
 const newNode=copyNodeData(copiedNodeData);
 newNode.id=uid(newNode.type);
 newNode.x=copiedNodeData.x+pasteOffset;
 newNode.y=copiedNodeData.y+pasteOffset;
 
 state.nodes.push(newNode);
+commitEditorHistory(editBefore);
 renderNodes();
 selectNode(newNode.id);
 return;
@@ -4257,6 +4351,7 @@ return;
 
 if(e.key!=='Delete')return;
 
+const editBefore=editorSnapshot();
 if(state.selectedConnectionId){
 state.connections=
 state.connections.filter(
@@ -4264,7 +4359,7 @@ c=>c.id!==state.selectedConnectionId
 );
 
 state.selectedConnectionId=null;
-
+commitEditorHistory(editBefore);
 renderConnections();
 renderSettings();
 return;
@@ -4286,12 +4381,13 @@ c=>c.from!==id&&c.to!==id
 );
 
 state.selectedNodeId=null;
-
+commitEditorHistory(editBefore);
 renderNodes();
 renderSettings();
 });
 
 function startConnection(e,nodeId,nodeEl){
+beginEditorHistory();
 const fromPort=nodeEl.querySelector('.port.output');
 if(!fromPort)return;
 
@@ -4323,6 +4419,7 @@ state.connections.push({id:uid('conn'),from,to});
 }
 }
 state.connecting=null;
+finishEditorHistory();
 renderConnections();
 renderSettings();
 }
@@ -4570,6 +4667,7 @@ state.connectionAnchorDrag=null;
 });
 
 function insertNodeIntoConnection(type,connection,mid){
+beginEditorHistory();
 const fromId=connection.from;
 const toId=connection.to;
 const fromNode=getNode(fromId);
@@ -4610,6 +4708,7 @@ to:newNode.id
 });
 }
 
+finishEditorHistory();
 renderNodes();
 renderSettings();
 return;
@@ -4631,6 +4730,7 @@ from:newNode.id,
 to:toId
 });
 
+finishEditorHistory();
 renderNodes();
 renderSettings();
 }
@@ -5819,6 +5919,7 @@ if(node.animation)node.animation.raw=null;
 cancelPreviewScene();
 state.nodes=data.nodes;
 state.connections=data.connections;
+resetEditorHistory();
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
 state.displayMode=['pc','mobile'].includes(data.displayMode)?data.displayMode:'pc';

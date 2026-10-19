@@ -231,6 +231,7 @@ finishWorkspaceCameraDrag();
 });
 
 function addNode(type,x,y){
+const editBefore=editorSnapshot();
 const node={
 id:uid(type),
 type,
@@ -277,6 +278,7 @@ panUndoStack:[],
 panRedoStack:[]
 };
 state.nodes.push(node);
+commitEditorHistory(editBefore);
 renderNodes();
 selectNode(node.id);
 return node;
@@ -2084,7 +2086,9 @@ label.textContent=`${currentTime.toFixed(2)} / ${duration.toFixed(2)} 秒`;
 Object.assign(view,getTimedPanView(node,currentTime));
 
 const videoDuration=Number(media.duration)||0;
-const startTime=Number(sourceNode.animation.startTime)||0;
+const startTime=getMediaCameraVideoTime(
+sourceNode,media,getTriggerPreviewTime(node.id,sourceNode)
+);
 
 if(videoDuration>0){
 const targetTime=Math.max(
@@ -2823,24 +2827,39 @@ node.clickFrameRegions[node.clickFrameIndex||0]=
 cloneClickRegions(node.clickRegions);
 }
 
-function ensureClickView(node,sourceNode){
-if(node.clickView.initialized)return;
-
-let view=null;
-
-if(sourceNode.type==='animation'){
-view=sourceNode.animation.views?.[state.displayMode]||
-sourceNode.animation.views?.pc;
-}else{
-view=getWorldInitialView(sourceNode);
+function getTriggerPreviewTime(nodeId,sourceNode){
+// Sum waits on the path to this trigger.  A sibling media branch starts
+// at the common ancestor, so this is its elapsed playback time.
+const visited=new Set();
+let current=nodeId;
+let elapsed=0;
+while(current&&!visited.has(current)){
+visited.add(current);
+const currentNode=getNode(current);
+if(currentNode?.type==='time')elapsed+=Math.max(0,Number(currentNode.timeSeconds)||0);
+if(current===sourceNode?.id)break;
+const incoming=state.connections.find(edge=>edge.to===current);
+if(!incoming)break;
+current=incoming.from;
+}
+return elapsed;
 }
 
-view=view||{yaw:0,pitch:0,zoom:1};
+function getReferenceCamera(node,sourceNode,seconds){
+const media=sourceNode?.type==='animation'?getClickAnimationMedia(sourceNode):null;
+const time=getMediaCameraLoopTime(sourceNode,media,Math.max(0,seconds||0));
+return getMediaCameraAt(sourceNode,time);
+}
 
-node.clickView.yaw=view.yaw;
-node.clickView.pitch=view.pitch;
-node.clickView.zoom=view.zoom;
-node.clickView.initialized=true;
+function ensureClickView(node,sourceNode){
+if(!sourceNode)return;
+const time=sourceNode.type==='animation'
+?(node.clickFrameIndex||0)/(Number(node.clickFrameFps)||8)
+:getTriggerPreviewTime(node.id,sourceNode);
+const referenceKey=`${sourceNode.id}:${state.displayMode}`;
+if(node.clickView.initialized&&node.clickReferenceKey===referenceKey)return;
+Object.assign(node.clickView,getReferenceCamera(node,sourceNode,time),{initialized:true});
+node.clickReferenceKey=referenceKey;
 }
 
 function createClickTargetAtCenter(node,worldNode,canvas){
@@ -3272,6 +3291,9 @@ node.clickFrameIndex/node.clickFrameFps,
 Math.max(0,media.duration-0.001)
 );
 
+// Reset the click editing camera to the referenced media camera at this frame.
+Object.assign(node.clickView,getReferenceCamera(node,worldNode,time));
+
 timeLabel.textContent=`${time.toFixed(3)} 秒`;
 
 video.pause();
@@ -3541,28 +3563,11 @@ return String(value)
 
 function ensureDialogueView(node,sourceNode){
 if(!sourceNode)return;
-
-let view=null;
-
-if(sourceNode.type==='world'){
-view=getWorldInitialView(sourceNode);
-}
-
-if(sourceNode.type==='animation'){
-view=sourceNode.animation.views?.[state.displayMode]||{
-yaw:0,
-pitch:0,
-zoom:1
-};
-}
-
-const sourceKey=`${sourceNode.id}:${state.displayMode}`;
-
-if(view&&node.dialogueSourceKey!==sourceKey){
-node.dialogueView.yaw=view.yaw;
-node.dialogueView.pitch=view.pitch;
-node.dialogueView.zoom=view.zoom;
-node.dialogueView.initialized=true;
+const seconds=getTriggerPreviewTime(node.id,sourceNode);
+const view=getReferenceCamera(node,sourceNode,seconds);
+const sourceKey=`${sourceNode.id}:${state.displayMode}:${seconds}`;
+if(node.dialogueSourceKey!==sourceKey){
+Object.assign(node.dialogueView,view,{initialized:true});
 node.dialogueSourceKey=sourceKey;
 }
 }
@@ -4039,8 +4044,105 @@ document.addEventListener('pointerdown',e=>{
 if(!contextMenu.contains(e.target)&&!workspace.contains(e.target.closest?.('.context-menu')||null))contextMenu.classList.add('hidden');
 });
 
-let copiedNodeData=null;
-let pasteOffset=0;
+const editorHistory={undo:[],redo:[],pending:null,restoring:false,limit:80};
+
+function cloneEditorValue(value,seen=new WeakMap()){
+if(value===null||typeof value!=='object')return value;
+if(value instanceof Element||value instanceof Blob||value instanceof ImageBitmap)return value;
+if(seen.has(value))return seen.get(value);
+if(value instanceof Set){
+const copy=new Set();
+seen.set(value,copy);
+for(const item of value)copy.add(cloneEditorValue(item,seen));
+return copy;
+}
+if(value instanceof Map){
+const copy=new Map();
+seen.set(value,copy);
+for(const [key,item] of value)copy.set(key,cloneEditorValue(item,seen));
+return copy;
+}
+if(Array.isArray(value)){
+const copy=[];
+seen.set(value,copy);
+for(const item of value)copy.push(cloneEditorValue(item,seen));
+return copy;
+}
+if(Object.getPrototypeOf(value)!==Object.prototype)return value;
+const copy={};
+seen.set(value,copy);
+for(const [key,item] of Object.entries(value)){
+copy[key]=cloneEditorValue(item,seen);
+}
+return copy;
+}
+
+function editorSnapshot(){
+return{
+nodes:cloneEditorValue(state.nodes),
+connections:cloneEditorValue(state.connections),
+selectedNodeId:state.selectedNodeId,
+selectedConnectionId:state.selectedConnectionId
+};
+}
+
+function editorHistorySignature(snapshot){
+return JSON.stringify({
+nodes:snapshot.nodes,
+connections:snapshot.connections
+},(key,value)=>{
+if(['panUndoStack','panRedoStack','clickUndoStack','clickRedoStack','panPath'].includes(key)){
+return undefined;
+}
+if(value instanceof Element)return '[media-element]';
+if(value instanceof Blob)return '[binary-file]';
+return value;
+});
+}
+
+function commitEditorHistory(before){
+if(!before||editorHistory.restoring)return;
+if(editorHistorySignature(before)===editorHistorySignature(editorSnapshot()))return;
+
+editorHistory.undo.push(before);
+if(editorHistory.undo.length>editorHistory.limit)editorHistory.undo.shift();
+editorHistory.redo=[];
+}
+
+function beginEditorHistory(){
+if(!editorHistory.restoring&&!editorHistory.pending){
+editorHistory.pending=editorSnapshot();
+}
+}
+
+function finishEditorHistory(){
+if(!editorHistory.pending)return;
+const before=editorHistory.pending;
+editorHistory.pending=null;
+commitEditorHistory(before);
+}
+
+function resetEditorHistory(){
+editorHistory.undo=[];
+editorHistory.redo=[];
+editorHistory.pending=null;
+}
+
+function applyEditorHistory(snapshot){
+editorHistory.restoring=true;
+if(typeof cancelPreviewScene==='function')cancelPreviewScene();
+
+state.nodes=cloneEditorValue(snapshot.nodes);
+state.connections=cloneEditorValue(snapshot.connections);
+state.selectedNodeId=snapshot.selectedNodeId&&state.nodes.some(n=>n.id===snapshot.selectedNodeId)
+?snapshot.selectedNodeId:null;
+state.selectedNodeIds.clear();
+state.selectedConnectionId=snapshot.selectedConnectionId;
+state.connecting=null;
+state.dragging=null;
+state.connectionAnchorDrag=null;
+
+renderNodes
 
 function copyNodeData(node){
 const copied={
@@ -4195,12 +4297,14 @@ e.preventDefault();
 
 pasteOffset+=40;
 
+const editBefore=editorSnapshot();
 const newNode=copyNodeData(copiedNodeData);
 newNode.id=uid(newNode.type);
 newNode.x=copiedNodeData.x+pasteOffset;
 newNode.y=copiedNodeData.y+pasteOffset;
 
 state.nodes.push(newNode);
+commitEditorHistory(editBefore);
 renderNodes();
 selectNode(newNode.id);
 return;
@@ -4254,6 +4358,7 @@ return;
 
 if(e.key!=='Delete')return;
 
+const editBefore=editorSnapshot();
 if(state.selectedConnectionId){
 state.connections=
 state.connections.filter(
@@ -4261,6 +4366,7 @@ c=>c.id!==state.selectedConnectionId
 );
 
 state.selectedConnectionId=null;
+commitEditorHistory(editBefore);
 
 renderConnections();
 renderSettings();
@@ -4283,12 +4389,14 @@ c=>c.from!==id&&c.to!==id
 );
 
 state.selectedNodeId=null;
+commitEditorHistory(editBefore);
 
 renderNodes();
 renderSettings();
 });
 
 function startConnection(e,nodeId,nodeEl){
+beginEditorHistory();
 const fromPort=nodeEl.querySelector('.port.output');
 if(!fromPort)return;
 
@@ -4320,6 +4428,7 @@ state.connections.push({id:uid('conn'),from,to});
 }
 }
 state.connecting=null;
+finishEditorHistory();
 renderConnections();
 renderSettings();
 }
@@ -4567,6 +4676,7 @@ state.connectionAnchorDrag=null;
 });
 
 function insertNodeIntoConnection(type,connection,mid){
+beginEditorHistory();
 const fromId=connection.from;
 const toId=connection.to;
 const fromNode=getNode(fromId);
@@ -5816,6 +5926,7 @@ if(node.animation)node.animation.raw=null;
 cancelPreviewScene();
 state.nodes=data.nodes;
 state.connections=data.connections;
+resetEditorHistory();
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
 state.displayMode=['pc','mobile'].includes(data.displayMode)?data.displayMode:'pc';
