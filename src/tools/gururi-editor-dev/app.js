@@ -4867,7 +4867,18 @@ return worldNode?.type==='world'
 :null;
 }
 
+function isPreviewCameraLocked(){
+const animation=state.previewAnimation;
+const controller=activeIndependentKeyframe;
+
+if(!animation||!controller)return false;
+if(controller.sourceId!==animation.nodeId)return false;
+
+return getKeyframeNodeFrames(controller.node).length>0;
+}
+
 gameCanvas.addEventListener('pointerdown',e=>{
+if(isPreviewCameraLocked())return;
 if(state.previewDialogueNodeId)return;
 if(e.button!==0)return;
 
@@ -4888,6 +4899,11 @@ gameCanvas.setPointerCapture(e.pointerId);
 
 gameCanvas.addEventListener('pointermove',e=>{
 if(!gamePreviewDrag)return;
+
+if(isPreviewCameraLocked()){
+gamePreviewDrag=null;
+return;
+}
 
 const world=getActivePreviewWorld();
 if(!world)return;
@@ -4963,26 +4979,23 @@ if(gameCanvas.hasPointerCapture(e.pointerId))gameCanvas.releasePointerCapture(e.
 gamePreviewDrag=null;
 });
 gameCanvas.addEventListener('wheel',e=>{
-if(state.previewDialogueNodeId)return;
+if(gamePreview.classList.contains('hidden'))return;
 
-const worldNode=getNode(state.previewWorldNodeId);
-if(!worldNode||worldNode.type!=='world')return;
+const world=getActivePreviewWorld();
+if(!world)return;
 
 e.preventDefault();
 
-worldNode.world.zoom=Math.max(
-.6,
-Math.min(
-2.2,
-worldNode.world.zoom+
-(e.deltaY>0?-.1:.1)
-)
+if(state.previewDialogueNodeId)return;
+if(isPreviewCameraLocked())return;
+
+world.zoom=clamp(
+world.zoom+(e.deltaY>0?-0.1:0.1),
+0.6,
+2.2
 );
 
-drawPanoramaPreview(
-gameCanvas,
-worldNode.world
-);
+drawPanoramaPreview(gameCanvas,world);
 },{passive:false});
 
 // Parallel preview: media owns the background; triggers run independently.
@@ -5227,16 +5240,21 @@ if(now-playback.startedAt>=playDuration*1000)finish();
 }
 
 if(playback.startedAt!==null&&!playback.finished){
+const cameraNode=activeIndependentKeyframe?.sourceId===node.id
+?activeIndependentKeyframe.node
+:null;
+
+if(cameraNode&&getKeyframeNodeFrames(cameraNode).length>0){
 const elapsed=(now-playback.startedAt)/1000;
 const cameraTime=getMediaCameraLoopTime(node,media,elapsed);
-const camera=activeIndependentKeyframe?.sourceId===node.id
-?getIndependentCameraAt(activeIndependentKeyframe.node,cameraTime,getMediaCameraBase(node))
-:getMediaCameraBase(node);
+const camera=getIndependentCameraAt(cameraNode,cameraTime,getMediaCameraBase(node));
 
 world.yaw=camera.yaw;
 world.pitch=camera.pitch;
 world.zoom=camera.zoom;
 }
+}
+
 drawPanoramaPreview(gameCanvas,world);
 if(playback.finished)return;
 
@@ -5784,7 +5802,17 @@ else state.cameraAnimationFrame=null;
 state.cameraAnimationFrame=requestAnimationFrame(tick);
 }
 }
-previewOutgoing(node.id);
+
+if(node.type==='world'&&!node.worldInfiniteLoop){
+const duration=getMediaPlaybackDuration(node,null);
+
+schedulePreviewBranch(duration,()=>{
+if(state.previewWorldNodeId!==node.id)return;
+previewOutgoing(node.id,'end');
+});
+}
+
+previewOutgoing(node.id,'start');
 return;
 }
 if(node.type==='keyframe'){
