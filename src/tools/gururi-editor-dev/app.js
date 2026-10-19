@@ -1400,6 +1400,7 @@ container.innerHTML=`
 <div class="setting-group">
 <div class="setting-label">水平角度（°）</div>
 <input class="number-input" data-camera-value="yaw" type="number" min="-180" max="180" step="0.1">
+<button class="camera-copy-view" type="button">画角をコピー</button>
 </div>
 <div class="setting-group">
 <div class="setting-label">垂直角度（°）</div>
@@ -1429,6 +1430,71 @@ inputs.yaw.value=format(yaw);
 inputs.pitch.value=format(toDegrees(view.pitch));
 inputs.fov.value=format(Math.max(35,Math.min(100,75/view.zoom)));
 };
+
+const copyButton=container.querySelector('.camera-copy-view');
+
+copyButton.addEventListener('click',async()=>{
+const cameraData={
+yaw:Number((view.yaw*180/Math.PI).toFixed(6)),
+pitch:Number((view.pitch*180/Math.PI).toFixed(6)),
+fov:Number((75/view.zoom).toFixed(6))
+};
+
+const text='GURURI_CAMERA:'+JSON.stringify(cameraData);
+
+try{
+await navigator.clipboard.writeText(text);
+copyButton.textContent='コピーしました';
+setTimeout(()=>{
+if(copyButton.isConnected){
+copyButton.textContent='画角をコピー';
+}
+},1500);
+}catch(error){
+console.error('画角のコピーに失敗しました',error);
+alert('クリップボードにコピーできませんでした。');
+}
+});
+
+inputs.yaw.addEventListener('paste',event=>{
+const text=event.clipboardData?.getData('text/plain')||'';
+
+if(!text.startsWith('GURURI_CAMERA:'))return;
+
+event.preventDefault();
+
+let data;
+
+try{
+data=JSON.parse(text.slice('GURURI_CAMERA:'.length));
+}catch(error){
+alert('画角データを読み取れませんでした。');
+return;
+}
+
+const yaw=Number(data.yaw);
+const pitch=Number(data.pitch);
+const fov=Number(data.fov);
+
+if(
+!Number.isFinite(yaw)||
+!Number.isFinite(pitch)||
+!Number.isFinite(fov)||
+yaw< -180||yaw>180||
+pitch< -88.85||pitch>88.85||
+fov<35||fov>100
+){
+alert('画角データが正しくありません。');
+return;
+}
+
+view.yaw=yaw*Math.PI/180;
+view.pitch=pitch*Math.PI/180;
+view.zoom=75/fov;
+
+redraw();
+sync();
+});
 
 for(const [type,input] of Object.entries(inputs)){
 input.addEventListener('change',()=>{
