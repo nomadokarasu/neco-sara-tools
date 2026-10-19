@@ -854,6 +854,20 @@ const mediaDuration=media?.duration||0;
 return Math.max(0.1,Number(node.animation.playDuration)||(mediaDuration*(Number(node.animation.loopCount)||1))||3);
 }
 
+function getMediaCameraLoopTime(node,media,elapsed){
+if(node.type!=='animation')return elapsed;
+
+const duration=Number(media?.duration)||0;
+if(duration<=0)return elapsed;
+
+const loopCount=Number(node.animation.loopCount)||1;
+const isLooping=node.animation.infiniteLoop||loopCount>1;
+
+if(!isLooping)return elapsed;
+
+return ((elapsed%duration)+duration)%duration;
+}
+
 function getMediaCameraVideoTime(node,media,elapsed){
 const duration=media?.duration||0;
 if(duration<=0)return 0;
@@ -865,33 +879,95 @@ function renderMediaNodeSettings(node){
 const videoMode=node.type==='animation';
 const media=mediaLibrary.find(m=>m.id===(videoMode?node.animation.mediaId:node.world.mediaId));
 const duration=getMediaPlaybackDuration(node,media);
-const start=Math.max(0,Math.min((media?.duration||0)-0.001,Number(node.animation.startTime)||0));
-const section=node.mediaSettingsOpened||{basic:true,camera:true,loop:false};
-const collapsible=(id,label,contents)=>`<details data-media-section="${id}" ${section[id]?'open':''}><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
+
+const collapsible=(id,label,contents)=>`<details data-media-section="${id}"><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
 const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
-const basic=mediaSelect+(videoMode?`<div class="setting-group"><div class="setting-label">素材の長さ</div><div class="file-name">${(media?.duration||0).toFixed(2)} 秒</div></div><div class="setting-group"><div class="setting-label">再生開始位置（秒）</div><input id="mediaStartInput" class="number-input" type="number" min="0" max="${Math.max(0,(media?.duration||0)-0.001)}" step="0.01" value="${Math.max(0,start)}"></div>`:'')+`<div class="setting-group"><div class="setting-label">${videoMode?'再生時間':'表示時間'}（秒）</div><input id="mediaDurationInput" class="number-input" type="number" min="0.1" step="0.1" value="${duration}"></div>`;
-const camera=`<div class="setting-group"><div class="setting-label">カメラ（${state.displayMode==='pc'?'PC':'スマホ'}） <label style="margin-left:8px;font-weight:normal;font-size:12px"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div><canvas id="mediaCameraCanvas" class="world-preview" width="320" height="320"></canvas><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div><div class="setting-group"><div class="setting-label">再生位置</div><input id="mediaCameraTime" type="range" min="0" max="${duration}" step="0.01" value="0" style="width:100%"><div id="mediaCameraTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} 秒</div></div><div class="setting-group"><button id="mediaCameraAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button><div id="mediaCameraFrames" class="pan-keyframe-list"></div></div>`;
+const durationSettings='';
+const pngSettings=videoMode?'':`
+<div class="setting-group">
+<div class="setting-label">表示時間（秒）</div>
+<input id="mediaWorldDuration" class="number-input" type="number" min="0.1" step="0.1" value="${duration}">
+</div>
+<div class="setting-group">
+<label>
+<input id="mediaWorldInfinite" type="checkbox" ${node.worldInfiniteLoop?'checked':''}>
+トリガーが発火するまで表示
+</label>
+</div>`;
+
+const previewControls=`
+<div class="setting-group">
+<canvas id="mediaCameraCanvas" class="world-preview" width="320" height="320"></canvas>
+<div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div>
+</div>
+<div class="setting-group">
+<div class="media-camera-time-header">
+<div class="setting-label">再生位置</div>
+<div class="media-camera-step-buttons">
+<button id="mediaCameraPreviousFrame" type="button" title="1コマ戻る">◀</button>
+<button id="mediaCameraNextFrame" type="button" title="1コマ進む">▶</button>
+</div>
+</div>
+<input id="mediaCameraTime" type="range" min="0" max="${duration}" step="0.01" value="0" style="width:100%">
+<div id="mediaCameraTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} 秒</div>
+</div>`;
+
+const camera=`
+<div class="setting-group">
+<label class="media-camera-inherit">
+<input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}>
+画角を継承
+</label>
+</div>
+
+<div class="media-camera-subsections">
+
+<details data-camera-subsection="keyframes">
+<summary>カメラワーク</summary>
+<div class="media-camera-subsection-body">
+<button id="mediaCameraAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button>
+<div id="mediaCameraFrames" class="pan-keyframe-list"></div>
+</div>
+</details>
+
+<details data-camera-subsection="angles">
+<summary>画角情報</summary>
+<div id="mediaCameraAngleFields" class="media-camera-subsection-body"></div>
+</details>
+
+</div>`;
 const loops=videoMode?`<div class="setting-group"><label><input id="mediaInfiniteLoop" type="checkbox" ${node.animation.infiniteLoop?'checked':''}> 無限ループ（トリガー発火まで再生）</label></div><div class="setting-group"><div class="setting-label">ループ回数</div><input id="mediaLoopCount" class="number-input" type="number" min="0.01" step="0.01" value="${Number(node.animation.loopCount)||1}"></div>`:`<div class="setting-group"><label><input id="mediaWorldInfinite" type="checkbox" ${node.worldInfiniteLoop?'checked':''}> 無限表示（トリガー発火まで表示）</label></div>`;
-settingsPanel.innerHTML=`<div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div><div class="media-section-list">${collapsible('basic','基本設定',basic)}${collapsible('camera','カメラ',camera)}${collapsible('loop','ループ',loops)}</div>`;
-settingsPanel.querySelectorAll('[data-media-section]').forEach(detail=>detail.addEventListener('toggle',()=>{
-if(!node.mediaSettingsOpened)node.mediaSettingsOpened={basic:true,camera:true,loop:false};
-node.mediaSettingsOpened[detail.dataset.mediaSection]=detail.open;
-}));
+settingsPanel.innerHTML=`
+<div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div>
+${mediaSelect}
+${pngSettings}
+${previewControls}
+${durationSettings}
+<div class="media-section-list">
+${collapsible('camera','カメラ',camera)}
+${videoMode?collapsible('loop','ループ',loops):''}
+</div>`;
+
 document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
-document.getElementById('mediaDurationInput').addEventListener('change',e=>{
-const value=Math.max(0.1,Number(e.target.value)||3);
-if(videoMode){node.animation.playDuration=value;node.animation.loopCount=(media?.duration>0)?value/media.duration:1;}
-else node.worldDuration=value;
-e.target.value=value;
+
+if(!videoMode){
+document.getElementById('mediaWorldDuration').addEventListener('change',e=>{
+node.worldDuration=Math.max(0.1,Number(e.target.value)||3);
 renderSettings();
 });
+}
+if(videoMode&&media?.duration>0){
+node.animation.playDuration=media.duration*(Number(node.animation.loopCount)||1);
+}
 if(videoMode){
-document.getElementById('mediaStartInput').addEventListener('change',e=>{node.animation.startTime=clamp(Number(e.target.value)||0,0,Math.max(0,(media?.duration||0)-0.001));renderSettings();});
+node.animation.startTime=0;
 document.getElementById('mediaInfiniteLoop').addEventListener('change',e=>node.animation.infiniteLoop=e.target.checked);
 document.getElementById('mediaLoopCount').addEventListener('change',e=>{node.animation.loopCount=Math.max(.01,Number(e.target.value)||1);node.animation.playDuration=(media?.duration||0)*node.animation.loopCount;renderSettings();});
 }else{
 document.getElementById('mediaWorldInfinite').addEventListener('change',e=>node.worldInfiniteLoop=e.target.checked);
 }
+
+
 setupMediaCameraInheritance(node);
 setupSharedMediaCamera(node,media,duration);
 }
@@ -910,9 +986,7 @@ const signal=controller.signal;
 cleanupAnimationSettingsPreview=()=>controller.abort();
 let second=0,drag=null;
 const view={...getMediaCameraAt(node,0)};
-
 let syncCameraInputs=()=>{};
-
 const draw=()=>{
 if(canvas.isConnected){
 drawPanoramaPreview(canvas,{
@@ -922,17 +996,34 @@ pitch:view.pitch,
 zoom:view.zoom
 });
 }
-
 syncCameraInputs();
 };
-
 syncCameraInputs=setupCameraNumberInputs(canvas,view,draw);
+
+const angleFields=document.getElementById('mediaCameraAngleFields');
+const cameraInputs=canvas.nextElementSibling;
+
+if(
+angleFields&&
+cameraInputs?.classList.contains('camera-number-settings')
+){
+angleFields.appendChild(cameraInputs);
+
+const copyButton=cameraInputs.querySelector('.camera-copy-view');
+
+if(copyButton){
+cameraInputs.appendChild(copyButton);
+}
+}
 
 const seek=t=>{
 second=clamp(Number(t)||0,0,duration);
 range.value=String(second);
 label.textContent=`${second.toFixed(2)} / ${duration.toFixed(2)} 秒`;
-Object.assign(view,getMediaCameraAt(node,second));
+
+const cameraTime=getMediaCameraLoopTime(node,media,second);
+Object.assign(view,getMediaCameraAt(node,cameraTime));
+
 if(node.type==='animation'&&media?.duration){
 const target=getMediaCameraVideoTime(node,media,second);
 if(Math.abs(source.currentTime-target)>.001)source.currentTime=target;
@@ -949,32 +1040,35 @@ row.append(select,remove);list.appendChild(row);
 }
 };
 range.addEventListener('input',()=>seek(range.value),{signal});
-
 const previousFrameButton=document.getElementById('mediaCameraPreviousFrame');
 const nextFrameButton=document.getElementById('mediaCameraNextFrame');
-
-const frameFps=node.type==='animation'&&Number.isFinite(media?.fps)&&media.fps>0
-?media.fps
-:null;
-
-const frameStep=frameFps?1/frameFps:0.01;
-
+const isVideo=node.type==='animation';
+const fps=Number(media?.fps);
+const hasFps=Number.isFinite(fps)&&fps>0;
+const frameStep=isVideo&&hasFps?1/fps:1/8;
+if(isVideo&&!hasFps){
+previousFrameButton.disabled=true;
+nextFrameButton.disabled=true;
+const notice=document.createElement('div');
+notice.className='settings-empty';
+notice.textContent='素材のFPSを取得できませんでした。コマ送りは使用できません。';
+range.insertAdjacentElement('afterend',notice);
+}
 const stepFrame=direction=>{
-const nextTime=frameFps
-?Math.round(second*frameFps+direction)/frameFps
-:Math.round((second+direction*frameStep)*100)/100;
-
+if(isVideo&&!hasFps)return;
+let nextTime;
+if(isVideo){
+// Round to the nearest frame index before stepping, to avoid floating-point drift.
+const frameIndex=Math.round(second*fps);
+nextTime=(frameIndex+direction)/fps;
+}else{
+const frameIndex=Math.round(second*8);
+nextTime=(frameIndex+direction)/8;
+}
 seek(clamp(nextTime,0,duration));
 };
-
-previousFrameButton?.addEventListener('click',()=>{
-stepFrame(-1);
-},{signal});
-
-nextFrameButton?.addEventListener('click',()=>{
-stepFrame(1);
-},{signal});
-
+previousFrameButton.addEventListener('click',()=>stepFrame(-1),{signal});
+nextFrameButton.addEventListener('click',()=>stepFrame(1),{signal});
 if(source?.addEventListener&&node.type==='animation'){
 source.addEventListener('seeked',draw,{signal});source.addEventListener('loadeddata',draw,{signal});
 }
@@ -1386,6 +1480,7 @@ container.innerHTML=`
 <div class="setting-group">
 <div class="setting-label">水平角度（°）</div>
 <input class="number-input" data-camera-value="yaw" type="number" min="-180" max="180" step="0.1">
+<button class="camera-copy-view" type="button">画角をコピー</button>
 </div>
 <div class="setting-group">
 <div class="setting-label">垂直角度（°）</div>
@@ -1415,6 +1510,71 @@ inputs.yaw.value=format(yaw);
 inputs.pitch.value=format(toDegrees(view.pitch));
 inputs.fov.value=format(Math.max(35,Math.min(100,75/view.zoom)));
 };
+
+const copyButton=container.querySelector('.camera-copy-view');
+
+copyButton.addEventListener('click',async()=>{
+const cameraData={
+yaw:Number((view.yaw*180/Math.PI).toFixed(6)),
+pitch:Number((view.pitch*180/Math.PI).toFixed(6)),
+fov:Number((75/view.zoom).toFixed(6))
+};
+
+const text='GURURI_CAMERA:'+JSON.stringify(cameraData);
+
+try{
+await navigator.clipboard.writeText(text);
+copyButton.textContent='コピーしました';
+setTimeout(()=>{
+if(copyButton.isConnected){
+copyButton.textContent='画角をコピー';
+}
+},1500);
+}catch(error){
+console.error('画角のコピーに失敗しました',error);
+alert('クリップボードにコピーできませんでした。');
+}
+});
+
+inputs.yaw.addEventListener('paste',event=>{
+const text=event.clipboardData?.getData('text/plain')||'';
+
+if(!text.startsWith('GURURI_CAMERA:'))return;
+
+event.preventDefault();
+
+let data;
+
+try{
+data=JSON.parse(text.slice('GURURI_CAMERA:'.length));
+}catch(error){
+alert('画角データを読み取れませんでした。');
+return;
+}
+
+const yaw=Number(data.yaw);
+const pitch=Number(data.pitch);
+const fov=Number(data.fov);
+
+if(
+!Number.isFinite(yaw)||
+!Number.isFinite(pitch)||
+!Number.isFinite(fov)||
+yaw< -180||yaw>180||
+pitch< -88.85||pitch>88.85||
+fov<35||fov>100
+){
+alert('画角データが正しくありません。');
+return;
+}
+
+view.yaw=yaw*Math.PI/180;
+view.pitch=pitch*Math.PI/180;
+view.zoom=75/fov;
+
+redraw();
+sync();
+});
 
 for(const [type,input] of Object.entries(inputs)){
 input.addEventListener('change',()=>{
@@ -4132,41 +4292,28 @@ renderConnections();
 function onConnectionEnd(e){
 window.removeEventListener('pointermove',onConnectionMove);
 if(!state.connecting)return;
+
 const target=document.elementFromPoint(e.clientX,e.clientY);
-const input=target&&target.closest&&target.closest('.port.input');
+const input=target?.closest?.('.port.input');
+
 if(input){
 const nodeEl=input.closest('.node');
-const to=nodeEl&&nodeEl.dataset.id;
-if(to&&to!==state.connecting.from){
-const fromId=state.connecting.from;
-const targetNode=getNode(to);
+const to=nodeEl?.dataset.id;
+const from=state.connecting.from;
 
-if(targetNode?.type==='click'){
-state.connections=state.connections.filter(c=>{
-if(c.from!==fromId)return true;
-const existingTarget=getNode(c.to);
-return existingTarget?.type==='click';
-});
-
-const alreadyConnected=state.connections.some(c=>c.from===fromId&&c.to===to);
+if(to&&to!==from&&getNode(from)&&getNode(to)){
+const alreadyConnected=state.connections.some(c=>c.from===from&&c.to===to);
 
 if(!alreadyConnected){
 state.connections.push({
 id:uid('conn'),
-from:fromId,
-to
-});
-}
-}else{
-state.connections=state.connections.filter(c=>c.from!==fromId);
-state.connections.push({
-id:uid('conn'),
-from:fromId,
+from,
 to
 });
 }
 }
 }
+
 state.connecting=null;
 renderConnections();
 renderSettings();
@@ -4904,7 +5051,9 @@ return;
 
 if(playback.startedAt!==null){
 const elapsed=(now-playback.startedAt)/1000;
-const camera=getMediaCameraAt(node,elapsed);
+const cameraTime=getMediaCameraLoopTime(node,media,elapsed);
+const camera=getMediaCameraAt(node,cameraTime);
+
 world.yaw=camera.yaw;
 world.pitch=camera.pitch;
 world.zoom=camera.zoom;
