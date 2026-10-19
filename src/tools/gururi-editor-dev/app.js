@@ -866,7 +866,7 @@ function renderMedia2DNodeSettings(node){
 const media=mediaLibrary.find(m=>m.id===node.media2DId);
 settingsPanel.innerHTML=`<div class="settings-title">2Dメディア</div>
 <div class="setting-group"><div class="setting-label">素材（PNG・JPG・MP4）</div><select id="media2DSelect" class="number-input">${media2DOptions(node.media2DId)}</select></div>
-<div class="setting-group"><div class="setting-label">配置（${state.displayMode==='pc'?'PC':'スマホ'}）</div><div id="media2DEditor" class="media2d-editor"><canvas id="media2DBackground"></canvas><div id="media2DSelection" class="media2d-selection"><div id="media2DContent"></div>${['nw','ne','sw','se'].map(p=>`<span class="media2d-handle media2d-handle-${p}" data-corner="${p}"></span>`).join('')}</div></div><div class="pan-help">素材をドラッグ：移動 / 四隅をドラッグ：自由に拡大縮小。PC・スマホの配置はそれぞれ記憶します。</div></div>`;
+<div class="setting-group"><div class="setting-label">配置（${state.displayMode==='pc'?'PC':'スマホ'}）</div><div id="media2DEditor" class="media2d-editor"><canvas id="media2DBackground"></canvas><div id="media2DSelection" class="media2d-selection"><div id="media2DContent"></div>${['nw','ne','sw','se'].map(p=>`<span class="media2d-handle media2d-handle-${p}" data-corner="${p}"></span>`).join('')}</div></div><div class="pan-help">素材をドラッグ：移動 / 四隅をドラッグ：縦横比を保って拡大縮小。PC・スマホの配置はそれぞれ記憶します。</div></div>`;
 const select=document.getElementById('media2DSelect');
 const box=document.getElementById('media2DEditor');
 const selection=document.getElementById('media2DSelection');
@@ -889,8 +889,18 @@ const mediaElement=createMedia2DElement(shownMedia);
 if(mediaElement){content.appendChild(mediaElement);if(mediaElement.tagName==='VIDEO')mediaElement.play().catch(()=>{});}
 }
 function draw(){selection.style.left=`${layout.x}%`;selection.style.top=`${layout.y}%`;selection.style.width=`${layout.w}%`;selection.style.height=`${layout.h}%`;}
-select.addEventListener('change',()=>{node.media2DId=select.value||null;fillMedia();});
-fillMedia();draw();
+function fitAspectRatio(){
+const selected=mediaLibrary.find(m=>m.id===node.media2DId);
+if(!selected?.width||!selected?.height)return;
+const rect=box.getBoundingClientRect();
+if(!rect.width||!rect.height)return;
+// Width stays fixed; correct height using the media's intrinsic ratio.
+layout.h=layout.w*rect.width/rect.height*selected.height/selected.width;
+}
+select.addEventListener('change',()=>{node.media2DId=select.value||null;fillMedia();fitAspectRatio();draw();});
+fillMedia();
+requestAnimationFrame(()=>{if(box.isConnected){fitAspectRatio();draw();}});
+draw();
 let drag=null;
 selection.addEventListener('pointerdown',e=>{
 if(e.button!==0)return;
@@ -907,10 +917,21 @@ const dy=(e.clientY-drag.y)/r.height*100;
 const a=drag.start;
 if(!drag.corner){layout.x=a.x+dx;layout.y=a.y+dy;}
 else{
-let left=a.x,top=a.y,right=a.x+a.w,bottom=a.y+a.h;
-if(drag.corner.includes('w'))left=Math.min(right-1,left+dx);else right=Math.max(left+1,right+dx);
-if(drag.corner.includes('n'))top=Math.min(bottom-1,top+dy);else bottom=Math.max(top+1,bottom+dy);
-layout.x=left;layout.y=top;layout.w=right-left;layout.h=bottom-top;
+const selected=mediaLibrary.find(m=>m.id===node.media2DId);
+const ratio=selected?.width&&selected?.height?selected.width/selected.height:(a.w*r.width)/(a.h*r.height);
+const anchorX=drag.corner.includes('w')?a.x+a.w:a.x;
+const anchorY=drag.corner.includes('n')?a.y+a.h:a.y;
+const signX=drag.corner.includes('w')?-1:1;
+const signY=drag.corner.includes('n')?-1:1;
+const desiredW=Math.max(1,signX*(a.w*signX+dx));
+const desiredH=Math.max(1,signY*(a.h*signY+dy));
+const widthFromHeight=desiredH*r.height/r.width*ratio;
+const newW=Math.max(1,Math.abs(desiredW-a.w)>Math.abs(widthFromHeight-a.w)?desiredW:widthFromHeight);
+const newH=newW*r.width/r.height/ratio;
+layout.x=signX<0?anchorX-newW:anchorX;
+layout.y=signY<0?anchorY-newH:anchorY;
+layout.w=newW;
+layout.h=newH;
 }
 draw();
 });
