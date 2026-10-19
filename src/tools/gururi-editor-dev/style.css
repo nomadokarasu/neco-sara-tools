@@ -537,3 +537,49 @@ cursor:pointer;
 .camera-copy-view:hover{
 background:#f0f0f0;
 }
+
+.media-camera-inherit{
+display:flex;
+align-items:center;
+gap:6px;
+font-size:12px;
+cursor:pointer;
+}
+
+.media-camera-inherit input{
+margin:0;
+}
+
+.media-camera-subsections{
+display:flex;
+flex-direction:column;
+gap:8px;
+margin-top:10px;
+}
+
+.media-camera-subsections details{
+border:1px solid #c7ccd3;
+border-radius:6px;
+overflow:hidden;
+}
+
+.media-camera-subsections summary{
+padding:10px 12px;
+background:#f7f7f7;
+font-size:13px;
+font-weight:600;
+cursor:pointer;
+user-select:none;
+}
+
+.media-camera-subsection-body{
+padding:12px;
+}
+
+.media-camera-subsection-body .camera-number-settings{
+margin:0;
+}
+
+.media-camera-subsection-body .setting-group:last-child{
+margin-bottom:0;
+}
