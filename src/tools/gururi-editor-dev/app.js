@@ -802,7 +802,15 @@ const previousMedia=findPreviousClickMediaNode(node.id);
 
 ensureDialogueView(node,previousMedia);
 
-const editors=node.dialoguePages.map((text,index)=>`<div class="dialogue-editor"><div class="setting-label">ダイアローグ ${index+1}</div><textarea class="dialogue-textarea" data-dialogue-index="${index}" maxlength="60">${escapeHtml(text)}</textarea><div class="dialogue-count" data-dialogue-count="${index}">${text.length}/60</div></div>`).join('');
+const editors=node.dialoguePages.map((text,index)=>`
+<div class="dialogue-editor">
+<div class="dialogue-editor-header">
+<div class="setting-label">ダイアローグ ${index+1}</div>
+<button type="button" class="dialogue-delete-btn" data-dialogue-delete="${index}">削除</button>
+</div>
+<textarea class="dialogue-textarea" data-dialogue-index="${index}" maxlength="60">${escapeHtml(text)}</textarea>
+<div class="dialogue-count" data-dialogue-count="${index}">${text.length}/60</div>
+</div>`).join('');
 const hasDialogue=node.dialoguePages.length>0;
 const fontSize=Number(node.dialogueFontSize)||24;
 const panelHeight=getDialoguePanelHeight(node);
@@ -4422,6 +4430,28 @@ renderNodes();
 renderSettings();
 });
 
+settingsPanel.querySelectorAll('[data-dialogue-delete]').forEach(button=>{
+button.addEventListener('click',()=>{
+const index=Number(button.dataset.dialogueDelete);
+
+if(!Number.isInteger(index))return;
+if(index<0||index>=node.dialoguePages.length)return;
+
+node.dialoguePages.splice(index,1);
+
+if(node.dialoguePages.length===0){
+node.dialogueEditIndex=0;
+}else if(node.dialogueEditIndex>index){
+node.dialogueEditIndex--;
+}else if(node.dialogueEditIndex>=node.dialoguePages.length){
+node.dialogueEditIndex=node.dialoguePages.length-1;
+}
+
+renderNodes();
+renderSettings();
+});
+});
+
 document.querySelectorAll('.dialogue-textarea').forEach(textarea=>{
 const index=Number(textarea.dataset.dialogueIndex);
 
@@ -4544,17 +4574,28 @@ material:{label:'素材',element:materialMenu},
 trigger:{label:'トリガー',element:triggerMenu},
 effect:{label:'効果',element:effectMenu},
 camera:{label:'カメラ',element:cameraMenu},
-panel:{label:'パネル',element:panelMenu}
+panel:{label:'UI',element:panelMenu}
 };
 
 function updateNodeMenuCategories(openCategory=null){
+const nestedMenu=document.getElementById('uiPanelMenu');
+const nestedButton=contextMenu.querySelector('[data-submenu="uiPanel"]');
+
+if(nestedMenu){
+nestedMenu.classList.add('hidden');
+}
+
+if(nestedButton){
+nestedButton.textContent='▶ パネル';
+}
+
 for(const [key,category] of Object.entries(nodeMenuCategories)){
 const isOpen=key===openCategory;
 category.element.classList.toggle('hidden',!isOpen);
 
 const button=contextMenu.querySelector(`[data-menu="${key}"]`);
 if(button){
-button.textContent=`${isOpen?'▼':'▶'} ${category.label}`;
+button.textContent=`${isOpen?'▼':'▶'} ${key==='panel'?'UI':category.label}`;
 }
 }
 }
@@ -4569,6 +4610,18 @@ updateNodeMenuCategories();
 }
 
 contextMenu.addEventListener('click',e=>{
+const nested=e.target.closest('[data-submenu="uiPanel"]');
+
+if(nested){
+const submenu=document.getElementById('uiPanelMenu');
+if(!submenu)return;
+
+const willOpen=submenu.classList.contains('hidden');
+submenu.classList.toggle('hidden',!willOpen);
+nested.textContent=`${willOpen?'▼':'▶'} パネル`;
+return;
+}
+
 const parent=e.target.closest('[data-menu]');
 
 if(parent){
