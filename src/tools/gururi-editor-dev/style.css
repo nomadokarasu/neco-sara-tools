@@ -1,3 +1,4 @@
+
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f4f6;color:#202124;overflow:hidden}
 button,input{font:inherit}
@@ -615,3 +616,17 @@ width:100%;
 .media2d-handle-sw{left:-6px;bottom:-6px;cursor:nesw-resize}
 .media2d-handle-se{right:-6px;bottom:-6px;cursor:nwse-resize}
 .media2d-layer{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+
+/* Editor-only folder organization */
+#folderCreateBtn.active{background:#dcecff;border-color:#3b82f6;color:#1754a4}
+.workspace.is-folder-lasso{cursor:crosshair}
+.workspace.is-folder-lasso .node{pointer-events:none}
+.folder-lasso-layer{position:absolute;inset:0;width:100%;height:100%;z-index:14;pointer-events:none;overflow:hidden}
+#folderLasso{fill:rgba(59,130,246,.12);stroke:#3b82f6;stroke-width:2;stroke-dasharray:6 4;stroke-linejoin:round}
+.folder-breadcrumb{position:absolute;top:10px;left:10px;z-index:12;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.95);padding:4px 9px;border-radius:7px;border:1px solid #d9dde3;max-width:70%;overflow:auto;white-space:nowrap}
+.folder-breadcrumb button{font-size:12px;border:0;background:transparent;padding:4px 5px;color:#1754a4}
+.folder-breadcrumb button:disabled{color:#555;cursor:default;font-weight:700}
+.node.folder-node{background:#e8f1ff;border-color:#739ad2}
+.node.folder-node .node-header{color:#1e477d}
+.node.folder-node .port{display:none}
+.node.folder-node .node-body{cursor:grab}
