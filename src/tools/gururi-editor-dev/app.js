@@ -1041,29 +1041,133 @@ if(node.frameInMode==='touch')return hit;
 return total>0&&inside===total;
 }
 function drawFrameInOverlay(node,canvas,overlay,view,draft=[]){
-const rect=canvas.getBoundingClientRect();const w=rect.width,h=rect.height;
+const rect=canvas.getBoundingClientRect();
+const w=rect.width;
+const h=rect.height;
 const dpr=window.devicePixelRatio||1;
-overlay.width=Math.max(1,Math.round(w*dpr));overlay.height=Math.max(1,Math.round(h*dpr));
-const ctx=overlay.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
-const project=(type,p)=>type==='target'?projectWorldAnglesToScreen(canvas,view,p.yaw,p.pitch):{x:p.x*w,y:p.y*h};
-for(const type of ['target','frame']){
-const regions=type==='target'?node.frameInTarget:node.frameInFrame;
-const color=type==='target'?'#ff8a00':'#39cb65';
-const mask=document.createElement('canvas');mask.width=overlay.width;mask.height=overlay.height;
-const mc=mask.getContext('2d');mc.setTransform(dpr,0,0,dpr,0,0);
-paintFrameInRegions(mc,regions,p=>project(type,p));
-const tinted=document.createElement('canvas');tinted.width=overlay.width;tinted.height=overlay.height;
-const tint=tinted.getContext('2d');
-tint.fillStyle=color;tint.fillRect(0,0,tinted.width,tinted.height);
-tint.globalCompositeOperation='destination-in';tint.drawImage(mask,0,0);
-ctx.save();ctx.globalAlpha=.26;ctx.drawImage(tinted,0,0,w,h);ctx.restore();
-ctx.save();ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineJoin='round';
-for(const r of regions){if(frameInTrace(ctx,r.points,p=>project(type,p)))ctx.stroke();}
-if(node.frameInTool===type&&draft.length>1){
-const pts=draft.map(p=>project(type,p)).filter(Boolean);
-if(pts.length){ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(const q of pts.slice(1))ctx.lineTo(q.x,q.y);ctx.stroke();}
+const width=Math.max(1,Math.round(w*dpr));
+const height=Math.max(1,Math.round(h*dpr));
+
+if(overlay.width!==width||overlay.height!==height){
+overlay.width=width;
+overlay.height=height;
 }
-ctx.restore();
+
+const ctx=overlay.getContext('2d');
+if(!ctx)return;
+
+ctx.setTransform(dpr,0,0,dpr,0,0);
+ctx.clearRect(0,0,w,h);
+
+const project=(type,p)=>{
+if(type==='target'){
+return projectWorldAnglesToScreen(
+canvas,view,p.yaw,p.pitch
+);
+}
+return{x:p.x*w,y:p.y*h};
+};
+
+for(const type of ['target','frame']){
+const regions=type==='target'
+?node.frameInTarget
+:node.frameInFrame;
+
+const color=type==='target'?'#ff8a00':'#39cb65';
+
+const mask=document.createElement('canvas');
+mask.width=width;
+mask.height=height;
+
+const maskCtx=mask.getContext('2d');
+if(!maskCtx)continue;
+
+maskCtx.setTransform(dpr,0,0,dpr,0,0);
+
+paintFrameInRegions(
+maskCtx,
+regions,
+p=>project(type,p)
+);
+
+const colorCanvas=document.createElement('canvas');
+colorCanvas.width=width;
+colorCanvas.height=height;
+
+const colorCtx=colorCanvas.getContext('2d');
+
+if(colorCtx){
+colorCtx.fillStyle=color;
+colorCtx.fillRect(0,0,width,height);
+colorCtx.globalCompositeOperation='destination-in';
+colorCtx.drawImage(mask,0,0);
+
+ctx.setTransform(1,0,0,1,0,0);
+ctx.globalAlpha=0.28;
+ctx.drawImage(colorCanvas,0,0);
+ctx.globalAlpha=1;
+}
+
+const outline=document.createElement('canvas');
+outline.width=width;
+outline.height=height;
+
+const outlineCtx=outline.getContext('2d');
+
+if(outlineCtx){
+const radius=Math.max(1,Math.round(2*dpr));
+
+for(let dy=-radius;dy<=radius;dy++){
+for(let dx=-radius;dx<=radius;dx++){
+if(dx*dx+dy*dy>radius*radius)continue;
+outlineCtx.drawImage(mask,dx,dy);
+}
+}
+
+outlineCtx.globalCompositeOperation='destination-out';
+outlineCtx.drawImage(mask,0,0);
+
+outlineCtx.globalCompositeOperation='source-in';
+outlineCtx.fillStyle=color;
+outlineCtx.fillRect(0,0,width,height);
+
+ctx.setTransform(1,0,0,1,0,0);
+ctx.drawImage(outline,0,0);
+}
+
+ctx.setTransform(dpr,0,0,dpr,0,0);
+
+if(node.frameInTool!==type||draft.length===0)continue;
+
+const projected=draft.map(p=>project(type,p));
+const valid=projected.filter(Boolean);
+
+if(valid.length===0)continue;
+
+ctx.beginPath();
+ctx.moveTo(valid[0].x,valid[0].y);
+
+for(let i=1;i<valid.length;i++){
+ctx.lineTo(valid[i].x,valid[i].y);
+}
+
+if(valid.length>=3){
+ctx.closePath();
+
+if(node.frameInBrush==='subtract'){
+ctx.fillStyle='rgba(255,255,255,0.28)';
+ctx.fill();
+}
+}
+
+ctx.strokeStyle=node.frameInBrush==='subtract'
+?'#ffffff'
+:color;
+
+ctx.lineWidth=2.5;
+ctx.lineCap='round';
+ctx.lineJoin='round';
+ctx.stroke();
 }
 }
 function renderFrameInSettings(node){
