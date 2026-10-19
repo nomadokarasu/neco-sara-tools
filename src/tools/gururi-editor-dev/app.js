@@ -883,6 +883,18 @@ const duration=getMediaPlaybackDuration(node,media);
 const collapsible=(id,label,contents)=>`<details data-media-section="${id}"><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
 const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
 const durationSettings='';
+const pngSettings=videoMode?'':`
+<div class="setting-group">
+<div class="setting-label">表示時間（秒）</div>
+<input id="mediaWorldDuration" class="number-input" type="number" min="0.1" step="0.1" value="${duration}">
+</div>
+<div class="setting-group">
+<label>
+<input id="mediaWorldInfinite" type="checkbox" ${node.worldInfiniteLoop?'checked':''}>
+トリガーが発火するまで表示
+</label>
+</div>`;
+
 const previewControls=`
 <div class="setting-group">
 <canvas id="mediaCameraCanvas" class="world-preview" width="320" height="320"></canvas>
@@ -928,14 +940,22 @@ const loops=videoMode?`<div class="setting-group"><label><input id="mediaInfinit
 settingsPanel.innerHTML=`
 <div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div>
 ${mediaSelect}
+${pngSettings}
 ${previewControls}
 ${durationSettings}
 <div class="media-section-list">
 ${collapsible('camera','カメラ',camera)}
-${collapsible('loop','ループ',loops)}
+${videoMode?collapsible('loop','ループ',loops):''}
 </div>`;
 
 document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
+
+if(!videoMode){
+document.getElementById('mediaWorldDuration').addEventListener('change',e=>{
+node.worldDuration=Math.max(0.1,Number(e.target.value)||3);
+renderSettings();
+});
+}
 if(videoMode&&media?.duration>0){
 node.animation.playDuration=media.duration*(Number(node.animation.loopCount)||1);
 }
