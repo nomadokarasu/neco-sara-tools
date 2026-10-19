@@ -2084,7 +2084,9 @@ label.textContent=`${currentTime.toFixed(2)} / ${duration.toFixed(2)} 秒`;
 Object.assign(view,getTimedPanView(node,currentTime));
 
 const videoDuration=Number(media.duration)||0;
-const startTime=Number(sourceNode.animation.startTime)||0;
+const startTime=getMediaCameraVideoTime(
+sourceNode,media,getTriggerPreviewTime(node.id,sourceNode)
+);
 
 if(videoDuration>0){
 const targetTime=Math.max(
@@ -2823,24 +2825,39 @@ node.clickFrameRegions[node.clickFrameIndex||0]=
 cloneClickRegions(node.clickRegions);
 }
 
-function ensureClickView(node,sourceNode){
-if(node.clickView.initialized)return;
-
-let view=null;
-
-if(sourceNode.type==='animation'){
-view=sourceNode.animation.views?.[state.displayMode]||
-sourceNode.animation.views?.pc;
-}else{
-view=getWorldInitialView(sourceNode);
+function getTriggerPreviewTime(nodeId,sourceNode){
+// Sum waits on the path to this trigger.  A sibling media branch starts
+// at the common ancestor, so this is its elapsed playback time.
+const visited=new Set();
+let current=nodeId;
+let elapsed=0;
+while(current&&!visited.has(current)){
+visited.add(current);
+const currentNode=getNode(current);
+if(currentNode?.type==='time')elapsed+=Math.max(0,Number(currentNode.timeSeconds)||0);
+if(current===sourceNode?.id)break;
+const incoming=state.connections.find(edge=>edge.to===current);
+if(!incoming)break;
+current=incoming.from;
+}
+return elapsed;
 }
 
-view=view||{yaw:0,pitch:0,zoom:1};
+function getReferenceCamera(node,sourceNode,seconds){
+const media=sourceNode?.type==='animation'?getClickAnimationMedia(sourceNode):null;
+const time=getMediaCameraLoopTime(sourceNode,media,Math.max(0,seconds||0));
+return getMediaCameraAt(sourceNode,time);
+}
 
-node.clickView.yaw=view.yaw;
-node.clickView.pitch=view.pitch;
-node.clickView.zoom=view.zoom;
-node.clickView.initialized=true;
+function ensureClickView(node,sourceNode){
+if(!sourceNode)return;
+const time=sourceNode.type==='animation'
+?(node.clickFrameIndex||0)/(Number(node.clickFrameFps)||8)
+:getTriggerPreviewTime(node.id,sourceNode);
+const referenceKey=`${sourceNode.id}:${state.displayMode}`;
+if(node.clickView.initialized&&node.clickReferenceKey===referenceKey)return;
+Object.assign(node.clickView,getReferenceCamera(node,sourceNode,time),{initialized:true});
+node.clickReferenceKey=referenceKey;
 }
 
 function createClickTargetAtCenter(node,worldNode,canvas){
@@ -3272,6 +3289,9 @@ node.clickFrameIndex/node.clickFrameFps,
 Math.max(0,media.duration-0.001)
 );
 
+// Reset the click editing camera to the referenced media camera at this frame.
+Object.assign(node.clickView,getReferenceCamera(node,worldNode,time));
+
 timeLabel.textContent=`${time.toFixed(3)} 秒`;
 
 video.pause();
@@ -3541,28 +3561,11 @@ return String(value)
 
 function ensureDialogueView(node,sourceNode){
 if(!sourceNode)return;
-
-let view=null;
-
-if(sourceNode.type==='world'){
-view=getWorldInitialView(sourceNode);
-}
-
-if(sourceNode.type==='animation'){
-view=sourceNode.animation.views?.[state.displayMode]||{
-yaw:0,
-pitch:0,
-zoom:1
-};
-}
-
-const sourceKey=`${sourceNode.id}:${state.displayMode}`;
-
-if(view&&node.dialogueSourceKey!==sourceKey){
-node.dialogueView.yaw=view.yaw;
-node.dialogueView.pitch=view.pitch;
-node.dialogueView.zoom=view.zoom;
-node.dialogueView.initialized=true;
+const seconds=getTriggerPreviewTime(node.id,sourceNode);
+const view=getReferenceCamera(node,sourceNode,seconds);
+const sourceKey=`${sourceNode.id}:${state.displayMode}:${seconds}`;
+if(node.dialogueSourceKey!==sourceKey){
+Object.assign(node.dialogueView,view,{initialized:true});
 node.dialogueSourceKey=sourceKey;
 }
 }

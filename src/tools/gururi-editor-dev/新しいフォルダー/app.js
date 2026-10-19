@@ -2746,25 +2746,43 @@ return null;
 }
 
 function findPreviousClickMediaNode(nodeId){
-let currentId=nodeId;
+// First prefer a media node on the path leading directly to this node.
+// In parallel graphs, a sibling media branch from the nearest common ancestor
+// supplies the background for click and dialogue editing previews.
 const visited=new Set();
+let frontier=[nodeId];
+const mediaTypes=new Set(['world','animation']);
 
-while(currentId&&!visited.has(currentId)){
-visited.add(currentId);
+while(frontier.length){
+const next=[];
+const parents=[];
 
-const incoming=state.connections.find(c=>c.to===currentId);
-if(!incoming)return null;
-
-const previous=getNode(incoming.from);
-if(!previous)return null;
-
-if(previous.type==='world'||previous.type==='animation'){
-return previous;
+for(const id of frontier){
+if(visited.has(id))continue;
+visited.add(id);
+for(const edge of state.connections){
+if(edge.to!==id)continue;
+const parent=getNode(edge.from);
+if(!parent)continue;
+if(mediaTypes.has(parent.type))return parent;
+parents.push(parent);
+}
 }
 
-currentId=previous.id;
+// Search the media branches attached to the nearest ancestor first.
+for(const parent of parents){
+for(const edge of state.connections){
+if(edge.from!==parent.id)continue;
+const sibling=getNode(edge.to);
+if(sibling&&mediaTypes.has(sibling.type))return sibling;
+}
 }
 
+for(const parent of parents){
+if(!visited.has(parent.id))next.push(parent.id);
+}
+frontier=next;
+}
 return null;
 }
 
