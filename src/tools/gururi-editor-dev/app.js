@@ -6268,6 +6268,18 @@ return;
 dialogueOverlay.classList.add('hidden');
 state.previewDialogueNodeId=null;
 
+// STARTへ戻る接続がある場合は、再生状態を初期化する
+const returnToStart=state.connections.some(
+c=>c.from===node.id&&c.to==='start'
+);
+
+if(returnToStart){
+cancelPreviewScene();
+showPreviewNode('start');
+return;
+}
+
+// 通常の接続先へ進む
 previewOutgoing(node.id);
 }
 function showPreviewNode(nodeId){
