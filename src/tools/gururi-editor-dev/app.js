@@ -912,14 +912,25 @@ const target=document.getElementById('keyframeAngleFields');
 if(fields&&target){target.appendChild(fields);const button=fields.querySelector('.camera-copy-view');if(button)fields.appendChild(button);}
 const seek=time=>{
 second=clamp(Number(time)||0,0,duration);
-range.value=String(second);label.textContent=`${second.toFixed(3)} / ${duration.toFixed(3)} 秒`;
+
+range.value=String(second);
+label.textContent=`${second.toFixed(3)} / ${duration.toFixed(3)} 秒`;
+
 const loopTime=getMediaCameraLoopTime(sourceNode,media,second);
-Object.assign(view,getIndependentCameraAt(node,loopTime,getMediaCameraBase(sourceNode)));
+const camera=getIndependentCameraAt(node,loopTime,getMediaCameraBase(sourceNode));
+
+Object.assign(view,camera);
+
+// 画角と数値を先に更新する
+draw();
+
 if(videoMode&&media?.duration&&source){
 const videoTime=getMediaCameraVideoTime(sourceNode,media,second);
-if(Math.abs(source.currentTime-videoTime)>0.001)source.currentTime=videoTime;
-else draw();
-}else draw();
+
+if(Math.abs(source.currentTime-videoTime)>0.001){
+source.currentTime=videoTime;
+}
+}
 };
 const updateList=()=>{
 list.innerHTML='';
@@ -5170,12 +5181,21 @@ state.previewWorldNodeId=null;
 previewMessage.textContent=media.fileName;
 
 const finish=()=>{
-if(state.previewAnimation!==playback)return;
-// Keep the final video frame as background for dialogue and click triggers.
-video.pause();
+if(state.previewAnimation!==playback||playback.finished)return;
+
 playback.finished=true;
-try{video.currentTime=Math.max(0,media.duration-0.001);}catch(error){}
+video.pause();
+
+try{
+video.currentTime=Math.max(0,media.duration-0.001);
+}catch(error){
+console.warn('最終フレームへの移動に失敗しました',error);
+}
+
 drawPanoramaPreview(gameCanvas,world);
+
+// 再生終了後、次のノードを実行する
+previewOutgoing(node.id);
 };
 
 const draw=now=>{
