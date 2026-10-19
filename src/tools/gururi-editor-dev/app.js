@@ -854,6 +854,20 @@ const mediaDuration=media?.duration||0;
 return Math.max(0.1,Number(node.animation.playDuration)||(mediaDuration*(Number(node.animation.loopCount)||1))||3);
 }
 
+function getMediaCameraLoopTime(node,media,elapsed){
+if(node.type!=='animation')return elapsed;
+
+const duration=Number(media?.duration)||0;
+if(duration<=0)return elapsed;
+
+const loopCount=Number(node.animation.loopCount)||1;
+const isLooping=node.animation.infiniteLoop||loopCount>1;
+
+if(!isLooping)return elapsed;
+
+return ((elapsed%duration)+duration)%duration;
+}
+
 function getMediaCameraVideoTime(node,media,elapsed){
 const duration=media?.duration||0;
 if(duration<=0)return 0;
@@ -927,7 +941,10 @@ const seek=t=>{
 second=clamp(Number(t)||0,0,duration);
 range.value=String(second);
 label.textContent=`${second.toFixed(2)} / ${duration.toFixed(2)} 秒`;
-Object.assign(view,getMediaCameraAt(node,second));
+
+const cameraTime=getMediaCameraLoopTime(node,media,second);
+Object.assign(view,getMediaCameraAt(node,cameraTime));
+
 if(node.type==='animation'&&media?.duration){
 const target=getMediaCameraVideoTime(node,media,second);
 if(Math.abs(source.currentTime-target)>.001)source.currentTime=target;
@@ -4901,7 +4918,9 @@ return;
 
 if(playback.startedAt!==null){
 const elapsed=(now-playback.startedAt)/1000;
-const camera=getMediaCameraAt(node,elapsed);
+const cameraTime=getMediaCameraLoopTime(node,media,elapsed);
+const camera=getMediaCameraAt(node,cameraTime);
+
 world.yaw=camera.yaw;
 world.pitch=camera.pitch;
 world.zoom=camera.zoom;
