@@ -271,6 +271,7 @@ panSeconds:3,
 panPath:[],
 panKeyframes:[],
 cameraKeyframes:{pc:[],mobile:[]},
+keyframeViews:{pc:[],mobile:[]},
 worldDuration:3,
 worldInfiniteLoop:false,
 panView:{yaw:0,pitch:0,zoom:1,initialized:false},
@@ -366,6 +367,7 @@ node.type==='dialogue'?'ダイアローグ':
 node.type==='fadeIn'?'フェードイン':
 node.type==='fadeOut'?'フェードアウト':
 node.type==='pan'?'パン':
+node.type==='keyframe'?'キーフレーム':
 '不明';
 
 const body=
@@ -377,6 +379,7 @@ node.type==='click'?'範囲クリック':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
+node.type==='keyframe'?'カメラワーク':
 '開始';
 el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div><div class="port output" data-port="output"></div>`;
 
@@ -766,6 +769,10 @@ renderMediaNodeSettings(node);
 return;
 }
 
+if(node.type==='keyframe'){
+renderKeyframeNodeSettings(node);
+return;
+}
 if(node.type==='dialogue'){
 const previousMedia=findPreviousClickMediaNode(node.id);
 
@@ -823,6 +830,131 @@ renderMediaNodeSettings(node);
 
 }
 
+function getKeyframeNodeFrames(node){
+if(!node.keyframeViews)node.keyframeViews={pc:[],mobile:[]};
+if(!Array.isArray(node.keyframeViews[state.displayMode]))node.keyframeViews[state.displayMode]=[];
+return node.keyframeViews[state.displayMode];
+}
+function getIndependentCameraAt(node,seconds,base){
+const frames=[...getKeyframeNodeFrames(node)].filter(f=>Number.isFinite(f.time)).sort((a,b)=>a.time-b.time);
+if(!frames.length)return {...base};
+if(seconds<=frames[0].time)return {...frames[0]};
+if(seconds>=frames[frames.length-1].time)return {...frames[frames.length-1]};
+for(let i=1;i<frames.length;i++){
+const a=frames[i-1],b=frames[i];
+if(seconds>b.time)continue;
+const t=clamp((seconds-a.time)/(b.time-a.time),0,1);
+return {yaw:a.yaw+angleDiff(b.yaw,a.yaw)*t,pitch:a.pitch+(b.pitch-a.pitch)*t,zoom:a.zoom+(b.zoom-a.zoom)*t};
+}
+return {...base};
+}
+function findSceneKeyframeNode(sourceNode){
+if(!sourceNode)return null;
+// A keyframe node on a parallel branch of a shared parent controls this media.
+for(const edge of state.connections){
+if(edge.to!==sourceNode.id)continue;
+const parent=edge.from;
+const visited=new Set();const queue=[parent];
+while(queue.length){
+const current=queue.shift();
+if(visited.has(current))continue;visited.add(current);
+for(const branch of state.connections.filter(c=>c.from===current)){
+const node=getNode(branch.to);
+if(node?.type==='keyframe')return node;
+if(node&&node.type==='time')queue.push(node.id);
+}
+for(const prev of state.connections.filter(c=>c.to===current))queue.push(prev.from);
+}
+}
+return null;
+}
+function renderKeyframeNodeSettings(node){
+const sourceNode=findPreviousClickMediaNode(node.id);
+if(!sourceNode){
+settingsPanel.innerHTML='<div class="settings-title">キーフレーム</div><div class="settings-empty">参照メディアがありません。メディアと同じ分岐元に接続してください。</div>';
+return;
+}
+const videoMode=sourceNode.type==='animation';
+const media=mediaLibrary.find(m=>m.id===(videoMode?sourceNode.animation.mediaId:sourceNode.world.mediaId));
+const duration=getMediaPlaybackDuration(sourceNode,media);
+const fps=videoMode?Number(media?.fps):8;
+const validFps=Number.isFinite(fps)&&fps>0;
+const frames=getKeyframeNodeFrames(node);
+const source=videoMode?media?.video:sourceNode.world.image;
+settingsPanel.innerHTML=`
+<div class="settings-title">キーフレーム</div>
+<div class="setting-group"><div class="setting-label">参照メディア</div><div class="file-name">${escapeHtml(videoMode?sourceNode.animation.fileName:sourceNode.world.fileName)}</div></div>
+<div class="setting-group"><canvas id="keyframeCameraCanvas" class="world-preview" width="320" height="320"></canvas><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div>
+<div class="setting-group"><div class="media-camera-time-header"><div class="setting-label">再生位置</div><div class="media-camera-step-buttons"><button id="keyframePrevious" type="button">◀</button><button id="keyframeNext" type="button">▶</button></div></div><input id="keyframeTime" type="range" min="0" max="${duration}" step="0.001" value="0" style="width:100%"><div id="keyframeTimeLabel" class="settings-empty"></div></div>
+<div id="keyframeAngleFields" class="setting-group"></div>
+<div class="setting-group"><button id="keyframeAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button><div id="keyframeList" class="pan-keyframe-list"></div></div>`;
+const canvas=document.getElementById('keyframeCameraCanvas');
+const range=document.getElementById('keyframeTime');
+const label=document.getElementById('keyframeTimeLabel');
+const list=document.getElementById('keyframeList');
+const prev=document.getElementById('keyframePrevious');
+const next=document.getElementById('keyframeNext');
+const controller=new AbortController();const signal=controller.signal;
+cleanupAnimationSettingsPreview=()=>controller.abort();
+if(source?.pause)source.pause();
+if(!validFps){prev.disabled=true;next.disabled=true;}
+let second=0,drag=null;
+const view={...getMediaCameraBase(sourceNode)};
+let syncInputs=()=>{};
+const draw=()=>{
+if(!canvas.isConnected)return;
+drawPanoramaPreview(canvas,{image:source?.readyState!==undefined&&source.readyState<2?null:source,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});
+syncInputs();
+};
+syncInputs=setupCameraNumberInputs(canvas,view,draw);
+const fields=canvas.nextElementSibling;
+const target=document.getElementById('keyframeAngleFields');
+if(fields&&target){target.appendChild(fields);const button=fields.querySelector('.camera-copy-view');if(button)fields.appendChild(button);}
+const seek=time=>{
+second=clamp(Number(time)||0,0,duration);
+range.value=String(second);label.textContent=`${second.toFixed(3)} / ${duration.toFixed(3)} 秒`;
+const loopTime=getMediaCameraLoopTime(sourceNode,media,second);
+Object.assign(view,getIndependentCameraAt(node,loopTime,getMediaCameraBase(sourceNode)));
+if(videoMode&&media?.duration&&source){
+const videoTime=getMediaCameraVideoTime(sourceNode,media,second);
+if(Math.abs(source.currentTime-videoTime)>0.001)source.currentTime=videoTime;
+else draw();
+}else draw();
+};
+const updateList=()=>{
+list.innerHTML='';
+for(const frame of [...frames].sort((a,b)=>a.time-b.time)){
+const row=document.createElement('div');row.className='pan-keyframe-row';
+const select=document.createElement('button');select.type='button';select.textContent=`◆ ${frame.time.toFixed(3)} 秒`;
+select.addEventListener('click',()=>seek(frame.time),{signal});
+const remove=document.createElement('button');remove.type='button';remove.textContent='削除';
+remove.addEventListener('click',()=>{
+const before=typeof editorSnapshot==='function'?editorSnapshot():null;
+const index=frames.indexOf(frame);if(index>=0)frames.splice(index,1);
+if(before)commitEditorHistory(before);
+updateList();seek(second);
+},{signal});
+row.append(select,remove);list.appendChild(row);
+}
+};
+range.addEventListener('input',()=>seek(range.value),{signal});
+const step=direction=>{if(!validFps)return;seek((Math.round(second*fps)+direction)/fps);};
+prev.addEventListener('click',()=>step(-1),{signal});next.addEventListener('click',()=>step(1),{signal});
+if(videoMode&&source?.addEventListener){source.addEventListener('seeked',draw,{signal});source.addEventListener('loadeddata',draw,{signal});}
+canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch};canvas.setPointerCapture(e.pointerId);},{signal});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;view.yaw=drag.yaw-(e.clientX-drag.x)*0.008;view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*0.008,-Math.PI/2+0.02,Math.PI/2-0.02);draw();},{signal});
+canvas.addEventListener('pointerup',()=>drag=null,{signal});canvas.addEventListener('pointercancel',()=>drag=null,{signal});
+canvas.addEventListener('wheel',e=>{e.preventDefault();view.zoom=clamp(view.zoom+(e.deltaY>0?-0.1:0.1),0.6,2.2);draw();},{signal,passive:false});
+document.getElementById('keyframeAdd').addEventListener('click',()=>{
+const before=typeof editorSnapshot==='function'?editorSnapshot():null;
+const time=Number(second.toFixed(3));const frame={time,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom};
+const index=frames.findIndex(f=>Math.abs(f.time-time)<0.0005);
+if(index>=0)frames[index]=frame;else frames.push(frame);
+if(before)commitEditorHistory(before);
+updateList();
+},{signal});
+updateList();seek(0);
+}
 function getMediaCameraFrames(node){
 if(!node.cameraKeyframes)node.cameraKeyframes={pc:[],mobile:[]};
 if(!Array.isArray(node.cameraKeyframes[state.displayMode]))node.cameraKeyframes[state.displayMode]=[];
@@ -837,6 +969,7 @@ return node.animation.views[state.displayMode]||node.animation.views.pc;
 
 function getMediaCameraAt(node,seconds){
 const base=getMediaCameraBase(node);
+if(node.type==='world'||node.type==='animation')return {...base};
 const frames=[...getMediaCameraFrames(node)].filter(f=>Number.isFinite(f.time)).sort((x,y)=>x.time-y.time);
 if(!frames.length)return {...base};
 if(seconds<=frames[0].time)return {...frames[0]};
@@ -914,41 +1047,17 @@ const previewControls=`
 <div id="mediaCameraTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} 秒</div>
 </div>`;
 
-const camera=`
-<div class="setting-group">
-<label class="media-camera-inherit">
-<input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}>
-画角を継承
-</label>
-</div>
-
-<div class="media-camera-subsections">
-
-<details data-camera-subsection="keyframes">
-<summary>カメラワーク</summary>
-<div class="media-camera-subsection-body">
-<button id="mediaCameraAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button>
-<div id="mediaCameraFrames" class="pan-keyframe-list"></div>
-</div>
-</details>
-
-<details data-camera-subsection="angles">
-<summary>画角情報</summary>
-<div id="mediaCameraAngleFields" class="media-camera-subsection-body"></div>
-</details>
-
-</div>`;
+const inheritControl=`<div class="setting-group"><label class="media-camera-inherit"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div>`;
+const angleInfo=`<div class="setting-group"><div class="setting-label">画角情報</div><div id="mediaCameraAngleFields"></div></div>`;
 const loops=videoMode?`<div class="setting-group"><label><input id="mediaInfiniteLoop" type="checkbox" ${node.animation.infiniteLoop?'checked':''}> 無限ループ（トリガー発火まで再生）</label></div><div class="setting-group"><div class="setting-label">ループ回数</div><input id="mediaLoopCount" class="number-input" type="number" min="0.01" step="0.01" value="${Number(node.animation.loopCount)||1}"></div>`:`<div class="setting-group"><label><input id="mediaWorldInfinite" type="checkbox" ${node.worldInfiniteLoop?'checked':''}> 無限表示（トリガー発火まで表示）</label></div>`;
 settingsPanel.innerHTML=`
 <div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div>
 ${mediaSelect}
 ${pngSettings}
+${inheritControl}
 ${previewControls}
-${durationSettings}
-<div class="media-section-list">
-${collapsible('camera','カメラ',camera)}
-${videoMode?collapsible('loop','ループ',loops):''}
-</div>`;
+${videoMode?loops:''}
+${angleInfo}`;
 
 document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
 
@@ -978,108 +1087,57 @@ function setupSharedMediaCamera(node,media,duration){
 const canvas=document.getElementById('mediaCameraCanvas');
 const range=document.getElementById('mediaCameraTime');
 const label=document.getElementById('mediaCameraTimeLabel');
-const add=document.getElementById('mediaCameraAdd');
-const list=document.getElementById('mediaCameraFrames');
-const frames=getMediaCameraFrames(node);
 const source=node.type==='world'?node.world.image:media?.video;
 if(source?.pause)source.pause();
-const controller=new AbortController();
-const signal=controller.signal;
+const controller=new AbortController();const signal=controller.signal;
 cleanupAnimationSettingsPreview=()=>controller.abort();
 let second=0,drag=null;
-const view={...getMediaCameraAt(node,0)};
-let syncCameraInputs=()=>{};
+const view={...getMediaCameraBase(node)};
+let syncInputs=()=>{};
 const draw=()=>{
-if(canvas.isConnected){
-drawPanoramaPreview(canvas,{
-image:source?.readyState!==undefined&&source.readyState<2?null:source,
-yaw:view.yaw,
-pitch:view.pitch,
-zoom:view.zoom
-});
-}
-syncCameraInputs();
+if(!canvas.isConnected)return;
+drawPanoramaPreview(canvas,{image:source?.readyState!==undefined&&source.readyState<2?null:source,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});
+syncInputs();
 };
-syncCameraInputs=setupCameraNumberInputs(canvas,view,draw);
-
-const angleFields=document.getElementById('mediaCameraAngleFields');
-const cameraInputs=canvas.nextElementSibling;
-
-if(
-angleFields&&
-cameraInputs?.classList.contains('camera-number-settings')
-){
-angleFields.appendChild(cameraInputs);
-
-const copyButton=cameraInputs.querySelector('.camera-copy-view');
-
-if(copyButton){
-cameraInputs.appendChild(copyButton);
-}
-}
-
-const seek=t=>{
-second=clamp(Number(t)||0,0,duration);
-range.value=String(second);
-label.textContent=`${second.toFixed(2)} / ${duration.toFixed(2)} 秒`;
-
-const cameraTime=getMediaCameraLoopTime(node,media,second);
-Object.assign(view,getMediaCameraAt(node,cameraTime));
-
-if(node.type==='animation'&&media?.duration){
-const target=getMediaCameraVideoTime(node,media,second);
-if(Math.abs(source.currentTime-target)>.001)source.currentTime=target;
+syncInputs=setupCameraNumberInputs(canvas,view,draw);
+const fields=canvas.nextElementSibling;
+const target=document.getElementById('mediaCameraAngleFields');
+if(fields&&target){target.appendChild(fields);const button=fields.querySelector('.camera-copy-view');if(button)fields.appendChild(button);}
+const seek=time=>{
+second=clamp(Number(time)||0,0,duration);
+range.value=String(second);label.textContent=`${second.toFixed(3)} / ${duration.toFixed(3)} 秒`;
+Object.assign(view,getMediaCameraBase(node));
+if(node.type==='animation'&&media?.duration&&source){
+const videoTime=getMediaCameraVideoTime(node,media,second);
+if(Math.abs(source.currentTime-videoTime)>0.001)source.currentTime=videoTime;
 else draw();
 }else draw();
 };
-const updateList=()=>{
-list.innerHTML='';
-for(const frame of [...frames].sort((a,b)=>a.time-b.time)){
-const row=document.createElement('div');row.className='pan-keyframe-row';
-const select=document.createElement('button');select.type='button';select.textContent=`◆ ${frame.time.toFixed(2)} 秒`;select.addEventListener('click',()=>seek(frame.time),{signal});
-const remove=document.createElement('button');remove.type='button';remove.textContent='削除';remove.addEventListener('click',()=>{frames.splice(frames.indexOf(frame),1);updateList();seek(second);},{signal});
-row.append(select,remove);list.appendChild(row);
-}
-};
 range.addEventListener('input',()=>seek(range.value),{signal});
-const previousFrameButton=document.getElementById('mediaCameraPreviousFrame');
-const nextFrameButton=document.getElementById('mediaCameraNextFrame');
-const isVideo=node.type==='animation';
-const fps=Number(media?.fps);
-const hasFps=Number.isFinite(fps)&&fps>0;
-const frameStep=isVideo&&hasFps?1/fps:1/8;
-if(isVideo&&!hasFps){
-previousFrameButton.disabled=true;
-nextFrameButton.disabled=true;
-const notice=document.createElement('div');
-notice.className='settings-empty';
-notice.textContent='素材のFPSを取得できませんでした。コマ送りは使用できません。';
-range.insertAdjacentElement('afterend',notice);
-}
-const stepFrame=direction=>{
-if(isVideo&&!hasFps)return;
-let nextTime;
-if(isVideo){
-// Round to the nearest frame index before stepping, to avoid floating-point drift.
-const frameIndex=Math.round(second*fps);
-nextTime=(frameIndex+direction)/fps;
-}else{
-const frameIndex=Math.round(second*8);
-nextTime=(frameIndex+direction)/8;
-}
-seek(clamp(nextTime,0,duration));
-};
-previousFrameButton.addEventListener('click',()=>stepFrame(-1),{signal});
-nextFrameButton.addEventListener('click',()=>stepFrame(1),{signal});
-if(source?.addEventListener&&node.type==='animation'){
-source.addEventListener('seeked',draw,{signal});source.addEventListener('loadeddata',draw,{signal});
-}
+const previous=document.getElementById('mediaCameraPreviousFrame');
+const next=document.getElementById('mediaCameraNextFrame');
+const videoMode=node.type==='animation';
+const fps=videoMode?Number(media?.fps):8;
+const validFps=Number.isFinite(fps)&&fps>0;
+if(!validFps){previous.disabled=true;next.disabled=true;}
+const step=direction=>{if(!validFps)return;seek((Math.round(second*fps)+direction)/fps);};
+previous.addEventListener('click',()=>step(-1),{signal});next.addEventListener('click',()=>step(1),{signal});
+if(videoMode&&source?.addEventListener){source.addEventListener('seeked',draw,{signal});source.addEventListener('loadeddata',draw,{signal});}
 canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch};canvas.setPointerCapture(e.pointerId);},{signal});
-canvas.addEventListener('pointermove',e=>{if(!drag)return;view.yaw=drag.yaw-(e.clientX-drag.x)*.008;view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*.008,-Math.PI/2+.02,Math.PI/2-.02);draw();},{signal});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;view.yaw=drag.yaw-(e.clientX-drag.x)*0.008;view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*0.008,-Math.PI/2+0.02,Math.PI/2-0.02);draw();},{signal});
 canvas.addEventListener('pointerup',()=>drag=null,{signal});canvas.addEventListener('pointercancel',()=>drag=null,{signal});
-canvas.addEventListener('wheel',e=>{e.preventDefault();view.zoom=clamp(view.zoom+(e.deltaY>0?-.1:.1),.6,2.2);draw();},{signal,passive:false});
-add.addEventListener('click',()=>{const t=Number(second.toFixed(2));const index=frames.findIndex(f=>Math.abs(f.time-t)<.005);const frame={time:t,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom};if(index>=0)frames[index]=frame;else frames.push(frame);updateList();},{signal});
-updateList();seek(0);
+canvas.addEventListener('wheel',e=>{e.preventDefault();view.zoom=clamp(view.zoom+(e.deltaY>0?-0.1:0.1),0.6,2.2);draw();},{signal,passive:false});
+// The initial camera view is stored on the media node, separately from keyframe animation.
+const syncBase=()=>{
+const base=getMediaCameraBase(node);
+Object.assign(base,view);
+if(node.type==='world')Object.assign(node.world,{yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});
+};
+canvas.addEventListener('pointerup',syncBase,{signal});
+canvas.addEventListener('wheel',syncBase,{signal});
+target?.addEventListener('change',syncBase,{signal});
+target?.addEventListener('paste',()=>queueMicrotask(syncBase),{signal});
+seek(0);
 }
 
 const mediaLibrary=[];
@@ -2848,7 +2906,8 @@ return elapsed;
 function getReferenceCamera(node,sourceNode,seconds){
 const media=sourceNode?.type==='animation'?getClickAnimationMedia(sourceNode):null;
 const time=getMediaCameraLoopTime(sourceNode,media,Math.max(0,seconds||0));
-return getMediaCameraAt(sourceNode,time);
+const keyframe=findSceneKeyframeNode(sourceNode);
+return keyframe?getIndependentCameraAt(keyframe,time,getMediaCameraBase(sourceNode)):getMediaCameraBase(sourceNode);
 }
 
 function ensureClickView(node,sourceNode){
@@ -4905,6 +4964,7 @@ worldNode.world
 
 // Parallel preview: media owns the background; triggers run independently.
 let previewSceneEpoch=0;
+let activeIndependentKeyframe=null;
 const previewBranchTimers=new Set();
 const previewVisited=new Set();
 function clearPreviewBranchTimers(){
@@ -4913,6 +4973,7 @@ previewBranchTimers.clear();
 if(state.previewTimer){clearTimeout(state.previewTimer);state.previewTimer=null;}
 }
 function cancelPreviewScene(){
+activeIndependentKeyframe=null;
 previewSceneEpoch++;
 clearPreviewBranchTimers();
 previewVisited.clear();
@@ -5120,7 +5181,9 @@ if(now-playback.startedAt>=playDuration*1000)finish();
 if(playback.startedAt!==null&&!playback.finished){
 const elapsed=(now-playback.startedAt)/1000;
 const cameraTime=getMediaCameraLoopTime(node,media,elapsed);
-const camera=getMediaCameraAt(node,cameraTime);
+const camera=activeIndependentKeyframe?.sourceId===node.id
+?getIndependentCameraAt(activeIndependentKeyframe.node,cameraTime,getMediaCameraBase(node))
+:getMediaCameraBase(node);
 
 world.yaw=camera.yaw;
 world.pitch=camera.pitch;
@@ -5655,14 +5718,42 @@ previewMessage.textContent=node.world.fileName||'ビュー素材未設定';
 drawPanoramaPreview(gameCanvas,node.world);
 const epoch=previewSceneEpoch;
 const duration=getMediaPlaybackDuration(node,null);
-const hasFrames=getMediaCameraFrames(node).length>0;
+const hasFrames=Boolean(findSceneKeyframeNode(node));
 if(hasFrames){
 const started=performance.now();
 const tick=now=>{
 if(epoch!==previewSceneEpoch||gamePreview.classList.contains('hidden'))return;
 const elapsed=Math.min(duration,(now-started)/1000);
-Object.assign(node.world,getMediaCameraAt(node,elapsed));
+const animation=activeIndependentKeyframe;
+const camera=animation?.sourceId===node.id
+?getIndependentCameraAt(animation.node,Math.max(0,elapsed-animation.offset),getMediaCameraBase(node))
+:getMediaCameraBase(node);
+Object.assign(node.world,camera);
 drawPanoramaPreview(gameCanvas,node.world);
+if(elapsed<duration)state.cameraAnimationFrame=requestAnimationFrame(tick);
+else state.cameraAnimationFrame=null;
+};
+state.cameraAnimationFrame=requestAnimationFrame(tick);
+}
+}
+previewOutgoing(node.id);
+return;
+}
+if(node.type==='keyframe'){
+const source=findPreviousClickMediaNode(node.id);
+if(source){
+const media=source.type==='animation'?getClickAnimationMedia(source):null;
+activeIndependentKeyframe={node,sourceId:source.id,offset:getTriggerPreviewTime(node.id,source)};
+// If this keyframe is started after a wait, its timeline begins at this moment.
+if(source.type==='world'&&state.previewWorldNodeId===source.id&&!state.cameraAnimationFrame){
+const epoch=previewSceneEpoch;
+const duration=getMediaPlaybackDuration(source,null);
+const start=performance.now();
+const tick=now=>{
+if(epoch!==previewSceneEpoch)return;
+const elapsed=(now-start)/1000;
+const camera=getIndependentCameraAt(node,Math.min(duration,elapsed),getMediaCameraBase(source));
+Object.assign(source.world,camera);drawPanoramaPreview(gameCanvas,source.world);
 if(elapsed<duration)state.cameraAnimationFrame=requestAnimationFrame(tick);
 else state.cameraAnimationFrame=null;
 };
