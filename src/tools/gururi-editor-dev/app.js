@@ -92,6 +92,7 @@ const dialogueOverlay=document.getElementById('dialogueOverlay');
 const dialogueText=document.getElementById('dialogueText');
 const fadeOverlay=document.getElementById('fadeOverlay');
 const gameViewport=document.getElementById('gameViewport');
+const media2DLayer=document.getElementById('media2DLayer');
 const pcModeBtn=document.getElementById('pcModeBtn');
 const mobileModeBtn=document.getElementById('mobileModeBtn');
 const ratioWidthInput=document.getElementById('ratioWidthInput');
@@ -276,7 +277,9 @@ worldDuration:3,
 worldInfiniteLoop:false,
 panView:{yaw:0,pitch:0,zoom:1,initialized:false},
 panUndoStack:[],
-panRedoStack:[]
+panRedoStack:[],
+media2DId:null,
+media2DLayouts:{pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}}
 };
 state.nodes.push(node);
 commitEditorHistory(editBefore);
@@ -364,6 +367,7 @@ node.type==='media'||node.type==='world'||node.type==='animation'?'メディア'
 node.type==='time'?'時間':
 node.type==='click'?'クリック':
 node.type==='dialogue'?'ダイアローグ':
+node.type==='media2d'?'2Dメディア':
 node.type==='fadeIn'?'フェードイン':
 node.type==='fadeOut'?'フェードアウト':
 node.type==='pan'?'パン':
@@ -377,6 +381,7 @@ node.type==='animation'?(node.animation.fileName||'素材未設定'):
 node.type==='time'?`${node.timeSeconds} 秒`:
 node.type==='click'?'範囲クリック':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
+node.type==='media2d'?'画像・動画を重ねて表示':
 node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
 node.type==='keyframe'?'カメラワーク':
@@ -692,6 +697,10 @@ setupPanPreview(node,previousWorld);
 return;
 }
 
+if(node.type==='media2d'){
+renderMedia2DNodeSettings(node);
+return;
+}
 if(node.type==='click'){
 const sourceNode=findPreviousClickMediaNode(node.id);
 
@@ -828,6 +837,100 @@ return;
 }
 renderMediaNodeSettings(node);
 
+}
+
+// 2D media uses normalized viewport coordinates and independent PC/mobile layouts.
+function getMedia2DLayout(node){
+if(!node.media2DLayouts)node.media2DLayouts={pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}};
+if(!node.media2DLayouts[state.displayMode])node.media2DLayouts[state.displayMode]={x:30,y:25,w:40,h:40};
+return node.media2DLayouts[state.displayMode];
+}
+function media2DOptions(selected){
+return `<option value="">素材を選択してください</option>`+mediaLibrary.filter(m=>['png','jpg','mp4'].includes(m.fileType)).map(m=>`<option value="${m.id}" ${m.id===selected?'selected':''}>${escapeHtml(m.fileName)}</option>`).join('');
+}
+function createMedia2DElement(media){
+if(!media)return null;
+const el=document.createElement(media.fileType==='mp4'?'video':'canvas');
+el.draggable=false;
+if(media.fileType==='mp4'){
+el.src=media.url||'';
+el.muted=true;el.playsInline=true;el.loop=true;el.autoplay=true;
+}else{
+el.width=media.width||1;el.height=media.height||1;
+if(media.image)el.getContext('2d').drawImage(media.image,0,0,el.width,el.height);
+}
+el.style.cssText='width:100%;height:100%;object-fit:fill;display:block;pointer-events:none;';
+return el;
+}
+function renderMedia2DNodeSettings(node){
+const media=mediaLibrary.find(m=>m.id===node.media2DId);
+settingsPanel.innerHTML=`<div class="settings-title">2Dメディア</div>
+<div class="setting-group"><div class="setting-label">素材（PNG・JPG・MP4）</div><select id="media2DSelect" class="number-input">${media2DOptions(node.media2DId)}</select></div>
+<div class="setting-group"><div class="setting-label">配置（${state.displayMode==='pc'?'PC':'スマホ'}）</div><div id="media2DEditor" class="media2d-editor"><canvas id="media2DBackground"></canvas><div id="media2DSelection" class="media2d-selection"><div id="media2DContent"></div>${['nw','ne','sw','se'].map(p=>`<span class="media2d-handle media2d-handle-${p}" data-corner="${p}"></span>`).join('')}</div></div><div class="pan-help">素材をドラッグ：移動 / 四隅をドラッグ：自由に拡大縮小。PC・スマホの配置はそれぞれ記憶します。</div></div>`;
+const select=document.getElementById('media2DSelect');
+const box=document.getElementById('media2DEditor');
+const selection=document.getElementById('media2DSelection');
+const content=document.getElementById('media2DContent');
+const layout=getMedia2DLayout(node);
+const mode=getActiveLayout();box.style.aspectRatio=`${mode.width} / ${mode.height}`;
+const bg=document.getElementById('media2DBackground');
+const previous=findPreviousClickMediaNode(node.id);
+const source=previous?.type==='world'?previous.world.image:previous?.type==='animation'?mediaLibrary.find(m=>m.id===previous.animation.mediaId)?.video:null;
+if(source){
+const base=getMediaCameraBase(previous);
+const drawBackground=()=>{if(!bg.isConnected)return;drawPanoramaPreview(bg,{image:source,yaw:base.yaw,pitch:base.pitch,zoom:base.zoom});};
+requestAnimationFrame(drawBackground);
+if(source.tagName==='VIDEO')source.addEventListener('loadeddata',drawBackground,{once:true});
+}
+let shownMedia=null;
+function fillMedia(){
+content.replaceChildren();shownMedia=mediaLibrary.find(m=>m.id===node.media2DId);
+const mediaElement=createMedia2DElement(shownMedia);
+if(mediaElement){content.appendChild(mediaElement);if(mediaElement.tagName==='VIDEO')mediaElement.play().catch(()=>{});}
+}
+function draw(){selection.style.left=`${layout.x}%`;selection.style.top=`${layout.y}%`;selection.style.width=`${layout.w}%`;selection.style.height=`${layout.h}%`;}
+select.addEventListener('change',()=>{node.media2DId=select.value||null;fillMedia();});
+fillMedia();draw();
+let drag=null;
+selection.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+const corner=e.target.dataset.corner||null;
+drag={id:e.pointerId,corner,x:e.clientX,y:e.clientY,start:{...layout}};
+selection.setPointerCapture(e.pointerId);e.preventDefault();
+});
+selection.addEventListener('pointermove',e=>{
+if(!drag||e.pointerId!==drag.id)return;
+const r=box.getBoundingClientRect();
+if(!r.width||!r.height)return;
+const dx=(e.clientX-drag.x)/r.width*100;
+const dy=(e.clientY-drag.y)/r.height*100;
+const a=drag.start;
+if(!drag.corner){layout.x=a.x+dx;layout.y=a.y+dy;}
+else{
+let left=a.x,top=a.y,right=a.x+a.w,bottom=a.y+a.h;
+if(drag.corner.includes('w'))left=Math.min(right-1,left+dx);else right=Math.max(left+1,right+dx);
+if(drag.corner.includes('n'))top=Math.min(bottom-1,top+dy);else bottom=Math.max(top+1,bottom+dy);
+layout.x=left;layout.y=top;layout.w=right-left;layout.h=bottom-top;
+}
+draw();
+});
+const end=e=>{if(drag?.id!==e.pointerId)return;drag=null;if(selection.hasPointerCapture(e.pointerId))selection.releasePointerCapture(e.pointerId);};
+selection.addEventListener('pointerup',end);selection.addEventListener('pointercancel',end);
+}
+function clearMedia2DLayer(){
+for(const video of media2DLayer.querySelectorAll('video')){video.pause();video.removeAttribute('src');video.load();}
+media2DLayer.replaceChildren();
+}
+function showMedia2D(node){
+const media=mediaLibrary.find(m=>m.id===node.media2DId);
+if(!media)return;
+const layout=getMedia2DLayout(node);
+const el=createMedia2DElement(media);
+if(!el)return;
+const wrap=document.createElement('div');
+wrap.style.cssText=`position:absolute;left:${layout.x}%;top:${layout.y}%;width:${layout.w}%;height:${layout.h}%;pointer-events:none;`;
+wrap.appendChild(el);media2DLayer.appendChild(wrap);
+if(el.tagName==='VIDEO')el.play().catch(error=>console.warn('2D動画を再生できませんでした',error));
 }
 
 function getKeyframeNodeFrames(node){
@@ -4944,8 +5047,6 @@ if(Math.hypot(dx,dy)>4){
 gamePreviewDrag.moved=true;
 }
 
-// キーフレーム制御中はカメラを回転させない
-// ただしクリック判定用の情報は保持する
 if(isPreviewCameraLocked())return;
 
 const world=getActivePreviewWorld();
@@ -5051,6 +5152,7 @@ clearPreviewBranchTimers();
 previewVisited.clear();
 state.previewClickTriggerIds=[];
 state.previewDialogueNodeId=null;
+clearMedia2DLayer();
 stopDialogueTyping();
 dialogueOverlay.classList.add('hidden');
 stopCameraAnimation();
@@ -5872,6 +5974,11 @@ else state.cameraAnimationFrame=null;
 state.cameraAnimationFrame=requestAnimationFrame(tick);
 }
 }
+previewOutgoing(node.id);
+return;
+}
+if(node.type==='media2d'){
+showMedia2D(node);
 previewOutgoing(node.id);
 return;
 }

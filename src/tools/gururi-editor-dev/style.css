@@ -604,3 +604,14 @@ border-top:1px solid #d5d5d5;
 margin:14px 0;
 width:100%;
 }
+
+.media2d-editor{position:relative;width:100%;background:#202328;overflow:hidden;touch-action:none;border:1px solid #8e949d;border-radius:4px;box-sizing:border-box}
+.media2d-editor #media2DBackground{position:absolute;inset:0;width:100%;height:100%;display:block}
+.media2d-selection{position:absolute;box-sizing:border-box;border:1px solid #fff;outline:1px dashed #181818;cursor:move;touch-action:none;min-width:1px;min-height:1px;z-index:1}
+#media2DContent{width:100%;height:100%;overflow:hidden;pointer-events:none}
+.media2d-handle{position:absolute;width:12px;height:12px;background:#fff;border:1px solid #333;border-radius:2px;box-sizing:border-box;z-index:2;touch-action:none}
+.media2d-handle-nw{left:-6px;top:-6px;cursor:nwse-resize}
+.media2d-handle-ne{right:-6px;top:-6px;cursor:nesw-resize}
+.media2d-handle-sw{left:-6px;bottom:-6px;cursor:nesw-resize}
+.media2d-handle-se{right:-6px;bottom:-6px;cursor:nwse-resize}
+.media2d-layer{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
