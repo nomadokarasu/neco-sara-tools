@@ -625,3 +625,7 @@ width:100%;
 .framein-tools+.setting-group{display:flex;gap:8px}
 .framein-tools+.setting-group button.active{border-color:#ff8a00}
 #frameInOverlay{touch-action:none;cursor:crosshair}
+.click-preview-wrap.framein-preview-wrap{
+aspect-ratio:var(--game-aspect,16/9);
+max-width:320px;
+}
