@@ -1,12 +1,5 @@
-
 const workspace=document.getElementById('workspace');
 const workspaceScene=document.getElementById('workspaceScene');
-const folderCreateBtn=document.getElementById('folderCreateBtn');
-const folderBreadcrumb=document.getElementById('folderBreadcrumb');
-const folderLasso=document.getElementById('folderLasso');
-let currentFolderId=null;
-let folderDraw=null;
-let folderCameraReturn=null;
 const nodesLayer=document.getElementById('nodesLayer');
 const connectionsSvg=document.getElementById('connections');
 
@@ -362,12 +355,9 @@ return null;
 
 function renderNodes(){
 nodesLayer.innerHTML='';
-if(currentFolderId&&!getNode(currentFolderId))currentFolderId=null;
-renderFolderBreadcrumb();
 for(const node of state.nodes){
-if((node.folderId||null)!==currentFolderId)continue;
 const el=document.createElement('div');
-el.className=`node ${node.type==='start'?'start-node':''} ${node.type==='folder'?'folder-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''}`;
+el.className=`node ${node.type==='start'?'start-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''}`;
 el.dataset.id=node.id;
 el.style.left=`${node.x}px`;
 el.style.top=`${node.y}px`;
@@ -378,7 +368,6 @@ node.type==='time'?'時間':
 node.type==='click'?'クリック':
 node.type==='dialogue'?'ダイアローグ':
 node.type==='media2d'?'2Dメディア':
-node.type==='folder'?'フォルダ':
 node.type==='fadeIn'?'フェードイン':
 node.type==='fadeOut'?'フェードアウト':
 node.type==='pan'?'パン':
@@ -393,7 +382,6 @@ node.type==='time'?`${node.timeSeconds} 秒`:
 node.type==='click'?'範囲クリック':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='media2d'?'画像・動画を重ねて表示':
-node.type==='folder'?`${state.nodes.filter(n=>n.folderId===node.id).length} ノード`:
 node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
 node.type==='keyframe'?'カメラワーク':
@@ -401,7 +389,7 @@ node.type==='keyframe'?'カメラワーク':
 el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div><div class="port output" data-port="output"></div>`;
 
 const bodyEl=el.querySelector('.node-body');
-bodyEl.textContent=node.type==='folder'?`${node.folderName||'フォルダ'} · ${state.nodes.filter(n=>n.folderId===node.id).length} ノード`:(node.customBody===undefined?body:node.customBody);
+bodyEl.textContent=node.customBody===undefined?body:node.customBody;
 
 attachNodeEvents(el,node);
 nodesLayer.appendChild(el);
@@ -495,17 +483,11 @@ resize();
 }
 
 function attachNodeEvents(el,node){
-if(node.type==='folder')el.addEventListener('dblclick',e=>{
-e.preventDefault();e.stopPropagation();
-openFolder(node.id);
-});
 el.addEventListener('pointerdown',e=>{
-if(folderCreateBtn.classList.contains('active'))return;
 if(getWorkspaceTool(e))return;
 if(e.button!==0)return;
 
 const port=e.target.closest('.port');
-if(port&&node.type==='folder')return;
 if(port){
 if(port.dataset.port==='output')startConnection(e,node.id,el);
 return;
@@ -554,9 +536,7 @@ if(el.hasPointerCapture(e.pointerId)){
 el.releasePointerCapture(e.pointerId);
 }
 
-const moved=Math.hypot(e.clientX-state.dragging.startX,e.clientY-state.dragging.startY)>6;
 state.dragging=null;
-if(moved)dropNodeIntoFolder(node,e.clientX,e.clientY);
 });
 
 el.addEventListener('pointercancel',e=>{
@@ -636,11 +616,6 @@ settingsPanel.appendChild(group);
 }
 
 if(!node){settingsPanel.innerHTML='<div class="settings-empty">ノードを選択してください</div>';return}
-if(node.type==='folder'){
-settingsPanel.innerHTML=`<div class="settings-title">フォルダ</div><div class="setting-group"><div class="setting-label">フォルダ名</div><input id="folderNameInput" class="number-input" type="text" maxlength="80" value="${escapeHtml(node.folderName||'フォルダ').replace(/"/g,'&quot;')}"></div><div class="settings-empty">ダブルクリックでフォルダの中を開きます。</div>`;
-document.getElementById('folderNameInput').addEventListener('input',e=>{node.folderName=e.target.value;renderNodes();renderFolderBreadcrumb();});
-return;
-}
 if(node.type==='start'){
 settingsPanel.innerHTML='<div class="settings-title">START</div><div class="settings-empty">ゲーム開始地点です。</div>';
 return;
@@ -4156,112 +4131,7 @@ const rect=workspace.getBoundingClientRect();
 return screenToWorkspace(e.clientX-rect.left,e.clientY-rect.top);
 }
 
-// Folder organization affects editor visibility only; the runtime graph is unchanged.
-function renderFolderBreadcrumb(){
-folderBreadcrumb.replaceChildren();
-const path=[];let id=currentFolderId;
-const seen=new Set();
-while(id&&!seen.has(id)){
-seen.add(id);const folder=getNode(id);if(!folder)break;
-path.unshift(folder);id=folder.folderId||null;
-}
-const steps=[{id:null,name:'ルート'},...path.map(f=>({id:f.id,name:f.folderName||'フォルダ'}))];
-steps.forEach((step,i)=>{
-if(i){const sep=document.createElement('span');sep.textContent=' › ';folderBreadcrumb.append(sep);}
-const button=document.createElement('button');button.type='button';button.textContent=step.name;
-button.disabled=step.id===currentFolderId;
-button.addEventListener('click',()=>openFolder(step.id));folderBreadcrumb.append(button);
-});
-}
-function fitFolderContents(){
-const els=[...nodesLayer.querySelectorAll('.node')];
-if(!els.length)return;
-let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-for(const el of els){const n=getNode(el.dataset.id);if(!n)continue;
-minX=Math.min(minX,n.x);minY=Math.min(minY,n.y);
-maxX=Math.max(maxX,n.x+el.offsetWidth);maxY=Math.max(maxY,n.y+el.offsetHeight);}
-if(!Number.isFinite(minX))return;
-const width=Math.max(1,maxX-minX),height=Math.max(1,maxY-minY);
-const scale=Math.min(1.4,Math.max(.15,Math.min((workspace.clientWidth-90)/width,(workspace.clientHeight-110)/height)));
-workspaceCamera.scale=scale;
-workspaceCamera.x=workspace.clientWidth/2-(minX+width/2)*scale;
-workspaceCamera.y=workspace.clientHeight/2-(minY+height/2)*scale;
-updateWorkspaceCamera();renderConnections();
-}
-function openFolder(id){
-if(id===currentFolderId)return;
-if(currentFolderId===null&&id)folderCameraReturn={x:workspaceCamera.x,y:workspaceCamera.y,scale:workspaceCamera.scale};
-currentFolderId=id;
-state.selectedNodeId=null;state.selectedNodeIds.clear();state.selectedConnectionId=null;
-renderNodes();renderSettings();
-if(!id&&folderCameraReturn){Object.assign(workspaceCamera,folderCameraReturn);folderCameraReturn=null;updateWorkspaceCamera();}
-else requestAnimationFrame(fitFolderContents);
-}
-function setFolderTool(active){
-folderCreateBtn.classList.toggle('active',active);
-folderCreateBtn.setAttribute('aria-pressed',String(active));
-workspace.classList.toggle('is-folder-lasso',active);
-if(!active){folderDraw=null;folderLasso.setAttribute('points','');}
-}
-folderCreateBtn.addEventListener('click',()=>setFolderTool(!folderCreateBtn.classList.contains('active')));
-window.addEventListener('keydown',e=>{if(e.key==='Escape'&&folderCreateBtn.classList.contains('active'))setFolderTool(false);});
-function folderScreenPoint(e){const rect=workspace.getBoundingClientRect();return {x:e.clientX-rect.left,y:e.clientY-rect.top};}
-function startFolderLasso(e){
-const p=folderScreenPoint(e);
-folderDraw={id:e.pointerId,points:[p],scene:currentFolderId};
-const svg=folderLasso.ownerSVGElement;svg.setAttribute('viewBox',`0 0 ${workspace.clientWidth} ${workspace.clientHeight}`);
-folderLasso.setAttribute('points',`${p.x},${p.y}`);
-workspace.setPointerCapture(e.pointerId);
-}
-function withinPolygon(x,y,points){
-let hit=false;
-for(let i=0,j=points.length-1;i<points.length;j=i++){
-const a=points[i],b=points[j];
-if(((a.y>y)!==(b.y>y))&&(x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x))hit=!hit;
-}
-return hit;
-}
-workspace.addEventListener('pointermove',e=>{
-if(!folderDraw||folderDraw.id!==e.pointerId)return;
-const p=folderScreenPoint(e),last=folderDraw.points.at(-1);
-if(Math.hypot(p.x-last.x,p.y-last.y)<2)return;
-folderDraw.points.push(p);
-folderLasso.setAttribute('points',folderDraw.points.map(v=>`${v.x},${v.y}`).join(' '));
-});
-function finishFolderLasso(e,canceled){
-if(!folderDraw||folderDraw.id!==e.pointerId)return;
-const points=folderDraw.points,scene=folderDraw.scene;
-folderDraw=null;folderLasso.setAttribute('points','');
-if(workspace.hasPointerCapture(e.pointerId))workspace.releasePointerCapture(e.pointerId);
-if(canceled||points.length<3)return;
-const members=state.nodes.filter(n=>(n.folderId||null)===scene&&n.type!=='start'&&withinPolygon((n.x+85)*workspaceCamera.scale+workspaceCamera.x,(n.y+38)*workspaceCamera.scale+workspaceCamera.y,points));
-if(!members.length)return;
-const before=editorSnapshot();
-const x=Math.min(...members.map(n=>n.x)),y=Math.min(...members.map(n=>n.y));
-const folder={id:uid('folder'),type:'folder',x,y,folderId:scene,folderName:'新しいフォルダ'};
-state.nodes.push(folder);
-for(const n of members)n.folderId=folder.id;
-commitEditorHistory(before);
-setFolderTool(false);renderNodes();selectNode(folder.id);
-}
-workspace.addEventListener('pointerup',e=>finishFolderLasso(e,false));
-workspace.addEventListener('pointercancel',e=>finishFolderLasso(e,true));
-function dropNodeIntoFolder(node,clientX,clientY){
-if(node.type==='start'||node.type==='folder')return;
-for(const el of nodesLayer.querySelectorAll('.folder-node')){
-const target=getNode(el.dataset.id);
-if(!target||target.id===node.id)continue;
-const rect=el.getBoundingClientRect();
-if(clientX<rect.left||clientX>rect.right||clientY<rect.top||clientY>rect.bottom)continue;
-node.folderId=target.id;
-state.selectedNodeId=null;renderNodes();renderSettings();return;
-}
-}
 workspace.addEventListener('pointerdown',e=>{
-if(folderCreateBtn.classList.contains('active')){
-if(e.button===0){startFolderLasso(e);e.preventDefault();e.stopPropagation();}
-return;
-}
 if(startWorkspaceCameraDrag(e))return;
 
 if(e.target===workspace||e.target===nodesLayer||e.target===workspaceScene){
@@ -4341,7 +4211,6 @@ finishWorkspaceCameraDrag();
 });
 
 workspace.addEventListener('contextmenu',e=>{
-if(folderCreateBtn.classList.contains('active')){e.preventDefault();return;}
 if(e.target.closest('.node')||e.target.closest('.context-menu'))return;
 e.preventDefault();
 const rect=workspace.getBoundingClientRect();
@@ -4463,7 +4332,6 @@ function applyEditorHistory(snapshot){
 editorHistory.restoring=true;
 if(typeof cancelPreviewScene==='function')cancelPreviewScene();
 state.nodes=cloneEditorValue(snapshot.nodes);
-if(currentFolderId&&!state.nodes.some(n=>n.id===currentFolderId))currentFolderId=null;
 state.connections=cloneEditorValue(snapshot.connections);
 state.selectedNodeId=snapshot.selectedNodeId&&state.nodes.some(n=>n.id===snapshot.selectedNodeId)?snapshot.selectedNodeId:null;
 state.selectedNodeIds.clear();
@@ -4837,114 +4705,14 @@ d+=` C ${x1} ${y1}, ${x2} ${y2}, ${p2.x} ${p2.y}`;
 return d;
 }
 
-function getVisibleConnectionNode(id){
-let node=getNode(id);
-const visited=new Set();
-
-while(node&&!visited.has(node.id)){
-visited.add(node.id);
-
-if((node.folderId||null)===currentFolderId){
-return node;
-}
-
-if(!node.folderId)return null;
-
-node=getNode(node.folderId);
-}
-
-return null;
-}
-
-function getVisibleConnectionPort(node,side){
-if(!node)return null;
-
-const port=nodesLayer.querySelector(
-`.node[data-id="${node.id}"] .port.${side}`
-);
-
-return port?getPortCenter(port):null;
-}
-
-function drawFolderConnectionLine(a,b){
-const path=document.createElementNS(
-'http://www.w3.org/2000/svg',
-'path'
-);
-
-path.setAttribute('d',curvePath(a,b));
-path.setAttribute('class','connection-path');
-connectionsSvg.appendChild(path);
-}
-
-function drawFolderBoundaryPoint(point){
-const circle=document.createElementNS(
-'http://www.w3.org/2000/svg',
-'circle'
-);
-
-circle.setAttribute('cx',point.x);
-circle.setAttribute('cy',point.y);
-circle.setAttribute('r','6');
-circle.setAttribute('fill','#ffffff');
-circle.setAttribute('stroke','#739ad2');
-circle.setAttribute('stroke-width','2');
-
-connectionsSvg.appendChild(circle);
-}
-
 function renderConnections(){
 connectionsSvg.innerHTML='';
 
-const drawnFolderConnections=new Set();
-
 for(const c of state.connections){
-const fromNode=getVisibleConnectionNode(c.from);
-const toNode=getVisibleConnectionNode(c.to);
+const fromEl=nodesLayer.querySelector(`.node[data-id="${c.from}"] .port.output`);
+const toEl=nodesLayer.querySelector(`.node[data-id="${c.to}"] .port.input`);
 
-if(!fromNode&&!toNode)continue;
-if(fromNode&&toNode&&fromNode.id===toNode.id)continue;
-
-const fromEl=fromNode
-?nodesLayer.querySelector(`.node[data-id="${fromNode.id}"] .port.output`)
-:null;
-
-const toEl=toNode
-?nodesLayer.querySelector(`.node[data-id="${toNode.id}"] .port.input`)
-:null;
-
-const isFolderConnection=
-!fromEl||
-!toEl||
-fromNode.id!==c.from||
-toNode.id!==c.to;
-
-if(isFolderConnection){
-const key=`${fromNode?.id||'outside'}:${toNode?.id||'outside'}`;
-
-if(drawnFolderConnections.has(key))continue;
-drawnFolderConnections.add(key);
-
-const fromPoint=fromEl?getPortCenter(fromEl):null;
-const toPoint=toEl?getPortCenter(toEl):null;
-
-const boundaryY=fromPoint?.y??toPoint?.y??0;
-
-const leftX=screenToWorkspace(20,0).x;
-const rightX=screenToWorkspace(
-workspace.clientWidth-20,0
-).x;
-
-const a=fromPoint||{x:leftX,y:boundaryY};
-const b=toPoint||{x:rightX,y:boundaryY};
-
-drawFolderConnectionLine(a,b);
-
-if(!fromPoint)drawFolderBoundaryPoint(a);
-if(!toPoint)drawFolderBoundaryPoint(b);
-
-continue;
-}
+if(!fromEl||!toEl)continue;
 
 const a=getPortCenter(fromEl);
 const b=getPortCenter(toEl);
@@ -6510,7 +6278,6 @@ if(node.animation)node.animation.raw=null;
 }
 cancelPreviewScene();
 state.nodes=data.nodes;
-currentFolderId=null;folderCameraReturn=null;setFolderTool(false);
 state.connections=data.connections;
 resetEditorHistory();
 state.selectedNodeId=null;
@@ -6682,7 +6449,6 @@ if(node.animation)node.animation.raw=null;
 }
 mediaLibrary.splice(0,mediaLibrary.length,...loaded);
 state.nodes=data.nodes;
-currentFolderId=null;folderCameraReturn=null;setFolderTool(false);
 state.connections=data.connections;
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
@@ -6805,4 +6571,3 @@ applyGameAspectRatio();
 updateLayoutControls();
 addStartNode();
 renderSettings();
-
