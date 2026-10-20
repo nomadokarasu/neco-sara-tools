@@ -749,3 +749,11 @@ flex-shrink:0;
 .click-item-branch-remove{flex:none;width:32px;height:36px;border:1px solid #cad0d9;border-radius:6px;background:#fff;cursor:pointer}
 .click-item-branch-add{display:block;width:100%;height:auto;min-height:36px;padding:8px 12px;background:#fff;border:1px solid #cad0d9;border-radius:6px;white-space:normal;cursor:pointer}
 .click-item-branch-settings .setting-label:not(:first-child){margin-top:12px}
+
+/* クリックノード：見出しと簡潔なアイテム行 */
+.setting-section-heading{font-size:14px;font-weight:700;color:#282e37;margin:0 0 12px;padding-bottom:7px;border-bottom:1px solid #d6dce3}
+.click-item-branch-settings{gap:8px}
+.click-item-branch-row{display:flex;align-items:center;gap:8px}
+.click-item-branch-select{flex:1;min-width:0;width:0}
+.click-item-branch-remove{width:auto;min-width:52px;padding:0 10px;white-space:nowrap}
+.click-item-branch-add:disabled{opacity:.5;cursor:not-allowed}

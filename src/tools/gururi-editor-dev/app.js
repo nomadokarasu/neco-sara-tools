@@ -650,7 +650,7 @@ const group=document.createElement('div');
 group.className='setting-group';
 
 const label=document.createElement('div');
-label.className='setting-label';
+label.className=node.type==='click'?'setting-section-heading':'setting-label';
 label.textContent='メモ';
 
 const textarea=document.createElement('textarea');
@@ -847,7 +847,7 @@ const inheritControl=isAnimation
 ?`<label class="click-inherit-control"><input id="clickInheritRegionsInput" type="checkbox" ${node.clickInheritRegions!==false?'checked':''}> 選択範囲を継承</label>`
 :'';
 
-settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameControls}<div class="setting-group"><div class="setting-label">クリック範囲を指定</div><div class="click-inherit-row">${inheritControl}</div><div class="click-preview-wrap"><canvas id="clickPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="clickLassoCanvas" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="clickLassoAddBtn" class="click-lasso-mode active" type="button" title="選択範囲に追加" aria-pressed="true">＋</button><button id="clickLassoSubtractBtn" class="click-lasso-mode" type="button" title="選択範囲から削除" aria-pressed="false">－</button></div></div><div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div><div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
+settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameControls}<div class="setting-group"><div class="setting-section-heading">範囲設定</div><div class="click-inherit-row">${inheritControl}</div><div class="click-preview-wrap"><canvas id="clickPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="clickLassoCanvas" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="clickLassoAddBtn" class="click-lasso-mode active" type="button" title="選択範囲に追加" aria-pressed="true">＋</button><button id="clickLassoSubtractBtn" class="click-lasso-mode" type="button" title="選択範囲から削除" aria-pressed="false">－</button></div></div><div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div><div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
 
 setupClickTriggerPreview(node,sourceNode);
 renderClickItemBranchSettings(node);
@@ -1002,35 +1002,63 @@ function ensureClickOtherBranch(owner){
  state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
 }
 function renderClickItemBranchSettings(node){
- const group=document.createElement('div');group.className='setting-group';group.classList.add('click-item-branch-settings');
- const heading=document.createElement('div');heading.className='setting-label';heading.textContent='アイテム使用時';group.append(heading);
- const help=document.createElement('div');help.className='settings-empty';help.textContent='登録したアイテムに応じて分岐します。通常クリックはノード右端から接続します。';group.append(help);
- const rows=document.createElement('div');rows.className='click-item-branch-list';
+ const group=document.createElement('div');
+ group.className='setting-group click-item-branch-settings';
+ const heading=document.createElement('div');
+ heading.className='setting-section-heading';
+ heading.textContent='アイテム設定';
+ group.append(heading);
+
+ const items=state.nodes.filter(n=>n.type==='itemAcquire');
  for(const branch of clickBranches(node).filter(b=>b.clickBranchItemId!=='__other__')){
-  const row=document.createElement('div');row.className='click-item-branch-row';
-  const open=document.createElement('button');open.type='button';open.className='click-item-branch-open';
-  open.textContent=itemDisplayName(getNode(branch.clickBranchItemId));
-  open.title='この分岐の設定を開く';
-  open.addEventListener('click',()=>selectNode(branch.id));
-  const remove=document.createElement('button');remove.type='button';remove.className='click-item-branch-remove';remove.textContent='×';remove.title='分岐を削除';
+  const row=document.createElement('div');
+  row.className='click-item-branch-row';
+  const select=document.createElement('select');
+  select.className='number-input click-item-branch-select';
+  select.setAttribute('aria-label','使用するアイテム');
+  for(const item of items){
+   const option=document.createElement('option');
+   option.value=item.id;
+   option.textContent=itemDisplayName(item);
+   option.selected=branch.clickBranchItemId===item.id;
+   option.disabled=clickBranches(node).some(other=>other.id!==branch.id&&other.clickBranchItemId===item.id);
+   select.append(option);
+  }
+  if(!items.some(item=>item.id===branch.clickBranchItemId)){
+   const option=document.createElement('option');
+   option.value=branch.clickBranchItemId;
+   option.textContent='削除されたアイテム';
+   option.selected=true;
+   option.disabled=true;
+   select.prepend(option);
+  }
+  select.addEventListener('change',()=>{
+   if(!select.value)return;
+   if(clickBranches(node).some(other=>other.id!==branch.id&&other.clickBranchItemId===select.value))return;
+   const before=editorSnapshot();
+   branch.clickBranchItemId=select.value;
+   commitEditorHistory(before);
+   renderNodes();renderSettings();
+  });
+  const remove=document.createElement('button');
+  remove.type='button';remove.className='click-item-branch-remove';
+  remove.textContent='削除';remove.title='このアイテム分岐を削除';
   remove.addEventListener('click',()=>deleteClickItemBranch(branch));
-  row.append(open,remove);rows.append(row);
+  row.append(select,remove);group.append(row);
  }
- group.append(rows);
- const select=document.createElement('select');select.className='number-input';select.setAttribute('aria-label','追加するアイテム');
- select.innerHTML='<option value="">追加するアイテムを選択</option>'+state.nodes.filter(n=>n.type==='itemAcquire'&&!clickBranches(node).some(b=>b.clickBranchItemId===n.id)).map(n=>`<option value="${n.id}">${escapeHtml(itemDisplayName(n))}</option>`).join('');
- group.append(select);
- const add=document.createElement('button');add.type='button';add.className='click-item-branch-add';add.textContent='＋ 使用するアイテムを追加';
- add.addEventListener('click',()=>addClickItemBranch(node,select.value));group.append(add);
- const otherHeading=document.createElement('div');otherHeading.className='setting-label';otherHeading.textContent='その他のアイテムを使用した場合';group.append(otherHeading);
- const note=document.createElement('div');note.className='settings-empty';note.textContent='ここに登録していないアイテムを使用した場合の分岐です。';group.append(note);
- const other=clickBranches(node).find(b=>b.clickBranchItemId==='__other__');
- if(other){
-  const open=document.createElement('button');open.type='button';open.className='click-item-branch-add';open.textContent='その他のアイテムの分岐を設定';
-  open.addEventListener('click',()=>selectNode(other.id));group.append(open);
- }
+ const add=document.createElement('button');
+ add.type='button';add.className='click-item-branch-add';
+ add.textContent='＋ アイテムを追加';
+ const available=items.find(item=>!clickBranches(node).some(b=>b.clickBranchItemId===item.id));
+ add.disabled=!available;
+ add.addEventListener('click',()=>{
+  const next=state.nodes.filter(n=>n.type==='itemAcquire').find(item=>!clickBranches(node).some(b=>b.clickBranchItemId===item.id));
+  if(next)addClickItemBranch(node,next.id);
+ });
+ group.append(add);
  settingsPanel.append(group);
 }
+
 function renderClickBranchSettings(branch){
  const item=branch.clickBranchItemId==='__other__'?null:getNode(branch.clickBranchItemId);
  const label=branch.clickBranchItemId==='__other__'?'その他のアイテム':itemDisplayName(item);
