@@ -1018,8 +1018,7 @@ function closeInventoryMenu(){
 }
 
 function refreshInventory(){
- inventoryButton.classList.toggle('hidden',!state.inventoryEnabled);
- if(!state.inventoryEnabled)closeInventoryMenu();
+ inventoryButton.classList.remove('hidden');
  const ids=[...state.inventory].filter(id=>getInventoryItem(id));
  inventoryOverlay.replaceChildren();
  const header=document.createElement('div');header.className='inventory-header';header.textContent='アイテム一覧';
@@ -1051,7 +1050,6 @@ function refreshInventory(){
 }
 
 inventoryButton.addEventListener('click',()=>{
- if(!state.inventoryEnabled)return;
  const willOpen=inventoryMenu.classList.contains('hidden');
  inventoryMenu.classList.toggle('hidden',!willOpen);
  inventoryButton.setAttribute('aria-expanded',String(willOpen));
@@ -6703,8 +6701,10 @@ if(node.type==='itemAcquire'){
  showDialoguePage(node,0);
  return;
 }
+// 旧インベントリ表示ノードとの互換性を維持
 if(node.type==='inventory'){
- state.inventoryEnabled=true;refreshInventory();previewOutgoing(node.id);return;
+ previewOutgoing(node.id);
+ return;
 }
 if(node.type==='itemUse'){
  if(!node.itemUseTargetId){return;}
