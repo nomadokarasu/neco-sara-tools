@@ -631,6 +631,7 @@ const node=getNode(state.selectedNodeId);
 if(node){
 queueMicrotask(()=>{
 if(state.selectedNodeId!==node.id)return;
+if(node.type==='dialogue')return;
 if(settingsPanel.querySelector('#nodeMemoInput'))return;
 
 const group=document.createElement('div');
