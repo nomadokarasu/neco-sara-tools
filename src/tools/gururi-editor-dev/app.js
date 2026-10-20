@@ -996,10 +996,56 @@ function deleteClickItemBranch(branch){
  commitEditorHistory(before);renderNodes();renderSettings();
 }
 function ensureClickOtherBranch(owner){
- if(owner.type!=='click'||clickBranches(owner).some(b=>b.clickBranchItemId==='__other__'))return;
- const branch={id:uid('clickBranch'),type:'clickBranch',clickBranchOwnerId:owner.id,clickBranchItemId:'__other__',clickBranchOnce:false,clickBranchConsume:false,x:owner.x+250,y:owner.y+95*(clickBranches(owner).length+1)};
+ if(owner.type!=='click')return;
+
+ const branches=clickBranches(owner);
+ const itemBranches=branches.filter(
+  b=>b.clickBranchItemId!=='__other__'
+ );
+ const otherBranches=branches.filter(
+  b=>b.clickBranchItemId==='__other__'
+ );
+
+ // アイテムが0個なら「その他」の分岐を削除
+ if(itemBranches.length===0){
+  const removedIds=new Set(otherBranches.map(b=>b.id));
+
+  state.nodes=state.nodes.filter(
+   n=>!removedIds.has(n.id)
+  );
+
+  state.connections=state.connections.filter(
+   c=>!removedIds.has(c.from)&&!removedIds.has(c.to)
+  );
+
+  if(removedIds.has(state.selectedNodeId)){
+   state.selectedNodeId=owner.id;
+  }
+
+  return;
+ }
+
+ // すでに「その他」の分岐があれば何もしない
+ if(otherBranches.length>0)return;
+
+ // アイテムが1個以上ある場合だけ自動生成
+ const branch={
+  id:uid('clickBranch'),
+  type:'clickBranch',
+  clickBranchOwnerId:owner.id,
+  clickBranchItemId:'__other__',
+  clickBranchOnce:false,
+  clickBranchConsume:false,
+  x:owner.x+250,
+  y:owner.y+95*(branches.length+1)
+ };
+
  state.nodes.push(branch);
- state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
+ state.connections.push({
+  id:uid('conn'),
+  from:owner.id,
+  to:branch.id
+ });
 }
 function renderClickItemBranchSettings(node){
  const group=document.createElement('div');
