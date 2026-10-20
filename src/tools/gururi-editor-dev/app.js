@@ -5884,6 +5884,9 @@ let previewSceneEpoch=0;
 let activeIndependentKeyframe=null;
 const previewBranchTimers=new Set();
 const previewVisited=new Set();
+
+// ゲーム中に一度でも取得したアイテム
+const acquiredItems=new Set();
 const previewCompletedTriggers=new Set();
 
 // 一度だけ実行するトリガーかどうか
@@ -6019,6 +6022,7 @@ state.inventory=new Set();
 state.selectedInventoryItemId=null;
 state.inventoryEnabled=false;
 previewCompletedTriggers.clear();
+acquiredItems.clear();
 }
 cancelPreviewScene();
 refreshInventory();
@@ -6842,10 +6846,21 @@ schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
 return;
 }
 if(node.type==='itemAcquire'){
- if(!state.inventory.has(node.id))state.inventory.add(node.id);
+
+ if(acquiredItems.has(node.id)){
+  previewOutgoing(node.id);
+  return;
+ }
+
+ acquiredItems.add(node.id);
+ state.inventory.add(node.id);
+
  refreshInventory();
- node.dialoguePages=[node.itemDescription||''];node.dialogueSpeaker=node.itemName||'';
+
+ node.dialoguePages=[node.itemDescription||''];
+ node.dialogueSpeaker=node.itemName||'';
  node.dialogueThumbnailMediaId=node.itemThumbnailMediaId||null;
+
  state.previewDialogueNodeId=node.id;
  showDialoguePage(node,0);
  return;
