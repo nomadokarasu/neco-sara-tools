@@ -1,4 +1,5 @@
 
+
 const workspace=document.getElementById('workspace');
 const workspaceScene=document.getElementById('workspaceScene');
 const nodesLayer=document.getElementById('nodesLayer');
@@ -300,6 +301,12 @@ frameInRedo:[],
 dialoguePages:[],
 dialogueEditIndex:0,
 optionChoices:[],
+clickItemBranches:[],
+clickOtherBranchId:null,
+clickBranchOwnerId:null,
+clickBranchItemId:null,
+clickBranchOnce:false,
+clickBranchConsume:false,
 itemName:'',
 itemDescription:'',
 itemThumbnailMediaId:null,
@@ -423,6 +430,7 @@ node.type==='itemAcquire'?'アイテム取得':
 node.type==='inventory'?'インベントリ表示':
 node.type==='itemUse'?'アイテム使用':
 node.type==='optionChoice'?'選択肢':
+node.type==='clickBranch'?'クリック分岐':
 node.type==='media2d'?'2Dメディア':
 node.type==='fadeIn'?'フェードイン':
 node.type==='fadeOut'?'フェードアウト':
@@ -443,6 +451,7 @@ node.type==='itemAcquire'?(node.itemName||'アイテム名未設定'):
 node.type==='inventory'?'所持アイテム一覧':
 node.type==='itemUse'?'選択アイテムを使用':
 node.type==='optionChoice'?(getNode(node.optionOwnerId)?.optionChoices?.find(c=>c.id===node.optionChoiceId)?.text||'選択肢'):
+node.type==='clickBranch'?(node.clickBranchItemId==='__other__'?'その他のアイテム':itemDisplayName(getNode(node.clickBranchItemId))):
 node.type==='media2d'?'画像・動画を重ねて表示':
 node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
@@ -631,7 +640,7 @@ const node=getNode(state.selectedNodeId);
 if(node){
 queueMicrotask(()=>{
 if(state.selectedNodeId!==node.id)return;
-if(node.type==='dialogue')return;
+if(node.type==='dialogue'||node.type==='clickBranch')return;
 if(settingsPanel.querySelector('#nodeMemoInput'))return;
 
 const group=document.createElement('div');
@@ -767,6 +776,7 @@ settingsPanel.innerHTML=`<div class="settings-title">選択肢</div><div class="
 return;
 }
 if(node.type==='option'){renderOptionSettings(node);return;}
+if(node.type==='clickBranch'){renderClickBranchSettings(node);return;}
 if(node.type==='itemAcquire'){renderItemAcquireSettings(node);return;}
 if(node.type==='inventory'){settingsPanel.innerHTML='<div class="settings-title">インベントリ表示</div><div class="settings-empty">このノードを実行すると、ゲーム画面にインベントリボタンが表示されます。取得したアイテムを一覧表示できます。</div>';return;}
 if(node.type==='itemUse'){renderItemUseSettings(node);return;}
@@ -837,6 +847,7 @@ const inheritControl=isAnimation
 settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameControls}<div class="setting-group"><div class="setting-label">クリック範囲を指定</div><div class="click-inherit-row">${inheritControl}</div><div class="click-preview-wrap"><canvas id="clickPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="clickLassoCanvas" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="clickLassoAddBtn" class="click-lasso-mode active" type="button" title="選択範囲に追加" aria-pressed="true">＋</button><button id="clickLassoSubtractBtn" class="click-lasso-mode" type="button" title="選択範囲から削除" aria-pressed="false">－</button></div></div><div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div><div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
 
 setupClickTriggerPreview(node,sourceNode);
+renderClickItemBranchSettings(node);
 
 const onceGroup=document.createElement('div');
 onceGroup.className='setting-group';
@@ -980,6 +991,74 @@ choice.text=input.value.slice(0,60);renderNodes();
 settingsPanel.querySelectorAll('[data-choice-delete]').forEach(button=>button.addEventListener('click',()=>removeOptionChoice(node,button.dataset.choiceDelete)));
 }
 
+// Each click location owns item-specific outgoing branches.
+function clickBranches(owner){
+ return state.nodes.filter(n=>n.type==='clickBranch'&&n.clickBranchOwnerId===owner.id);
+}
+function addClickItemBranch(owner,itemId){
+ if(!itemId||itemId==='__other__'&&clickBranches(owner).some(n=>n.clickBranchItemId==='__other__'))return;
+ if(clickBranches(owner).some(n=>n.clickBranchItemId===itemId))return;
+ const before=editorSnapshot();
+ const branch={id:uid('clickBranch'),type:'clickBranch',clickBranchOwnerId:owner.id,clickBranchItemId:itemId,clickBranchOnce:false,clickBranchConsume:false,x:owner.x+250,y:owner.y+95*(clickBranches(owner).length+1)};
+ state.nodes.push(branch);
+ state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
+ commitEditorHistory(before);
+ renderNodes();renderSettings();
+}
+function deleteClickItemBranch(branch){
+ const before=editorSnapshot();
+ state.nodes=state.nodes.filter(n=>n.id!==branch.id);
+ state.connections=state.connections.filter(c=>c.from!==branch.id&&c.to!==branch.id);
+ commitEditorHistory(before);renderNodes();renderSettings();
+}
+function renderClickItemBranchSettings(node){
+ const group=document.createElement('div');group.className='setting-group';
+ const heading=document.createElement('div');heading.className='setting-label';heading.textContent='アイテム使用時の分岐';group.append(heading);
+ const help=document.createElement('div');help.className='settings-empty';help.textContent='通常クリックは従来どおり右端から接続。アイテム使用時は下の分岐ノードへ進みます。';group.append(help);
+ const rows=document.createElement('div');
+ for(const branch of clickBranches(node)){
+  const row=document.createElement('div');row.className='setting-group';
+  const open=document.createElement('button');open.type='button';open.className='add-world-btn';
+  open.textContent=branch.clickBranchItemId==='__other__'?'その他のアイテム':itemDisplayName(getNode(branch.clickBranchItemId));
+  open.addEventListener('click',()=>selectNode(branch.id));
+  row.append(open);rows.append(row);
+ }
+ group.append(rows);
+ const select=document.createElement('select');select.className='number-input';
+ select.innerHTML='<option value="">分岐に追加するアイテム</option>'+state.nodes.filter(n=>n.type==='itemAcquire'&&!clickBranches(node).some(b=>b.clickBranchItemId===n.id)).map(n=>`<option value="${n.id}">${escapeHtml(itemDisplayName(n))}</option>`).join('');
+ group.append(select);
+ const add=document.createElement('button');add.type='button';add.className='add-world-btn';add.textContent='＋ アイテム分岐を追加';
+ add.addEventListener('click',()=>addClickItemBranch(node,select.value));group.append(add);
+ if(!clickBranches(node).some(n=>n.clickBranchItemId==='__other__')){
+  const other=document.createElement('button');other.type='button';other.className='add-world-btn';other.textContent='＋ その他のアイテム分岐を追加';
+  other.addEventListener('click',()=>addClickItemBranch(node,'__other__'));group.append(other);
+ }
+ settingsPanel.append(group);
+}
+function renderClickBranchSettings(branch){
+ const item=branch.clickBranchItemId==='__other__'?null:getNode(branch.clickBranchItemId);
+ const label=branch.clickBranchItemId==='__other__'?'その他のアイテム':itemDisplayName(item);
+ settingsPanel.innerHTML=`<div class="settings-title">クリック分岐：${escapeHtml(label)}</div><div class="setting-group"><label><input id="clickBranchOnce" type="checkbox" ${branch.clickBranchOnce?'checked':''}> 一度だけ実行する</label></div>${item?`<div class="setting-group"><label><input id="clickBranchConsume" type="checkbox" ${branch.clickBranchConsume?'checked':''}> 使用後にアイテムを消費する</label></div>`:''}<div class="setting-group"><button id="clickBranchRemove" type="button" class="add-world-btn">この分岐を削除</button></div><div class="settings-empty">右端からダイアローグやメディアへ接続してください。</div>`;
+ document.getElementById('clickBranchOnce').addEventListener('change',e=>branch.clickBranchOnce=e.target.checked);
+ document.getElementById('clickBranchConsume')?.addEventListener('change',e=>branch.clickBranchConsume=e.target.checked);
+ document.getElementById('clickBranchRemove').addEventListener('click',()=>deleteClickItemBranch(branch));
+}
+function runClickItemBranch(click,itemId){
+ const branches=clickBranches(click);
+ const branch=branches.find(n=>n.clickBranchItemId===itemId)||branches.find(n=>n.clickBranchItemId==='__other__');
+ if(!branch)return; // Unregistered item without "other" is silent.
+ if(branch.clickBranchOnce&&previewCompletedTriggers.has(branch.id))return;
+ if(branch.clickBranchOnce)previewCompletedTriggers.add(branch.id);
+ if(branch.clickBranchConsume&&branch.clickBranchItemId===itemId){
+  state.inventory.delete(itemId);
+  state.selectedInventoryItemId=null;
+  refreshInventory();
+ }
+ prepareExplorationBranch(branch.id);
+ previewVisited.delete(branch.id);
+ showPreviewNode(branch.id);
+}
+
 // Items share dialogue appearance and click-region editing instead of duplicating them.
 function getInventoryItem(id){return getNode(id)?.type==='itemAcquire'?getNode(id):null;}
 function itemThumbnail(node){
@@ -1037,7 +1116,7 @@ function renderItemAcquireSettings(node){
  <div class="setting-group"><div class="setting-label">アイテム名</div><input id="itemNameInput" class="number-input" maxlength="40" value="${escapeHtml(node.itemName||'').replace(/"/g,'&quot;')}"></div>
  <div class="setting-group"><div class="setting-label">サムネイル（正方形）</div><select id="itemThumbnailInput" class="number-input">${options}</select></div>
  <div class="setting-group"><div class="setting-label">説明</div><textarea id="itemDescriptionInput" class="dialogue-textarea" maxlength="60">${escapeHtml(node.itemDescription||'')}</textarea></div>
- <div class="setting-group"><label><input type="checkbox" id="itemConsumableInput" ${node.itemConsumable!==false?'checked':''}> 使用後に消える</label></div>
+ 
  <div class="setting-group"><div class="dialogue-preview-wrap"><canvas id="dialoguePreviewCanvas" class="world-preview" width="320" height="320"></canvas><div id="dialoguePreviewBox" class="dialogue-preview-box"><div id="dialoguePreviewSpeaker" class="dialogue-speaker"></div><div class="dialogue-panel-content"><img id="dialoguePreviewThumbnail" class="dialogue-panel-thumbnail hidden" alt=""><div id="dialoguePreviewText" class="dialogue-preview-text"></div></div></div></div></div>`;
  const addButton=document.createElement('button');addButton.id='addDialogueBtn';addButton.hidden=true;settingsPanel.append(addButton);
  setupDialogueTriggerPreview(node,source);addButton.remove();
@@ -1052,7 +1131,6 @@ function renderItemAcquireSettings(node){
  document.getElementById('itemNameInput').addEventListener('input',e=>{node.itemName=e.target.value;sync();renderNodes();});
  document.getElementById('itemDescriptionInput').addEventListener('input',e=>{node.itemDescription=e.target.value;sync();});
  document.getElementById('itemThumbnailInput').addEventListener('change',e=>{node.itemThumbnailMediaId=e.target.value||null;sync();});
- document.getElementById('itemConsumableInput').addEventListener('change',e=>{node.itemConsumable=e.target.checked;});
  sync();
 }
 function renderItemUseSettings(node){
@@ -5794,37 +5872,21 @@ const world=getActivePreviewWorld();
 if(!world)return;
 
 const animation=state.previewAnimation;
-// An equipped inventory item takes precedence over ordinary click triggers.
+// Selected item: only the corresponding branch of a clicked location can run.
 if(state.selectedInventoryItemId){
- for(const id of [...state.previewItemUseTriggerIds]){
-  const trigger=getNode(id);
-  if(
- !trigger||
- trigger.itemUseTargetId!==state.selectedInventoryItemId||
- !canFireExplorationTrigger(trigger)
-)continue;
-  if(!isClickTargetHit(trigger,world,e.clientX,e.clientY))continue;
-  const item=getInventoryItem(state.selectedInventoryItemId);
-
-  if(item?.itemConsumable!==false){
-   state.inventory.delete(item.id);
-   state.selectedInventoryItemId=null;
+ for(const triggerId of state.previewClickTriggerIds){
+  const click=getNode(triggerId);
+  if(!click)continue;
+  let regions=null;
+  if(animation&&click.clickAnimationMode){
+   const fps=Math.max(1,Number(click.clickFrameFps)||8);
+   regions=getClickFrameRegions(click,Math.max(0,Math.floor(animation.video.currentTime*fps)));
   }
-
-  refreshInventory();
-
-  // 他のアイテム使用ノードの待機を維持する
-  // 同じ接続先も再度実行できるようにする
-  for(const connection of state.connections){
-   if(connection.from===trigger.id){
-    previewVisited.delete(connection.to);
-   }
-  }
-
-  fireExplorationTrigger(trigger);
+  if(!isClickTargetHit(click,world,e.clientX,e.clientY,regions))continue;
+  runClickItemBranch(click,state.selectedInventoryItemId);
   return;
  }
- return;
+ return; // Outside all click regions: no response.
 }
 for(const triggerId of state.previewClickTriggerIds){
 const trigger=getNode(triggerId);
@@ -5972,7 +6034,7 @@ const targets=state.connections
 .map(c=>getNode(c.to))
 .filter(Boolean)
 .filter(target=>{
-if(!sourceIsMedia)return true;
+if(!sourceIsMedia)return !(source?.type==='click'&&target.type==='clickBranch');
 
 const targetEndsScene=target.type==='world'||target.type==='animation'||target.type==='start';
 
@@ -6846,21 +6908,12 @@ schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
 return;
 }
 if(node.type==='itemAcquire'){
-
- if(acquiredItems.has(node.id)){
-  previewOutgoing(node.id);
-  return;
- }
-
+ if(acquiredItems.has(node.id)){previewOutgoing(node.id);return;}
  acquiredItems.add(node.id);
- state.inventory.add(node.id);
-
+ if(!state.inventory.has(node.id))state.inventory.add(node.id);
  refreshInventory();
-
- node.dialoguePages=[node.itemDescription||''];
- node.dialogueSpeaker=node.itemName||'';
+ node.dialoguePages=[node.itemDescription||''];node.dialogueSpeaker=node.itemName||'';
  node.dialogueThumbnailMediaId=node.itemThumbnailMediaId||null;
-
  state.previewDialogueNodeId=node.id;
  showDialoguePage(node,0);
  return;
@@ -6875,6 +6928,7 @@ if(node.type==='itemUse'){
  if(!state.previewItemUseTriggerIds.includes(node.id))state.previewItemUseTriggerIds.push(node.id);
  return;
 }
+if(node.type==='clickBranch'){previewOutgoing(node.id);return;}
 if(node.type==='optionChoice'){previewOutgoing(node.id);return;}
 if(node.type==='option'){
 if(!node.optionChoices?.length){previewOutgoing(node.id);return;}
