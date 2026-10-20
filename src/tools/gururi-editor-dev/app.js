@@ -963,8 +963,45 @@ settingsPanel.querySelectorAll('[data-choice-delete]').forEach(button=>button.ad
 // Items share dialogue appearance and click-region editing instead of duplicating them.
 function getInventoryItem(id){return getNode(id)?.type==='itemAcquire'?getNode(id):null;}
 function itemThumbnail(node){
- const media=mediaLibrary.find(m=>m.id===node.itemThumbnailMediaId&&(m.fileType==='png'||m.fileType==='jpg'));
- return media?.image?.src||media?.url||'';
+ const media=mediaLibrary.find(
+  m=>m.id===node?.itemThumbnailMediaId&&
+  (m.fileType==='png'||m.fileType==='jpg')
+ );
+
+ if(!media?.image)return '';
+
+ if(media.thumbnailDataUrl)return media.thumbnailDataUrl;
+
+ const canvas=document.createElement('canvas');
+ canvas.width=256;
+ canvas.height=256;
+
+ const ctx=canvas.getContext('2d');
+ if(!ctx)return '';
+
+ ctx.clearRect(0,0,256,256);
+
+ const image=media.image;
+ const width=image.naturalWidth||image.width;
+ const height=image.naturalHeight||image.height;
+
+ if(!width||!height)return '';
+
+ const scale=Math.min(256/width,256/height);
+ const drawWidth=width*scale;
+ const drawHeight=height*scale;
+
+ ctx.drawImage(
+  image,
+  (256-drawWidth)/2,
+  (256-drawHeight)/2,
+  drawWidth,
+  drawHeight
+ );
+
+ media.thumbnailDataUrl=canvas.toDataURL('image/png');
+
+ return media.thumbnailDataUrl;
 }
 function itemDisplayName(node){return node?.itemName?.trim()||'アイテム';}
 function renderItemAcquireSettings(node){
@@ -5888,6 +5925,10 @@ alert('STARTからノードへ接続してください。');return;
 }
 gamePreview.classList.remove('hidden');
 resizeGameCanvas();
+
+refreshInventory();
+inventoryButton.classList.remove('hidden');
+
 drawPanoramaPreview(gameCanvas,{image:null,yaw:0,pitch:0,zoom:1});
 previewOutgoing('start');
 }
