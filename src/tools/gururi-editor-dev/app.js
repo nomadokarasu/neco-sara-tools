@@ -4701,6 +4701,63 @@ selected=region.mode==='add';
 return selected;
 }
 
+// Compare the effective 360-degree lasso area (add/subtract included).
+// Cache each scene/frame so overlapping targets do not slow repeated clicks.
+const previewClickAreaCache=new Map();
+function getEffectiveClickArea(node,regions,frameKey='static'){
+ const key=`${node.id}:${frameKey}`;
+ if(previewClickAreaCache.has(key))return previewClickAreaCache.get(key);
+ const active=regions||node.clickRegions||[];
+ const width=360,height=180;
+ let area=0;
+ for(let y=0;y<height;y++){
+  const pitch=Math.PI/2-(y+0.5)*Math.PI/height;
+  const weight=Math.cos(pitch);
+  for(let x=0;x<width;x++){
+   const point={yaw:(x+0.5)*2*Math.PI/width-Math.PI,pitch};
+   let selected=false;
+   for(const region of active){
+    if(isPointInsideClickPolygon(point,region.points))selected=region.mode==='add';
+   }
+   if(selected)area+=weight;
+  }
+ }
+ previewClickAreaCache.set(key,area);
+ return area;
+}
+
+function findBestPreviewClick(clientX,clientY,world,animation,itemId){
+ const matches=[];
+ for(const id of state.previewClickTriggerIds){
+  const node=getNode(id);
+  if(!node||!canFireExplorationTrigger(node))continue;
+  let regions=null;
+  let frameKey='static';
+  if(animation&&node.clickAnimationMode){
+   const fps=Math.max(1,Number(node.clickFrameFps)||8);
+   const frame=Math.max(0,Math.floor(animation.video.currentTime*fps));
+   frameKey=`frame:${frame}`;
+   regions=getClickFrameRegions(node,frame);
+  }
+  if(!isClickTargetHit(node,world,clientX,clientY,regions))continue;
+  if(itemId){
+   const branches=clickBranches(node);
+   const branch=branches.find(b=>b.clickBranchItemId===itemId)
+    ||branches.find(b=>b.clickBranchItemId==='__other__');
+   // A completed once-only branch cannot obstruct another clickable place.
+   if(!branch||(branch.clickBranchOnce&&previewCompletedTriggers.has(branch.id)))continue;
+  }
+  matches.push({node,area:getEffectiveClickArea(node,regions,frameKey)});
+ }
+ matches.sort((a,b)=>a.area-b.area);
+ recordPreviewDiagnostic('click-candidates',{
+  x:clientX,y:clientY,selectedItem:itemId||null,
+  candidates:matches.map(m=>({clickId:m.node.id,area:m.area})),
+  chosen:matches[0]?.node.id||null
+ });
+ return matches[0]?.node||null;
+}
+
 function escapeHtml(value){
 return String(value)
 .replace(/&/g,'&amp;')
@@ -6073,51 +6130,21 @@ const world=getActivePreviewWorld();
 if(!world)return;
 
 const animation=state.previewAnimation;
-// Selected item: only the corresponding branch of a clicked location can run.
-if(state.selectedInventoryItemId){
- for(const triggerId of state.previewClickTriggerIds){
-  const click=getNode(triggerId);
-  if(!click)continue;
-  let regions=null;
-  if(animation&&click.clickAnimationMode){
-   const fps=Math.max(1,Number(click.clickFrameFps)||8);
-   regions=getClickFrameRegions(click,Math.max(0,Math.floor(animation.video.currentTime*fps)));
-  }
-  if(!isClickTargetHit(click,world,e.clientX,e.clientY,regions))continue;
-  recordPreviewDiagnostic('click-hit',{clickId:click.id,x:e.clientX,y:e.clientY,selectedItem:state.selectedInventoryItemId});
-  runClickItemBranch(click,state.selectedInventoryItemId);
-  return;
- }
- return; // Outside all click regions: no response.
-}
-for(const triggerId of state.previewClickTriggerIds){
-const trigger=getNode(triggerId);
-if(!trigger||!canFireExplorationTrigger(trigger))continue;
-
-let regions=null;
-
-if(animation&&trigger.clickAnimationMode){
-const fps=Math.max(1,Number(trigger.clickFrameFps)||8);
-const frame=Math.max(
-0,
-Math.floor(animation.video.currentTime*fps)
+const trigger=findBestPreviewClick(
+ e.clientX,e.clientY,world,animation,state.selectedInventoryItemId
 );
-
-regions=getClickFrameRegions(trigger,frame);
+if(!trigger)return;
+recordPreviewDiagnostic('click-hit',{
+ clickId:trigger.id,x:e.clientX,y:e.clientY,
+ selectedItem:state.selectedInventoryItemId
+});
+if(state.selectedInventoryItemId){
+ runClickItemBranch(trigger,state.selectedInventoryItemId);
+ return;
 }
-
-if(!isClickTargetHit(trigger,world,e.clientX,e.clientY,regions)){
-continue;
-}
-
-recordPreviewDiagnostic('click-hit',{clickId:trigger.id,x:e.clientX,y:e.clientY,selectedItem:null});
 fireExplorationTrigger(trigger);
-
 if(!state.connections.some(c=>c.from===trigger.id)){
  previewMessage.textContent='クリック発火・接続先なし';
-}
-
-break;
 }
 });
 gameCanvas.addEventListener('pointercancel',e=>{
@@ -6285,6 +6312,7 @@ return Boolean(node.clickTarget?.initialized||Object.values(node.clickFrameRegio
 
 function startPreview(preserveInventory=false){
 recordPreviewDiagnostic('preview-start',{preserveInventory});
+previewClickAreaCache.clear();
 if(!preserveInventory){
 state.inventory=new Set();
 state.selectedInventoryItemId=null;

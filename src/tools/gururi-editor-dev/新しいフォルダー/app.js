@@ -1,5 +1,71 @@
 
 
+// Preview diagnostic recorder: bounded in-memory events, exported only on user click.
+const previewDiagnosticEvents=[];
+const previewDiagnosticErrors=[];
+function recordPreviewDiagnostic(type,details={}){
+ try{
+  previewDiagnosticEvents.push({time:new Date().toISOString(),type,...details});
+  if(previewDiagnosticEvents.length>400)previewDiagnosticEvents.shift();
+ }catch(error){console.warn('Diagnostic recorder:',error);}
+}
+function recordPreviewError(kind,message,stack=''){
+ previewDiagnosticErrors.push({time:new Date().toISOString(),kind,message:String(message),stack:String(stack||'')});
+ if(previewDiagnosticErrors.length>80)previewDiagnosticErrors.shift();
+}
+window.addEventListener('error',event=>{
+ recordPreviewError('JavaScript',event.message||'Unknown error',event.error?.stack||`${event.filename||''}:${event.lineno||''}:${event.colno||''}`);
+});
+window.addEventListener('unhandledrejection',event=>{
+ const reason=event.reason;
+ recordPreviewError('Promise',reason?.message||String(reason),reason?.stack||'');
+});
+function exportPreviewDiagnostics(){
+ try{
+  const nodeInfo=id=>{
+   const n=getNode(id);
+   return n?{id:n.id,type:n.type,label:n.itemName||n.customBody||n.world?.fileName||n.animation?.fileName||'',once:!!(n.triggerOnce||n.clickBranchOnce)}:{id,missing:true};
+  };
+  const activeVideo=state.previewAnimation?.video;
+  const report={
+   exportedAt:new Date().toISOString(),
+   appTitle:document.title,
+   location:location.pathname,
+   userAgent:navigator.userAgent,
+   previewOpen:!gamePreview.classList.contains('hidden'),
+   displayMode:state.displayMode,
+   sceneEpoch:previewSceneEpoch,
+   activeNode:nodeInfo(state.previewNodeId),
+   activeWorld:nodeInfo(state.previewWorldNodeId),
+   dialogueNode:nodeInfo(state.previewDialogueNodeId),
+   selectedInventoryItem:nodeInfo(state.selectedInventoryItemId),
+   inventory:[...state.inventory].map(nodeInfo),
+   acquiredItems:[...acquiredItems].map(nodeInfo),
+   completedTriggers:[...previewCompletedTriggers].map(nodeInfo),
+   visitedNodes:[...previewVisited].map(nodeInfo),
+   waitingClicks:state.previewClickTriggerIds.map(nodeInfo),
+   waitingItemUses:state.previewItemUseTriggerIds.map(nodeInfo),
+   waitingFrameIns:state.previewFrameInIds.map(nodeInfo),
+   pendingTimers:previewBranchTimers.size,
+   sceneVideo:activeVideo?{time:activeVideo.currentTime,duration:activeVideo.duration,paused:activeVideo.paused,ended:activeVideo.ended,readyState:activeVideo.readyState}:null,
+   nodeCount:state.nodes.length,
+   connectionCount:state.connections.length,
+   errors:previewDiagnosticErrors,
+   events:previewDiagnosticEvents
+  };
+  const content='ぐるりエディタ 診断レポート\n'+JSON.stringify(report,null,2)+'\n';
+  const blob=new Blob([content],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download='gururi-diagnostic-'+new Date().toISOString().replace(/[:.]/g,'-')+'.txt';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
+ }catch(error){console.error('診断レポートの保存に失敗しました',error);alert('診断レポートを保存できませんでした。Consoleを確認してください。');}
+}
+
 const workspace=document.getElementById('workspace');
 const workspaceScene=document.getElementById('workspaceScene');
 const nodesLayer=document.getElementById('nodesLayer');
@@ -1171,10 +1237,12 @@ function renderClickBranchSettings(branch){
  document.getElementById('clickBranchRemove')?.addEventListener('click',()=>deleteClickItemBranch(branch));
 }
 function runClickItemBranch(click,itemId){
+recordPreviewDiagnostic('item-click',{clickId:click.id,itemId});
  const branches=clickBranches(click);
  const branch=branches.find(n=>n.clickBranchItemId===itemId)||branches.find(n=>n.clickBranchItemId==='__other__');
- if(!branch)return; // Unregistered item without "other" is silent.
- if(branch.clickBranchOnce&&previewCompletedTriggers.has(branch.id))return;
+ if(!branch){recordPreviewDiagnostic('item-no-branch',{clickId:click.id,itemId});return;} // Unregistered item without 'other' is silent.
+ if(branch.clickBranchOnce&&previewCompletedTriggers.has(branch.id)){recordPreviewDiagnostic('branch-already-completed',{branchId:branch.id});return;}
+recordPreviewDiagnostic('branch-fired',{branchId:branch.id,itemId,consumed:!!(branch.clickBranchConsume&&branch.clickBranchItemId===itemId)});
  if(branch.clickBranchOnce)previewCompletedTriggers.add(branch.id);
  if(branch.clickBranchConsume&&branch.clickBranchItemId===itemId){
   state.inventory.delete(itemId);
@@ -5878,6 +5946,7 @@ renderNodes();
 renderSettings();
 }
 
+document.getElementById('exportPreviewDiagnosticBtn').addEventListener('click',exportPreviewDiagnostics);
 playBtn.addEventListener('click',()=>startPreview());
 closePreviewBtn.addEventListener('click',stopPreview);
 
@@ -5998,6 +6067,7 @@ gameCanvas.releasePointerCapture(e.pointerId);
 gamePreviewDrag=null;
 
 if(moved)return;
+recordPreviewDiagnostic('canvas-click',{x:e.clientX,y:e.clientY,selectedItem:state.selectedInventoryItemId,waitingClicks:[...state.previewClickTriggerIds]});
 
 const world=getActivePreviewWorld();
 if(!world)return;
@@ -6014,6 +6084,7 @@ if(state.selectedInventoryItemId){
    regions=getClickFrameRegions(click,Math.max(0,Math.floor(animation.video.currentTime*fps)));
   }
   if(!isClickTargetHit(click,world,e.clientX,e.clientY,regions))continue;
+  recordPreviewDiagnostic('click-hit',{clickId:click.id,x:e.clientX,y:e.clientY,selectedItem:state.selectedInventoryItemId});
   runClickItemBranch(click,state.selectedInventoryItemId);
   return;
  }
@@ -6039,6 +6110,7 @@ if(!isClickTargetHit(trigger,world,e.clientX,e.clientY,regions)){
 continue;
 }
 
+recordPreviewDiagnostic('click-hit',{clickId:trigger.id,x:e.clientX,y:e.clientY,selectedItem:null});
 fireExplorationTrigger(trigger);
 
 if(!state.connections.some(c=>c.from===trigger.id)){
@@ -6158,6 +6230,7 @@ stopPreviewAnimation();
 state.previewWorldNodeId=null;
 }
 function previewOutgoing(nodeId,phase='start'){
+recordPreviewDiagnostic('node-outgoing',{nodeId,phase,targets:state.connections.filter(c=>c.from===nodeId).map(c=>c.to)});
 const source=getNode(nodeId);
 const sourceIsMedia=source?.type==='world'||source?.type==='animation';
 
@@ -6211,6 +6284,7 @@ return Boolean(node.clickTarget?.initialized||Object.values(node.clickFrameRegio
 }
 
 function startPreview(preserveInventory=false){
+recordPreviewDiagnostic('preview-start',{preserveInventory});
 if(!preserveInventory){
 state.inventory=new Set();
 state.selectedInventoryItemId=null;
@@ -6241,6 +6315,7 @@ previewOutgoing('start');
 
 
 function stopPreview(){
+recordPreviewDiagnostic('preview-stop');
 state.inventoryEnabled=false;
 refreshInventory();
 cancelPreviewScene();
@@ -6944,6 +7019,7 @@ return;
 previewOutgoing(node.id);
 }
 function showPreviewNode(nodeId){
+recordPreviewDiagnostic('node-enter',{nodeId,nodeType:getNode(nodeId)?.type||'missing',alreadyVisited:previewVisited.has(nodeId)});
 const node=getNode(nodeId);
 if(!node||gamePreview.classList.contains('hidden'))return;
 // A branch converging on an already-active node is executed only once per scene.
