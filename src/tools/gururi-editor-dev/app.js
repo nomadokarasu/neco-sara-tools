@@ -4003,7 +4003,7 @@ const isAnimation=worldNode.type==='animation';
 const media=isAnimation?getClickAnimationMedia(worldNode):null;
 const video=media?.video||null;
 
-if(isAnimation&&video){
+if(isAnimation&&video&&document.getElementById('clickFrameRange')){
 const range=document.getElementById('clickFrameRange');
 const previousButton=document.getElementById('clickPreviousFrameBtn');
 const nextButton=document.getElementById('clickNextFrameBtn');
@@ -4085,6 +4085,30 @@ drawClickLassoOverlay(node,worldNode);
 });
 
 showFrame(node.clickFrameIndex||0);
+}else if(isAnimation&&video){
+
+video.pause();
+
+const redraw=()=>{
+if(!previewCanvas.isConnected)return;
+
+drawPanoramaPreview(
+previewCanvas,
+getClickLassoWorld(node,worldNode)
+);
+
+drawClickLassoOverlay(node,worldNode);
+};
+
+video.addEventListener('loadeddata',redraw,{once:true});
+video.addEventListener('seeked',redraw,{once:true});
+
+if(video.readyState>=2){
+video.currentTime=0;
+redraw();
+}else{
+video.currentTime=0;
+}
 }
 
 let drag=null;
