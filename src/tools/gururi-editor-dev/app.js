@@ -838,6 +838,25 @@ settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameCo
 
 setupClickTriggerPreview(node,sourceNode);
 
+const onceGroup=document.createElement('div');
+onceGroup.className='setting-group';
+
+const onceLabel=document.createElement('label');
+const onceCheckbox=document.createElement('input');
+onceCheckbox.type='checkbox';
+onceCheckbox.checked=node.triggerOnce===true;
+
+onceLabel.append(
+ onceCheckbox,
+ document.createTextNode(' 一度だけ実行する')
+);
+onceGroup.append(onceLabel);
+settingsPanel.append(onceGroup);
+
+onceCheckbox.addEventListener('change',()=>{
+ node.triggerOnce=onceCheckbox.checked;
+});
+
 return;
 }
 if(node.type==='media'){
@@ -1046,6 +1065,26 @@ function renderItemUseSettings(node){
  <div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
  document.getElementById('itemUseSelect').addEventListener('change',e=>{node.itemUseTargetId=e.target.value||null;});
  setupClickTriggerPreview(node,source);
+
+ const onceGroup=document.createElement('div');
+ onceGroup.className='setting-group';
+
+ const onceLabel=document.createElement('label');
+ const onceCheckbox=document.createElement('input');
+ onceCheckbox.type='checkbox';
+ onceCheckbox.checked=node.triggerOnce===true;
+
+ onceLabel.append(
+  onceCheckbox,
+  document.createTextNode(' 一度だけ実行する')
+ );
+
+ onceGroup.append(onceLabel);
+ settingsPanel.append(onceGroup);
+
+ onceCheckbox.addEventListener('change',()=>{
+  node.triggerOnce=onceCheckbox.checked;
+ });
 }
 const inventoryMenu=document.getElementById('inventoryMenu');
 const inventoryToolboxButton=document.getElementById('inventoryToolboxButton');
@@ -5759,7 +5798,11 @@ const animation=state.previewAnimation;
 if(state.selectedInventoryItemId){
  for(const id of [...state.previewItemUseTriggerIds]){
   const trigger=getNode(id);
-  if(!trigger||trigger.itemUseTargetId!==state.selectedInventoryItemId)continue;
+  if(
+ !trigger||
+ trigger.itemUseTargetId!==state.selectedInventoryItemId||
+ !canFireExplorationTrigger(trigger)
+)continue;
   if(!isClickTargetHit(trigger,world,e.clientX,e.clientY))continue;
   const item=getInventoryItem(state.selectedInventoryItemId);
 
@@ -5778,14 +5821,14 @@ if(state.selectedInventoryItemId){
    }
   }
 
-  previewOutgoing(trigger.id);
+  fireExplorationTrigger(trigger);
   return;
  }
  return;
 }
 for(const triggerId of state.previewClickTriggerIds){
 const trigger=getNode(triggerId);
-if(!trigger)continue;
+if(!trigger||!canFireExplorationTrigger(trigger))continue;
 
 let regions=null;
 
@@ -5803,11 +5846,10 @@ if(!isClickTargetHit(trigger,world,e.clientX,e.clientY,regions)){
 continue;
 }
 
-clearPreviewBranchTimers();
-state.previewClickTriggerIds=[];
-previewOutgoing(trigger.id);
+fireExplorationTrigger(trigger);
+
 if(!state.connections.some(c=>c.from===trigger.id)){
-previewMessage.textContent='クリック発火・接続先なし';
+ previewMessage.textContent='クリック発火・接続先なし';
 }
 
 break;
@@ -5842,6 +5884,58 @@ let previewSceneEpoch=0;
 let activeIndependentKeyframe=null;
 const previewBranchTimers=new Set();
 const previewVisited=new Set();
+const previewCompletedTriggers=new Set();
+
+// 一度だけ実行するトリガーかどうか
+function canFireExplorationTrigger(node){
+ if(!node)return false;
+ return !node.triggerOnce||!previewCompletedTriggers.has(node.id);
+}
+
+// 接続先の処理を再実行できる状態にする
+function prepareExplorationBranch(nodeId){
+ const visited=new Set();
+
+ function visit(id){
+  if(visited.has(id))return;
+  visited.add(id);
+
+  const node=getNode(id);
+  if(!node)return;
+
+  // メディアや別の待機トリガーは初期化しない
+  if(
+   node.type==='world'||
+   node.type==='animation'||
+   node.type==='start'||
+   node.type==='click'||
+   node.type==='frameIn'||
+   node.type==='itemUse'
+  )return;
+
+  previewVisited.delete(id);
+
+  for(const connection of state.connections){
+   if(connection.from===id)visit(connection.to);
+  }
+ }
+
+ for(const connection of state.connections){
+  if(connection.from===nodeId)visit(connection.to);
+ }
+}
+
+function fireExplorationTrigger(node){
+ if(!canFireExplorationTrigger(node))return;
+
+ if(node.triggerOnce){
+  previewCompletedTriggers.add(node.id);
+ }
+
+ prepareExplorationBranch(node.id);
+ previewOutgoing(node.id);
+}
+
 function clearPreviewBranchTimers(){
 for(const timer of previewBranchTimers)clearTimeout(timer);
 previewBranchTimers.clear();
@@ -5924,6 +6018,7 @@ if(!preserveInventory){
 state.inventory=new Set();
 state.selectedInventoryItemId=null;
 state.inventoryEnabled=false;
+previewCompletedTriggers.clear();
 }
 cancelPreviewScene();
 refreshInventory();
