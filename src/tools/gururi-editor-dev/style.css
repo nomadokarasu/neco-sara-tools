@@ -804,3 +804,34 @@ flex-shrink:0;
 @media(max-width:480px){
  .equipped-item-label{font-size:11px;padding:0 7px;max-width:calc(100% - 174px)}
 }
+
+/* 2026-10: Replace the old toolbox menu with a compact name-only selector. */
+.inventory-button,.inventory-menu,.inventory-overlay{display:none !important}
+.equipped-item-label{
+ right:14px;
+ max-width:min(75%,450px);
+ width:auto;
+ gap:7px;
+ padding:0 10px;
+ overflow:visible;
+ pointer-events:auto;
+ white-space:nowrap;
+}
+.equipped-item-label span{flex:none}
+.equipped-item-label select{
+ min-width:78px;
+ max-width:min(45vw,240px);
+ width:auto;
+ height:30px;
+ padding:3px 25px 3px 8px;
+ background:#fff;
+ color:#202530;
+ border:1px solid #758095;
+ border-radius:5px;
+ font-size:13px;
+ cursor:pointer;
+}
+@media(max-width:480px){
+ .equipped-item-label{right:8px;max-width:calc(100% - 16px);padding:0 7px;gap:4px}
+ .equipped-item-label select{max-width:40vw;font-size:12px}
+}

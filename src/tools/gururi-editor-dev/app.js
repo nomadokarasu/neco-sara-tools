@@ -163,6 +163,7 @@ const textAnswerOverlay=document.getElementById('textAnswerOverlay');
 const inventoryOverlay=document.getElementById('inventoryOverlay');
 const inventoryButton=document.getElementById('inventoryButton');
 const equippedItemLabel=document.getElementById('equippedItemLabel');
+const equippedItemSelect=document.getElementById('equippedItemSelect');
 const fadeOverlay=document.getElementById('fadeOverlay');
 const gameViewport=document.getElementById('gameViewport');
 const media2DLayer=document.getElementById('media2DLayer');
@@ -1373,10 +1374,20 @@ function refreshInventory(){
  const equippedItem=state.inventory.has(state.selectedInventoryItemId)
   ?getInventoryItem(state.selectedInventoryItemId):null;
  if(!equippedItem&&state.selectedInventoryItemId!==null)state.selectedInventoryItemId=null;
- equippedItemLabel.textContent='装備中のアイテム：'+(equippedItem?itemDisplayName(equippedItem):'なし');
- equippedItemLabel.title=equippedItemLabel.textContent;
- equippedItemLabel.classList.remove('hidden');
  const ids=[...state.inventory].filter(id=>getInventoryItem(id));
+ equippedItemSelect.replaceChildren();
+ const noneOption=document.createElement('option');
+ noneOption.value='';noneOption.textContent='なし';
+ equippedItemSelect.append(noneOption);
+ for(const id of ids){
+  const item=getInventoryItem(id);
+  const option=document.createElement('option');
+  option.value=id;
+  option.textContent=itemDisplayName(item);
+  equippedItemSelect.append(option);
+ }
+ equippedItemSelect.value=equippedItem?.id||'';
+ equippedItemLabel.classList.remove('hidden');
  inventoryOverlay.replaceChildren();
  const header=document.createElement('div');header.className='inventory-header';header.textContent='アイテム一覧';
  const close=document.createElement('button');close.textContent='×';close.type='button';close.addEventListener('click',()=>inventoryOverlay.classList.add('hidden'));header.append(close);
@@ -1405,6 +1416,12 @@ function refreshInventory(){
  details.textContent=selected?(selected.itemDescription||itemDisplayName(selected)):'';
  inventoryOverlay.append(details);
 }
+
+equippedItemSelect.addEventListener('change',()=>{
+ const id=equippedItemSelect.value;
+ state.selectedInventoryItemId=id&&state.inventory.has(id)&&getInventoryItem(id)?id:null;
+ refreshInventory();
+});
 
 inventoryButton.addEventListener('click',()=>{
  const willOpen=inventoryMenu.classList.contains('hidden');
@@ -6015,7 +6032,7 @@ playBtn.addEventListener('click',()=>startPreview());
 closePreviewBtn.addEventListener('click',stopPreview);
 
 gameViewport.addEventListener('click',e=>{
-if(e.target.closest('#inventoryButton, #inventoryOverlay'))return;
+if(e.target.closest('#equippedItemLabel, #inventoryButton, #inventoryOverlay'))return;
 if(gamePreview.classList.contains('hidden'))return;
 if(!state.previewDialogueNodeId)return;
 if(getNode(state.previewDialogueNodeId)?.type==='option')return;

@@ -19,7 +19,7 @@
 <div id="editorHomeHero" class="editor-home__hero">
 <img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
-<p class="editor-home__version">ver.0.1.68</p>
+<p class="editor-home__version">ver.0.1.69</p>
 <h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
 <img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
 <img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
@@ -54,7 +54,7 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
-<span class="editor-version">ver.0.1.68</span>
+<span class="editor-version">ver.0.1.69</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
 </div>
 <div class="top-actions">
@@ -162,7 +162,10 @@
 </div>
 <div id="optionChoicesOverlay" class="option-choices-overlay hidden"></div>
 <div id="textAnswerOverlay" class="game-text-answer-overlay hidden"></div>
-<div id="equippedItemLabel" class="equipped-item-label hidden" aria-live="polite">装備中のアイテム：なし</div>
+<label id="equippedItemLabel" class="equipped-item-label hidden" for="equippedItemSelect">
+<span>装備中のアイテム：</span>
+<select id="equippedItemSelect" aria-label="装備中のアイテムを選択"><option value="">なし</option></select>
+</label>
 <button id="inventoryButton" class="inventory-button hidden" type="button" aria-label="メニューを開く" aria-expanded="false">☰</button>
 <div id="inventoryMenu" class="inventory-menu hidden">
 <button id="inventoryToolboxButton" type="button">道具箱</button>
