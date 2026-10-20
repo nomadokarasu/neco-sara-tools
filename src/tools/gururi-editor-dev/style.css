@@ -774,3 +774,7 @@ flex-shrink:0;
 .game-text-answer-preview button{align-self:flex-start}
 
 #clickBranchRemove{display:block;width:100%;height:auto;min-height:38px;padding:8px 12px;font-size:13px;line-height:1.5;white-space:nowrap;text-align:center;cursor:pointer}
+
+/* Game preview diagnostic export: separate from the 360-degree canvas. */
+.export-preview-diagnostic{position:absolute;top:14px;right:62px;z-index:12;padding:9px 12px;min-height:38px;border-radius:7px;background:rgba(25,32,44,.92);color:#fff;border:1px solid rgba(255,255,255,.55);font-size:13px;cursor:pointer;white-space:nowrap}
+.export-preview-diagnostic:hover{background:#36465e}
