@@ -5002,7 +5002,8 @@ material:{label:'素材',element:materialMenu},
 trigger:{label:'トリガー',element:triggerMenu},
 effect:{label:'効果',element:effectMenu},
 camera:{label:'カメラ',element:cameraMenu},
-panel:{label:'UI',element:panelMenu}
+panel:{label:'UI',element:panelMenu},
+item:{label:'アイテム',element:document.getElementById('itemMenu')}
 };
 
 function updateNodeMenuCategories(openCategory=null){
