@@ -93,6 +93,7 @@ const previewMessage=document.getElementById('previewMessage');
 const dialogueOverlay=document.getElementById('dialogueOverlay');
 const dialogueText=document.getElementById('dialogueText');
 const optionChoicesOverlay=document.getElementById('optionChoicesOverlay');
+const textAnswerOverlay=document.getElementById('textAnswerOverlay');
 const inventoryOverlay=document.getElementById('inventoryOverlay');
 const inventoryButton=document.getElementById('inventoryButton');
 const fadeOverlay=document.getElementById('fadeOverlay');
@@ -123,6 +124,7 @@ previewClickTriggerIds:[],
 previewFrameInIds:[],
 previewDialogueNodeId:null,
 previewDialoguePageIndex:0,
+previewTextAnswerNodeId:null,
 previewItemUseTriggerIds:[],
 inventory:new Set(),
 selectedInventoryItemId:null,
@@ -266,6 +268,68 @@ state.connections=state.connections.filter(c=>!ids.has(c.from)&&!ids.has(c.to));
 commitEditorHistory(before);
 renderNodes();renderSettings();
 }
+function textAnswerBranches(owner){
+ return state.nodes.filter(n=>n.type==='textAnswerBranch'&&n.textAnswerOwnerId===owner.id);
+}
+function ensureTextAnswerBranches(owner){
+ if(owner?.type!=='textAnswer')return;
+ for(const result of ['correct','incorrect']){
+  if(textAnswerBranches(owner).some(n=>n.textAnswerResult===result))continue;
+  const branch={id:uid('textAnswerBranch'),type:'textAnswerBranch',textAnswerOwnerId:owner.id,textAnswerResult:result,x:owner.x+250,y:owner.y+(result==='correct'?0:100)};
+  state.nodes.push(branch);
+  state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
+ }
+}
+function runTextAnswerBranch(owner,result){
+ const branch=textAnswerBranches(owner).find(n=>n.textAnswerResult===result);
+ if(!branch)return;
+ prepareExplorationBranch(owner.id);
+ previewVisited.delete(branch.id);
+ showPreviewNode(branch.id);
+}
+function closeTextAnswerPanel(){
+ textAnswerOverlay.classList.add('hidden');
+ textAnswerOverlay.replaceChildren();
+ state.previewTextAnswerNodeId=null;
+}
+function showTextAnswerPanel(node){
+ closeTextAnswerPanel();
+ state.previewTextAnswerNodeId=node.id;
+ const form=document.createElement('form');form.className='game-text-answer-form';
+ const title=document.createElement('div');title.className='game-text-answer-question';title.textContent=node.textAnswerQuestion||'';
+ const input=document.createElement('input');input.className='game-text-answer-field';input.type='text';input.autocomplete='off';input.spellcheck=false;
+ input.inputMode=node.textAnswerMode==='number'?'numeric':'text';
+ const actions=document.createElement('div');actions.className='game-text-answer-actions';
+ const submit=document.createElement('button');submit.type='submit';submit.textContent='決定';
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='閉じる';cancel.addEventListener('click',closeTextAnswerPanel);
+ actions.append(submit,cancel);form.append(title,input,actions);textAnswerOverlay.append(form);
+ form.addEventListener('submit',event=>{
+  event.preventDefault();
+  if(state.previewTextAnswerNodeId!==node.id)return;
+  const answer=input.value;
+  const correct=String(node.textAnswerCorrect??'');
+  const valid=node.textAnswerMode!=='number'||/^[0-9]*$/.test(answer);
+  const result=valid&&answer===correct?'correct':'incorrect';
+  closeTextAnswerPanel();
+  runTextAnswerBranch(node,result);
+ });
+ textAnswerOverlay.classList.remove('hidden');
+ input.focus({preventScroll:true});
+}
+function renderTextAnswerSettings(node){
+ settingsPanel.innerHTML=`<div class="settings-title">テキスト入力</div>
+ <div class="setting-group"><div class="setting-label">質問文</div><textarea id="textAnswerQuestion" class="dialogue-textarea" maxlength="160"></textarea></div>
+ <div class="setting-group"><div class="setting-label">正解（空欄も正解として設定できます）</div><input id="textAnswerCorrect" class="number-input" type="text" autocomplete="off"></div>
+ <div class="setting-group"><div class="setting-label">入力形式</div><select id="textAnswerMode" class="number-input"><option value="text">文字・数字</option><option value="number">数字のみ</option></select></div>
+ <div class="setting-group"><div class="setting-label">表示プレビュー</div><div class="game-text-answer-preview"><div id="textAnswerPreviewQuestion"></div><input class="game-text-answer-field" type="text" placeholder="ここに回答を入力" disabled><button type="button" disabled>決定</button></div></div>`;
+ const question=document.getElementById('textAnswerQuestion');question.value=node.textAnswerQuestion||'';
+ const correct=document.getElementById('textAnswerCorrect');correct.value=String(node.textAnswerCorrect??'');
+ const mode=document.getElementById('textAnswerMode');mode.value=node.textAnswerMode==='number'?'number':'text';
+ const preview=document.getElementById('textAnswerPreviewQuestion');preview.textContent=question.value;
+ question.addEventListener('input',()=>{node.textAnswerQuestion=question.value;preview.textContent=question.value;});
+ correct.addEventListener('input',()=>{node.textAnswerCorrect=correct.value;});
+ mode.addEventListener('change',()=>{node.textAnswerMode=mode.value;});
+}
 function addNode(type,x,y){
 const editBefore=editorSnapshot();
 const node={
@@ -301,6 +365,11 @@ frameInRedo:[],
 dialoguePages:[],
 dialogueEditIndex:0,
 optionChoices:[],
+textAnswerQuestion:'',
+textAnswerCorrect:'',
+textAnswerMode:'text',
+textAnswerOwnerId:null,
+textAnswerResult:null,
 clickItemBranches:[],
 clickOtherBranchId:null,
 clickBranchOwnerId:null,
@@ -340,6 +409,7 @@ media2DLayouts:{pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}}
 };
 state.nodes.push(node);
 if(type==='click')ensureClickOtherBranch(node);
+if(type==='textAnswer')ensureTextAnswerBranches(node);
 commitEditorHistory(editBefore);
 renderNodes();
 selectNode(node.id);
@@ -429,6 +499,8 @@ node.type==='click'?'クリック':
 node.type==='frameIn'?'フレームイン':
 node.type==='dialogue'?'ダイアローグ':
 node.type==='option'?'オプション':
+node.type==='textAnswer'?'テキスト入力':
+node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解':'不正解'):
 node.type==='itemAcquire'?'アイテム取得':
 node.type==='inventory'?'インベントリ表示':
 node.type==='itemUse'?'アイテム使用':
@@ -450,6 +522,8 @@ node.type==='click'?'範囲クリック':
 node.type==='frameIn'?'カメラ範囲トリガー':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='option'?'質問文と選択肢':
+node.type==='textAnswer'?'入力した回答を判定':
+node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解ルート':'不正解ルート'):
 node.type==='itemAcquire'?(node.itemName||'アイテム名未設定'):
 node.type==='inventory'?'所持アイテム一覧':
 node.type==='itemUse'?'選択アイテムを使用':
@@ -779,6 +853,8 @@ settingsPanel.innerHTML=`<div class="settings-title">選択肢</div><div class="
 return;
 }
 if(node.type==='option'){renderOptionSettings(node);return;}
+if(node.type==='textAnswer'){renderTextAnswerSettings(node);return;}
+if(node.type==='textAnswerBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.textAnswerResult==='correct'?'正解':'不正解'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
 if(node.type==='clickBranch'){renderClickBranchSettings(node);return;}
 if(node.type==='itemAcquire'){renderItemAcquireSettings(node);return;}
 if(node.type==='inventory'){settingsPanel.innerHTML='<div class="settings-title">インベントリ表示</div><div class="settings-empty">このノードを実行すると、ゲーム画面にインベントリボタンが表示されます。取得したアイテムを一覧表示できます。</div>';return;}
@@ -5349,11 +5425,13 @@ const editBefore=editorSnapshot();
 const newNode=copyNodeData(copiedNodeData);
 newNode.id=uid(newNode.type);
 if(newNode.type==='option'){newNode.optionChoices=[];}
-if(newNode.type==='optionChoice')return;
+if(newNode.type==='optionChoice'||newNode.type==='textAnswerBranch')return;
+if(newNode.type==='textAnswer'){newNode.textAnswerOwnerId=null;newNode.textAnswerResult=null;}
 newNode.x=copiedNodeData.x+pasteOffset;
 newNode.y=copiedNodeData.y+pasteOffset;
 
 state.nodes.push(newNode);
+if(newNode.type==='textAnswer')ensureTextAnswerBranches(newNode);
 commitEditorHistory(editBefore);
 renderNodes();
 selectNode(newNode.id);
@@ -5427,11 +5505,12 @@ state.selectedNodeId;
 
 if(!id||id==='start')return;
 const removedNode=getNode(id);
+if(removedNode?.type==='textAnswerBranch')return;
 if(removedNode?.type==='optionChoice'){
 const owner=getNode(removedNode.optionOwnerId);
 if(owner){removeOptionChoice(owner,removedNode.optionChoiceId);state.selectedNodeId=null;return;}
 }
-const attached=new Set(removedNode?.type==='option'?optionChoiceNodes(removedNode).map(n=>n.id):[]);
+const attached=new Set(removedNode?.type==='option'?optionChoiceNodes(removedNode).map(n=>n.id):removedNode?.type==='textAnswer'?textAnswerBranches(removedNode).map(n=>n.id):[]);
 attached.add(id);
 
 state.nodes=
@@ -6069,6 +6148,7 @@ state.previewFrameInIds=[];
 state.previewDialogueNodeId=null;
 optionChoicesOverlay.classList.add('hidden');
 optionChoicesOverlay.replaceChildren();
+closeTextAnswerPanel();
 inventoryOverlay.classList.add('hidden');
 clearMedia2DLayer();
 stopDialogueTyping();
@@ -6981,6 +7061,8 @@ if(node.type==='itemUse'){
  return;
 }
 if(node.type==='clickBranch'){previewOutgoing(node.id);return;}
+if(node.type==='textAnswerBranch'){previewOutgoing(node.id);return;}
+if(node.type==='textAnswer'){showTextAnswerPanel(node);return;}
 if(node.type==='optionChoice'){previewOutgoing(node.id);return;}
 if(node.type==='option'){
 if(!node.optionChoices?.length){previewOutgoing(node.id);return;}
@@ -7272,6 +7354,7 @@ if(node.animation)node.animation.raw=null;
 cancelPreviewScene();
 state.nodes=data.nodes;
 state.connections=data.connections;
+for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);
 resetEditorHistory();
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
@@ -7443,6 +7526,7 @@ if(node.animation)node.animation.raw=null;
 mediaLibrary.splice(0,mediaLibrary.length,...loaded);
 state.nodes=data.nodes;
 state.connections=data.connections;
+for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
 state.displayMode=['pc','mobile'].includes(data.displayMode)?data.displayMode:'pc';

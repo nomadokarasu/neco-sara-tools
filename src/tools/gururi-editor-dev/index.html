@@ -19,7 +19,7 @@
 <div id="editorHomeHero" class="editor-home__hero">
 <img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
-<p class="editor-home__version">ver.0.1.64</p>
+<p class="editor-home__version">ver.0.1.65</p>
 <h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
 <img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
 <img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
@@ -54,7 +54,7 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
-<span class="editor-version">ver.0.1.64</span>
+<span class="editor-version">ver.0.1.65</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
 </div>
 <div class="top-actions">
@@ -132,15 +132,15 @@
 <div id="uiPanelMenu" class="submenu hidden">
 <button type="button" data-create="dialogue">ダイアローグ</button>
 <button type="button" data-create="option">オプション</button>
+<button type="button" data-create="textAnswer">テキスト入力</button>
 <button type="button" data-create="media2d">2Dメディア</button>
-</div>
-</div>
 
+</div>
+</div>
 <button type="button" class="menu-parent" data-menu="item">▶ アイテム</button>
 <div id="itemMenu" class="submenu hidden">
 <button type="button" data-create="itemAcquire">アイテム取得</button>
 </div>
-
 </div>
 </main>
 <aside class="editor-sidebar">
@@ -160,6 +160,7 @@
 <div class="dialogue-arrow">▼</div>
 </div>
 <div id="optionChoicesOverlay" class="option-choices-overlay hidden"></div>
+<div id="textAnswerOverlay" class="game-text-answer-overlay hidden"></div>
 <button id="inventoryButton" class="inventory-button hidden" type="button" aria-label="メニューを開く" aria-expanded="false">☰</button>
 <div id="inventoryMenu" class="inventory-menu hidden">
 <button id="inventoryToolboxButton" type="button">道具箱</button>

@@ -760,16 +760,17 @@ flex-shrink:0;
 
 /* クリックノード：追加用アイテム選択欄 */
 .click-item-branch-add-select{display:block;width:100%;min-width:0;}
-/* クリック分岐：削除ボタン */
-#clickBranchRemove {
-  display:block;
-  width:100%;
-  height:auto;
-  min-height:38px;
-  padding:8px 12px;
-  font-size:13px;
-  line-height:1.5;
-  white-space:nowrap;
-  text-align:center;
-  cursor:pointer;
-}
+
+/* テキスト入力パネル */
+.game-text-answer-overlay{position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;padding:16px;pointer-events:auto}
+.game-text-answer-form{width:min(90%,480px);max-height:90%;overflow:auto;background:rgba(18,22,30,.96);border:1px solid #758095;border-radius:10px;padding:22px;color:#fff;display:flex;flex-direction:column;gap:14px;box-shadow:0 12px 45px rgba(0,0,0,.45)}
+.game-text-answer-question{font-size:18px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.game-text-answer-field{box-sizing:border-box;width:100%;min-width:0;background:#fff;color:#111;border:1px solid #9ca3af;border-radius:6px;padding:10px;font-size:16px}
+.game-text-answer-actions{display:flex;gap:10px}
+.game-text-answer-actions button,.game-text-answer-preview button{padding:9px 18px;border:1px solid #aab2c0;border-radius:6px;cursor:pointer}
+.game-text-answer-actions button:first-child{background:#e5e7eb;color:#111}
+.game-text-answer-actions button:last-child{background:#303b4a;color:#fff}
+.game-text-answer-preview{display:flex;flex-direction:column;gap:10px;background:#252a32;color:#fff;padding:12px;border-radius:7px;white-space:pre-wrap}
+.game-text-answer-preview button{align-self:flex-start}
+
+#clickBranchRemove{display:block;width:100%;height:auto;min-height:38px;padding:8px 12px;font-size:13px;line-height:1.5;white-space:nowrap;text-align:center;cursor:pointer}
