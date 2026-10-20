@@ -5762,10 +5762,22 @@ if(state.selectedInventoryItemId){
   if(!trigger||trigger.itemUseTargetId!==state.selectedInventoryItemId)continue;
   if(!isClickTargetHit(trigger,world,e.clientX,e.clientY))continue;
   const item=getInventoryItem(state.selectedInventoryItemId);
-  if(item?.itemConsumable!==false){state.inventory.delete(item.id);state.selectedInventoryItemId=null;}
+
+  if(item?.itemConsumable!==false){
+   state.inventory.delete(item.id);
+   state.selectedInventoryItemId=null;
+  }
+
   refreshInventory();
-  state.previewItemUseTriggerIds=[];
-  clearPreviewBranchTimers();
+
+  // 他のアイテム使用ノードの待機を維持する
+  // 同じ接続先も再度実行できるようにする
+  for(const connection of state.connections){
+   if(connection.from===trigger.id){
+    previewVisited.delete(connection.to);
+   }
+  }
+
   previewOutgoing(trigger.id);
   return;
  }
