@@ -664,3 +664,16 @@ background:#f2f2f2;
 .option-choice-row{display:flex;align-items:center;gap:6px;margin:8px 0}
 .option-choice-row span{font-size:12px;white-space:nowrap}
 .option-choice-row input{min-width:0;flex:1}
+
+/* Inventory: a reusable overlay above the 360-degree scene. */
+.inventory-button{position:absolute;top:14px;right:56px;z-index:8;background:#202530;color:white;padding:9px 14px;border:1px solid #758095;border-radius:7px;cursor:pointer}
+.inventory-button.hidden,.inventory-overlay.hidden{display:none}
+.inventory-overlay{position:absolute;inset:8% 8%;z-index:12;background:rgba(22,26,33,.96);border:1px solid #8b96a7;border-radius:10px;padding:16px;color:white;display:flex;flex-direction:column;gap:12px}
+.inventory-header{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:bold}
+.inventory-header button{background:transparent;border:0;color:white;font-size:26px;cursor:pointer}
+.inventory-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;overflow-y:auto}
+.inventory-item{background:#3b4452;color:white;border:1px solid #758094;border-radius:6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:7px;min-width:0}
+.inventory-item.active{border-color:#ffa533;box-shadow:0 0 0 2px #ffa533 inset}
+.inventory-item img{width:100%;aspect-ratio:1;object-fit:contain}
+.inventory-item span{font-size:12px;overflow-wrap:anywhere}
+.inventory-details{font-size:13px;line-height:1.6}

@@ -92,6 +92,8 @@ const previewMessage=document.getElementById('previewMessage');
 const dialogueOverlay=document.getElementById('dialogueOverlay');
 const dialogueText=document.getElementById('dialogueText');
 const optionChoicesOverlay=document.getElementById('optionChoicesOverlay');
+const inventoryOverlay=document.getElementById('inventoryOverlay');
+const inventoryButton=document.getElementById('inventoryButton');
 const fadeOverlay=document.getElementById('fadeOverlay');
 const gameViewport=document.getElementById('gameViewport');
 const media2DLayer=document.getElementById('media2DLayer');
@@ -120,6 +122,10 @@ previewClickTriggerIds:[],
 previewFrameInIds:[],
 previewDialogueNodeId:null,
 previewDialoguePageIndex:0,
+previewItemUseTriggerIds:[],
+inventory:new Set(),
+selectedInventoryItemId:null,
+inventoryEnabled:false,
 dialogueTypeTimer:null,
 effectAnimationFrame:null,
 cameraAnimationFrame:null,
@@ -294,6 +300,11 @@ frameInRedo:[],
 dialoguePages:[],
 dialogueEditIndex:0,
 optionChoices:[],
+itemName:'',
+itemDescription:'',
+itemThumbnailMediaId:null,
+itemConsumable:true,
+itemUseTargetId:null,
 optionOwnerId:null,
 optionChoiceId:null,
 dialogueView:{yaw:0,pitch:0,zoom:1,initialized:false},
@@ -408,6 +419,9 @@ node.type==='click'?'クリック':
 node.type==='frameIn'?'フレームイン':
 node.type==='dialogue'?'ダイアローグ':
 node.type==='option'?'オプション':
+node.type==='itemAcquire'?'アイテム取得':
+node.type==='inventory'?'インベントリ表示':
+node.type==='itemUse'?'アイテム使用':
 node.type==='optionChoice'?'選択肢':
 node.type==='media2d'?'2Dメディア':
 node.type==='fadeIn'?'フェードイン':
@@ -425,6 +439,9 @@ node.type==='click'?'範囲クリック':
 node.type==='frameIn'?'カメラ範囲トリガー':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='option'?'質問文と選択肢':
+node.type==='itemAcquire'?(node.itemName||'アイテム名未設定'):
+node.type==='inventory'?'所持アイテム一覧':
+node.type==='itemUse'?'選択アイテムを使用':
 node.type==='optionChoice'?(getNode(node.optionOwnerId)?.optionChoices?.find(c=>c.id===node.optionChoiceId)?.text||'選択肢'):
 node.type==='media2d'?'画像・動画を重ねて表示':
 node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
@@ -749,6 +766,9 @@ settingsPanel.innerHTML=`<div class="settings-title">選択肢</div><div class="
 return;
 }
 if(node.type==='option'){renderOptionSettings(node);return;}
+if(node.type==='itemAcquire'){renderItemAcquireSettings(node);return;}
+if(node.type==='inventory'){settingsPanel.innerHTML='<div class="settings-title">インベントリ表示</div><div class="settings-empty">このノードを実行すると、ゲーム画面にインベントリボタンが表示されます。取得したアイテムを一覧表示できます。</div>';return;}
+if(node.type==='itemUse'){renderItemUseSettings(node);return;}
 if(node.type==='media2d'){
 renderMedia2DNodeSettings(node);
 return;
@@ -940,6 +960,83 @@ choice.text=input.value.slice(0,60);renderNodes();
 settingsPanel.querySelectorAll('[data-choice-delete]').forEach(button=>button.addEventListener('click',()=>removeOptionChoice(node,button.dataset.choiceDelete)));
 }
 
+// Items share dialogue appearance and click-region editing instead of duplicating them.
+function getInventoryItem(id){return getNode(id)?.type==='itemAcquire'?getNode(id):null;}
+function itemThumbnail(node){
+ const media=mediaLibrary.find(m=>m.id===node.itemThumbnailMediaId&&(m.fileType==='png'||m.fileType==='jpg'));
+ return media?.image?.src||media?.url||'';
+}
+function itemDisplayName(node){return node?.itemName?.trim()||'アイテム';}
+function renderItemAcquireSettings(node){
+ if(!Array.isArray(node.dialoguePages))node.dialoguePages=[''];
+ const source=findPreviousClickMediaNode(node.id);
+ ensureDialogueView(node,source);
+ node.dialoguePages=[node.itemDescription||''];
+ node.dialogueSpeaker=node.itemName||'';
+ node.dialogueThumbnailMediaId=node.itemThumbnailMediaId||null;
+ const candidates=mediaLibrary.filter(m=>['png','jpg'].includes(m.fileType)&&m.width===m.height);
+ const options='<option value="">未設定</option>'+candidates.map(m=>`<option value="${m.id}" ${m.id===node.itemThumbnailMediaId?'selected':''}>${escapeHtml(m.fileName)}</option>`).join('');
+ settingsPanel.innerHTML=`<div class="settings-title">アイテム取得</div>
+ <div class="setting-group"><div class="setting-label">アイテム名</div><input id="itemNameInput" class="number-input" maxlength="40" value="${escapeHtml(node.itemName||'').replace(/"/g,'&quot;')}"></div>
+ <div class="setting-group"><div class="setting-label">サムネイル（正方形）</div><select id="itemThumbnailInput" class="number-input">${options}</select></div>
+ <div class="setting-group"><div class="setting-label">説明</div><textarea id="itemDescriptionInput" class="dialogue-textarea" maxlength="60">${escapeHtml(node.itemDescription||'')}</textarea></div>
+ <div class="setting-group"><label><input type="checkbox" id="itemConsumableInput" ${node.itemConsumable!==false?'checked':''}> 使用後に消える</label></div>
+ <div class="setting-group"><div class="dialogue-preview-wrap"><canvas id="dialoguePreviewCanvas" class="world-preview" width="320" height="320"></canvas><div id="dialoguePreviewBox" class="dialogue-preview-box"><div id="dialoguePreviewSpeaker" class="dialogue-speaker"></div><div class="dialogue-panel-content"><img id="dialoguePreviewThumbnail" class="dialogue-panel-thumbnail hidden" alt=""><div id="dialoguePreviewText" class="dialogue-preview-text"></div></div></div></div></div>`;
+ const addButton=document.createElement('button');addButton.id='addDialogueBtn';addButton.hidden=true;settingsPanel.append(addButton);
+ setupDialogueTriggerPreview(node,source);addButton.remove();
+ const sync=()=>{
+ node.dialoguePages=[node.itemDescription||''];node.dialogueSpeaker=node.itemName||'';
+ node.dialogueThumbnailMediaId=node.itemThumbnailMediaId||null;
+ document.getElementById('dialoguePreviewText').textContent=node.itemDescription||'';
+ document.getElementById('dialoguePreviewSpeaker').textContent=node.itemName||'';
+ const img=document.getElementById('dialoguePreviewThumbnail');const src=itemThumbnail(node);
+ img.classList.toggle('hidden',!src);if(src)img.src=src;
+ };
+ document.getElementById('itemNameInput').addEventListener('input',e=>{node.itemName=e.target.value;sync();renderNodes();});
+ document.getElementById('itemDescriptionInput').addEventListener('input',e=>{node.itemDescription=e.target.value;sync();});
+ document.getElementById('itemThumbnailInput').addEventListener('change',e=>{node.itemThumbnailMediaId=e.target.value||null;sync();});
+ document.getElementById('itemConsumableInput').addEventListener('change',e=>{node.itemConsumable=e.target.checked;});
+ sync();
+}
+function renderItemUseSettings(node){
+ const source=findPreviousClickMediaNode(node.id);
+ const items=state.nodes.filter(n=>n.type==='itemAcquire');
+ const options='<option value="">使用するアイテムを選択</option>'+items.map(n=>`<option value="${n.id}" ${node.itemUseTargetId===n.id?'selected':''}>${escapeHtml(itemDisplayName(n))}</option>`).join('');
+ if(!source){settingsPanel.innerHTML='<div class="settings-title">アイテム使用</div><div class="settings-empty">使用する背景メディアを前に接続してください。</div>';return;}
+ settingsPanel.innerHTML=`<div class="settings-title">アイテム使用</div><div class="setting-group"><div class="setting-label">使用するアイテム</div><select id="itemUseSelect" class="number-input">${options}</select></div>
+ <div class="setting-group"><div class="setting-label">クリック範囲を指定</div><div class="click-preview-wrap"><canvas id="clickPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="clickLassoCanvas" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="clickLassoAddBtn" class="click-lasso-mode" type="button">＋</button><button id="clickLassoSubtractBtn" class="click-lasso-mode" type="button">－</button></div></div><div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ：回転 / Z＋ドラッグ：ズーム</div></div>
+ <div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
+ document.getElementById('itemUseSelect').addEventListener('change',e=>{node.itemUseTargetId=e.target.value||null;});
+ setupClickTriggerPreview(node,source);
+}
+function refreshInventory(){
+ inventoryButton.classList.toggle('hidden',!state.inventoryEnabled);
+ const ids=[...state.inventory].filter(id=>getInventoryItem(id));
+ inventoryOverlay.replaceChildren();
+ const header=document.createElement('div');header.className='inventory-header';header.textContent='インベントリ';
+ const close=document.createElement('button');close.textContent='×';close.type='button';close.addEventListener('click',()=>inventoryOverlay.classList.add('hidden'));header.append(close);
+ inventoryOverlay.append(header);
+ const grid=document.createElement('div');grid.className='inventory-grid';
+ for(const id of ids){
+ const item=getInventoryItem(id);const b=document.createElement('button');b.type='button';b.className='inventory-item';
+ b.classList.toggle('active',state.selectedInventoryItemId===id);
+ const thumb=itemThumbnail(item);
+ if(thumb){const img=document.createElement('img');img.src=thumb;img.alt='';b.append(img);}
+ const title=document.createElement('span');title.textContent=itemDisplayName(item);b.append(title);
+ b.title=item.itemDescription||'';
+ b.addEventListener('click',()=>{state.selectedInventoryItemId=state.selectedInventoryItemId===id?null:id;inventoryOverlay.classList.add('hidden');refreshInventory();});
+ grid.append(b);
+ }
+ inventoryOverlay.append(grid);
+ const details=document.createElement('div');details.className='inventory-details';
+ const selected=getInventoryItem(state.selectedInventoryItemId);
+ details.textContent=selected?(selected.itemDescription||itemDisplayName(selected)):'アイテムを選択すると、使用対象に指定できます。';
+ inventoryOverlay.append(details);
+}
+inventoryButton.addEventListener('click',()=>{
+ if(!state.inventoryEnabled)return;
+ refreshInventory();inventoryOverlay.classList.toggle('hidden');
+});
 // 2D media uses normalized viewport coordinates and independent PC/mobile layouts.
 function getMedia2DLayout(node){
 if(!node.media2DLayouts)node.media2DLayouts={pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}};
@@ -5448,10 +5545,11 @@ renderNodes();
 renderSettings();
 }
 
-playBtn.addEventListener('click',startPreview);
+playBtn.addEventListener('click',()=>startPreview());
 closePreviewBtn.addEventListener('click',stopPreview);
 
 gameViewport.addEventListener('click',e=>{
+if(e.target.closest('#inventoryButton, #inventoryOverlay'))return;
 if(gamePreview.classList.contains('hidden'))return;
 if(!state.previewDialogueNodeId)return;
 if(getNode(state.previewDialogueNodeId)?.type==='option')return;
@@ -5566,13 +5664,28 @@ gameCanvas.releasePointerCapture(e.pointerId);
 
 gamePreviewDrag=null;
 
-if(moved||state.previewClickTriggerIds.length===0)return;
+if(moved)return;
 
 const world=getActivePreviewWorld();
 if(!world)return;
 
 const animation=state.previewAnimation;
-
+// An equipped inventory item takes precedence over ordinary click triggers.
+if(state.selectedInventoryItemId){
+ for(const id of [...state.previewItemUseTriggerIds]){
+  const trigger=getNode(id);
+  if(!trigger||trigger.itemUseTargetId!==state.selectedInventoryItemId)continue;
+  if(!isClickTargetHit(trigger,world,e.clientX,e.clientY))continue;
+  const item=getInventoryItem(state.selectedInventoryItemId);
+  if(item?.itemConsumable!==false){state.inventory.delete(item.id);state.selectedInventoryItemId=null;}
+  refreshInventory();
+  state.previewItemUseTriggerIds=[];
+  clearPreviewBranchTimers();
+  previewOutgoing(trigger.id);
+  return;
+ }
+ return;
+}
 for(const triggerId of state.previewClickTriggerIds){
 const trigger=getNode(triggerId);
 if(!trigger)continue;
@@ -5643,10 +5756,12 @@ previewSceneEpoch++;
 clearPreviewBranchTimers();
 previewVisited.clear();
 state.previewClickTriggerIds=[];
+state.previewItemUseTriggerIds=[];
 state.previewFrameInIds=[];
 state.previewDialogueNodeId=null;
 optionChoicesOverlay.classList.add('hidden');
 optionChoicesOverlay.replaceChildren();
+inventoryOverlay.classList.add('hidden');
 clearMedia2DLayer();
 stopDialogueTyping();
 dialogueOverlay.classList.add('hidden');
@@ -5665,10 +5780,7 @@ const targets=state.connections
 .filter(target=>{
 if(!sourceIsMedia)return true;
 
-const targetEndsScene=
-target.type==='world'||
-target.type==='animation'||
-target.type==='start';
+const targetEndsScene=target.type==='world'||target.type==='animation'||target.type==='start';
 
 if(phase==='end')return targetEndsScene;
 
@@ -5676,11 +5788,7 @@ return !targetEndsScene;
 });
 
 for(const target of targets){
-if(target.type==='start'&&sourceIsMedia&&phase==='end'){
-startPreview();
-return;
-}
-
+if(sourceIsMedia&&phase==='end'&&target.type==='start'){startPreview(true);return;}
 showPreviewNode(target.id);
 }
 }
@@ -5714,8 +5822,14 @@ function canUsePreviewClick(node){
 return Boolean(node.clickTarget?.initialized||Object.values(node.clickFrameRegions||{}).some(regions=>Array.isArray(regions)&&regions.some(r=>r.mode==='add'&&r.points?.length>=3)));
 }
 
-function startPreview(){
+function startPreview(preserveInventory=false){
+if(!preserveInventory){
+state.inventory=new Set();
+state.selectedInventoryItemId=null;
+state.inventoryEnabled=false;
+}
 cancelPreviewScene();
+refreshInventory();
 stopEffectAnimation();
 state.previewNodeId=null;
 state.lastCameraView=null;
@@ -5733,6 +5847,8 @@ previewOutgoing('start');
 
 
 function stopPreview(){
+state.inventoryEnabled=false;
+refreshInventory();
 cancelPreviewScene();
 stopEffectAnimation();
 state.previewNodeId=null;
@@ -6426,7 +6542,7 @@ c=>c.from===node.id&&c.to==='start'
 );
 
 if(returnToStart){
-startPreview();
+startPreview(true);
 return;
 }
 
@@ -6528,6 +6644,23 @@ return;
 if(node.type==='time'){
 schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
 return;
+}
+if(node.type==='itemAcquire'){
+ if(!state.inventory.has(node.id))state.inventory.add(node.id);
+ refreshInventory();
+ node.dialoguePages=[node.itemDescription||''];node.dialogueSpeaker=node.itemName||'';
+ node.dialogueThumbnailMediaId=node.itemThumbnailMediaId||null;
+ state.previewDialogueNodeId=node.id;
+ showDialoguePage(node,0);
+ return;
+}
+if(node.type==='inventory'){
+ state.inventoryEnabled=true;refreshInventory();previewOutgoing(node.id);return;
+}
+if(node.type==='itemUse'){
+ if(!node.itemUseTargetId){return;}
+ if(!state.previewItemUseTriggerIds.includes(node.id))state.previewItemUseTriggerIds.push(node.id);
+ return;
 }
 if(node.type==='optionChoice'){previewOutgoing(node.id);return;}
 if(node.type==='option'){
