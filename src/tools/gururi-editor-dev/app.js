@@ -997,55 +997,24 @@ function deleteClickItemBranch(branch){
 }
 function ensureClickOtherBranch(owner){
  if(owner.type!=='click')return;
-
  const branches=clickBranches(owner);
- const itemBranches=branches.filter(
-  b=>b.clickBranchItemId!=='__other__'
- );
- const otherBranches=branches.filter(
-  b=>b.clickBranchItemId==='__other__'
- );
+ const itemBranches=branches.filter(b=>b.clickBranchItemId!=='__other__');
+ const otherBranches=branches.filter(b=>b.clickBranchItemId==='__other__');
 
- // アイテムが0個なら「その他」の分岐を削除
+ // 登録アイテムがない場合は「その他」の分岐を表示しない
  if(itemBranches.length===0){
-  const removedIds=new Set(otherBranches.map(b=>b.id));
-
-  state.nodes=state.nodes.filter(
-   n=>!removedIds.has(n.id)
-  );
-
-  state.connections=state.connections.filter(
-   c=>!removedIds.has(c.from)&&!removedIds.has(c.to)
-  );
-
-  if(removedIds.has(state.selectedNodeId)){
-   state.selectedNodeId=owner.id;
-  }
-
+  const ids=new Set(otherBranches.map(b=>b.id));
+  if(!ids.size)return;
+  state.nodes=state.nodes.filter(n=>!ids.has(n.id));
+  state.connections=state.connections.filter(c=>!ids.has(c.from)&&!ids.has(c.to));
+  if(ids.has(state.selectedNodeId))state.selectedNodeId=owner.id;
   return;
  }
 
- // すでに「その他」の分岐があれば何もしない
  if(otherBranches.length>0)return;
-
- // アイテムが1個以上ある場合だけ自動生成
- const branch={
-  id:uid('clickBranch'),
-  type:'clickBranch',
-  clickBranchOwnerId:owner.id,
-  clickBranchItemId:'__other__',
-  clickBranchOnce:false,
-  clickBranchConsume:false,
-  x:owner.x+250,
-  y:owner.y+95*(branches.length+1)
- };
-
+ const branch={id:uid('clickBranch'),type:'clickBranch',clickBranchOwnerId:owner.id,clickBranchItemId:'__other__',clickBranchOnce:false,clickBranchConsume:false,x:owner.x+250,y:owner.y+95*(branches.length+1)};
  state.nodes.push(branch);
- state.connections.push({
-  id:uid('conn'),
-  from:owner.id,
-  to:branch.id
- });
+ state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
 }
 function renderClickItemBranchSettings(node){
  const group=document.createElement('div');
@@ -1092,14 +1061,26 @@ function renderClickItemBranchSettings(node){
   remove.addEventListener('click',()=>deleteClickItemBranch(branch));
   row.append(select,remove);group.append(row);
  }
- const add=document.createElement('button');
- add.type='button';add.className='click-item-branch-add';
- add.textContent='＋ アイテムを追加';
- const available=items.find(item=>!clickBranches(node).some(b=>b.clickBranchItemId===item.id));
- add.disabled=!available;
- add.addEventListener('click',()=>{
-  const next=state.nodes.filter(n=>n.type==='itemAcquire').find(item=>!clickBranches(node).some(b=>b.clickBranchItemId===item.id));
-  if(next)addClickItemBranch(node,next.id);
+ // メディアの素材選択と同じく、選択した時点で分岐を追加する
+ const add=document.createElement('select');
+ add.className='number-input click-item-branch-add-select';
+ add.setAttribute('aria-label','アイテムを追加');
+ const placeholder=document.createElement('option');
+ placeholder.value='';
+ placeholder.textContent='アイテムを選択してください';
+ add.append(placeholder);
+
+ for(const item of items){
+  if(clickBranches(node).some(b=>b.clickBranchItemId===item.id))continue;
+  const option=document.createElement('option');
+  option.value=item.id;
+  option.textContent=itemDisplayName(item);
+  add.append(option);
+ }
+ add.disabled=add.options.length===1;
+ add.value='';
+ add.addEventListener('change',()=>{
+  if(add.value)addClickItemBranch(node,add.value);
  });
  group.append(add);
  settingsPanel.append(group);

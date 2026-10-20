@@ -757,3 +757,6 @@ flex-shrink:0;
 .click-item-branch-select{flex:1;min-width:0;width:0}
 .click-item-branch-remove{width:auto;min-width:52px;padding:0 10px;white-space:nowrap}
 .click-item-branch-add:disabled{opacity:.5;cursor:not-allowed}
+
+/* クリックノード：追加用アイテム選択欄 */
+.click-item-branch-add-select{display:block;width:100%;min-width:0;}
