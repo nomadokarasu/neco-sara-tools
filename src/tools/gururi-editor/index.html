@@ -15,8 +15,14 @@
 <button type="button" data-editor-home-lang="en" aria-pressed="false">English</button>
 </div>
 <header class="editor-home__header">
+<div id="editorHomeHero" class="editor-home__hero">
+<img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
+</div>
 <p class="editor-home__version">ver.0.1.0</p>
-<h1 class="editor-home__title" id="editorHomeTitle">ぐるりエディタ</h1>
+<h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
+<img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
+<img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
+</h1>
 </header>
 <div class="editor-home__intro">
 <p id="editorHomeDescription">ぐるりペイントで描いた素材を組み合わせて、インタラクティブ作品を制作できます。</p>
@@ -47,6 +53,7 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
+<span class="editor-version">ver.0.1.46</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
 </div>
 <div class="top-actions">
@@ -93,18 +100,20 @@
 </section>
 <div class="main-layout">
 <main id="workspace" class="workspace" tabindex="0" aria-label="ゲーム作業エリア">
+<div id="workspaceScene" class="workspace-scene">
 <svg id="connections" class="connections" aria-hidden="true"></svg>
 <div id="nodesLayer" class="nodes-layer"></div>
+</div>
 <div id="contextMenu" class="context-menu hidden" role="menu">
 <button type="button" class="menu-parent" data-menu="material">▶ 素材</button>
 <div id="materialMenu" class="submenu hidden">
 <button type="button" data-create="media">メディア</button>
-<button type="button" data-create="dialogue">ダイアローグ</button>
 </div>
 <button type="button" class="menu-parent" data-menu="trigger">▶ トリガー</button>
 <div id="triggerMenu" class="submenu hidden">
 <button type="button" data-create="time">時間</button>
 <button type="button" data-create="click">クリック</button>
+<button type="button" data-create="frameIn">フレームイン</button>
 </div>
 <button type="button" class="menu-parent" data-menu="effect">▶ 効果</button>
 <div id="effectMenu" class="submenu hidden">
@@ -113,7 +122,17 @@
 </div>
 <button type="button" class="menu-parent" data-menu="camera">▶ カメラ</button>
 <div id="cameraMenu" class="submenu hidden">
-<button type="button" data-create="pan">パン</button>
+<button type="button" data-create="keyframe">キーフレーム</button>
+</div>
+<button type="button" class="menu-parent" data-menu="panel">▶ UI</button>
+<div id="panelMenu" class="submenu hidden">
+<button type="button" disabled title="今後実装予定">ボタン（準備中）</button>
+<button type="button" class="menu-parent" data-submenu="uiPanel">▶ パネル</button>
+<div id="uiPanelMenu" class="submenu hidden">
+<button type="button" data-create="dialogue">ダイアローグ</button>
+<button type="button" disabled title="今後実装予定">オプション（準備中）</button>
+<button type="button" data-create="media2d">2Dメディア</button>
+</div>
 </div>
 </div>
 </main>
@@ -127,6 +146,7 @@
 <button id="closePreviewBtn" class="close-preview" type="button">×</button>
 <div id="gameViewport" class="game-viewport">
 <canvas id="gameCanvas"></canvas>
+<div id="media2DLayer" class="media2d-layer"></div>
 <div id="fadeOverlay" class="fade-overlay"></div>
 <div id="dialogueOverlay" class="game-dialogue hidden">
 <div id="dialogueText" class="game-dialogue-text"></div>
@@ -137,7 +157,7 @@
 </div>
 </div>
 <input id="gartFileInput" type="file" accept=".gart" hidden>
-<input id="worldFileInput" type="file" accept=".png,image/png,.mp4,video/mp4" multiple hidden>
+<input id="worldFileInput" type="file" accept=".png,.jpg,.jpeg,.mp4,image/png,image/jpeg,video/mp4" multiple hidden>
 <input id="animationFileInput" type="file" accept=".mp4,video/mp4" multiple hidden>
 <script src="app.js"></script>
 <script>
@@ -167,22 +187,40 @@ console.warn('お知らせの取得に失敗しました',error);
 }
 
 function renderCards(target,items){
-target.replaceChildren();
-for(const item of items){
-const card=document.createElement(item.url?'a':'div');
-card.className='editor-home__item';
-if(item.url){card.href=item.url;card.target='_blank';card.rel='noopener noreferrer';}
-const title=document.createElement('strong');title.textContent=item.title;card.append(title);
-if(item.description){const detail=document.createElement('span');detail.textContent=item.description;card.append(detail);}
-target.append(card);
-}
+ target.replaceChildren();
+ const type=target.id==='editorHomeNoticeList'?'notice':target.id==='editorHomeLinks'?'link':'simple';
+ for(const item of items){
+  const card=document.createElement(item.url?'a':'div');
+  card.className='editor-home__item editor-home__item--'+type+(item.url?'':' is-disabled');
+  if(item.url){card.href=item.url;card.target=item.newTab?'_blank':'_self';if(item.newTab)card.rel='noopener noreferrer';}
+  if(type==='link'){
+   if(item.thumbnail){
+    const thumb=document.createElement('span');thumb.className='editor-home__link-thumbnail';
+    const img=document.createElement('img');img.src=item.thumbnail;img.alt='';img.loading='lazy';
+    img.addEventListener('error',()=>thumb.remove());thumb.append(img);card.append(thumb);
+   }
+   const text=document.createElement('span');text.className='editor-home__link-text';
+   const title=document.createElement('span');title.className='editor-home__link-title';title.textContent=item.title;
+   text.append(title);
+   const desc=document.createElement('span');desc.className='editor-home__link-description';desc.textContent=item.description||'';text.append(desc);
+   card.append(text);
+  }else if(type==='notice'){
+   card.textContent=item.title;
+  }else{
+   const title=document.createElement('span');title.className='editor-home__simple-title';title.textContent=item.title;card.append(title);
+   if(item.description){const desc=document.createElement('span');desc.className='editor-home__simple-description';desc.textContent=item.description;card.append(desc);}
+  }
+  target.append(card);
+ }
 }
 function setLanguage(lang){
 const t=data[lang]||data.ja;
 const content=homeContent;
 const texts=content?.languages?.[lang]||{};
-document.getElementById('editorHomeTitle').textContent=texts.title||t.title;
+document.documentElement.lang=lang;
+document.getElementById('editorHomeTitle').setAttribute('aria-label',texts.title||t.title);
 document.getElementById('editorHomeDescription').textContent=texts.description||t.description;
+
 start.textContent=texts.startButton||t.start;
 document.getElementById('editorHomeImportantHeading').textContent=texts.importantHeading||t.important;
 document.getElementById('editorHomeNoticeHeading').textContent=texts.noticeHeading||t.notice;
@@ -232,7 +270,8 @@ const localized=item[lang]||item.ja||{};
 return {
 title:localized.title||localized.text||'',
 description:localized.description||'',
-url:localized.url||item.url||''
+url:localized.url||item.url||'',
+thumbnail:item.thumbnail||''
 };
 }).filter(item=>item.title.trim())
 :[];

@@ -1,11 +1,85 @@
 const workspace=document.getElementById('workspace');
+const workspaceScene=document.getElementById('workspaceScene');
 const nodesLayer=document.getElementById('nodesLayer');
 const connectionsSvg=document.getElementById('connections');
+
+const workspaceCamera={
+x:0,
+y:0,
+scale:1,
+drag:null
+};
+
+function updateWorkspaceCamera(){
+const camera=workspaceCamera;
+workspaceScene.style.transform=`translate(${camera.x}px,${camera.y}px) scale(${camera.scale})`;
+workspace.style.backgroundPosition=`${camera.x}px ${camera.y}px`;
+workspace.style.backgroundSize=`${20*camera.scale}px ${20*camera.scale}px`;
+}
+
+function screenToWorkspace(x,y){
+return{
+x:(x-workspaceCamera.x)/workspaceCamera.scale,
+y:(y-workspaceCamera.y)/workspaceCamera.scale
+};
+}
+
+function workspaceToScreen(x,y){
+return{
+x:x*workspaceCamera.scale+workspaceCamera.x,
+y:y*workspaceCamera.scale+workspaceCamera.y
+};
+}
+
+function getWorkspaceTool(e){
+if(e.button===1)return 'pan';
+if(e.button!==0)return null;
+if(state.pressedKeys.has(' '))return 'pan';
+if(state.pressedKeys.has('z'))return 'zoom';
+return null;
+}
+
+workspace.addEventListener('auxclick',e=>{
+if(e.button===1)e.preventDefault();
+});
+
+workspace.addEventListener('mousedown',e=>{
+if(e.button===1)e.preventDefault();
+});
+
+function finishWorkspaceCameraDrag(){
+workspaceCamera.drag=null;
+workspace.classList.remove('is-panning','is-zooming');
+}
+
+function startWorkspaceCameraDrag(e){
+const mode=getWorkspaceTool(e);
+if(!mode)return false;
+
+workspaceCamera.drag={
+mode,
+pointerId:e.pointerId,
+startX:e.clientX,
+startY:e.clientY,
+x:workspaceCamera.x,
+y:workspaceCamera.y,
+scale:workspaceCamera.scale
+};
+
+workspace.classList.toggle('is-panning',mode==='pan');
+workspace.classList.toggle('is-zooming',mode==='zoom');
+
+workspace.setPointerCapture(e.pointerId);
+e.preventDefault();
+e.stopPropagation();
+return true;
+}
 const contextMenu=document.getElementById('contextMenu');
 const materialMenu=document.getElementById('materialMenu');
 const triggerMenu=document.getElementById('triggerMenu');
 const effectMenu=document.getElementById('effectMenu');
 const cameraMenu=document.getElementById('cameraMenu');
+const panelMenu=document.getElementById('panelMenu');
 const settingsPanel=document.getElementById('settingsPanel');
 const worldFileInput=document.getElementById('worldFileInput');
 const animationFileInput=document.getElementById('animationFileInput');
@@ -18,6 +92,7 @@ const dialogueOverlay=document.getElementById('dialogueOverlay');
 const dialogueText=document.getElementById('dialogueText');
 const fadeOverlay=document.getElementById('fadeOverlay');
 const gameViewport=document.getElementById('gameViewport');
+const media2DLayer=document.getElementById('media2DLayer');
 const pcModeBtn=document.getElementById('pcModeBtn');
 const mobileModeBtn=document.getElementById('mobileModeBtn');
 const ratioWidthInput=document.getElementById('ratioWidthInput');
@@ -27,6 +102,7 @@ const state={
 nodes:[],
 connections:[],
 selectedNodeId:null,
+selectedNodeIds:new Set(),
 selectedConnectionId:null,
 menuPoint:{x:0,y:0},
 connecting:null,
@@ -37,7 +113,9 @@ previewTimer:null,
 previewNodeId:null,
 previewWorldNodeId:null,
 previewAnimation:null,
+panVideo:null,
 previewClickTriggerIds:[],
+previewFrameInIds:[],
 previewDialogueNodeId:null,
 previewDialoguePageIndex:0,
 dialogueTypeTimer:null,
@@ -130,15 +208,17 @@ ratioWidthInput.addEventListener('change',updateActiveLayout);
 ratioHeightInput.addEventListener('change',updateActiveLayout);
 
 window.addEventListener('keydown',e=>{
+const target=e.target;
+const typing=target instanceof HTMLElement&&(
+target.isContentEditable||
+['INPUT','TEXTAREA','SELECT'].includes(target.tagName)
+);
+
+if(typing)return;
+
 state.pressedKeys.add(e.key.toLowerCase());
 
-if(
-e.code==='Space'&&
-state.selectedNodeId&&
-getNode(state.selectedNodeId)?.type==='click'&&
-document.activeElement?.tagName!=='INPUT'&&
-document.activeElement?.tagName!=='TEXTAREA'
-){
+if(e.code==='Space'){
 e.preventDefault();
 }
 });
@@ -149,9 +229,11 @@ state.pressedKeys.delete(e.key.toLowerCase());
 
 window.addEventListener('blur',()=>{
 state.pressedKeys.clear();
+finishWorkspaceCameraDrag();
 });
 
 function addNode(type,x,y){
+const editBefore=editorSnapshot();
 const node={
 id:uid(type),
 type,
@@ -173,9 +255,22 @@ mobile:{yaw:0,pitch:0,zoom:1}
 timeSeconds:1,
 clickTarget:{yaw:0,pitch:0,width:0.5,height:0.35,initialized:false},
 clickView:{yaw:0,pitch:0,zoom:1,initialized:false},
+clickInheritRegions:true,
+frameInMode:'contain',
+frameInTool:'target',
+frameInView:{yaw:0,pitch:0,zoom:1,initialized:false},
+frameInReferenceKey:null,
+frameInTarget:[],
+frameInFrame:[],
+frameInUndo:[],
+frameInRedo:[],
 dialoguePages:[],
 dialogueEditIndex:0,
 dialogueView:{yaw:0,pitch:0,zoom:1,initialized:false},
+dialogueThumbnail:null,
+dialogueFontSize:24,
+dialogueSpeaker:'',
+dialoguePanelHeights:{pc:20,mobile:20},
 animation:{
 fileName:'',
 raw:null,
@@ -184,11 +279,19 @@ loop:false
 effectSeconds:1,
 panSeconds:3,
 panPath:[],
+panKeyframes:[],
+cameraKeyframes:{pc:[],mobile:[]},
+keyframeViews:{pc:[],mobile:[]},
+worldDuration:3,
+worldInfiniteLoop:false,
 panView:{yaw:0,pitch:0,zoom:1,initialized:false},
 panUndoStack:[],
-panRedoStack:[]
+panRedoStack:[],
+media2DId:null,
+media2DLayouts:{pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}}
 };
 state.nodes.push(node);
+commitEditorHistory(editBefore);
 renderNodes();
 selectNode(node.id);
 return node;
@@ -263,7 +366,7 @@ function renderNodes(){
 nodesLayer.innerHTML='';
 for(const node of state.nodes){
 const el=document.createElement('div');
-el.className=`node ${node.type==='start'?'start-node':''} ${state.selectedNodeId===node.id?'selected':''}`;
+el.className=`node ${node.type==='start'?'start-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''}`;
 el.dataset.id=node.id;
 el.style.left=`${node.x}px`;
 el.style.top=`${node.y}px`;
@@ -272,10 +375,13 @@ node.type==='start'?'START':
 node.type==='media'||node.type==='world'||node.type==='animation'?'メディア':
 node.type==='time'?'時間':
 node.type==='click'?'クリック':
+node.type==='frameIn'?'フレームイン':
 node.type==='dialogue'?'ダイアローグ':
+node.type==='media2d'?'2Dメディア':
 node.type==='fadeIn'?'フェードイン':
 node.type==='fadeOut'?'フェードアウト':
 node.type==='pan'?'パン':
+node.type==='keyframe'?'キーフレーム':
 '不明';
 
 const body=
@@ -284,34 +390,127 @@ node.type==='world'?(node.world.fileName||'素材未設定'):
 node.type==='animation'?(node.animation.fileName||'素材未設定'):
 node.type==='time'?`${node.timeSeconds} 秒`:
 node.type==='click'?'範囲クリック':
+node.type==='frameIn'?'カメラ範囲トリガー':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
+node.type==='media2d'?'画像・動画を重ねて表示':
 node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
+node.type==='keyframe'?'カメラワーク':
 '開始';
-el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body">${body}</div><div class="port output" data-port="output"></div>`;
+el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div><div class="port output" data-port="output"></div>`;
+
+const bodyEl=el.querySelector('.node-body');
+bodyEl.textContent=node.customBody===undefined?body:node.customBody;
+
 attachNodeEvents(el,node);
 nodesLayer.appendChild(el);
 }
 requestAnimationFrame(renderConnections);
 }
 
+function attachNodeBodyEditor(el,node){
+const body=el.querySelector('.node-body');
+if(!body)return;
+
+body.addEventListener('dblclick',e=>{
+e.preventDefault();
+e.stopPropagation();
+
+if(body.querySelector('textarea'))return;
+
+const originalText=body.textContent;
+const editor=document.createElement('textarea');
+
+editor.className='node-body-editor';
+editor.maxLength=160;
+editor.value=originalText;
+editor.rows=1;
+editor.placeholder='文章を入力';
+
+body.textContent='';
+body.appendChild(editor);
+
+const resize=()=>{
+editor.style.height='auto';
+editor.style.height=`${editor.scrollHeight}px`;
+requestAnimationFrame(renderConnections);
+};
+
+let finished=false;
+
+const finish=save=>{
+if(finished)return;
+finished=true;
+
+if(save){
+const value=editor.value.trim();
+node.customBody=value||undefined;
+}
+
+body.textContent=save
+?(node.customBody===undefined?originalText:node.customBody)
+:originalText;
+
+requestAnimationFrame(renderConnections);
+};
+
+editor.addEventListener('pointerdown',event=>{
+event.stopPropagation();
+});
+
+editor.addEventListener('click',event=>{
+event.stopPropagation();
+});
+
+editor.addEventListener('dblclick',event=>{
+event.stopPropagation();
+});
+
+editor.addEventListener('input',resize);
+
+editor.addEventListener('keydown',event=>{
+event.stopPropagation();
+
+if(event.key==='Escape'){
+event.preventDefault();
+finish(false);
+return;
+}
+
+if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){
+event.preventDefault();
+finish(true);
+}
+});
+
+editor.addEventListener('blur',()=>{
+finish(true);
+});
+
+editor.focus();
+editor.select();
+resize();
+});
+}
+
 function attachNodeEvents(el,node){
 el.addEventListener('pointerdown',e=>{
+if(getWorkspaceTool(e))return;
+if(e.button!==0)return;
+
 const port=e.target.closest('.port');
 if(port){
-if(port.dataset.port==='output') startConnection(e,node.id,el);
+if(port.dataset.port==='output')startConnection(e,node.id,el);
 return;
 }
 
 state.selectedNodeId=node.id;
+state.selectedNodeIds.clear();
 state.selectedConnectionId=null;
 
 nodesLayer.querySelectorAll('.node').forEach(nodeEl=>{
 nodeEl.classList.toggle('selected',nodeEl.dataset.id===node.id);
 });
-
-renderConnections();
-renderSettings();
 
 state.dragging={
 id:node.id,
@@ -324,24 +523,16 @@ originY:node.y
 
 el.setPointerCapture(e.pointerId);
 e.preventDefault();
+
+renderConnections();
+renderSettings();
 });
 
 el.addEventListener('pointermove',e=>{
 if(!state.dragging||state.dragging.id!==node.id)return;
 
-const rect=workspace.getBoundingClientRect();
-const nextX=state.dragging.originX+(e.clientX-state.dragging.startX);
-const nextY=state.dragging.originY+(e.clientY-state.dragging.startY);
-
-node.x=Math.max(
-0,
-Math.min(rect.width-el.offsetWidth,nextX)
-);
-
-node.y=Math.max(
-0,
-Math.min(rect.height-el.offsetHeight,nextY)
-);
+node.x=state.dragging.originX+(e.clientX-state.dragging.startX)/workspaceCamera.scale;
+node.y=state.dragging.originY+(e.clientY-state.dragging.startY)/workspaceCamera.scale;
 
 el.style.left=`${node.x}px`;
 el.style.top=`${node.y}px`;
@@ -372,6 +563,7 @@ state.dragging=null;
 
 function selectNode(id){
 state.selectedNodeId=id;
+state.selectedNodeIds.clear();
 state.selectedConnectionId=null;
 renderNodes();
 renderSettings();
@@ -384,6 +576,56 @@ cleanupAnimationSettingsPreview=null;
 }
 
 const node=getNode(state.selectedNodeId);
+
+if(node){
+queueMicrotask(()=>{
+if(state.selectedNodeId!==node.id)return;
+if(settingsPanel.querySelector('#nodeMemoInput'))return;
+
+const group=document.createElement('div');
+group.className='setting-group';
+
+const label=document.createElement('div');
+label.className='setting-label';
+label.textContent='メモ';
+
+const textarea=document.createElement('textarea');
+textarea.id='nodeMemoInput';
+textarea.className='dialogue-textarea';
+textarea.maxLength=160;
+textarea.rows=3;
+textarea.placeholder='ノードに表示する文章を入力';
+textarea.value=node.customBody||'';
+
+const counter=document.createElement('div');
+counter.className='dialogue-count';
+counter.textContent=`${textarea.value.length}/160`;
+
+textarea.addEventListener('input',()=>{
+node.customBody=textarea.value.length>0?textarea.value:undefined;
+counter.textContent=`${textarea.value.length}/160`;
+
+const nodeEl=Array.from(nodesLayer.querySelectorAll('.node')).find(el=>el.dataset.id===node.id);
+const bodyEl=nodeEl?.querySelector('.node-body');
+
+if(bodyEl){
+if(node.customBody!==undefined){
+bodyEl.textContent=node.customBody;
+}else{
+renderNodes();
+}
+}
+
+requestAnimationFrame(renderConnections);
+});
+
+group.appendChild(label);
+group.appendChild(textarea);
+group.appendChild(counter);
+settingsPanel.appendChild(group);
+});
+}
+
 if(!node){settingsPanel.innerHTML='<div class="settings-empty">ノードを選択してください</div>';return}
 if(node.type==='start'){
 settingsPanel.innerHTML='<div class="settings-title">START</div><div class="settings-empty">ゲーム開始地点です。</div>';
@@ -412,25 +654,68 @@ return;
 }
 
 if(node.type==='pan'){
-const previousWorld=findPreviousWorldNode(node.id);
+const previousWorld=findPreviousClickMediaNode(node.id);
 
 if(!previousWorld){
-settingsPanel.innerHTML='<div class="settings-title">パン</div><div class="settings-empty">このノードより前にビューノードを接続してください。</div>';
+settingsPanel.innerHTML='<div class="settings-title">パン</div><div class="settings-empty">このノードより前にビューまたはアニメーションノードを接続してください。</div>';
 return;
 }
 
-settingsPanel.innerHTML=`<div class="settings-title">パン</div><div class="setting-group"><div class="setting-label">カメラ経路</div><div class="pan-preview-wrap"><canvas id="panPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="panPathCanvas" class="pan-path-canvas" width="320" height="320"></canvas></div><div class="pan-help">ドラッグ：経路描画 / 中クリック＋ドラッグ：カメラ回転 / Z＋ドラッグ：ズーム / Ctrl＋Z：Undo / Ctrl＋Y：Redo</div></div><div class="setting-group"><div class="setting-label">移動時間（秒）</div><input id="panSecondsInput" class="number-input" type="number" min="0" step="0.1" value="${node.panSeconds}"></div>`;
+const isVideoPan=previousWorld.type==='animation';
+const duration=Math.max(0.1,Number(node.panSeconds)||3);
 
-document.getElementById('panSecondsInput').addEventListener('input',e=>{
-node.panSeconds=Math.max(0,Number(e.target.value)||0);
+const timeControls=isVideoPan?`
+<div class="setting-group">
+<div class="setting-label">再生位置</div>
+<input id="panTimeRange" type="range" min="0" max="${duration}" step="0.01" value="0" style="width:100%">
+<div id="panTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} 秒</div>
+</div>
+<div class="setting-group">
+<button id="panAddKeyframeBtn" class="add-world-btn" type="button" title="現在の位置にキーフレームを登録">＋</button>
+<div id="panKeyframeList" class="pan-keyframe-list"></div>
+</div>`:'';
+
+settingsPanel.innerHTML=`
+<div class="settings-title">パン</div>
+<div class="setting-group">
+<div class="setting-label">${isVideoPan?'カメラ位置':'カメラ経路'}</div>
+<div class="pan-preview-wrap">
+<canvas id="panPreviewCanvas" class="world-preview" width="320" height="320"></canvas>
+<canvas id="panPathCanvas" class="pan-path-canvas" width="320" height="320"></canvas>
+</div>
+<div class="pan-help">${isVideoPan?'ドラッグ：カメラ回転 / ホイール：ズーム / ＋：現在の時刻とカメラ位置を登録':'ドラッグ：経路描画 / 中クリック＋ドラッグ：カメラ回転 / Z＋ドラッグ：ズーム / Ctrl＋Z：Undo / Ctrl＋Y：Redo'}</div>
+</div>
+${timeControls}
+<div class="setting-group">
+<div class="setting-label">移動時間（秒）</div>
+<input id="panSecondsInput" class="number-input" type="number" min="0.1" step="0.1" value="${duration}">
+</div>`;
+
+const secondsInput=document.getElementById('panSecondsInput');
+
+secondsInput.addEventListener('change',()=>{
+node.panSeconds=Math.max(0.1,Number(secondsInput.value)||3);
 renderNodes();
+renderSettings();
 });
 
+if(isVideoPan){
+setupTimedPanPreview(node,previousWorld);
+}else{
 setupPanPreview(node,previousWorld);
+}
 
 return;
 }
 
+if(node.type==='media2d'){
+renderMedia2DNodeSettings(node);
+return;
+}
+if(node.type==='frameIn'){
+renderFrameInSettings(node);
+return;
+}
 if(node.type==='click'){
 const sourceNode=findPreviousClickMediaNode(node.id);
 
@@ -452,7 +737,7 @@ if(!node.clickAnimationMode||node.clickSourceMediaId!==media.id){
 node.clickAnimationMode=true;
 node.clickSourceMediaId=media.id;
 node.clickFrameIndex=0;
-node.clickFrameFps=8;
+node.clickFrameFps=media.fps||8;
 node.clickFrameRegions={};
 node.clickPolygon=[];
 node.clickRegions=[];
@@ -460,7 +745,9 @@ node.clickUndoStack=[];
 node.clickRedoStack=[];
 }
 
-if(!Number.isFinite(node.clickFrameFps)||node.clickFrameFps<=0){
+if(Number.isFinite(media.fps)&&media.fps>0){
+node.clickFrameFps=media.fps;
+}else if(!Number.isFinite(node.clickFrameFps)||node.clickFrameFps<=0){
 node.clickFrameFps=8;
 }
 }else{
@@ -478,10 +765,14 @@ frameCount-1
 );
 
 const frameControls=isAnimation
-?`<div class="setting-group"><div class="setting-label">素材FPS（コマ送り用）</div><input id="clickFrameFpsInput" class="number-input" type="number" min="1" max="120" step="1" value="${node.clickFrameFps}"></div><div class="setting-group"><div class="setting-label">コマ送り</div><div class="click-frame-controls"><button id="clickPreviousFrameBtn" type="button">◀ 前</button><span id="clickFrameLabel">${node.clickFrameIndex+1} / ${frameCount}</span><button id="clickNextFrameBtn" type="button">次 ▶</button></div><input id="clickFrameRange" type="range" min="0" max="${frameCount-1}" step="1" value="${node.clickFrameIndex}" style="width:100%"><div id="clickFrameTimeLabel" class="settings-empty"></div></div>`
+?`<div class="setting-group"><div class="setting-label">コマ送り</div><div class="click-frame-controls"><button id="clickPreviousFrameBtn" type="button">◀ 前</button><span id="clickFrameLabel">${node.clickFrameIndex+1} / ${frameCount}</span><button id="clickNextFrameBtn" type="button">次 ▶</button></div><input id="clickFrameRange" type="range" min="0" max="${frameCount-1}" step="1" value="${node.clickFrameIndex}" style="width:100%"><div id="clickFrameTimeLabel" class="settings-empty"></div></div>`
 :'';
 
-settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameControls}<div class="setting-group"><div class="setting-label">クリック範囲（投げ縄）</div><div class="click-preview-wrap"><canvas id="clickPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="clickLassoCanvas" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="clickLassoAddBtn" class="click-lasso-mode active" type="button" title="選択範囲に追加" aria-pressed="true">＋</button><button id="clickLassoSubtractBtn" class="click-lasso-mode" type="button" title="選択範囲から削除" aria-pressed="false">－</button></div></div><div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div><div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
+const inheritControl=isAnimation
+?`<label class="click-inherit-control"><input id="clickInheritRegionsInput" type="checkbox" ${node.clickInheritRegions!==false?'checked':''}> 選択範囲を継承</label>`
+:'';
+
+settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameControls}<div class="setting-group"><div class="setting-label">クリック範囲を指定</div><div class="click-inherit-row">${inheritControl}</div><div class="click-preview-wrap"><canvas id="clickPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="clickLassoCanvas" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="clickLassoAddBtn" class="click-lasso-mode active" type="button" title="選択範囲に追加" aria-pressed="true">＋</button><button id="clickLassoSubtractBtn" class="click-lasso-mode" type="button" title="選択範囲から削除" aria-pressed="false">－</button></div></div><div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div><div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
 
 setupClickTriggerPreview(node,sourceNode);
 
@@ -497,105 +788,832 @@ assignMediaToNode(node,e.target.value);
 return;
 }
 
-if(node.type==='animation'){
-const media=mediaLibrary.find(item=>item.id===node.animation.mediaId&&item.fileType==='mp4');
-const mediaDuration=media&&Number.isFinite(media.duration)?media.duration:0;
-
-if(!Number.isFinite(node.animation.loopCount)||node.animation.loopCount<=0){
-node.animation.loopCount=1;
-}
-
-if(!Number.isFinite(node.animation.playDuration)||node.animation.playDuration<=0){
-node.animation.playDuration=mediaDuration*node.animation.loopCount;
-}
-
-const formatValue=value=>Number(value.toFixed(3)).toString();
-const disabled=mediaDuration<=0||node.animation.infiniteLoop;
-
-settingsPanel.innerHTML=`<div class="settings-title">アニメーション（360度MP4）</div><div class="setting-group"><div class="setting-label">メディアを選択</div><select id="animationMediaSelect" class="number-input">${getMediaOptions('media',node.animation.mediaId)}</select></div><div class="setting-group"><div class="setting-label">初期カメラ位置（${state.displayMode==='pc'?'PC':'スマホ'}） <label style="margin-left:12px;font-size:12px;font-weight:normal;white-space:nowrap"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div><canvas id="animationPreviewCanvas" class="world-preview" width="320" height="320"></canvas><div class="settings-empty">ドラッグ：カメラ回転 / ホイール：ズーム</div></div><div class="setting-group"><div class="setting-label">再生開始位置</div><input id="animationStartRange" type="range" min="0" max="${Math.max(0,mediaDuration-0.001)}" step="0.001" value="${Math.min(Math.max(0,Number(node.animation.startTime)||0),Math.max(0,mediaDuration-0.001))}" ${mediaDuration>0?'':'disabled'} style="width:100%"><input id="animationStartTimeInput" class="number-input" type="number" min="0" max="${Math.max(0,mediaDuration-0.001)}" step="0.001" value="${formatValue(Math.min(Math.max(0,Number(node.animation.startTime)||0),Math.max(0,mediaDuration-0.001)))}" ${mediaDuration>0?'':'disabled'}> 秒</div><div class="setting-group"><div class="setting-label">素材の長さ</div><div class="file-name">${mediaDuration>0?formatValue(mediaDuration)+' 秒':'MP4を選択してください'}</div></div><div class="setting-group"><label><input id="animationInfiniteLoopInput" type="checkbox" ${node.animation.infiniteLoop?'checked':''}> 無限ループ（トリガー発火まで再生）</label></div><div class="setting-group"><div class="setting-label">ループ回数</div><input id="animationLoopCountInput" class="number-input" type="number" min="0.01" max="1000" step="any" value="${formatValue(node.animation.loopCount)}" ${disabled?'disabled':''}></div><div class="setting-group"><div class="setting-label">再生時間（秒）</div><input id="animationPlayDurationInput" class="number-input" type="number" min="0.01" step="any" value="${formatValue(node.animation.playDuration)}" ${disabled?'disabled':''}></div>`;
-
-document.getElementById('animationMediaSelect').addEventListener('change',e=>{
-node.animation.loopCount=1;
-node.animation.playDuration=0;
-node.animation.startTime=0;
-assignMediaToNode(node,e.target.value);
-});
-
-const loopInput=document.getElementById('animationLoopCountInput');
-const durationInput=document.getElementById('animationPlayDurationInput');
-
-setupAnimationPreview(node,media);
-
-document.getElementById('animationInfiniteLoopInput').addEventListener('change',e=>{
-node.animation.infiniteLoop=e.target.checked;
-loopInput.disabled=node.animation.infiniteLoop||mediaDuration<=0;
-durationInput.disabled=node.animation.infiniteLoop||mediaDuration<=0;
-});
-
-loopInput.addEventListener('change',()=>{
-if(mediaDuration<=0||node.animation.infiniteLoop)return;
-
-const value=Number(loopInput.value);
-
-if(!Number.isFinite(value)||value<=0){
-loopInput.value=formatValue(node.animation.loopCount);
+if(node.type==='animation'||node.type==='world'){
+renderMediaNodeSettings(node);
 return;
 }
 
-node.animation.loopCount=Math.max(0.01,Math.min(1000,value));
-node.animation.playDuration=mediaDuration*node.animation.loopCount;
-
-loopInput.value=formatValue(node.animation.loopCount);
-durationInput.value=formatValue(node.animation.playDuration);
-});
-
-durationInput.addEventListener('change',()=>{
-if(mediaDuration<=0||node.animation.infiniteLoop)return;
-
-const value=Number(durationInput.value);
-
-if(!Number.isFinite(value)||value<=0){
-durationInput.value=formatValue(node.animation.playDuration);
+if(node.type==='keyframe'){
+renderKeyframeNodeSettings(node);
 return;
 }
-
-node.animation.playDuration=Math.max(0.01,Math.min(mediaDuration*1000,value));
-node.animation.loopCount=node.animation.playDuration/mediaDuration;
-
-durationInput.value=formatValue(node.animation.playDuration);
-loopInput.value=formatValue(node.animation.loopCount);
-});
-
-return;
-}
-
 if(node.type==='dialogue'){
-const previousWorld=findPreviousWorldNode(node.id);
+const previousMedia=findPreviousClickMediaNode(node.id);
 
-const dialogueWorld=previousWorld||{
-world:{
-image:null,
-yaw:0,
-pitch:0,
-zoom:1
+ensureDialogueView(node,previousMedia);
+
+const editors=node.dialoguePages.map((text,index)=>`
+<div class="dialogue-editor">
+<div class="dialogue-editor-header">
+<div class="setting-label">ダイアローグ ${index+1}</div>
+<button type="button" class="dialogue-delete-btn" data-dialogue-delete="${index}">削除</button>
+</div>
+<textarea class="dialogue-textarea" data-dialogue-index="${index}" maxlength="60">${escapeHtml(text)}</textarea>
+<div class="dialogue-count" data-dialogue-count="${index}">${text.length}/60</div>
+</div>`).join('');
+const hasDialogue=node.dialoguePages.length>0;
+const fontSize=Number(node.dialogueFontSize)||24;
+const panelHeight=getDialoguePanelHeight(node);
+
+settingsPanel.innerHTML=`
+<div class="settings-title">ダイアローグ</div>
+<div class="setting-group">
+<div class="setting-label">発話者</div>
+<input id="dialogueSpeakerInput" class="number-input" type="text" maxlength="40" placeholder="発話者の名前" value="${escapeHtml(node.dialogueSpeaker||'').replace(/"/g,'&quot;')}">
+</div>
+<div class="setting-group">
+<div class="setting-label">サムネイル</div>
+<div class="dialogue-thumbnail-controls">
+<select id="dialogueThumbnailSelect" class="number-input">${getDialogueThumbnailOptions(node.dialogueThumbnailMediaId)}</select>
+<img id="dialogueThumbnailSettingsImage" class="dialogue-thumbnail-settings-image hidden" alt="サムネイル">
+</div>
+</div>
+<div class="setting-group">
+<div class="setting-label">フォントサイズ（px）</div>
+<input id="dialogueFontSizeInput" class="number-input" type="number" min="10" max="36" step="1" value="${fontSize}">
+</div>
+<div class="setting-group">
+<div class="setting-label">パネルの高さ（${state.displayMode==='pc'?'PC':'スマホ'}・画面高さの％）</div>
+<input id="dialoguePanelHeightInput" class="number-input" type="number" min="10" max="60" step="1" value="${panelHeight}">
+</div>
+<div class="setting-group">
+<div class="dialogue-preview-wrap">
+<canvas id="dialoguePreviewCanvas" class="world-preview" width="320" height="320"></canvas>
+<div id="dialoguePreviewBox" class="dialogue-preview-box ${hasDialogue?'':'hidden'}">
+<div id="dialoguePreviewSpeaker" class="dialogue-speaker hidden"></div>
+<div class="dialogue-panel-content">
+<img id="dialoguePreviewThumbnail" class="dialogue-panel-thumbnail hidden" alt="">
+<div id="dialoguePreviewText" class="dialogue-preview-text"></div>
+</div>
+<div class="dialogue-arrow">▼</div>
+</div>
+</div>
+</div>
+<div class="setting-group">
+<button id="addDialogueBtn" class="add-world-btn" type="button">＋</button>
+</div>
+<div id="dialogueEditors">${editors}</div>`;
+
+setupDialogueTriggerPreview(node,previousMedia);
+setupDialogueAppearance(node);
+return;
 }
+renderMediaNodeSettings(node);
+
+}
+
+// 2D media uses normalized viewport coordinates and independent PC/mobile layouts.
+function getMedia2DLayout(node){
+if(!node.media2DLayouts)node.media2DLayouts={pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}};
+if(!node.media2DLayouts[state.displayMode])node.media2DLayouts[state.displayMode]={x:30,y:25,w:40,h:40};
+return node.media2DLayouts[state.displayMode];
+}
+function media2DOptions(selected){
+return `<option value="">素材を選択してください</option>`+mediaLibrary.filter(m=>['png','jpg','mp4'].includes(m.fileType)).map(m=>`<option value="${m.id}" ${m.id===selected?'selected':''}>${escapeHtml(m.fileName)}</option>`).join('');
+}
+function createMedia2DElement(media){
+if(!media)return null;
+const el=document.createElement(media.fileType==='mp4'?'video':'canvas');
+el.draggable=false;
+if(media.fileType==='mp4'){
+el.src=media.url||'';
+el.muted=true;el.playsInline=true;el.loop=true;el.autoplay=true;
+}else{
+el.width=media.width||1;el.height=media.height||1;
+if(media.image)el.getContext('2d').drawImage(media.image,0,0,el.width,el.height);
+}
+el.style.cssText='width:100%;height:100%;object-fit:fill;display:block;pointer-events:none;';
+return el;
+}
+function renderMedia2DNodeSettings(node){
+const media=mediaLibrary.find(m=>m.id===node.media2DId);
+settingsPanel.innerHTML=`<div class="settings-title">2Dメディア</div>
+<div class="setting-group"><div class="setting-label">素材（PNG・JPG・MP4）</div><select id="media2DSelect" class="number-input">${media2DOptions(node.media2DId)}</select></div>
+<div class="setting-group"><div class="setting-label">配置（${state.displayMode==='pc'?'PC':'スマホ'}）</div><div id="media2DEditor" class="media2d-editor"><canvas id="media2DBackground"></canvas><div id="media2DSelection" class="media2d-selection"><div id="media2DContent"></div>${['nw','ne','sw','se'].map(p=>`<span class="media2d-handle media2d-handle-${p}" data-corner="${p}"></span>`).join('')}</div></div><div class="pan-help">素材をドラッグ：移動 / 四隅をドラッグ：縦横比を保って拡大縮小。PC・スマホの配置はそれぞれ記憶します。</div></div>`;
+const select=document.getElementById('media2DSelect');
+const box=document.getElementById('media2DEditor');
+const selection=document.getElementById('media2DSelection');
+const content=document.getElementById('media2DContent');
+const layout=getMedia2DLayout(node);
+const mode=getActiveLayout();box.style.aspectRatio=`${mode.width} / ${mode.height}`;
+const bg=document.getElementById('media2DBackground');
+const previous=findPreviousClickMediaNode(node.id);
+const source=previous?.type==='world'?previous.world.image:previous?.type==='animation'?mediaLibrary.find(m=>m.id===previous.animation.mediaId)?.video:null;
+if(source){
+const base=getMediaCameraBase(previous);
+const drawBackground=()=>{if(!bg.isConnected)return;drawPanoramaPreview(bg,{image:source,yaw:base.yaw,pitch:base.pitch,zoom:base.zoom});};
+requestAnimationFrame(drawBackground);
+if(source.tagName==='VIDEO')source.addEventListener('loadeddata',drawBackground,{once:true});
+}
+let shownMedia=null;
+function fillMedia(){
+content.replaceChildren();shownMedia=mediaLibrary.find(m=>m.id===node.media2DId);
+const mediaElement=createMedia2DElement(shownMedia);
+if(mediaElement){content.appendChild(mediaElement);if(mediaElement.tagName==='VIDEO')mediaElement.play().catch(()=>{});}
+}
+function draw(){selection.style.left=`${layout.x}%`;selection.style.top=`${layout.y}%`;selection.style.width=`${layout.w}%`;selection.style.height=`${layout.h}%`;}
+function fitAspectRatio(){
+const selected=mediaLibrary.find(m=>m.id===node.media2DId);
+if(!selected?.width||!selected?.height)return;
+const rect=box.getBoundingClientRect();
+if(!rect.width||!rect.height)return;
+// Width stays fixed; correct height using the media's intrinsic ratio.
+layout.h=layout.w*rect.width/rect.height*selected.height/selected.width;
+}
+select.addEventListener('change',()=>{node.media2DId=select.value||null;fillMedia();fitAspectRatio();draw();});
+fillMedia();
+requestAnimationFrame(()=>{if(box.isConnected){fitAspectRatio();draw();}});
+draw();
+let drag=null;
+selection.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+const corner=e.target.dataset.corner||null;
+drag={id:e.pointerId,corner,x:e.clientX,y:e.clientY,start:{...layout}};
+selection.setPointerCapture(e.pointerId);e.preventDefault();
+});
+selection.addEventListener('pointermove',e=>{
+if(!drag||e.pointerId!==drag.id)return;
+const r=box.getBoundingClientRect();
+if(!r.width||!r.height)return;
+const dx=(e.clientX-drag.x)/r.width*100;
+const dy=(e.clientY-drag.y)/r.height*100;
+const a=drag.start;
+if(!drag.corner){layout.x=a.x+dx;layout.y=a.y+dy;}
+else{
+const selected=mediaLibrary.find(m=>m.id===node.media2DId);
+const ratio=selected?.width&&selected?.height?selected.width/selected.height:(a.w*r.width)/(a.h*r.height);
+const anchorX=drag.corner.includes('w')?a.x+a.w:a.x;
+const anchorY=drag.corner.includes('n')?a.y+a.h:a.y;
+const signX=drag.corner.includes('w')?-1:1;
+const signY=drag.corner.includes('n')?-1:1;
+const desiredW=Math.max(1,signX*(a.w*signX+dx));
+const desiredH=Math.max(1,signY*(a.h*signY+dy));
+const widthFromHeight=desiredH*r.height/r.width*ratio;
+const newW=Math.max(1,Math.abs(desiredW-a.w)>Math.abs(widthFromHeight-a.w)?desiredW:widthFromHeight);
+const newH=newW*r.width/r.height/ratio;
+layout.x=signX<0?anchorX-newW:anchorX;
+layout.y=signY<0?anchorY-newH:anchorY;
+layout.w=newW;
+layout.h=newH;
+}
+draw();
+});
+const end=e=>{if(drag?.id!==e.pointerId)return;drag=null;if(selection.hasPointerCapture(e.pointerId))selection.releasePointerCapture(e.pointerId);};
+selection.addEventListener('pointerup',end);selection.addEventListener('pointercancel',end);
+}
+function clearMedia2DLayer(){
+for(const video of media2DLayer.querySelectorAll('video')){video.pause();video.removeAttribute('src');video.load();}
+media2DLayer.replaceChildren();
+}
+function showMedia2D(node){
+const media=mediaLibrary.find(m=>m.id===node.media2DId);
+if(!media)return;
+const layout=getMedia2DLayout(node);
+const el=createMedia2DElement(media);
+if(!el)return;
+const wrap=document.createElement('div');
+wrap.style.cssText=`position:absolute;left:${layout.x}%;top:${layout.y}%;width:${layout.w}%;height:${layout.h}%;pointer-events:none;`;
+wrap.appendChild(el);media2DLayer.appendChild(wrap);
+if(el.tagName==='VIDEO')el.play().catch(error=>console.warn('2D動画を再生できませんでした',error));
+}
+
+// Frame-in: target is sphere-anchored; frame is viewport-anchored.
+function frameInCopy(regions){return regions.map(r=>({mode:r.mode,points:r.points.map(p=>({...p}))}));}
+function frameInHistory(node){
+if(!Array.isArray(node.frameInTarget))node.frameInTarget=[];
+if(!Array.isArray(node.frameInFrame))node.frameInFrame=[];
+if(!Array.isArray(node.frameInUndo))node.frameInUndo=[];
+if(!Array.isArray(node.frameInRedo))node.frameInRedo=[];
+}
+function frameInSnapshot(node){return {target:frameInCopy(node.frameInTarget),frame:frameInCopy(node.frameInFrame)};}
+function frameInRestore(node,snap){node.frameInTarget=frameInCopy(snap.target);node.frameInFrame=frameInCopy(snap.frame);}
+function frameInPush(node){frameInHistory(node);node.frameInUndo.push(frameInSnapshot(node));if(node.frameInUndo.length>100)node.frameInUndo.shift();node.frameInRedo=[];}
+function frameInStep(node,redo){
+frameInHistory(node);
+const from=redo?node.frameInRedo:node.frameInUndo;
+if(!from.length)return false;
+const to=redo?node.frameInUndo:node.frameInRedo;
+to.push(frameInSnapshot(node));frameInRestore(node,from.pop());return true;
+}
+function frameInView(node,source){
+if(!node.frameInView)node.frameInView={yaw:0,pitch:0,zoom:1,initialized:false};
+const key=`${source.id}:${state.displayMode}`;
+if(!node.frameInView.initialized||node.frameInReferenceKey!==key){
+Object.assign(node.frameInView,getReferenceCamera(node,source,getTriggerPreviewTime(node.id,source)),{initialized:true});
+node.frameInReferenceKey=key;
+}
+return node.frameInView;
+}
+function frameInTrace(ctx,points,project){
+if(points.length<3)return false;
+const projected=points.map(project);
+if(projected.some(p=>!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)))return false;
+ctx.beginPath();ctx.moveTo(projected[0].x,projected[0].y);
+for(let i=1;i<projected.length;i++)ctx.lineTo(projected[i].x,projected[i].y);
+ctx.closePath();return true;
+}
+function paintFrameInRegions(ctx,regions,project){
+for(const region of regions){
+if(!frameInTrace(ctx,region.points,project))continue;
+ctx.globalCompositeOperation=region.mode==='subtract'?'destination-out':'source-over';
+ctx.fillStyle='#fff';ctx.fill();
+}
+ctx.globalCompositeOperation='source-over';
+}
+function frameInMasks(node,canvas,view,width,height){
+frameInHistory(node);
+const target=document.createElement('canvas');target.width=width;target.height=height;
+const frame=document.createElement('canvas');frame.width=width;frame.height=height;
+const rect=canvas.getBoundingClientRect();
+const tx=target.getContext('2d',{willReadFrequently:true});
+const fx=frame.getContext('2d',{willReadFrequently:true});
+const projectWorld=p=>{
+const q=projectWorldAnglesToScreen(canvas,view,p.yaw,p.pitch);
+return q?{x:q.x/(rect.width||1)*width,y:q.y/(rect.height||1)*height}:null;
+};
+const projectFrame=p=>({x:p.x*width,y:p.y*height});
+paintFrameInRegions(tx,node.frameInTarget,projectWorld);
+paintFrameInRegions(fx,node.frameInFrame,projectFrame);
+return {target:tx.getImageData(0,0,width,height).data,frame:fx.getImageData(0,0,width,height).data};
+}
+function isFrameInTriggered(node,canvas,view){
+if(!node.frameInTarget?.some(r=>r.mode==='add'&&r.points.length>=3)||!node.frameInFrame?.some(r=>r.mode==='add'&&r.points.length>=3))return false;
+const {target,frame}=frameInMasks(node,canvas,view,192,108);
+let hit=false,total=0,inside=0;
+for(let i=3;i<target.length;i+=4){
+if(target[i]<128)continue;
+total++;
+if(frame[i]>=128){inside++;hit=true;}
+}
+if(node.frameInMode==='touch')return hit;
+return total>0&&inside===total;
+}
+function drawFrameInOverlay(node,canvas,overlay,view,draft=[]){
+const rect=canvas.getBoundingClientRect();
+const w=rect.width;
+const h=rect.height;
+const dpr=window.devicePixelRatio||1;
+const width=Math.max(1,Math.round(w*dpr));
+const height=Math.max(1,Math.round(h*dpr));
+
+if(overlay.width!==width||overlay.height!==height){
+overlay.width=width;
+overlay.height=height;
+}
+
+const ctx=overlay.getContext('2d');
+if(!ctx)return;
+
+ctx.setTransform(dpr,0,0,dpr,0,0);
+ctx.clearRect(0,0,w,h);
+
+const project=(type,p)=>{
+if(type==='target'){
+return projectWorldAnglesToScreen(
+canvas,view,p.yaw,p.pitch
+);
+}
+return{x:p.x*w,y:p.y*h};
 };
 
-ensureDialogueView(node,dialogueWorld);
+for(const type of ['target','frame']){
+const regions=type==='target'
+?node.frameInTarget
+:node.frameInFrame;
 
-const editors=node.dialoguePages.map((text,index)=>`<div class="dialogue-editor"><div class="setting-label">ダイアローグ ${index+1}</div><textarea class="dialogue-textarea" data-dialogue-index="${index}" maxlength="60">${escapeHtml(text)}</textarea><div class="dialogue-count" data-dialogue-count="${index}">${text.length}/60</div></div>`).join('');
-const hasDialogue=node.dialoguePages.length>0;
-settingsPanel.innerHTML=`<div class="settings-title">ダイアローグ</div><div class="setting-group"><button id="addDialogueBtn" class="add-world-btn" type="button">＋</button></div><div class="setting-group"><div class="dialogue-preview-wrap"><canvas id="dialoguePreviewCanvas" class="world-preview" width="320" height="320"></canvas><div id="dialoguePreviewBox" class="dialogue-preview-box ${hasDialogue?'':'hidden'}"><div id="dialoguePreviewText" class="dialogue-preview-text"></div><div class="dialogue-arrow">▼</div></div></div></div><div id="dialogueEditors">${editors}</div>`;
-setupDialogueTriggerPreview(node,dialogueWorld);
-return;
+const color=type==='target'?'#ff8a00':'#39cb65';
+
+const mask=document.createElement('canvas');
+mask.width=width;
+mask.height=height;
+
+const maskCtx=mask.getContext('2d');
+if(!maskCtx)continue;
+
+maskCtx.setTransform(dpr,0,0,dpr,0,0);
+
+paintFrameInRegions(
+maskCtx,
+regions,
+p=>project(type,p)
+);
+
+const colorCanvas=document.createElement('canvas');
+colorCanvas.width=width;
+colorCanvas.height=height;
+
+const colorCtx=colorCanvas.getContext('2d');
+
+if(colorCtx){
+colorCtx.fillStyle=color;
+colorCtx.fillRect(0,0,width,height);
+colorCtx.globalCompositeOperation='destination-in';
+colorCtx.drawImage(mask,0,0);
+
+ctx.setTransform(1,0,0,1,0,0);
+ctx.globalAlpha=0.28;
+ctx.drawImage(colorCanvas,0,0);
+ctx.globalAlpha=1;
 }
-settingsPanel.innerHTML=`<div class="settings-title">ビュー（2:1 PNG）</div><div class="setting-group"><div class="setting-label">メディアを選択</div><select id="worldMediaSelect" class="number-input">${getMediaOptions('media',node.world.mediaId)}</select></div><div class="setting-group"><div class="setting-label">初期カメラ位置 <label style="margin-left:12px;font-size:12px;font-weight:normal;white-space:nowrap"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div><canvas id="worldPreviewCanvas" class="world-preview" width="320" height="320"></canvas></div>`;
 
-document.getElementById('worldMediaSelect').addEventListener('change',e=>{
-assignMediaToNode(node,e.target.value);
+const outline=document.createElement('canvas');
+outline.width=width;
+outline.height=height;
+
+const outlineCtx=outline.getContext('2d');
+
+if(outlineCtx){
+const radius=Math.max(1,Math.round(2*dpr));
+
+for(let dy=-radius;dy<=radius;dy++){
+for(let dx=-radius;dx<=radius;dx++){
+if(dx*dx+dy*dy>radius*radius)continue;
+outlineCtx.drawImage(mask,dx,dy);
+}
+}
+
+outlineCtx.globalCompositeOperation='destination-out';
+outlineCtx.drawImage(mask,0,0);
+
+outlineCtx.globalCompositeOperation='source-in';
+outlineCtx.fillStyle=color;
+outlineCtx.fillRect(0,0,width,height);
+
+ctx.setTransform(1,0,0,1,0,0);
+ctx.drawImage(outline,0,0);
+}
+
+ctx.setTransform(dpr,0,0,dpr,0,0);
+
+if(node.frameInTool!==type||draft.length===0)continue;
+
+const projected=draft.map(p=>project(type,p));
+const valid=projected.filter(Boolean);
+
+if(valid.length===0)continue;
+
+ctx.beginPath();
+ctx.moveTo(valid[0].x,valid[0].y);
+
+for(let i=1;i<valid.length;i++){
+ctx.lineTo(valid[i].x,valid[i].y);
+}
+
+if(valid.length>=3){
+ctx.closePath();
+
+if(node.frameInBrush==='subtract'){
+ctx.fillStyle='rgba(255,255,255,0.28)';
+ctx.fill();
+}
+}
+
+ctx.strokeStyle=node.frameInBrush==='subtract'
+?'#ffffff'
+:color;
+
+ctx.lineWidth=2.5;
+ctx.lineCap='round';
+ctx.lineJoin='round';
+ctx.stroke();
+}
+}
+function renderFrameInSettings(node){
+const source=findPreviousClickMediaNode(node.id);
+if(!source){settingsPanel.innerHTML='<div class="settings-title">フレームイン</div><div class="settings-empty">参照できる360°メディアを接続してください。</div>';return;}
+frameInHistory(node);
+const view=frameInView(node,source);
+const media=source.type==='animation'?getClickAnimationMedia(source):null;
+const image=source.type==='world'?source.world.image:media?.video;
+settingsPanel.innerHTML=`<div class="settings-title">フレームイン</div>
+<div class="setting-group framein-checks"><label><input id="frameInContain" type="checkbox" ${node.frameInMode!=='touch'?'checked':''}> 内包したら発火</label><label><input id="frameInTouch" type="checkbox" ${node.frameInMode==='touch'?'checked':''}> 接触したら発火</label></div>
+<div class="setting-group"><div class="click-preview-wrap framein-preview-wrap"><canvas id="frameInPreview" class="world-preview" width="320" height="320"></canvas><canvas id="frameInOverlay" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="frameInAdd" class="click-lasso-mode" type="button" title="選択範囲に追加">＋</button><button id="frameInSubtract" class="click-lasso-mode" type="button" title="選択範囲から削除">－</button></div></div>
+<div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div>
+<div class="setting-group framein-tools"><button type="button" id="frameInTargetButton">ターゲット</button><button type="button" id="frameInFrameButton">フレーム</button></div>
+<div class="setting-group"><button id="clearFrameInBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
+const preview=document.getElementById('frameInPreview');
+const overlay=document.getElementById('frameInOverlay');
+const targetBtn=document.getElementById('frameInTargetButton');
+const frameBtn=document.getElementById('frameInFrameButton');
+const addBtn=document.getElementById('frameInAdd');
+const subBtn=document.getElementById('frameInSubtract');
+node.frameInTool=node.frameInTool==='frame'?'frame':'target';
+node.frameInBrush=node.frameInBrush==='subtract'?'subtract':'add';
+let draft=[],drag=null;
+const sync=()=>{
+targetBtn.classList.toggle('active',node.frameInTool==='target');frameBtn.classList.toggle('active',node.frameInTool==='frame');
+addBtn.classList.toggle('active',node.frameInBrush==='add');subBtn.classList.toggle('active',node.frameInBrush==='subtract');
+};
+const draw=()=>{
+drawPanoramaPreview(preview,{image,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});
+drawFrameInOverlay(node,preview,overlay,view,draft);
+};
+const switchTool=tool=>{node.frameInTool=tool;draft=[];sync();draw();};
+targetBtn.addEventListener('click',()=>switchTool('target'));
+frameBtn.addEventListener('click',()=>switchTool('frame'));
+addBtn.addEventListener('click',()=>{node.frameInBrush='add';sync();});
+subBtn.addEventListener('click',()=>{node.frameInBrush='subtract';sync();});
+
+document.getElementById('clearFrameInBtn').addEventListener('click',()=>{
+const regions=node.frameInTool==='target'
+?node.frameInTarget
+:node.frameInFrame;
+
+if(regions.length===0)return;
+
+frameInPush(node);
+regions.length=0;
+draft=[];
+draw();
 });
 
-setupWorldPreview(node);
+const setMode=mode=>{node.frameInMode=mode;document.getElementById('frameInContain').checked=mode==='contain';document.getElementById('frameInTouch').checked=mode==='touch';};
+document.getElementById('frameInContain').addEventListener('change',()=>setMode('contain'));
+document.getElementById('frameInTouch').addEventListener('change',()=>setMode('touch'));
+const addPoint=e=>{
+const rect=overlay.getBoundingClientRect();
+const p=node.frameInTool==='target'
+?screenPointToWorldAngles(overlay,view,e.clientX,e.clientY)
+:{x:(e.clientX-rect.left)/rect.width,y:(e.clientY-rect.top)/rect.height};
+if(!p)return;
+const prev=draft[draft.length-1];
+if(prev&&Math.hypot(...(node.frameInTool==='target'?[angleDiff(prev.yaw,p.yaw),prev.pitch-p.pitch]:[prev.x-p.x,prev.y-p.y]))<.003)return;
+draft.push(p);draw();
+};
+overlay.addEventListener('pointerdown',e=>{
+const rotate=e.button===1||(e.button===0&&state.pressedKeys.has(' '));
+const zoom=e.button===0&&state.pressedKeys.has('z');
+if(e.button!==0&&e.button!==1)return;
+if(rotate)drag={mode:'rotate',id:e.pointerId,x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch};
+else if(zoom)drag={mode:'zoom',id:e.pointerId,y:e.clientY,zoom:view.zoom};
+else {frameInPush(node);draft=[];drag={mode:'lasso',id:e.pointerId};addPoint(e);}
+overlay.setPointerCapture(e.pointerId);e.preventDefault();
+});
+overlay.addEventListener('pointermove',e=>{
+if(!drag||e.pointerId!==drag.id)return;
+if(drag.mode==='rotate'){
+view.yaw=drag.yaw-(e.clientX-drag.x)*.008;
+view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*.008,-Math.PI/2+.02,Math.PI/2-.02);draw();
+}else if(drag.mode==='zoom'){
+view.zoom=clamp(drag.zoom-(e.clientY-drag.y)*.005,.6,2.2);draw();
+}else addPoint(e);
+});
+const finish=e=>{
+if(!drag||e.pointerId!==drag.id)return;
+if(drag.mode==='lasso'){
+addPoint(e);
+if(draft.length>=3){const regions=node.frameInTool==='target'?node.frameInTarget:node.frameInFrame;
+regions.push({mode:node.frameInBrush,points:draft.map(p=>({...p}))});}
+}
+draft=[];drag=null;if(overlay.hasPointerCapture(e.pointerId))overlay.releasePointerCapture(e.pointerId);draw();
+};
+overlay.addEventListener('pointerup',finish);
+overlay.addEventListener('pointercancel',e=>{draft=[];drag=null;draw();});
+overlay.addEventListener('wheel',e=>{e.preventDefault();view.zoom=clamp(view.zoom+(e.deltaY>0?-.1:.1),.6,2.2);draw();},{passive:false});
+if(image?.tagName==='VIDEO'){
+const listener=()=>{if(preview.isConnected)draw();};
+image.addEventListener('seeked',listener);
+const prior=cleanupAnimationSettingsPreview;
+cleanupAnimationSettingsPreview=()=>{image.removeEventListener('seeked',listener);node.frameInUndoAction=null;node.frameInRedoAction=null;prior?.();};
+}
+node.frameInUndoAction=()=>{if(frameInStep(node,false))draw();};
+node.frameInRedoAction=()=>{if(frameInStep(node,true))draw();};
+const previousCleanup=cleanupAnimationSettingsPreview;
+cleanupAnimationSettingsPreview=()=>{node.frameInUndoAction=null;node.frameInRedoAction=null;previousCleanup?.();};
+sync();requestAnimationFrame(draw);
+}
+
+function getKeyframeNodeFrames(node){
+if(!node.keyframeViews)node.keyframeViews={pc:[],mobile:[]};
+if(!Array.isArray(node.keyframeViews[state.displayMode]))node.keyframeViews[state.displayMode]=[];
+return node.keyframeViews[state.displayMode];
+}
+function getIndependentCameraAt(node,seconds,base){
+const frames=[...getKeyframeNodeFrames(node)].filter(f=>Number.isFinite(f.time)).sort((a,b)=>a.time-b.time);
+if(!frames.length)return {...base};
+if(seconds<=frames[0].time)return {...frames[0]};
+if(seconds>=frames[frames.length-1].time)return {...frames[frames.length-1]};
+for(let i=1;i<frames.length;i++){
+const a=frames[i-1],b=frames[i];
+if(seconds>b.time)continue;
+const t=clamp((seconds-a.time)/(b.time-a.time),0,1);
+return {yaw:a.yaw+angleDiff(b.yaw,a.yaw)*t,pitch:a.pitch+(b.pitch-a.pitch)*t,zoom:a.zoom+(b.zoom-a.zoom)*t};
+}
+return {...base};
+}
+function findSceneKeyframeNode(sourceNode){
+if(!sourceNode)return null;
+// A keyframe node on a parallel branch of a shared parent controls this media.
+for(const edge of state.connections){
+if(edge.to!==sourceNode.id)continue;
+const parent=edge.from;
+const visited=new Set();const queue=[parent];
+while(queue.length){
+const current=queue.shift();
+if(visited.has(current))continue;visited.add(current);
+for(const branch of state.connections.filter(c=>c.from===current)){
+const node=getNode(branch.to);
+if(node?.type==='keyframe')return node;
+if(node&&node.type==='time')queue.push(node.id);
+}
+for(const prev of state.connections.filter(c=>c.to===current))queue.push(prev.from);
+}
+}
+return null;
+}
+function renderKeyframeNodeSettings(node){
+const sourceNode=findPreviousClickMediaNode(node.id);
+if(!sourceNode){
+settingsPanel.innerHTML='<div class="settings-title">キーフレーム</div><div class="settings-empty">参照メディアがありません。メディアと同じ分岐元に接続してください。</div>';
+return;
+}
+const videoMode=sourceNode.type==='animation';
+const media=mediaLibrary.find(m=>m.id===(videoMode?sourceNode.animation.mediaId:sourceNode.world.mediaId));
+const duration=getMediaPlaybackDuration(sourceNode,media);
+const fps=videoMode?Number(media?.fps):8;
+const validFps=Number.isFinite(fps)&&fps>0;
+const frames=getKeyframeNodeFrames(node);
+const source=videoMode?media?.video:sourceNode.world.image;
+settingsPanel.innerHTML=`
+<div class="settings-title">キーフレーム</div>
+<div class="setting-group"><div class="setting-label">参照メディア</div><div class="file-name">${escapeHtml(videoMode?sourceNode.animation.fileName:sourceNode.world.fileName)}</div></div>
+<div class="setting-group"><canvas id="keyframeCameraCanvas" class="world-preview" width="320" height="320"></canvas><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div>
+<div class="setting-group"><div class="media-camera-time-header"><div class="setting-label">再生位置</div><div class="media-camera-step-buttons"><button id="keyframePrevious" type="button">◀</button><button id="keyframeNext" type="button">▶</button></div></div><input id="keyframeTime" type="range" min="0" max="${duration}" step="0.001" value="0" style="width:100%"><div id="keyframeTimeLabel" class="settings-empty"></div></div>
+<div class="setting-group"><button id="keyframeAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button><div id="keyframeList" class="pan-keyframe-list"></div></div>
+<div id="keyframeAngleFields" class="setting-group"></div>`;
+const canvas=document.getElementById('keyframeCameraCanvas');
+const range=document.getElementById('keyframeTime');
+const label=document.getElementById('keyframeTimeLabel');
+const list=document.getElementById('keyframeList');
+const prev=document.getElementById('keyframePrevious');
+const next=document.getElementById('keyframeNext');
+const controller=new AbortController();const signal=controller.signal;
+cleanupAnimationSettingsPreview=()=>controller.abort();
+if(source?.pause)source.pause();
+if(!validFps){prev.disabled=true;next.disabled=true;}
+let second=0,drag=null;
+const view={...getMediaCameraBase(sourceNode)};
+let syncInputs=()=>{};
+const draw=()=>{
+if(!canvas.isConnected)return;
+drawPanoramaPreview(canvas,{image:source?.readyState!==undefined&&source.readyState<2?null:source,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});
+syncInputs();
+};
+syncInputs=setupCameraNumberInputs(canvas,view,draw);
+const fields=canvas.nextElementSibling;
+const target=document.getElementById('keyframeAngleFields');
+if(fields&&target){target.appendChild(fields);const button=fields.querySelector('.camera-copy-view');if(button)fields.appendChild(button);}
+const seek=time=>{
+second=clamp(Number(time)||0,0,duration);
+
+range.value=String(second);
+label.textContent=`${second.toFixed(3)} / ${duration.toFixed(3)} 秒`;
+
+const loopTime=getMediaCameraLoopTime(sourceNode,media,second);
+const camera=getIndependentCameraAt(node,loopTime,getMediaCameraBase(sourceNode));
+
+Object.assign(view,camera);
+
+// 画角と数値を先に更新する
+draw();
+
+if(videoMode&&media?.duration&&source){
+const videoTime=getMediaCameraVideoTime(sourceNode,media,second);
+
+if(Math.abs(source.currentTime-videoTime)>0.001){
+source.currentTime=videoTime;
+}
+}
+};
+const updateList=()=>{
+list.innerHTML='';
+for(const frame of [...frames].sort((a,b)=>a.time-b.time)){
+const row=document.createElement('div');row.className='pan-keyframe-row';
+const select=document.createElement('button');select.type='button';select.textContent=`◆ ${frame.time.toFixed(3)} 秒`;
+select.addEventListener('click',()=>seek(frame.time),{signal});
+const remove=document.createElement('button');remove.type='button';remove.textContent='削除';
+remove.addEventListener('click',()=>{
+const before=typeof editorSnapshot==='function'?editorSnapshot():null;
+const index=frames.indexOf(frame);if(index>=0)frames.splice(index,1);
+if(before)commitEditorHistory(before);
+updateList();seek(second);
+},{signal});
+row.append(select,remove);list.appendChild(row);
+}
+};
+range.addEventListener('input',()=>seek(range.value),{signal});
+const step=direction=>{if(!validFps)return;seek((Math.round(second*fps)+direction)/fps);};
+prev.addEventListener('click',()=>step(-1),{signal});next.addEventListener('click',()=>step(1),{signal});
+if(videoMode&&source?.addEventListener){source.addEventListener('seeked',draw,{signal});source.addEventListener('loadeddata',draw,{signal});}
+canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch};canvas.setPointerCapture(e.pointerId);},{signal});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;view.yaw=drag.yaw-(e.clientX-drag.x)*0.008;view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*0.008,-Math.PI/2+0.02,Math.PI/2-0.02);draw();},{signal});
+canvas.addEventListener('pointerup',()=>drag=null,{signal});canvas.addEventListener('pointercancel',()=>drag=null,{signal});
+canvas.addEventListener('wheel',e=>{e.preventDefault();view.zoom=clamp(view.zoom+(e.deltaY>0?-0.1:0.1),0.6,2.2);draw();},{signal,passive:false});
+document.getElementById('keyframeAdd').addEventListener('click',()=>{
+const before=typeof editorSnapshot==='function'?editorSnapshot():null;
+const time=Number(second.toFixed(3));const frame={time,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom};
+const index=frames.findIndex(f=>Math.abs(f.time-time)<0.0005);
+if(index>=0)frames[index]=frame;else frames.push(frame);
+if(before)commitEditorHistory(before);
+updateList();
+},{signal});
+updateList();seek(0);
+}
+function getMediaCameraFrames(node){
+if(!node.cameraKeyframes)node.cameraKeyframes={pc:[],mobile:[]};
+if(!Array.isArray(node.cameraKeyframes[state.displayMode]))node.cameraKeyframes[state.displayMode]=[];
+return node.cameraKeyframes[state.displayMode];
+}
+
+function getMediaCameraBase(node){
+if(node.type==='world')return getWorldInitialView(node)||{yaw:0,pitch:0,zoom:1};
+if(!node.animation.views)node.animation.views={pc:{yaw:0,pitch:0,zoom:1},mobile:{yaw:0,pitch:0,zoom:1}};
+return node.animation.views[state.displayMode]||node.animation.views.pc;
+}
+
+function getMediaCameraAt(node,seconds){
+const base=getMediaCameraBase(node);
+if(node.type==='world'||node.type==='animation')return {...base};
+const frames=[...getMediaCameraFrames(node)].filter(f=>Number.isFinite(f.time)).sort((x,y)=>x.time-y.time);
+if(!frames.length)return {...base};
+if(seconds<=frames[0].time)return {...frames[0]};
+if(seconds>=frames[frames.length-1].time)return {...frames[frames.length-1]};
+for(let i=1;i<frames.length;i++){
+const before=frames[i-1],after=frames[i];
+if(seconds>after.time)continue;
+const fraction=clamp((seconds-before.time)/(after.time-before.time),0,1);
+return {yaw:before.yaw+angleDiff(after.yaw,before.yaw)*fraction,pitch:before.pitch+(after.pitch-before.pitch)*fraction,zoom:before.zoom+(after.zoom-before.zoom)*fraction};
+}
+return {...base};
+}
+
+function getMediaPlaybackDuration(node,media){
+if(node.type==='world')return Math.max(0.1,Number(node.worldDuration)||3);
+const mediaDuration=media?.duration||0;
+return Math.max(0.1,Number(node.animation.playDuration)||(mediaDuration*(Number(node.animation.loopCount)||1))||3);
+}
+
+function getMediaCameraLoopTime(node,media,elapsed){
+if(node.type!=='animation')return elapsed;
+
+const duration=Number(media?.duration)||0;
+if(duration<=0)return elapsed;
+
+const loopCount=Number(node.animation.loopCount)||1;
+const isLooping=node.animation.infiniteLoop||loopCount>1;
+
+if(!isLooping)return elapsed;
+
+return ((elapsed%duration)+duration)%duration;
+}
+
+function getMediaCameraVideoTime(node,media,elapsed){
+const duration=media?.duration||0;
+if(duration<=0)return 0;
+const start=clamp(Number(node.animation.startTime)||0,0,Math.max(0,duration-0.001));
+return Math.min(Math.max(0,duration-0.001),(start+elapsed)%duration);
+}
+
+function renderMediaNodeSettings(node){
+const videoMode=node.type==='animation';
+const media=mediaLibrary.find(m=>m.id===(videoMode?node.animation.mediaId:node.world.mediaId));
+const duration=getMediaPlaybackDuration(node,media);
+
+const collapsible=(id,label,contents)=>`<details data-media-section="${id}"><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
+const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
+const durationSettings='';
+const pngSettings=videoMode?'':`
+<div class="setting-group">
+<div class="setting-label">表示時間（秒）</div>
+<input id="mediaWorldDuration" class="number-input" type="number" min="0.1" step="0.1" value="${duration}">
+</div>
+<div class="setting-group">
+<label>
+<input id="mediaWorldInfinite" type="checkbox" ${node.worldInfiniteLoop?'checked':''}>
+トリガーが発火するまで表示
+</label>
+</div>`;
+
+const previewControls=`
+<div class="setting-group">
+<canvas id="mediaCameraCanvas" class="world-preview" width="320" height="320"></canvas>
+<div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div>
+</div>
+<div class="setting-group">
+<div class="media-camera-time-header">
+<div class="setting-label">再生位置</div>
+<div class="media-camera-step-buttons">
+<button id="mediaCameraPreviousFrame" type="button" title="1コマ戻る">◀</button>
+<button id="mediaCameraNextFrame" type="button" title="1コマ進む">▶</button>
+</div>
+</div>
+<input id="mediaCameraTime" type="range" min="0" max="${duration}" step="0.01" value="0" style="width:100%">
+<div id="mediaCameraTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} 秒</div>
+</div>`;
+
+const inheritControl=`<div class="setting-group"><label class="media-camera-inherit"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div>`;
+const angleInfo=`<div class="setting-group"><div class="setting-label">画角情報</div><div id="mediaCameraAngleFields"></div></div>`;
+const loops=videoMode?`
+<div class="setting-group">
+<div class="setting-label">ループ回数</div>
+<input id="mediaLoopCount" class="number-input" type="number" min="0.01" step="0.01" value="${Number(node.animation.loopCount)||1}">
+</div>
+<div class="setting-group">
+<label>
+<input id="mediaInfiniteLoop" type="checkbox" ${node.animation.infiniteLoop?'checked':''}>
+無限ループ（トリガー発火まで再生）
+</label>
+</div>`:'';
+settingsPanel.innerHTML=`
+<div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div>
+${mediaSelect}
+${pngSettings}
+${inheritControl}
+${previewControls}
+<hr class="media-settings-divider">
+${videoMode?loops:''}
+<hr class="media-settings-divider">
+${angleInfo}`;
+
+document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
+
+if(!videoMode){
+document.getElementById('mediaWorldDuration').addEventListener('change',e=>{
+node.worldDuration=Math.max(0.1,Number(e.target.value)||3);
+renderSettings();
+});
+}
+if(videoMode&&media?.duration>0){
+node.animation.playDuration=media.duration*(Number(node.animation.loopCount)||1);
+}
+if(videoMode){
+node.animation.startTime=0;
+document.getElementById('mediaInfiniteLoop').addEventListener('change',e=>node.animation.infiniteLoop=e.target.checked);
+document.getElementById('mediaLoopCount').addEventListener('change',e=>{node.animation.loopCount=Math.max(.01,Number(e.target.value)||1);node.animation.playDuration=(media?.duration||0)*node.animation.loopCount;renderSettings();});
+}else{
+document.getElementById('mediaWorldInfinite').addEventListener('change',e=>node.worldInfiniteLoop=e.target.checked);
+}
+
+
+setupMediaCameraInheritance(node);
+setupSharedMediaCamera(node,media,duration);
+}
+
+function setupSharedMediaCamera(node,media,duration){
+const canvas=document.getElementById('mediaCameraCanvas');
+const range=document.getElementById('mediaCameraTime');
+const label=document.getElementById('mediaCameraTimeLabel');
+const source=node.type==='world'?node.world.image:media?.video;
+if(source?.pause)source.pause();
+const controller=new AbortController();const signal=controller.signal;
+cleanupAnimationSettingsPreview=()=>controller.abort();
+let second=0,drag=null;
+const view={...getMediaCameraBase(node)};
+let syncInputs=()=>{};
+const draw=()=>{
+if(!canvas.isConnected)return;
+drawPanoramaPreview(canvas,{image:source?.readyState!==undefined&&source.readyState<2?null:source,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});
+syncInputs();
+};
+syncInputs=setupCameraNumberInputs(canvas,view,draw);
+const fields=canvas.nextElementSibling;
+const target=document.getElementById('mediaCameraAngleFields');
+if(fields&&target){target.appendChild(fields);const button=fields.querySelector('.camera-copy-view');if(button)fields.appendChild(button);}
+const seek=time=>{
+second=clamp(Number(time)||0,0,duration);
+range.value=String(second);label.textContent=`${second.toFixed(3)} / ${duration.toFixed(3)} 秒`;
+Object.assign(view,getMediaCameraBase(node));
+if(node.type==='animation'&&media?.duration&&source){
+const videoTime=getMediaCameraVideoTime(node,media,second);
+if(Math.abs(source.currentTime-videoTime)>0.001)source.currentTime=videoTime;
+else draw();
+}else draw();
+};
+range.addEventListener('input',()=>seek(range.value),{signal});
+const previous=document.getElementById('mediaCameraPreviousFrame');
+const next=document.getElementById('mediaCameraNextFrame');
+const videoMode=node.type==='animation';
+const fps=videoMode?Number(media?.fps):8;
+const validFps=Number.isFinite(fps)&&fps>0;
+if(!validFps){previous.disabled=true;next.disabled=true;}
+const step=direction=>{if(!validFps)return;seek((Math.round(second*fps)+direction)/fps);};
+previous.addEventListener('click',()=>step(-1),{signal});next.addEventListener('click',()=>step(1),{signal});
+if(videoMode&&source?.addEventListener){source.addEventListener('seeked',draw,{signal});source.addEventListener('loadeddata',draw,{signal});}
+canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch};canvas.setPointerCapture(e.pointerId);},{signal});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;view.yaw=drag.yaw-(e.clientX-drag.x)*0.008;view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*0.008,-Math.PI/2+0.02,Math.PI/2-0.02);draw();},{signal});
+canvas.addEventListener('pointerup',()=>drag=null,{signal});canvas.addEventListener('pointercancel',()=>drag=null,{signal});
+canvas.addEventListener('wheel',e=>{e.preventDefault();view.zoom=clamp(view.zoom+(e.deltaY>0?-0.1:0.1),0.6,2.2);draw();},{signal,passive:false});
+// The initial camera view is stored on the media node, separately from keyframe animation.
+const syncBase=()=>{
+const base=getMediaCameraBase(node);
+Object.assign(base,view);
+if(node.type==='world')Object.assign(node.world,{yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});
+};
+canvas.addEventListener('pointerup',syncBase,{signal});
+canvas.addEventListener('wheel',syncBase,{signal});
+target?.addEventListener('change',syncBase,{signal});
+target?.addEventListener('paste',()=>queueMicrotask(syncBase),{signal});
+seek(0);
 }
 
 const mediaLibrary=[];
@@ -633,7 +1651,8 @@ setMediaPanelOpen(false);
 
 function getMediaOptions(type,selectedId){
 const available=mediaLibrary.filter(media=>{
-return type==='media'||media.fileType===(type==='world'?'png':'mp4');
+return media.width===media.height*2&&
+(media.fileType==='png'||media.fileType==='mp4');
 });
 
 const options=available.map(media=>{
@@ -676,7 +1695,7 @@ if(context){
 context.fillStyle='#252525';
 context.fillRect(0,0,canvas.width,canvas.height);
 
-const source=media.fileType==='png'?media.image:media.video;
+const source=media.fileType==='mp4'?media.video:media.image;
 
 if(source){
 try{
@@ -726,6 +1745,11 @@ mediaList.appendChild(item);
 function assignMediaToNode(node,mediaId){
 const media=mediaLibrary.find(item=>item.id===mediaId);
 
+if(media&&media.width!==media.height*2){
+alert('360度メディアには2:1の画像・動画を選択してください。');
+return;
+}
+
 if(
 media&&(
 node.type==='media'||
@@ -757,30 +1781,130 @@ renderNodes();
 renderSettings();
 }
 
+async function readMp4FrameRate(file){
+const buffer=await file.arrayBuffer();
+const view=new DataView(buffer);
+const decoder=new TextDecoder('ascii');
+
+function boxes(start,end){
+const result=[];
+let position=start;
+
+while(position+8<=end){
+let size=view.getUint32(position);
+const type=decoder.decode(new Uint8Array(buffer,position+4,4));
+let headerSize=8;
+
+if(size===1){
+if(position+16>end)break;
+const high=view.getUint32(position+8);
+const low=view.getUint32(position+12);
+size=high*4294967296+low;
+headerSize=16;
+}else if(size===0){
+size=end-position;
+}
+
+if(!Number.isSafeInteger(size)||size<headerSize||position+size>end)break;
+
+result.push({
+type,
+start:position+headerSize,
+end:position+size
+});
+
+position+=size;
+}
+
+return result;
+}
+
+function child(parent,type){
+return boxes(parent.start,parent.end).find(box=>box.type===type);
+}
+
+const moov=boxes(0,buffer.byteLength).find(box=>box.type==='moov');
+if(!moov)return null;
+
+for(const trak of boxes(moov.start,moov.end).filter(box=>box.type==='trak')){
+const mdia=child(trak,'mdia');
+if(!mdia)continue;
+
+const hdlr=child(mdia,'hdlr');
+if(!hdlr||hdlr.start+12>hdlr.end)continue;
+
+const handler=decoder.decode(new Uint8Array(buffer,hdlr.start+8,4));
+if(handler!=='vide')continue;
+
+const mdhd=child(mdia,'mdhd');
+if(!mdhd)continue;
+
+const version=view.getUint8(mdhd.start);
+const timescaleOffset=version===1?20:12;
+if(mdhd.start+timescaleOffset+4>mdhd.end)continue;
+
+const timescale=view.getUint32(mdhd.start+timescaleOffset);
+if(!timescale)continue;
+
+const minf=child(mdia,'minf');
+const stbl=minf?child(minf,'stbl'):null;
+const stts=stbl?child(stbl,'stts'):null;
+if(!stts||stts.start+8>stts.end)continue;
+
+const entryCount=view.getUint32(stts.start+4);
+let sampleCount=0;
+let durationTicks=0;
+let offset=stts.start+8;
+
+for(let i=0;i<entryCount;i++){
+if(offset+8>stts.end)break;
+
+const count=view.getUint32(offset);
+const delta=view.getUint32(offset+4);
+
+sampleCount+=count;
+durationTicks+=count*delta;
+offset+=8;
+}
+
+if(sampleCount>0&&durationTicks>0){
+const fps=sampleCount*timescale/durationTicks;
+if(Number.isFinite(fps)&&fps>0&&fps<=240){
+return fps;
+}
+}
+}
+
+return null;
+}
+
 async function importMediaFile(file){
 const extension=file.name.toLowerCase();
 const isPng=extension.endsWith('.png');
+const isJpg=extension.endsWith('.jpg')||extension.endsWith('.jpeg');
 const isMp4=extension.endsWith('.mp4');
+const isImage=isPng||isJpg;
 
-if(!isPng&&!isMp4){
-throw new Error('PNGまたはMP4を選択してください。');
+if(!isImage&&!isMp4){
+throw new Error('PNG、JPGまたはMP4を選択してください。');
 }
 
 const media={
 id:uid('media'),
 fileName:file.name,
-fileType:isPng?'png':'mp4',
+fileType:isPng?'png':isJpg?'jpg':'mp4',
 image:null,
 video:null,
 url:null,
 raw:null,
 frames:[],
 duration:0,
+fps:null,
 width:0,
 height:0
 };
 
-if(isPng){
+if(isImage){
 const url=URL.createObjectURL(file);
 
 try{
@@ -799,6 +1923,7 @@ URL.revokeObjectURL(url);
 }
 
 if(isMp4){
+media.fps=await readMp4FrameRate(file);
 const url=URL.createObjectURL(file);
 const video=document.createElement('video');
 
@@ -827,13 +1952,8 @@ throw error;
 }
 }
 
-if(media.width!==media.height*2){
-if(media.url){
-media.video.removeAttribute('src');
-media.video.load();
-URL.revokeObjectURL(media.url);
-}
-throw new Error('2:1の画像・動画を選択してください。');
+if(media.width<=0||media.height<=0){
+throw new Error('画像・動画のサイズを取得できませんでした。');
 }
 
 media.sourceFile=file;
@@ -863,6 +1983,7 @@ alert(`${file.name} の読み込みに失敗しました。\n${error.message}`);
 }
 
 worldFileInput.value='';
+if(files.length>0)setMediaPanelOpen(false);
 });
 
 animationFileInput.addEventListener('change',async e=>{
@@ -878,6 +1999,7 @@ alert(`${file.name} の読み込みに失敗しました。\n${error.message}`);
 }
 
 animationFileInput.value='';
+if(files.length>0)setMediaPanelOpen(false);
 });
 
 renderMediaList();
@@ -894,6 +2016,7 @@ container.innerHTML=`
 <div class="setting-group">
 <div class="setting-label">水平角度（°）</div>
 <input class="number-input" data-camera-value="yaw" type="number" min="-180" max="180" step="0.1">
+<button class="camera-copy-view" type="button">画角をコピー</button>
 </div>
 <div class="setting-group">
 <div class="setting-label">垂直角度（°）</div>
@@ -923,6 +2046,71 @@ inputs.yaw.value=format(yaw);
 inputs.pitch.value=format(toDegrees(view.pitch));
 inputs.fov.value=format(Math.max(35,Math.min(100,75/view.zoom)));
 };
+
+const copyButton=container.querySelector('.camera-copy-view');
+
+copyButton.addEventListener('click',async()=>{
+const cameraData={
+yaw:Number((view.yaw*180/Math.PI).toFixed(6)),
+pitch:Number((view.pitch*180/Math.PI).toFixed(6)),
+fov:Number((75/view.zoom).toFixed(6))
+};
+
+const text='GURURI_CAMERA:'+JSON.stringify(cameraData);
+
+try{
+await navigator.clipboard.writeText(text);
+copyButton.textContent='コピーしました';
+setTimeout(()=>{
+if(copyButton.isConnected){
+copyButton.textContent='画角をコピー';
+}
+},1500);
+}catch(error){
+console.error('画角のコピーに失敗しました',error);
+alert('クリップボードにコピーできませんでした。');
+}
+});
+
+inputs.yaw.addEventListener('paste',event=>{
+const text=event.clipboardData?.getData('text/plain')||'';
+
+if(!text.startsWith('GURURI_CAMERA:'))return;
+
+event.preventDefault();
+
+let data;
+
+try{
+data=JSON.parse(text.slice('GURURI_CAMERA:'.length));
+}catch(error){
+alert('画角データを読み取れませんでした。');
+return;
+}
+
+const yaw=Number(data.yaw);
+const pitch=Number(data.pitch);
+const fov=Number(data.fov);
+
+if(
+!Number.isFinite(yaw)||
+!Number.isFinite(pitch)||
+!Number.isFinite(fov)||
+yaw< -180||yaw>180||
+pitch< -88.85||pitch>88.85||
+fov<35||fov>100
+){
+alert('画角データが正しくありません。');
+return;
+}
+
+view.yaw=yaw*Math.PI/180;
+view.pitch=pitch*Math.PI/180;
+view.zoom=75/fov;
+
+redraw();
+sync();
+});
 
 for(const [type,input] of Object.entries(inputs)){
 input.addEventListener('change',()=>{
@@ -1195,6 +2383,17 @@ zoom:previous.clickView.zoom
 };
 }
 
+if(previous.type==='animation'){
+const view=previous.animation.views?.[state.displayMode]||previous.animation.views?.pc;
+if(view){
+return{
+yaw:view.yaw,
+pitch:view.pitch,
+zoom:view.zoom
+};
+}
+}
+
 if(previous.type==='world'){
 const view=getWorldInitialView(previous);
 
@@ -1260,7 +2459,9 @@ return null;
 function ensurePanView(node,worldNode){
 const startView=
 getCameraViewBeforeNode(node.id)||
-getWorldInitialView(worldNode);
+(worldNode.type==='animation'
+?(worldNode.animation.views?.[state.displayMode]||worldNode.animation.views?.pc)
+:getWorldInitialView(worldNode));
 
 if(!startView)return;
 
@@ -1286,12 +2487,274 @@ node.panPath[0]=startPoint;
 }
 
 function getPanPreviewWorld(node,worldNode){
+let image=null;
+
+if(worldNode.type==='animation'){
+const media=mediaLibrary.find(item=>
+item.id===worldNode.animation.mediaId&&item.fileType==='mp4'
+);
+
+image=media?.video?.readyState>=2?media.video:null;
+}else{
+image=worldNode.world.image;
+}
+
 return{
-image:worldNode.world.image,
+image,
 yaw:node.panView.yaw,
 pitch:node.panView.pitch,
 zoom:node.panView.zoom
 };
+}
+
+function getTimedPanView(node,time){
+const frames=[...(node.panKeyframes||[])]
+.filter(frame=>Number.isFinite(frame.time))
+.sort((a,b)=>a.time-b.time);
+
+if(frames.length===0){
+return{
+yaw:node.panView.yaw||0,
+pitch:node.panView.pitch||0,
+zoom:node.panView.zoom||1
+};
+}
+
+if(time<=frames[0].time)return {...frames[0]};
+
+const last=frames[frames.length-1];
+if(time>=last.time)return {...last};
+
+for(let i=1;i<frames.length;i++){
+const a=frames[i-1];
+const b=frames[i];
+
+if(time>b.time)continue;
+
+const t=clamp(
+(time-a.time)/(b.time-a.time),
+0,
+1
+);
+
+return{
+yaw:normalizeAngle(a.yaw+angleDiff(b.yaw,a.yaw)*t),
+pitch:a.pitch+(b.pitch-a.pitch)*t,
+zoom:a.zoom+(b.zoom-a.zoom)*t
+};
+}
+
+return {...last};
+}
+
+function setupTimedPanPreview(node,sourceNode){
+const canvas=document.getElementById('panPreviewCanvas');
+const pathCanvas=document.getElementById('panPathCanvas');
+const range=document.getElementById('panTimeRange');
+const label=document.getElementById('panTimeLabel');
+const addButton=document.getElementById('panAddKeyframeBtn');
+const list=document.getElementById('panKeyframeList');
+
+if(!canvas||!range||!label||!addButton||!list)return;
+
+pathCanvas.style.pointerEvents='none';
+
+const media=mediaLibrary.find(item=>
+item.id===sourceNode.animation.mediaId&&item.fileType==='mp4'
+);
+
+const video=media?.video;
+if(!video)return;
+
+video.pause();
+
+ensurePanView(node,sourceNode);
+
+const duration=Math.max(0.1,Number(node.panSeconds)||3);
+
+if(!Array.isArray(node.panKeyframes)){
+node.panKeyframes=[];
+}
+
+if(node.panKeyframes.length===0){
+node.panKeyframes.push({
+time:0,
+yaw:node.panView.yaw,
+pitch:node.panView.pitch,
+zoom:node.panView.zoom
+});
+}
+
+const view={
+yaw:0,
+pitch:0,
+zoom:1
+};
+
+const controller=new AbortController();
+const signal=controller.signal;
+
+cleanupAnimationSettingsPreview=()=>{
+controller.abort();
+};
+
+let currentTime=0;
+let drag=null;
+
+const draw=()=>{
+if(!canvas.isConnected)return;
+
+drawPanoramaPreview(canvas,{
+image:video.readyState>=2?video:null,
+yaw:view.yaw,
+pitch:view.pitch,
+zoom:view.zoom
+});
+};
+
+const seek=time=>{
+currentTime=clamp(time,0,duration);
+range.value=String(currentTime);
+label.textContent=`${currentTime.toFixed(2)} / ${duration.toFixed(2)} 秒`;
+
+Object.assign(view,getTimedPanView(node,currentTime));
+
+const videoDuration=Number(media.duration)||0;
+const startTime=getMediaCameraVideoTime(
+sourceNode,media,getTriggerPreviewTime(node.id,sourceNode)
+);
+
+if(videoDuration>0){
+const targetTime=Math.max(
+0,
+Math.min(
+videoDuration-0.001,
+(startTime+currentTime)%videoDuration
+)
+);
+
+if(Math.abs(video.currentTime-targetTime)>0.001){
+video.currentTime=targetTime;
+}else{
+draw();
+}
+}else{
+draw();
+}
+};
+
+const updateList=()=>{
+list.innerHTML='';
+
+const frames=[...node.panKeyframes].sort((a,b)=>a.time-b.time);
+
+for(const frame of frames){
+const row=document.createElement('div');
+row.className='pan-keyframe-row';
+
+const select=document.createElement('button');
+select.type='button';
+select.textContent=`◆ ${frame.time.toFixed(2)} 秒`;
+select.addEventListener('click',()=>{
+seek(frame.time);
+});
+
+const remove=document.createElement('button');
+remove.type='button';
+remove.textContent='削除';
+remove.addEventListener('click',()=>{
+node.panKeyframes=node.panKeyframes.filter(item=>item!==frame);
+updateList();
+seek(currentTime);
+});
+
+row.appendChild(select);
+row.appendChild(remove);
+list.appendChild(row);
+}
+};
+
+range.addEventListener('input',()=>{
+seek(Number(range.value));
+},{signal});
+
+video.addEventListener('seeked',draw,{signal});
+video.addEventListener('loadeddata',draw,{signal});
+
+canvas.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+
+drag={
+x:e.clientX,
+y:e.clientY,
+yaw:view.yaw,
+pitch:view.pitch
+};
+
+canvas.setPointerCapture(e.pointerId);
+},{signal});
+
+canvas.addEventListener('pointermove',e=>{
+if(!drag)return;
+
+view.yaw=normalizeAngle(
+drag.yaw-(e.clientX-drag.x)*0.008
+);
+
+view.pitch=clamp(
+drag.pitch+(e.clientY-drag.y)*0.008,
+-Math.PI/2+0.02,
+Math.PI/2-0.02
+);
+
+draw();
+},{signal});
+
+const finishDrag=()=>{
+drag=null;
+};
+
+canvas.addEventListener('pointerup',finishDrag,{signal});
+canvas.addEventListener('pointercancel',finishDrag,{signal});
+
+canvas.addEventListener('wheel',e=>{
+e.preventDefault();
+
+view.zoom=clamp(
+view.zoom+(e.deltaY>0?-0.1:0.1),
+0.6,
+2.2
+);
+
+draw();
+},{passive:false,signal});
+
+addButton.addEventListener('click',()=>{
+const time=Number(currentTime.toFixed(2));
+
+const frame={
+time,
+yaw:view.yaw,
+pitch:view.pitch,
+zoom:view.zoom
+};
+
+const existing=node.panKeyframes.findIndex(item=>
+Math.abs(item.time-time)<0.005
+);
+
+if(existing>=0){
+node.panKeyframes[existing]=frame;
+}else{
+node.panKeyframes.push(frame);
+}
+
+node.panKeyframes.sort((a,b)=>a.time-b.time);
+updateList();
+},{signal});
+
+updateList();
+seek(0);
 }
 
 function setupPanPreview(node,worldNode){
@@ -1301,6 +2764,30 @@ const pathCanvas=document.getElementById('panPathCanvas');
 if(!previewCanvas||!pathCanvas)return;
 
 ensurePanView(node,worldNode);
+
+if(worldNode.type==='animation'){
+const media=mediaLibrary.find(item=>
+item.id===worldNode.animation.mediaId&&item.fileType==='mp4'
+);
+
+if(media?.video){
+const video=media.video;
+video.pause();
+
+const startTime=Math.max(
+0,
+Math.min(media.duration-0.001,Number(worldNode.animation.startTime)||0)
+);
+
+video.addEventListener('seeked',()=>{
+if(previewCanvas.isConnected){
+drawPanoramaPreview(previewCanvas,getPanPreviewWorld(node,worldNode));
+}
+},{once:true});
+
+video.currentTime=startTime;
+}
+}
 
 let drawing=false;
 let cameraDrag=null;
@@ -1765,6 +3252,7 @@ gl.uniform1f(renderer.pitch,world.pitch);
 gl.uniform1f(renderer.fov,fov);
 gl.uniform1f(renderer.aspect,canvas.width/canvas.height);
 gl.drawArrays(gl.TRIANGLES,0,6);
+if(canvas===gameCanvas)checkActiveFrameInTriggers();
 }
 
 function clamp(value,min,max){
@@ -1797,25 +3285,43 @@ return null;
 }
 
 function findPreviousClickMediaNode(nodeId){
-let currentId=nodeId;
+// First prefer a media node on the path leading directly to this node.
+// In parallel graphs, a sibling media branch from the nearest common ancestor
+// supplies the background for click and dialogue editing previews.
 const visited=new Set();
+let frontier=[nodeId];
+const mediaTypes=new Set(['world','animation']);
 
-while(currentId&&!visited.has(currentId)){
-visited.add(currentId);
+while(frontier.length){
+const next=[];
+const parents=[];
 
-const incoming=state.connections.find(c=>c.to===currentId);
-if(!incoming)return null;
-
-const previous=getNode(incoming.from);
-if(!previous)return null;
-
-if(previous.type==='world'||previous.type==='animation'){
-return previous;
+for(const id of frontier){
+if(visited.has(id))continue;
+visited.add(id);
+for(const edge of state.connections){
+if(edge.to!==id)continue;
+const parent=getNode(edge.from);
+if(!parent)continue;
+if(mediaTypes.has(parent.type))return parent;
+parents.push(parent);
+}
 }
 
-currentId=previous.id;
+// Search the media branches attached to the nearest ancestor first.
+for(const parent of parents){
+for(const edge of state.connections){
+if(edge.from!==parent.id)continue;
+const sibling=getNode(edge.to);
+if(sibling&&mediaTypes.has(sibling.type))return sibling;
+}
 }
 
+for(const parent of parents){
+if(!visited.has(parent.id))next.push(parent.id);
+}
+frontier=next;
+}
 return null;
 }
 
@@ -1830,6 +3336,10 @@ media.fileType==='mp4'
 
 function getClickFrameRegions(node,frameIndex){
 const frames=node.clickFrameRegions||{};
+
+if(node.clickInheritRegions===false){
+return cloneClickRegions(frames[frameIndex]||[]);
+}
 
 const keys=Object.keys(frames)
 .map(Number)
@@ -1848,28 +3358,58 @@ if(!node.clickFrameRegions){
 node.clickFrameRegions={};
 }
 
-node.clickFrameRegions[node.clickFrameIndex||0]=
-cloneClickRegions(node.clickRegions);
+const currentIndex=node.clickFrameIndex||0;
+const regions=cloneClickRegions(node.clickRegions);
+
+node.clickFrameRegions[currentIndex]=regions;
+
+if(node.clickInheritRegions!==false){
+const media=mediaLibrary.find(m=>m.id===node.clickSourceMediaId);
+const fps=Number(node.clickFrameFps)||8;
+const frameCount=media?.duration
+?Math.max(1,Math.ceil(media.duration*fps))
+:currentIndex+1;
+
+for(let index=currentIndex+1;index<frameCount;index++){
+node.clickFrameRegions[index]=cloneClickRegions(regions);
+}
+}
+}
+
+function getTriggerPreviewTime(nodeId,sourceNode){
+// Sum waits on the path to this trigger.  A sibling media branch starts
+// at the common ancestor, so this is its elapsed playback time.
+const visited=new Set();
+let current=nodeId;
+let elapsed=0;
+while(current&&!visited.has(current)){
+visited.add(current);
+const currentNode=getNode(current);
+if(currentNode?.type==='time')elapsed+=Math.max(0,Number(currentNode.timeSeconds)||0);
+if(current===sourceNode?.id)break;
+const incoming=state.connections.find(edge=>edge.to===current);
+if(!incoming)break;
+current=incoming.from;
+}
+return elapsed;
+}
+
+function getReferenceCamera(node,sourceNode,seconds){
+const media=sourceNode?.type==='animation'?getClickAnimationMedia(sourceNode):null;
+const time=getMediaCameraLoopTime(sourceNode,media,Math.max(0,seconds||0));
+const keyframe=findSceneKeyframeNode(sourceNode);
+return keyframe?getIndependentCameraAt(keyframe,time,getMediaCameraBase(sourceNode)):getMediaCameraBase(sourceNode);
 }
 
 function ensureClickView(node,sourceNode){
-if(node.clickView.initialized)return;
-
-let view=null;
-
-if(sourceNode.type==='animation'){
-view=sourceNode.animation.views?.[state.displayMode]||
-sourceNode.animation.views?.pc;
-}else{
-view=getWorldInitialView(sourceNode);
-}
-
-view=view||{yaw:0,pitch:0,zoom:1};
-
-node.clickView.yaw=view.yaw;
-node.clickView.pitch=view.pitch;
-node.clickView.zoom=view.zoom;
-node.clickView.initialized=true;
+if(!sourceNode)return;
+const time=sourceNode.type==='animation'
+?(node.clickFrameIndex||0)/(Number(node.clickFrameFps)||8)
+:getTriggerPreviewTime(node.id,sourceNode);
+const referenceKey=`${sourceNode.id}:${state.displayMode}`;
+if(node.clickView.initialized&&node.clickReferenceKey===referenceKey)return;
+Object.assign(node.clickView,getReferenceCamera(node,sourceNode,time),{initialized:true});
+node.clickReferenceKey=referenceKey;
 }
 
 function createClickTargetAtCenter(node,worldNode,canvas){
@@ -2006,10 +3546,34 @@ node.clickLassoMode='add';
 updateClickRegionState(node);
 }
 
+function snapshotClickLasso(node){
+return{
+frameIndex:node.clickFrameIndex||0,
+regions:cloneClickRegions(node.clickRegions),
+frameRegions:Object.fromEntries(
+Object.entries(node.clickFrameRegions||{}).map(([index,regions])=>[
+index,
+cloneClickRegions(regions)
+])
+)
+};
+}
+
+function restoreClickLasso(node,snapshot){
+node.clickFrameIndex=snapshot.frameIndex;
+node.clickFrameRegions=Object.fromEntries(
+Object.entries(snapshot.frameRegions).map(([index,regions])=>[
+index,
+cloneClickRegions(regions)
+])
+);
+setClickLassoRegions(node,snapshot.regions);
+}
+
 function saveClickLassoHistory(node){
 ensureClickLassoHistory(node);
 
-node.clickUndoStack.push(cloneClickRegions(node.clickRegions));
+node.clickUndoStack.push(snapshotClickLasso(node));
 
 if(node.clickUndoStack.length>100){
 node.clickUndoStack.shift();
@@ -2212,6 +3776,27 @@ if(!previewCanvas||!lassoCanvas||!clearButton||!addModeButton||!subtractModeButt
 
 ensureClickLassoHistory(node);
 
+const inheritInput=document.getElementById('clickInheritRegionsInput');
+
+if(inheritInput){
+inheritInput.addEventListener('change',()=>{
+saveClickLassoHistory(node);
+
+node.clickInheritRegions=inheritInput.checked;
+
+if(node.clickInheritRegions){
+saveCurrentClickFramePolygon(node);
+}
+
+setClickLassoRegions(
+node,
+getClickFrameRegions(node,node.clickFrameIndex||0)
+);
+
+drawClickLassoOverlay(node,worldNode);
+});
+}
+
 if(node.clickLassoMode!=='add'&&node.clickLassoMode!=='subtract'){
 node.clickLassoMode='add';
 }
@@ -2249,7 +3834,7 @@ const previousButton=document.getElementById('clickPreviousFrameBtn');
 const nextButton=document.getElementById('clickNextFrameBtn');
 const label=document.getElementById('clickFrameLabel');
 const timeLabel=document.getElementById('clickFrameTimeLabel');
-const fpsInput=document.getElementById('clickFrameFpsInput');
+
 
 const frameCount=()=>Math.max(
 1,
@@ -2270,9 +3855,6 @@ setClickLassoRegions(
 node,
 getClickFrameRegions(node,nextIndex)
 );
-
-node.clickUndoStack=[];
-node.clickRedoStack=[];
 }
 
 range.value=String(node.clickFrameIndex);
@@ -2282,6 +3864,10 @@ const time=Math.min(
 node.clickFrameIndex/node.clickFrameFps,
 Math.max(0,media.duration-0.001)
 );
+
+// 画角はクリックノード内で保持する。
+// 初回の画角設定は ensureClickView() に任せる。
+// フレーム切り替え時には画角を上書きしない。
 
 timeLabel.textContent=`${time.toFixed(3)} 秒`;
 
@@ -2310,33 +3896,7 @@ range.addEventListener('input',()=>{
 showFrame(Number(range.value));
 });
 
-fpsInput.addEventListener('change',()=>{
-const fps=Number(fpsInput.value);
 
-if(!Number.isInteger(fps)||fps<1||fps>120){
-fpsInput.value=String(node.clickFrameFps);
-return;
-}
-
-if(fps===node.clickFrameFps)return;
-
-const previousFps=node.clickFrameFps;
-const previousFrames=node.clickFrameRegions||{};
-const converted={};
-
-for(const [frame,regions] of Object.entries(previousFrames)){
-const time=Number(frame)/previousFps;
-const nextFrame=Math.round(time*fps);
-converted[nextFrame]=cloneClickRegions(regions);
-}
-
-node.clickFrameRegions=converted;
-node.clickFrameIndex=Math.round(node.clickFrameIndex/previousFps*fps);
-node.clickFrameFps=fps;
-
-range.max=String(frameCount()-1);
-showFrame(node.clickFrameIndex);
-});
 
 video.addEventListener('seeked',()=>{
 if(!document.getElementById('clickPreviewCanvas'))return;
@@ -2576,27 +4136,208 @@ return String(value)
 .replace(/>/g,'&gt;');
 }
 
-function ensureDialogueView(node,worldNode){
-if(node.dialogueView.initialized)return;
-
-const view=getWorldInitialView(worldNode);
-
-node.dialogueView.yaw=view.yaw;
-node.dialogueView.pitch=view.pitch;
-node.dialogueView.zoom=view.zoom;
-node.dialogueView.initialized=true;
+function ensureDialogueView(node,sourceNode){
+if(!sourceNode)return;
+const seconds=getTriggerPreviewTime(node.id,sourceNode);
+const view=getReferenceCamera(node,sourceNode,seconds);
+const sourceKey=`${sourceNode.id}:${state.displayMode}:${seconds}`;
+if(node.dialogueSourceKey!==sourceKey){
+Object.assign(node.dialogueView,view,{initialized:true});
+node.dialogueSourceKey=sourceKey;
+}
 }
 
-function getDialogueViewWorld(node,worldNode){
+function getDialogueViewWorld(node,sourceNode){
+let image=null;
+
+if(sourceNode?.type==='world'){
+image=sourceNode.world.image;
+}
+
+if(sourceNode?.type==='animation'){
+const media=mediaLibrary.find(item=>
+item.id===sourceNode.animation.mediaId&&
+item.fileType==='mp4'
+);
+image=media?.video||null;
+}
+
 return{
-image:worldNode.world.image,
+image,
 yaw:node.dialogueView.yaw,
 pitch:node.dialogueView.pitch,
 zoom:node.dialogueView.zoom
 };
 }
 
-function setupDialogueTriggerPreview(node,worldNode){
+function getDialoguePanelHeight(node){
+const value=Number(node.dialoguePanelHeights?.[state.displayMode]);
+return Number.isFinite(value)&&value>=10&&value<=60?value:20;
+}
+
+function applyDialoguePreviewLayout(node){
+const box=document.getElementById('dialoguePreviewBox');
+if(!box)return;
+
+const layout=getActiveLayout();
+const referenceWidth=layout.width>=layout.height?1280:720;
+const referenceHeight=referenceWidth*layout.height/layout.width;
+const previewWidth=box.parentElement.clientWidth;
+const scale=previewWidth/referenceWidth;
+const panelHeight=referenceHeight*getDialoguePanelHeight(node)/100;
+
+box.style.width=`${referenceWidth}px`;
+box.style.height=`${panelHeight}px`;
+box.style.transform=`scale(${scale})`;
+box.style.setProperty('--dialogue-thumbnail-size',`${Math.max(1,panelHeight-48)}px`);
+}
+
+function applyGameDialogueLayout(node){
+const height=getDialoguePanelHeight(node);
+const scale=Number.parseFloat(
+gameViewport.style.getPropertyValue('--dialogue-scale')
+)||1;
+
+const panelHeight=gameViewport.clientHeight*height/100;
+const thumbnailSize=Math.max(1,panelHeight-48*scale);
+
+dialogueOverlay.style.height=`${height}%`;
+dialogueOverlay.style.setProperty(
+'--dialogue-thumbnail-size',
+`${thumbnailSize}px`
+);
+}
+
+function getDialogueThumbnailOptions(selectedId){
+const options=mediaLibrary
+.filter(media=>
+(media.fileType==='png'||media.fileType==='jpg')&&
+media.width===media.height
+)
+.map(media=>{
+const selected=media.id===selectedId?' selected':'';
+return `<option value="${media.id}"${selected}>${escapeHtml(media.fileName)}</option>`;
+})
+.join('');
+
+return `<option value="">未設定</option>${options}`;
+}
+
+function getDialogueThumbnailData(node){
+if(!node.dialogueThumbnailMediaId)return node.dialogueThumbnail||null;
+
+const media=mediaLibrary.find(item=>
+item.id===node.dialogueThumbnailMediaId&&
+(item.fileType==='png'||item.fileType==='jpg')&&
+item.width===item.height
+);
+
+if(!media?.image)return null;
+
+const canvas=document.createElement('canvas');
+canvas.width=256;
+canvas.height=256;
+
+const ctx=canvas.getContext('2d');
+if(!ctx)return null;
+
+ctx.drawImage(media.image,0,0,256,256);
+return canvas.toDataURL('image/png');
+}
+
+function setupDialogueAppearance(node){
+const speakerInput=document.getElementById('dialogueSpeakerInput');
+const thumbnailSelect=document.getElementById('dialogueThumbnailSelect');
+const settingsImage=document.getElementById('dialogueThumbnailSettingsImage');
+const fontInput=document.getElementById('dialogueFontSizeInput');
+const heightInput=document.getElementById('dialoguePanelHeightInput');
+
+if(!speakerInput||!thumbnailSelect||!settingsImage||!fontInput||!heightInput)return;
+
+const updateAppearance=()=>{
+const previewImage=document.getElementById('dialoguePreviewThumbnail');
+const previewText=document.getElementById('dialoguePreviewText');
+const previewSpeaker=document.getElementById('dialoguePreviewSpeaker');
+const fontSize=Number(node.dialogueFontSize)||24;
+const thumbnailData=getDialogueThumbnailData(node);
+const speaker=(node.dialogueSpeaker||'').trim();
+
+applyDialoguePreviewLayout(node);
+
+if(previewText){
+previewText.style.fontSize=`${fontSize}px`;
+}
+
+if(previewSpeaker){
+previewSpeaker.textContent=speaker;
+previewSpeaker.classList.toggle('hidden',!speaker);
+}
+
+if(previewImage){
+previewImage.classList.toggle('hidden',!thumbnailData);
+if(thumbnailData)previewImage.src=thumbnailData;
+else previewImage.removeAttribute('src');
+}
+
+settingsImage.classList.toggle('hidden',!thumbnailData);
+if(thumbnailData)settingsImage.src=thumbnailData;
+else settingsImage.removeAttribute('src');
+};
+
+speakerInput.addEventListener('input',()=>{
+node.dialogueSpeaker=speakerInput.value.slice(0,40);
+updateAppearance();
+});
+
+thumbnailSelect.addEventListener('change',()=>{
+node.dialogueThumbnailMediaId=thumbnailSelect.value||null;
+node.dialogueThumbnail=null;
+updateAppearance();
+});
+
+fontInput.addEventListener('input',()=>{
+const value=Number(fontInput.value);
+if(!Number.isFinite(value)||value<10||value>36)return;
+node.dialogueFontSize=value;
+updateAppearance();
+});
+
+fontInput.addEventListener('change',()=>{
+node.dialogueFontSize=Math.max(
+10,
+Math.min(36,Number(fontInput.value)||24)
+);
+fontInput.value=node.dialogueFontSize;
+updateAppearance();
+});
+
+heightInput.addEventListener('input',()=>{
+const value=Number(heightInput.value);
+if(!Number.isFinite(value)||value<10||value>60)return;
+
+if(!node.dialoguePanelHeights){
+node.dialoguePanelHeights={pc:20,mobile:20};
+}
+
+node.dialoguePanelHeights[state.displayMode]=value;
+updateAppearance();
+});
+
+heightInput.addEventListener('change',()=>{
+const value=Math.max(10,Math.min(60,Number(heightInput.value)||20));
+
+if(!node.dialoguePanelHeights){
+node.dialoguePanelHeights={pc:20,mobile:20};
+}
+
+node.dialoguePanelHeights[state.displayMode]=value;
+heightInput.value=value;
+updateAppearance();
+});
+
+updateAppearance();
+}
+function setupDialogueTriggerPreview(node,sourceNode){
 const canvas=document.getElementById('dialoguePreviewCanvas');
 const addButton=document.getElementById('addDialogueBtn');
 const previewBox=document.getElementById('dialoguePreviewBox');
@@ -2606,16 +4347,46 @@ if(!canvas||!addButton)return;
 let drag=null;
 
 const draw=()=>{
-drawPanoramaPreview(canvas,getDialogueViewWorld(node,worldNode));
+drawPanoramaPreview(canvas,getDialogueViewWorld(node,sourceNode));
 };
+
+if(sourceNode?.type==='animation'){
+const media=mediaLibrary.find(item=>
+item.id===sourceNode.animation.mediaId&&
+item.fileType==='mp4'
+);
+
+const video=media?.video;
+
+if(video){
+video.pause();
+
+const startTime=Number(sourceNode.animation.startTime)||0;
+
+if(video.readyState>=2){
+try{
+video.currentTime=startTime;
+}catch(error){
+console.warn(error);
+}
+}
+
+video.addEventListener('seeked',draw,{once:true});
+video.addEventListener('loadeddata',draw,{once:true});
+}
+}
 
 const updatePreview=()=>{
 if(!previewBox||!previewText)return;
+
+applyDialoguePreviewLayout(node);
+
 if(node.dialoguePages.length===0){
 previewBox.classList.add('hidden');
 previewText.textContent='';
 return;
 }
+
 node.dialogueEditIndex=clamp(node.dialogueEditIndex,0,node.dialoguePages.length-1);
 previewBox.classList.remove('hidden');
 previewText.textContent=node.dialoguePages[node.dialogueEditIndex]||'';
@@ -2659,6 +4430,28 @@ renderNodes();
 renderSettings();
 });
 
+settingsPanel.querySelectorAll('[data-dialogue-delete]').forEach(button=>{
+button.addEventListener('click',()=>{
+const index=Number(button.dataset.dialogueDelete);
+
+if(!Number.isInteger(index))return;
+if(index<0||index>=node.dialoguePages.length)return;
+
+node.dialoguePages.splice(index,1);
+
+if(node.dialoguePages.length===0){
+node.dialogueEditIndex=0;
+}else if(node.dialogueEditIndex>index){
+node.dialogueEditIndex--;
+}else if(node.dialogueEditIndex>=node.dialoguePages.length){
+node.dialogueEditIndex=node.dialoguePages.length-1;
+}
+
+renderNodes();
+renderSettings();
+});
+});
+
 document.querySelectorAll('.dialogue-textarea').forEach(textarea=>{
 const index=Number(textarea.dataset.dialogueIndex);
 
@@ -2687,138 +4480,279 @@ updatePreview();
 
 function workspacePointFromEvent(e){
 const rect=workspace.getBoundingClientRect();
-return{x:e.clientX-rect.left,y:e.clientY-rect.top};
+return screenToWorkspace(e.clientX-rect.left,e.clientY-rect.top);
 }
 
 workspace.addEventListener('pointerdown',e=>{
-if(e.target===workspace||e.target===nodesLayer){
+if(startWorkspaceCameraDrag(e))return;
+
+if(e.target===workspace||e.target===nodesLayer||e.target===workspaceScene){
 if(e.button!==0)return;
 state.selectedNodeId=null;
+state.selectedNodeIds.clear();
 state.selectedConnectionId=null;
 renderNodes();
 renderSettings();
 }
 });
 
+workspace.addEventListener('wheel',e=>{
+if(e.target.closest('.context-menu'))return;
+
+e.preventDefault();
+
+const rect=workspace.getBoundingClientRect();
+const centerX=e.clientX-rect.left;
+const centerY=e.clientY-rect.top;
+
+const previousScale=workspaceCamera.scale;
+const nextScale=Math.max(
+0.01,
+Math.min(3,previousScale*Math.exp(-e.deltaY*0.001))
+);
+
+const factor=nextScale/previousScale;
+
+workspaceCamera.scale=nextScale;
+workspaceCamera.x=centerX-(centerX-workspaceCamera.x)*factor;
+workspaceCamera.y=centerY-(centerY-workspaceCamera.y)*factor;
+
+updateWorkspaceCamera();
+},{passive:false});
+
+workspace.addEventListener('pointermove',e=>{
+const drag=workspaceCamera.drag;
+if(!drag||drag.pointerId!==e.pointerId)return;
+
+if(drag.mode==='pan'){
+workspaceCamera.x=drag.x+e.clientX-drag.startX;
+workspaceCamera.y=drag.y+e.clientY-drag.startY;
+}
+
+if(drag.mode==='zoom'){
+const nextScale=Math.max(
+0.01,
+Math.min(3,drag.scale*Math.exp((drag.startY-e.clientY)*0.008))
+);
+
+const rect=workspace.getBoundingClientRect();
+const centerX=drag.startX-rect.left;
+const centerY=drag.startY-rect.top;
+const factor=nextScale/drag.scale;
+
+workspaceCamera.scale=nextScale;
+workspaceCamera.x=centerX-(centerX-drag.x)*factor;
+workspaceCamera.y=centerY-(centerY-drag.y)*factor;
+}
+
+updateWorkspaceCamera();
+});
+
+workspace.addEventListener('pointerup',e=>{
+if(workspaceCamera.drag?.pointerId!==e.pointerId)return;
+finishWorkspaceCameraDrag();
+});
+
+workspace.addEventListener('pointercancel',e=>{
+if(workspaceCamera.drag?.pointerId!==e.pointerId)return;
+finishWorkspaceCameraDrag();
+});
+
+workspace.addEventListener('lostpointercapture',()=>{
+finishWorkspaceCameraDrag();
+});
+
 workspace.addEventListener('contextmenu',e=>{
 if(e.target.closest('.node')||e.target.closest('.context-menu'))return;
 e.preventDefault();
-const p=workspacePointFromEvent(e);
-openContextMenu(p.x,p.y);
+const rect=workspace.getBoundingClientRect();
+openContextMenu(e.clientX-rect.left,e.clientY-rect.top);
 });
 
+const nodeMenuCategories={
+material:{label:'素材',element:materialMenu},
+trigger:{label:'トリガー',element:triggerMenu},
+effect:{label:'効果',element:effectMenu},
+camera:{label:'カメラ',element:cameraMenu},
+panel:{label:'UI',element:panelMenu}
+};
+
+function updateNodeMenuCategories(openCategory=null){
+const nestedMenu=document.getElementById('uiPanelMenu');
+const nestedButton=contextMenu.querySelector('[data-submenu="uiPanel"]');
+
+if(nestedMenu){
+nestedMenu.classList.add('hidden');
+}
+
+if(nestedButton){
+nestedButton.textContent='▶ パネル';
+}
+
+for(const [key,category] of Object.entries(nodeMenuCategories)){
+const isOpen=key===openCategory;
+category.element.classList.toggle('hidden',!isOpen);
+
+const button=contextMenu.querySelector(`[data-menu="${key}"]`);
+if(button){
+button.textContent=`${isOpen?'▼':'▶'} ${key==='panel'?'UI':category.label}`;
+}
+}
+}
+
 function openContextMenu(x,y,connection=null){
-state.menuPoint={x,y};
+state.menuPoint=screenToWorkspace(x,y);
 state.insertConnection=connection;
 contextMenu.style.left=`${x}px`;
 contextMenu.style.top=`${y}px`;
 contextMenu.classList.remove('hidden');
-materialMenu.classList.add('hidden');
-triggerMenu.classList.add('hidden');
-effectMenu.classList.add('hidden');
-cameraMenu.classList.add('hidden');
-
-const materialButton=contextMenu.querySelector('[data-menu="material"]');
-const triggerButton=contextMenu.querySelector('[data-menu="trigger"]');
-const effectButton=contextMenu.querySelector('[data-menu="effect"]');
-const cameraButton=contextMenu.querySelector('[data-menu="camera"]');
-
-if(materialButton)materialButton.textContent='▶ 素材';
-if(triggerButton)triggerButton.textContent='▶ トリガー';
-if(effectButton)effectButton.textContent='▶ 効果';
-if(cameraButton)cameraButton.textContent='▶ カメラ';
+updateNodeMenuCategories();
 }
 
 contextMenu.addEventListener('click',e=>{
+const nested=e.target.closest('[data-submenu="uiPanel"]');
+
+if(nested){
+const submenu=document.getElementById('uiPanelMenu');
+if(!submenu)return;
+
+const willOpen=submenu.classList.contains('hidden');
+submenu.classList.toggle('hidden',!willOpen);
+nested.textContent=`${willOpen?'▼':'▶'} パネル`;
+return;
+}
+
 const parent=e.target.closest('[data-menu]');
+
 if(parent){
-const materialButton=contextMenu.querySelector('[data-menu="material"]');
-const triggerButton=contextMenu.querySelector('[data-menu="trigger"]');
-const effectButton=contextMenu.querySelector('[data-menu="effect"]');
-const cameraButton=contextMenu.querySelector('[data-menu="camera"]');
+const key=parent.dataset.menu;
+const category=nodeMenuCategories[key];
+if(!category)return;
 
-if(parent.dataset.menu==='material'){
-const willOpen=materialMenu.classList.contains('hidden');
-
-materialMenu.classList.toggle('hidden',!willOpen);
-triggerMenu.classList.add('hidden');
-effectMenu.classList.add('hidden');
-cameraMenu.classList.add('hidden');
-
-if(materialButton)materialButton.textContent=willOpen?'▼ 素材':'▶ 素材';
-if(triggerButton)triggerButton.textContent='▶ トリガー';
-if(effectButton)effectButton.textContent='▶ 効果';
-if(cameraButton)cameraButton.textContent='▶ カメラ';
-}
-
-if(parent.dataset.menu==='trigger'){
-const willOpen=triggerMenu.classList.contains('hidden');
-
-triggerMenu.classList.toggle('hidden',!willOpen);
-materialMenu.classList.add('hidden');
-effectMenu.classList.add('hidden');
-cameraMenu.classList.add('hidden');
-
-if(triggerButton)triggerButton.textContent=willOpen?'▼ トリガー':'▶ トリガー';
-if(materialButton)materialButton.textContent='▶ 素材';
-if(effectButton)effectButton.textContent='▶ 効果';
-if(cameraButton)cameraButton.textContent='▶ カメラ';
-}
-
-if(parent.dataset.menu==='effect'){
-const willOpen=effectMenu.classList.contains('hidden');
-
-effectMenu.classList.toggle('hidden',!willOpen);
-materialMenu.classList.add('hidden');
-triggerMenu.classList.add('hidden');
-cameraMenu.classList.add('hidden');
-
-if(effectButton)effectButton.textContent=willOpen?'▼ 効果':'▶ 効果';
-if(materialButton)materialButton.textContent='▶ 素材';
-if(triggerButton)triggerButton.textContent='▶ トリガー';
-if(cameraButton)cameraButton.textContent='▶ カメラ';
-}
-
-if(parent.dataset.menu==='camera'){
-const willOpen=cameraMenu.classList.contains('hidden');
-
-cameraMenu.classList.toggle('hidden',!willOpen);
-materialMenu.classList.add('hidden');
-triggerMenu.classList.add('hidden');
-effectMenu.classList.add('hidden');
-
-if(cameraButton)cameraButton.textContent=willOpen?'▼ カメラ':'▶ カメラ';
-if(materialButton)materialButton.textContent='▶ 素材';
-if(triggerButton)triggerButton.textContent='▶ トリガー';
-if(effectButton)effectButton.textContent='▶ 効果';
-}
-
+const willOpen=category.element.classList.contains('hidden');
+updateNodeMenuCategories(willOpen?key:null);
 return;
 }
 
 const create=e.target.closest('[data-create]');
+
 if(create){
-if(state.insertConnection){
-insertNodeIntoConnection(
-create.dataset.create,
-state.insertConnection,
-state.menuPoint
-);
+const insertConnection=state.insertConnection;
+const menuPoint={...state.menuPoint};
+const nodeType=create.dataset.create;
+
+contextMenu.classList.add('hidden');
 state.insertConnection=null;
+
+if(insertConnection){
+insertNodeIntoConnection(
+nodeType,
+insertConnection,
+menuPoint
+);
 }else{
 addNode(
-create.dataset.create,
-state.menuPoint.x,
-state.menuPoint.y
+nodeType,
+menuPoint.x,
+menuPoint.y
 );
 }
-contextMenu.classList.add('hidden');
 }
 });
 
 document.addEventListener('pointerdown',e=>{
 if(!contextMenu.contains(e.target)&&!workspace.contains(e.target.closest?.('.context-menu')||null))contextMenu.classList.add('hidden');
 });
+
+// Workspace and node-edit history (separate from lasso/path stroke history).
+const editorHistory={undo:[],redo:[],pending:null,restoring:false,limit:80};
+function cloneEditorValue(value,seen=new WeakMap()){
+if(value===null||typeof value!=='object')return value;
+if(value instanceof Element||value instanceof Blob||value instanceof ImageBitmap)return value;
+if(seen.has(value))return seen.get(value);
+if(value instanceof Set){const copy=new Set();seen.set(value,copy);for(const item of value)copy.add(cloneEditorValue(item,seen));return copy;}
+if(value instanceof Map){const copy=new Map();seen.set(value,copy);for(const [key,item] of value)copy.set(key,cloneEditorValue(item,seen));return copy;}
+if(Array.isArray(value)){const copy=[];seen.set(value,copy);for(const item of value)copy.push(cloneEditorValue(item,seen));return copy;}
+if(Object.getPrototypeOf(value)!==Object.prototype)return value;
+const copy={};seen.set(value,copy);
+for(const [key,item] of Object.entries(value))copy[key]=cloneEditorValue(item,seen);
+return copy;
+}
+function editorSnapshot(){
+return {nodes:cloneEditorValue(state.nodes),connections:cloneEditorValue(state.connections),selectedNodeId:state.selectedNodeId,selectedConnectionId:state.selectedConnectionId};
+}
+function editorHistorySignature(snapshot){
+return JSON.stringify({nodes:snapshot.nodes,connections:snapshot.connections},(key,value)=>{
+if(['panUndoStack','panRedoStack','clickUndoStack','clickRedoStack','frameInUndo','frameInRedo','panPath'].includes(key))return undefined;
+if(value instanceof Element)return '[media-element]';
+if(value instanceof Blob)return '[binary-file]';
+return value;
+});
+}
+function commitEditorHistory(before){
+if(!before||editorHistory.restoring)return;
+if(editorHistorySignature(before)===editorHistorySignature(editorSnapshot()))return;
+editorHistory.undo.push(before);
+if(editorHistory.undo.length>editorHistory.limit)editorHistory.undo.shift();
+editorHistory.redo=[];
+}
+function beginEditorHistory(){if(!editorHistory.restoring&&!editorHistory.pending)editorHistory.pending=editorSnapshot();}
+function finishEditorHistory(){
+if(!editorHistory.pending)return;
+const before=editorHistory.pending;editorHistory.pending=null;
+commitEditorHistory(before);
+}
+function resetEditorHistory(){editorHistory.undo=[];editorHistory.redo=[];editorHistory.pending=null;}
+function applyEditorHistory(snapshot){
+editorHistory.restoring=true;
+if(typeof cancelPreviewScene==='function')cancelPreviewScene();
+state.nodes=cloneEditorValue(snapshot.nodes);
+state.connections=cloneEditorValue(snapshot.connections);
+state.selectedNodeId=snapshot.selectedNodeId&&state.nodes.some(n=>n.id===snapshot.selectedNodeId)?snapshot.selectedNodeId:null;
+state.selectedNodeIds.clear();
+state.selectedConnectionId=snapshot.selectedConnectionId;
+state.connecting=null;state.dragging=null;state.connectionAnchorDrag=null;
+renderNodes();renderSettings();renderConnections();renderMediaList();
+editorHistory.restoring=false;
+}
+function stepEditorHistory(redo){
+finishEditorHistory();
+const source=redo?editorHistory.redo:editorHistory.undo;
+if(!source.length)return;
+const current=editorSnapshot();
+const next=source.pop();
+const dest=redo?editorHistory.undo:editorHistory.redo;
+dest.push(current);
+applyEditorHistory(next);
+}
+// Group continuous number/text edits into one history entry per focus session.
+document.addEventListener('focusin',e=>{
+if(settingsPanel.contains(e.target)&&e.target.matches('input,textarea,select'))beginEditorHistory();
+},true);
+document.addEventListener('focusout',e=>{
+if(settingsPanel.contains(e.target))setTimeout(finishEditorHistory,0);
+},true);
+// Capture settings button/checkbox changes, node drags, connection handles and line controls.
+document.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+if(settingsPanel.contains(e.target)||workspace.contains(e.target)||connectionsSvg.contains(e.target))beginEditorHistory();
+},true);
+window.addEventListener('pointerup',()=>setTimeout(finishEditorHistory,0));
+window.addEventListener('pointercancel',()=>setTimeout(finishEditorHistory,0));
+// For keyboard-based changes to select boxes / fields, commit when the field blurs.
+document.addEventListener('keydown',e=>{
+if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
+const key=e.key.toLowerCase();
+if(key!=='z'&&key!=='y')return;
+const selected=getNode(state.selectedNodeId);
+// Existing lasso and drawn-pan histories retain their own shortcut handling.
+if(selected?.type==='click'||selected?.type==='frameIn')return;
+if(selected?.type==='pan'&&(selected.panUndoStack?.length||selected.panRedoStack?.length))return;
+const active=document.activeElement;
+if(active&&active!==document.body&&active instanceof HTMLElement&&!settingsPanel.contains(active)&&['INPUT','TEXTAREA'].includes(active.tagName))return;
+e.preventDefault();e.stopImmediatePropagation();
+stepEditorHistory(key==='y'||(key==='z'&&e.shiftKey));
+},true);
 
 let copiedNodeData=null;
 let pasteOffset=0;
@@ -2872,6 +4806,80 @@ return;
 const selectedNode=getNode(state.selectedNodeId);
 const key=e.key.toLowerCase();
 
+if((e.ctrlKey||e.metaKey)&&!e.altKey&&key==='a'){
+e.preventDefault();
+
+state.selectedNodeIds=new Set(state.nodes.map(node=>node.id));
+state.selectedNodeId=null;
+state.selectedConnectionId=null;
+
+renderNodes();
+renderSettings();
+
+if(state.nodes.length===0)return;
+
+let minX=Infinity;
+let minY=Infinity;
+let maxX=-Infinity;
+let maxY=-Infinity;
+
+for(const node of state.nodes){
+const el=Array.from(nodesLayer.querySelectorAll('.node')).find(item=>item.dataset.id===node.id);
+if(!el)continue;
+
+minX=Math.min(minX,node.x);
+minY=Math.min(minY,node.y);
+maxX=Math.max(maxX,node.x+el.offsetWidth);
+maxY=Math.max(maxY,node.y+el.offsetHeight);
+}
+
+for(const connection of state.connections){
+if(!Array.isArray(connection.anchors))continue;
+
+for(const anchor of connection.anchors){
+minX=Math.min(minX,anchor.x);
+minY=Math.min(minY,anchor.y);
+maxX=Math.max(maxX,anchor.x);
+maxY=Math.max(maxY,anchor.y);
+}
+}
+
+if(!Number.isFinite(minX))return;
+
+const padding=100;
+const contentWidth=Math.max(1,maxX-minX);
+const contentHeight=Math.max(1,maxY-minY);
+
+const viewportWidth=workspace.clientWidth;
+const viewportHeight=workspace.clientHeight;
+
+const availableWidth=Math.max(1,viewportWidth-padding*2);
+const availableHeight=Math.max(1,viewportHeight-padding*2);
+
+const scale=Math.min(
+3,
+availableWidth/contentWidth,
+availableHeight/contentHeight
+);
+
+workspaceCamera.scale=Math.max(0.01,scale);
+
+workspaceCamera.x=viewportWidth/2-(minX+contentWidth/2)*workspaceCamera.scale;
+workspaceCamera.y=viewportHeight/2-(minY+contentHeight/2)*workspaceCamera.scale;
+
+updateWorkspaceCamera();
+renderConnections();
+
+return;
+}
+
+if(selectedNode?.type==='frameIn'&&(e.ctrlKey||e.metaKey)&&!e.altKey&&(key==='z'||key==='y')){
+e.preventDefault();
+if(key==='y'||(key==='z'&&e.shiftKey))selectedNode.frameInRedoAction?.();
+else selectedNode.frameInUndoAction?.();
+return;
+}
+
 if(selectedNode?.type==='click'&&(e.ctrlKey||e.metaKey)&&!e.altKey){
 if(key==='z'||key==='y'){
 e.preventDefault();
@@ -2884,9 +4892,8 @@ const destination=undo?selectedNode.clickRedoStack:selectedNode.clickUndoStack;
 
 if(source.length===0)return;
 
-destination.push(cloneClickRegions(selectedNode.clickRegions));
-setClickLassoRegions(selectedNode,source.pop());
-saveCurrentClickFramePolygon(selectedNode);
+destination.push(snapshotClickLasso(selectedNode));
+restoreClickLasso(selectedNode,source.pop());
 
 renderSettings();
 return;
@@ -2909,12 +4916,14 @@ e.preventDefault();
 
 pasteOffset+=40;
 
+const editBefore=editorSnapshot();
 const newNode=copyNodeData(copiedNodeData);
 newNode.id=uid(newNode.type);
 newNode.x=copiedNodeData.x+pasteOffset;
 newNode.y=copiedNodeData.y+pasteOffset;
 
 state.nodes.push(newNode);
+commitEditorHistory(editBefore);
 renderNodes();
 selectNode(newNode.id);
 return;
@@ -2968,6 +4977,7 @@ return;
 
 if(e.key!=='Delete')return;
 
+const editBefore=editorSnapshot();
 if(state.selectedConnectionId){
 state.connections=
 state.connections.filter(
@@ -2975,7 +4985,7 @@ c=>c.id!==state.selectedConnectionId
 );
 
 state.selectedConnectionId=null;
-
+commitEditorHistory(editBefore);
 renderConnections();
 renderSettings();
 return;
@@ -2997,12 +5007,13 @@ c=>c.from!==id&&c.to!==id
 );
 
 state.selectedNodeId=null;
-
+commitEditorHistory(editBefore);
 renderNodes();
 renderSettings();
 });
 
 function startConnection(e,nodeId,nodeEl){
+beginEditorHistory();
 const fromPort=nodeEl.querySelector('.port.output');
 if(!fromPort)return;
 
@@ -3025,41 +5036,16 @@ function onConnectionEnd(e){
 window.removeEventListener('pointermove',onConnectionMove);
 if(!state.connecting)return;
 const target=document.elementFromPoint(e.clientX,e.clientY);
-const input=target&&target.closest&&target.closest('.port.input');
+const input=target?.closest?.('.port.input');
 if(input){
-const nodeEl=input.closest('.node');
-const to=nodeEl&&nodeEl.dataset.id;
-if(to&&to!==state.connecting.from){
-const fromId=state.connecting.from;
-const targetNode=getNode(to);
-
-if(targetNode?.type==='click'){
-state.connections=state.connections.filter(c=>{
-if(c.from!==fromId)return true;
-const existingTarget=getNode(c.to);
-return existingTarget?.type==='click';
-});
-
-const alreadyConnected=state.connections.some(c=>c.from===fromId&&c.to===to);
-
-if(!alreadyConnected){
-state.connections.push({
-id:uid('conn'),
-from:fromId,
-to
-});
-}
-}else{
-state.connections=state.connections.filter(c=>c.from!==fromId);
-state.connections.push({
-id:uid('conn'),
-from:fromId,
-to
-});
-}
+const to=input.closest('.node')?.dataset.id;
+const from=state.connecting.from;
+if(to&&to!==from&&getNode(from)&&getNode(to)&&!state.connections.some(c=>c.from===from&&c.to===to)){
+state.connections.push({id:uid('conn'),from,to});
 }
 }
 state.connecting=null;
+finishEditorHistory();
 renderConnections();
 renderSettings();
 }
@@ -3067,7 +5053,10 @@ renderSettings();
 function getPortCenter(port){
 const wr=workspace.getBoundingClientRect();
 const r=port.getBoundingClientRect();
-return{x:r.left+r.width/2-wr.left,y:r.top+r.height/2-wr.top};
+return screenToWorkspace(
+r.left+r.width/2-wr.left,
+r.top+r.height/2-wr.top
+);
 }
 
 function curvePath(a,b){
@@ -3115,9 +5104,16 @@ const d=connectionCurve(points);
 
 const path=document.createElementNS('http://www.w3.org/2000/svg','path');
 path.setAttribute('d',d);
+const isSelectedConnection=
+state.selectedConnectionId===c.id||
+(
+state.selectedNodeIds.has(c.from)&&
+state.selectedNodeIds.has(c.to)
+);
+
 path.setAttribute(
 'class',
-state.selectedConnectionId===c.id
+isSelectedConnection
 ?'connection-path selected'
 :'connection-path'
 );
@@ -3209,7 +5205,7 @@ dot.setAttribute('cx',anchor.x);
 dot.setAttribute('cy',anchor.y);
 dot.setAttribute('r','7');
 dot.setAttribute('fill','#ffffff');
-dot.setAttribute('stroke','#3b82f6');
+dot.setAttribute('stroke','#f97316');
 dot.setAttribute('stroke-width','2.5');
 
 dot.style.pointerEvents='auto';
@@ -3259,7 +5255,8 @@ g.addEventListener('click',e=>{
 e.preventDefault();
 e.stopPropagation();
 
-openContextMenu(mid.x,mid.y,c);
+const position=workspaceToScreen(mid.x,mid.y);
+openContextMenu(position.x,position.y,c);
 });
 
 connectionsSvg.appendChild(g);
@@ -3296,6 +5293,7 @@ state.connectionAnchorDrag=null;
 });
 
 function insertNodeIntoConnection(type,connection,mid){
+beginEditorHistory();
 const fromId=connection.from;
 const toId=connection.to;
 const fromNode=getNode(fromId);
@@ -3336,6 +5334,7 @@ to:newNode.id
 });
 }
 
+finishEditorHistory();
 renderNodes();
 renderSettings();
 return;
@@ -3357,13 +5356,44 @@ from:newNode.id,
 to:toId
 });
 
+finishEditorHistory();
 renderNodes();
 renderSettings();
 }
 
 playBtn.addEventListener('click',startPreview);
 closePreviewBtn.addEventListener('click',stopPreview);
-dialogueOverlay.addEventListener('click',advanceDialogue);
+
+gameViewport.addEventListener('click',e=>{
+if(gamePreview.classList.contains('hidden'))return;
+if(!state.previewDialogueNodeId)return;
+if(e.button!==0)return;
+
+e.preventDefault();
+advanceDialogue();
+});
+
+document.addEventListener('keydown',e=>{
+if(gamePreview.classList.contains('hidden'))return;
+if(!state.previewDialogueNodeId)return;
+if(e.isComposing||e.key==='Process'||e.keyCode===229)return;
+if(e.repeat||e.ctrlKey||e.altKey||e.metaKey)return;
+
+const target=e.target;
+
+if(target instanceof HTMLElement&&(
+target.isContentEditable||
+['INPUT','TEXTAREA','SELECT'].includes(target.tagName)
+)){
+return;
+}
+
+if(!['Enter','Space','KeyZ'].includes(e.code))return;
+
+e.preventDefault();
+e.stopImmediatePropagation();
+advanceDialogue();
+},true);
 
 let gamePreviewDrag=null;
 
@@ -3379,6 +5409,16 @@ const worldNode=getNode(state.previewWorldNodeId);
 return worldNode?.type==='world'
 ?worldNode.world
 :null;
+}
+
+function isPreviewCameraLocked(){
+const animation=state.previewAnimation;
+const controller=activeIndependentKeyframe;
+
+if(!animation||!controller)return false;
+if(controller.sourceId!==animation.nodeId)return false;
+
+return getKeyframeNodeFrames(controller.node).length>0;
 }
 
 gameCanvas.addEventListener('pointerdown',e=>{
@@ -3403,15 +5443,17 @@ gameCanvas.setPointerCapture(e.pointerId);
 gameCanvas.addEventListener('pointermove',e=>{
 if(!gamePreviewDrag)return;
 
-const world=getActivePreviewWorld();
-if(!world)return;
-
 const dx=e.clientX-gamePreviewDrag.x;
 const dy=e.clientY-gamePreviewDrag.y;
 
 if(Math.hypot(dx,dy)>4){
 gamePreviewDrag.moved=true;
 }
+
+if(isPreviewCameraLocked())return;
+
+const world=getActivePreviewWorld();
+if(!world)return;
 
 world.yaw=gamePreviewDrag.yaw-dx*0.008;
 
@@ -3462,13 +5504,10 @@ if(!isClickTargetHit(trigger,world,e.clientX,e.clientY,regions)){
 continue;
 }
 
-const next=state.connections.find(c=>c.from===trigger.id);
-
+clearPreviewBranchTimers();
 state.previewClickTriggerIds=[];
-
-if(next){
-showPreviewNode(next.to);
-}else{
+previewOutgoing(trigger.id);
+if(!state.connections.some(c=>c.from===trigger.id)){
 previewMessage.textContent='クリック発火・接続先なし';
 }
 
@@ -3480,80 +5519,129 @@ if(gameCanvas.hasPointerCapture(e.pointerId))gameCanvas.releasePointerCapture(e.
 gamePreviewDrag=null;
 });
 gameCanvas.addEventListener('wheel',e=>{
-if(state.previewDialogueNodeId)return;
+if(gamePreview.classList.contains('hidden'))return;
 
-const worldNode=getNode(state.previewWorldNodeId);
-if(!worldNode||worldNode.type!=='world')return;
+const world=getActivePreviewWorld();
+if(!world)return;
 
 e.preventDefault();
 
-worldNode.world.zoom=Math.max(
-.6,
-Math.min(
-2.2,
-worldNode.world.zoom+
-(e.deltaY>0?-.1:.1)
-)
+if(state.previewDialogueNodeId)return;
+if(isPreviewCameraLocked())return;
+
+world.zoom=clamp(
+world.zoom+(e.deltaY>0?-0.1:0.1),
+0.6,
+2.2
 );
 
-drawPanoramaPreview(
-gameCanvas,
-worldNode.world
-);
+drawPanoramaPreview(gameCanvas,world);
 },{passive:false});
 
-function startPreview(){
-stopPreviewTimer();
-stopEffectAnimation();
+// Parallel preview: media owns the background; triggers run independently.
+let previewSceneEpoch=0;
+let activeIndependentKeyframe=null;
+const previewBranchTimers=new Set();
+const previewVisited=new Set();
+function clearPreviewBranchTimers(){
+for(const timer of previewBranchTimers)clearTimeout(timer);
+previewBranchTimers.clear();
+if(state.previewTimer){clearTimeout(state.previewTimer);state.previewTimer=null;}
+}
+function cancelPreviewScene(){
+activeIndependentKeyframe=null;
+previewSceneEpoch++;
+clearPreviewBranchTimers();
+previewVisited.clear();
+state.previewClickTriggerIds=[];
+state.previewFrameInIds=[];
+state.previewDialogueNodeId=null;
+clearMedia2DLayer();
+stopDialogueTyping();
+dialogueOverlay.classList.add('hidden');
 stopCameraAnimation();
+stopPreviewAnimation();
+state.previewWorldNodeId=null;
+}
+function previewOutgoing(nodeId,phase='start'){
+const source=getNode(nodeId);
+const sourceIsMedia=source?.type==='world'||source?.type==='animation';
 
+const targets=state.connections
+.filter(c=>c.from===nodeId)
+.map(c=>getNode(c.to))
+.filter(Boolean)
+.filter(target=>{
+if(!sourceIsMedia)return true;
+
+const targetIsMedia=target.type==='world'||target.type==='animation';
+
+if(phase==='end')return targetIsMedia;
+
+return !targetIsMedia;
+});
+
+for(const target of targets){
+showPreviewNode(target.id);
+}
+}
+function schedulePreviewBranch(seconds,callback){
+const epoch=previewSceneEpoch;
+const timer=setTimeout(()=>{
+previewBranchTimers.delete(timer);
+if(epoch===previewSceneEpoch&&!gamePreview.classList.contains('hidden'))callback();
+},Math.max(0,seconds)*1000);
+previewBranchTimers.add(timer);
+}
+let checkingFrameIn=false;
+function checkActiveFrameInTriggers(){
+if(checkingFrameIn||!state.previewFrameInIds?.length)return;
+if(gamePreview.classList.contains('hidden'))return;
+const view=getActivePreviewWorld();if(!view)return;
+checkingFrameIn=true;
+try{
+for(const id of [...state.previewFrameInIds]){
+const node=getNode(id);if(!node)continue;
+if(!isFrameInTriggered(node,gameCanvas,view))continue;
+state.previewFrameInIds=[];
+clearPreviewBranchTimers();
+previewOutgoing(id);
+if(!state.connections.some(c=>c.from===id))previewMessage.textContent='フレームイン発火・接続先なし';
+break;
+}
+}finally{checkingFrameIn=false;}
+}
+function canUsePreviewClick(node){
+return Boolean(node.clickTarget?.initialized||Object.values(node.clickFrameRegions||{}).some(regions=>Array.isArray(regions)&&regions.some(r=>r.mode==='add'&&r.points?.length>=3)));
+}
+
+function startPreview(){
+cancelPreviewScene();
+stopEffectAnimation();
 state.previewNodeId=null;
 state.lastCameraView=null;
 state.pendingAnimationFade=null;
-state.previewWorldNodeId=null;
-state.previewClickTriggerIds=[];
-
 fadeOverlay.style.opacity=0;
 fadeOverlay.style.pointerEvents='none';
-
-const startConn=state.connections.find(c=>c.from==='start');
-
-if(!startConn){
-alert('STARTからノードへ接続してください。');
-return;
+if(!state.connections.some(c=>c.from==='start')){
+alert('STARTからノードへ接続してください。');return;
 }
-
 gamePreview.classList.remove('hidden');
-
 resizeGameCanvas();
-
-drawPanoramaPreview(gameCanvas,{
-image:null,
-yaw:0,
-pitch:0,
-zoom:1
-});
-
-showPreviewNode(startConn.to);
+drawPanoramaPreview(gameCanvas,{image:null,yaw:0,pitch:0,zoom:1});
+previewOutgoing('start');
 }
+
 
 function stopPreview(){
-stopPreviewTimer();
-stopDialogueTyping();
+cancelPreviewScene();
 stopEffectAnimation();
-stopCameraAnimation();
-
-state.previewClickTriggerIds=[];
-state.previewDialogueNodeId=null;
-state.previewWorldNodeId=null;
-
-dialogueOverlay.classList.add('hidden');
-
+state.previewNodeId=null;
 fadeOverlay.style.opacity=0;
 fadeOverlay.style.pointerEvents='none';
-
 gamePreview.classList.add('hidden');
 }
+
 
 function stopPreviewTimer(){
 if(state.previewTimer){
@@ -3616,7 +5704,7 @@ video.loop=false;
 video.src=media.url;
 
 video.addEventListener('ended',()=>{
-if(state.previewAnimation?.video!==video)return;
+if(state.previewAnimation?.video!==video||state.previewAnimation.finished)return;
 
 video.currentTime=0;
 
@@ -3679,63 +5767,24 @@ startedAt:null
 state.previewAnimation=playback;
 state.previewWorldNodeId=null;
 
-state.previewClickTriggerIds=state.connections
-.filter(connection=>connection.from===node.id)
-.map(connection=>getNode(connection.to))
-.filter(trigger=>
-trigger?.type==='click'&&(
-trigger.clickTarget.initialized||
-Object.values(trigger.clickFrameRegions||{}).some(regions=>
-regions.some(region=>region.mode==='add'&&region.points.length>=3)
-)
-)
-)
-.map(trigger=>trigger.id);
-
-state.previewDialogueNodeId=null;
-
-dialogueOverlay.classList.add('hidden');
-
 previewMessage.textContent=media.fileName;
 
-if(node.animation.infiniteLoop){
-const outgoing=state.connections.filter(c=>c.from===node.id);
-
-const timeConnection=outgoing.find(c=>{
-return getNode(c.to)?.type==='time';
-});
-
-if(timeConnection){
-const timeNode=getNode(timeConnection.to);
-const delay=Math.max(0,Number(timeNode.timeSeconds)||0);
-
-state.previewTimer=setTimeout(()=>{
-if(state.previewAnimation!==playback)return;
-
-const next=state.connections.find(c=>c.from===timeNode.id);
-
-if(next){
-showPreviewNode(next.to);
-}else{
-stopPreviewAnimation();
-previewMessage.textContent='時間トリガー発火・接続先なし';
-}
-},delay*1000);
-}
-}
-
 const finish=()=>{
-if(state.previewAnimation!==playback)return;
+if(state.previewAnimation!==playback||playback.finished)return;
 
-stopPreviewAnimation();
+playback.finished=true;
+video.pause();
 
-const next=state.connections.find(c=>c.from===node.id);
-
-if(next){
-showPreviewNode(next.to);
-}else{
-previewMessage.textContent='アニメーション再生終了';
+try{
+video.currentTime=Math.max(0,media.duration-0.001);
+}catch(error){
+console.warn('最終フレームへの移動に失敗しました',error);
 }
+
+drawPanoramaPreview(gameCanvas,world);
+
+// 再生終了時に接続先のメディアを開始する
+previewOutgoing(node.id,'end');
 };
 
 const draw=now=>{
@@ -3746,14 +5795,28 @@ stopPreviewAnimation();
 return;
 }
 
-if(!node.animation.infiniteLoop&&playback.startedAt!==null){
-if(now-playback.startedAt>=playDuration*1000){
-finish();
-return;
+if(!node.animation.infiniteLoop&&playback.startedAt!==null&&!playback.finished){
+if(now-playback.startedAt>=playDuration*1000)finish();
+}
+
+if(playback.startedAt!==null&&!playback.finished){
+const cameraNode=activeIndependentKeyframe?.sourceId===node.id
+?activeIndependentKeyframe.node
+:null;
+
+if(cameraNode&&getKeyframeNodeFrames(cameraNode).length>0){
+const elapsed=(now-playback.startedAt)/1000;
+const cameraTime=getMediaCameraLoopTime(node,media,elapsed);
+const camera=getIndependentCameraAt(cameraNode,cameraTime,getMediaCameraBase(node));
+
+world.yaw=camera.yaw;
+world.pitch=camera.pitch;
+world.zoom=camera.zoom;
 }
 }
 
 drawPanoramaPreview(gameCanvas,world);
+if(playback.finished)return;
 
 const pendingFade=state.pendingAnimationFade;
 
@@ -3834,6 +5897,56 @@ if(state.cameraAnimationFrame){
 cancelAnimationFrame(state.cameraAnimationFrame);
 state.cameraAnimationFrame=null;
 }
+
+if(state.panVideo){
+state.panVideo.pause();
+state.panVideo.removeAttribute('src');
+state.panVideo.load();
+state.panVideo=null;
+}
+}
+
+function runTimedPan(node,worldNode,video,onComplete){
+const duration=Math.max(0.1,Number(node.panSeconds)||3);
+const durationMs=duration*1000;
+
+const frames=node.panKeyframes||[];
+
+if(frames.length===0){
+onComplete();
+return;
+}
+
+const start=performance.now();
+
+const animate=now=>{
+if(state.panVideo!==video)return;
+
+const elapsed=Math.min(
+duration,
+(now-start)/1000
+);
+
+const view=getTimedPanView(node,elapsed);
+
+worldNode.world.yaw=view.yaw;
+worldNode.world.pitch=view.pitch;
+worldNode.world.zoom=view.zoom;
+
+drawPanoramaPreview(
+gameCanvas,
+worldNode.world
+);
+
+if((now-start)<durationMs){
+state.cameraAnimationFrame=requestAnimationFrame(animate);
+}else{
+state.cameraAnimationFrame=null;
+onComplete();
+}
+};
+
+state.cameraAnimationFrame=requestAnimationFrame(animate);
 }
 
 function runPan(node,worldNode,onComplete){
@@ -4115,6 +6228,54 @@ state.effectAnimationFrame=requestAnimationFrame(animate);
 function showDialoguePage(node,index){
 stopDialogueTyping();
 
+applyGameDialogueLayout(node);
+
+let speaker=dialogueOverlay.querySelector('#gameDialogueSpeaker');
+
+if(!speaker){
+speaker=document.createElement('div');
+speaker.id='gameDialogueSpeaker';
+speaker.className='dialogue-speaker';
+dialogueOverlay.insertBefore(speaker,dialogueOverlay.firstChild);
+}
+
+const speakerName=(node.dialogueSpeaker||'').trim();
+speaker.textContent=speakerName;
+speaker.classList.toggle('hidden',!speakerName);
+
+const fontSize=Math.max(
+10,
+Math.min(36,Number(node.dialogueFontSize)||24)
+);
+
+dialogueText.style.fontSize=`calc(${fontSize}px * var(--dialogue-scale,1))`;
+
+let thumbnail=dialogueOverlay.querySelector('#gameDialogueThumbnail');
+
+if(!thumbnail){
+const content=document.createElement('div');
+content.className='dialogue-panel-content';
+
+thumbnail=document.createElement('img');
+thumbnail.id='gameDialogueThumbnail';
+thumbnail.className='dialogue-panel-thumbnail hidden';
+thumbnail.alt='';
+
+dialogueText.parentNode.insertBefore(content,dialogueText);
+content.appendChild(thumbnail);
+content.appendChild(dialogueText);
+}
+
+const thumbnailData=getDialogueThumbnailData(node);
+
+thumbnail.classList.toggle('hidden',!thumbnailData);
+
+if(thumbnailData){
+thumbnail.src=thumbnailData;
+}else{
+thumbnail.removeAttribute('src');
+}
+
 const text=node.dialoguePages[index]||'';
 const characters=[...text];
 
@@ -4160,231 +6321,164 @@ return;
 dialogueOverlay.classList.add('hidden');
 state.previewDialogueNodeId=null;
 
-const outgoing=
-state.connections.filter(c=>c.from===node.id);
-
-const clickTriggers=outgoing
-.map(c=>getNode(c.to))
-.filter(
-nextNode=>
-nextNode?.type==='click'&&
-nextNode.clickTarget.initialized
+// STARTへ戻る接続がある場合は、再生状態を初期化する
+const returnToStart=state.connections.some(
+c=>c.from===node.id&&c.to==='start'
 );
 
-if(clickTriggers.length>0){
-state.previewClickTriggerIds=
-clickTriggers.map(trigger=>trigger.id);
-
-previewMessage.textContent='クリック待ち';
+if(returnToStart){
+startPreview();
 return;
 }
 
-const next=outgoing[0];
-
-if(next){
-showPreviewNode(next.to);
+// 通常の接続先へ進む
+previewOutgoing(node.id);
 }
-}
-
 function showPreviewNode(nodeId){
-stopPreviewTimer();
 const node=getNode(nodeId);
-if(!node)return;
-state.previewNodeId=nodeId;
-
-if(node.type==='start'){
-const next=state.connections.find(c=>c.from===node.id);
-
-if(next){
-setTimeout(()=>{
-if(gamePreview.classList.contains('hidden'))return;
-if(state.previewNodeId!==node.id)return;
-showPreviewNode(next.to);
-},0);
-}
-
-return;
-}
-
+if(!node||gamePreview.classList.contains('hidden'))return;
+// A branch converging on an already-active node is executed only once per scene.
+if(previewVisited.has(node.id))return;
+previewVisited.add(node.id);
+if(node.type==='start'){previewOutgoing(node.id);return;}
+if(node.type==='world'||node.type==='animation'){
+// Only one 360-degree scene is shown at a time.
+cancelPreviewScene();
+previewVisited.add(node.id);
+state.previewNodeId=node.id;
 if(node.type==='animation'){
 playPreviewAnimation(node);
-return;
+}else{
+state.previewWorldNodeId=node.id;
+applyWorldInitialView(node);
+previewMessage.textContent=node.world.fileName||'ビュー素材未設定';
+drawPanoramaPreview(gameCanvas,node.world);
+const epoch=previewSceneEpoch;
+const duration=getMediaPlaybackDuration(node,null);
+const hasFrames=Boolean(findSceneKeyframeNode(node));
+if(hasFrames){
+const started=performance.now();
+const tick=now=>{
+if(epoch!==previewSceneEpoch||gamePreview.classList.contains('hidden'))return;
+const elapsed=Math.min(duration,(now-started)/1000);
+const animation=activeIndependentKeyframe;
+const camera=animation?.sourceId===node.id
+?getIndependentCameraAt(animation.node,Math.max(0,elapsed-animation.offset),getMediaCameraBase(node))
+:getMediaCameraBase(node);
+Object.assign(node.world,camera);
+drawPanoramaPreview(gameCanvas,node.world);
+if(elapsed<duration)state.cameraAnimationFrame=requestAnimationFrame(tick);
+else state.cameraAnimationFrame=null;
+};
+state.cameraAnimationFrame=requestAnimationFrame(tick);
+}
 }
 
-if(node.type==='world'){
-state.previewWorldNodeId=node.id;
-state.previewClickTriggerIds=[];
-state.previewDialogueNodeId=null;
-dialogueOverlay.classList.add('hidden');
+if(node.type==='world'&&!node.worldInfiniteLoop){
+const duration=getMediaPlaybackDuration(node,null);
 
-previewMessage.textContent=node.world.fileName||'ビュー素材未設定';
+schedulePreviewBranch(duration,()=>{
+if(state.previewWorldNodeId!==node.id)return;
+previewOutgoing(node.id,'end');
+});
+}
 
-applyWorldInitialView(node);
-
-drawPanoramaPreview(gameCanvas,node.world);
-
-const outgoing=state.connections.filter(c=>c.from===node.id);
-
-const clickTriggers=outgoing
-.map(c=>getNode(c.to))
-.filter(nextNode=>nextNode?.type==='click'&&nextNode.clickTarget.initialized);
-
-if(clickTriggers.length>0){
-state.previewClickTriggerIds=clickTriggers.map(trigger=>trigger.id);
+previewOutgoing(node.id,'start');
+return;
+}
+if(node.type==='keyframe'){
+const source=findPreviousClickMediaNode(node.id);
+if(source){
+const media=source.type==='animation'?getClickAnimationMedia(source):null;
+activeIndependentKeyframe={node,sourceId:source.id,offset:getTriggerPreviewTime(node.id,source)};
+// If this keyframe is started after a wait, its timeline begins at this moment.
+if(source.type==='world'&&state.previewWorldNodeId===source.id&&!state.cameraAnimationFrame){
+const epoch=previewSceneEpoch;
+const duration=getMediaPlaybackDuration(source,null);
+const start=performance.now();
+const tick=now=>{
+if(epoch!==previewSceneEpoch)return;
+const elapsed=(now-start)/1000;
+const camera=getIndependentCameraAt(node,Math.min(duration,elapsed),getMediaCameraBase(source));
+Object.assign(source.world,camera);drawPanoramaPreview(gameCanvas,source.world);
+if(elapsed<duration)state.cameraAnimationFrame=requestAnimationFrame(tick);
+else state.cameraAnimationFrame=null;
+};
+state.cameraAnimationFrame=requestAnimationFrame(tick);
+}
+}
+previewOutgoing(node.id);
+return;
+}
+if(node.type==='media2d'){
+showMedia2D(node);
+previewOutgoing(node.id);
+return;
+}
+if(node.type==='frameIn'){
+if(!state.previewFrameInIds.includes(node.id))state.previewFrameInIds.push(node.id);
+checkActiveFrameInTriggers();
+return;
+}
+if(node.type==='click'){
+if(!canUsePreviewClick(node)){previewOutgoing(node.id);return;}
+if(!state.previewClickTriggerIds.includes(node.id))state.previewClickTriggerIds.push(node.id);
 previewMessage.textContent='クリック待ち';
 return;
 }
-
-const next=outgoing[0];
-
-if(next){
-const nextNode=getNode(next.to);
-
-if(
-nextNode?.type==='time'||
-nextNode?.type==='dialogue'||
-nextNode?.type==='fadeIn'||
-nextNode?.type==='fadeOut'||
-nextNode?.type==='pan'
-){
-showPreviewNode(nextNode.id);
-}
-}
-
+if(node.type==='time'){
+schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
 return;
 }
-
-if(node.type==='pan'){
-previewMessage.textContent='';
-
-const worldNode=
-getNode(state.previewWorldNodeId)||
-findPreviousWorldNode(node.id);
-
-const next=state.connections.find(c=>c.from===node.id);
-
-if(!worldNode){
-if(next){
-showPreviewNode(next.to);
-}
-
+if(node.type==='dialogue'){
+if(node.dialoguePages.length===0){previewOutgoing(node.id);return;}
+state.previewDialogueNodeId=node.id;
+showDialoguePage(node,0);
 return;
 }
-
-state.previewWorldNodeId=worldNode.id;
-
-runPan(node,worldNode,()=>{
-if(next){
-showPreviewNode(next.to);
-}
-});
-
-return;
-}
-
 if(node.type==='fadeIn'){
-previewMessage.textContent='';
+stopEffectAnimation();
 
-const next=state.connections.find(c=>c.from===node.id);
-
-if(next){
-const nextNode=getNode(next.to);
-
-if(nextNode?.type==='animation'){
-state.pendingAnimationFade={
-nodeId:nextNode.id,
-seconds:node.effectSeconds
-};
-
+fadeOverlay.classList.remove('hidden');
 fadeOverlay.style.opacity='1';
 fadeOverlay.style.pointerEvents='none';
 
-showPreviewNode(next.to);
-return;
+const nextNodes=state.connections
+.filter(c=>c.from===node.id)
+.map(c=>getNode(c.to))
+.filter(Boolean);
+
+const nextVideo=nextNodes.find(n=>n.type==='animation');
+
+if(nextVideo){
+state.pendingAnimationFade={
+nodeId:nextVideo.id,
+seconds:Math.max(0,Number(node.effectSeconds)||0)
+};
 }
 
-if(nextNode?.type==='world'){
-applyWorldInitialView(nextNode);
-state.previewWorldNodeId=nextNode.id;
-drawPanoramaPreview(gameCanvas,nextNode.world);
-}
-}
+previewOutgoing(node.id);
 
-runFadeEffect(node,1,0,()=>{
-if(next){
-showPreviewNode(next.to);
+if(!nextVideo){
+runFadeEffect(node,1,0,()=>{});
 }
-});
 
 return;
 }
 
 if(node.type==='fadeOut'){
-previewMessage.textContent='';
-
-const next=state.connections.find(c=>c.from===node.id);
-
-runFadeEffect(node,0,1,()=>{
-if(next){
-showPreviewNode(next.to);
-}
-});
-
+runFadeEffect(node,0,1,()=>previewOutgoing(node.id));
 return;
 }
-
-if(node.type==='time'){
-previewMessage.textContent=`${node.timeSeconds} 秒待機`;
-const next=state.connections.find(c=>c.from===node.id);
-state.previewTimer=setTimeout(()=>{
-if(next)showPreviewNode(next.to);
-},node.timeSeconds*1000);
+if(node.type==='pan'){
+const sourceNode=getNode(state.previewWorldNodeId)||findPreviousClickMediaNode(node.id);
+if(sourceNode?.type==='world')runPan(node,sourceNode,()=>previewOutgoing(node.id));
+else previewOutgoing(node.id);
 return;
 }
-if(node.type==='click'){
-if(!node.clickTarget.initialized){
-const next=state.connections.find(c=>c.from===node.id);
-if(next)showPreviewNode(next.to);
-return;
+previewOutgoing(node.id);
 }
 
-state.previewClickTriggerIds=[node.id];
-previewMessage.textContent='クリック待ち';
-return;
-}
-
-if(node.type==='dialogue'){
-state.previewClickTriggerIds=[];
-state.previewDialogueNodeId=node.id;
-previewMessage.textContent='';
-
-if(node.dialoguePages.length===0){
-const outgoing=state.connections.filter(c=>c.from===node.id);
-
-const clickTriggers=outgoing
-.map(c=>getNode(c.to))
-.filter(nextNode=>nextNode?.type==='click'&&nextNode.clickTarget.initialized);
-
-state.previewDialogueNodeId=null;
-
-if(clickTriggers.length>0){
-state.previewClickTriggerIds=clickTriggers.map(trigger=>trigger.id);
-previewMessage.textContent='クリック待ち';
-return;
-}
-
-const next=outgoing[0];
-
-if(next){
-showPreviewNode(next.to);
-}
-
-return;
-}
-
-showDialoguePage(node,0);
-}
-}
 
 function resizeGameCanvas(){
 const rect=gamePreview.getBoundingClientRect();
@@ -4401,6 +6495,10 @@ width=height*aspect;
 
 gameViewport.style.width=`${Math.max(1,width)}px`;
 gameViewport.style.height=`${Math.max(1,height)}px`;
+
+const referenceWidth=layout.width>=layout.height?1280:720;
+const dialogueScale=width/referenceWidth;
+gameViewport.style.setProperty('--dialogue-scale',String(dialogueScale));
 
 gameCanvas.width=Math.max(1,Math.floor(width));
 gameCanvas.height=Math.max(1,Math.floor(height));
@@ -4577,11 +6675,12 @@ if(!data.nodes.some(node=>node.id==='start'&&node.type==='start'))throw new Erro
 const nodeIds=new Set(data.nodes.map(node=>node.id));
 if(nodeIds.size!==data.nodes.length||data.connections.some(c=>!nodeIds.has(c.from)||!nodeIds.has(c.to)))throw new Error('ノードの接続情報が不正です。');
 for(const item of data.media){
-if(!item||!['png','mp4'].includes(item.fileType)||!entries.has(item.path))throw new Error('素材が不足しています。');
+if(!item||!['png','jpg','mp4'].includes(item.fileType)||!entries.has(item.path))throw new Error('素材が不足しています。');
 }
 for(const item of data.media){
 const blob=entries.get(item.path);
-const assetFile=new File([blob],item.fileName,{type:item.fileType==='png'?'image/png':'video/mp4'});
+const mimeType=item.fileType==='png'?'image/png':item.fileType==='jpg'?'image/jpeg':'video/mp4';
+const assetFile=new File([blob],item.fileName,{type:mimeType});
 const imported=await importMediaFile(assetFile);
 imported.id=item.id;
 }
@@ -4594,9 +6693,10 @@ node.world.raw=null;
 }
 if(node.animation)node.animation.raw=null;
 }
-stopPreviewTimer();
+cancelPreviewScene();
 state.nodes=data.nodes;
 state.connections=data.connections;
+resetEditorHistory();
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
 state.displayMode=['pc','mobile'].includes(data.displayMode)?data.displayMode:'pc';
@@ -4745,13 +6845,14 @@ const chunk=new Uint8Array(binary.length);
 for(let j=0;j<binary.length;j++)chunk[j]=binary.charCodeAt(j);
 chunks.push(chunk);
 }
-const blob=new Blob(chunks,{type:item.fileType==='png'?'image/png':'video/mp4'});
+const mimeType=item.fileType==='png'?'image/png':item.fileType==='jpg'?'image/jpeg':'video/mp4';
+const blob=new Blob(chunks,{type:mimeType});
 const url=URL.createObjectURL(blob);
 createdUrls.push(url);
-if(item.fileType==='png'){
+if(item.fileType==='png'||item.fileType==='jpg'){
 const picture=new Image();
 await new Promise((resolve,reject)=>{picture.onload=resolve;picture.onerror=()=>reject(new Error(item.fileName+' を開けません'));picture.src=url;});
-loaded.push({id:item.id,fileName:item.fileName,fileType:'png',image:picture,video:null,url,width:picture.naturalWidth,height:picture.naturalHeight,duration:0});
+loaded.push({id:item.id,fileName:item.fileName,fileType:item.fileType,image:picture,video:null,url,width:picture.naturalWidth,height:picture.naturalHeight,duration:0});
 }else if(item.fileType==='mp4'){
 const video=document.createElement('video');
 video.preload='auto';video.playsInline=true;video.muted=true;
