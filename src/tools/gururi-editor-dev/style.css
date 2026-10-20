@@ -778,3 +778,29 @@ flex-shrink:0;
 /* Game preview diagnostic export: separate from the 360-degree canvas. */
 .export-preview-diagnostic{position:absolute;top:14px;right:62px;z-index:12;padding:9px 12px;min-height:38px;border-radius:7px;background:rgba(25,32,44,.92);color:#fff;border:1px solid rgba(255,255,255,.55);font-size:13px;cursor:pointer;white-space:nowrap}
 .export-preview-diagnostic:hover{background:#36465e}
+
+/* Currently equipped item, immediately left of the inventory menu. */
+.equipped-item-label{
+ position:absolute;
+ top:14px;
+ right:106px;
+ z-index:8;
+ height:42px;
+ max-width:min(55%,360px);
+ display:flex;
+ align-items:center;
+ padding:0 11px;
+ border:1px solid #758095;
+ border-radius:7px;
+ background:rgba(32,37,48,.94);
+ color:#fff;
+ font-size:13px;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ pointer-events:none;
+ box-sizing:border-box;
+}
+@media(max-width:480px){
+ .equipped-item-label{font-size:11px;padding:0 7px;max-width:calc(100% - 174px)}
+}
