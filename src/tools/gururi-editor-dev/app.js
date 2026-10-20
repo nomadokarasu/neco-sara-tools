@@ -5665,14 +5665,22 @@ const targets=state.connections
 .filter(target=>{
 if(!sourceIsMedia)return true;
 
-const targetIsMedia=target.type==='world'||target.type==='animation';
+const targetEndsScene=
+target.type==='world'||
+target.type==='animation'||
+target.type==='start';
 
-if(phase==='end')return targetIsMedia;
+if(phase==='end')return targetEndsScene;
 
-return !targetIsMedia;
+return !targetEndsScene;
 });
 
 for(const target of targets){
+if(target.type==='start'&&sourceIsMedia&&phase==='end'){
+startPreview();
+return;
+}
+
 showPreviewNode(target.id);
 }
 }
