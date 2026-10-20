@@ -740,3 +740,16 @@ min-height:0;
 .inventory-instruction{
 flex-shrink:0;
 }
+/* クリックノード：アイテム分岐ボタン */
+.settings-panel .add-world-btn:not([id]){
+  width:100%;
+  height:auto;
+  min-height:38px;
+  padding:8px 12px;
+  font-size:13px;
+  line-height:1.5;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:break-word;
+  margin-top:8px;
+}
