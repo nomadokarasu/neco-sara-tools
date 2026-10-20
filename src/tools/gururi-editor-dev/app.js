@@ -1,3 +1,4 @@
+
 const workspace=document.getElementById('workspace');
 const workspaceScene=document.getElementById('workspaceScene');
 const nodesLayer=document.getElementById('nodesLayer');
@@ -90,6 +91,7 @@ const gameCanvas=document.getElementById('gameCanvas');
 const previewMessage=document.getElementById('previewMessage');
 const dialogueOverlay=document.getElementById('dialogueOverlay');
 const dialogueText=document.getElementById('dialogueText');
+const optionChoicesOverlay=document.getElementById('optionChoicesOverlay');
 const fadeOverlay=document.getElementById('fadeOverlay');
 const gameViewport=document.getElementById('gameViewport');
 const media2DLayer=document.getElementById('media2DLayer');
@@ -232,6 +234,31 @@ state.pressedKeys.clear();
 finishWorkspaceCameraDrag();
 });
 
+function optionChoiceNodes(owner){
+return state.nodes.filter(n=>n.type==='optionChoice'&&n.optionOwnerId===owner.id);
+}
+function addOptionChoice(owner){
+if(owner.type!=='option')return;
+const before=editorSnapshot();
+if(!Array.isArray(owner.optionChoices))owner.optionChoices=[];
+const choice={id:uid('choice'),text:''};
+owner.optionChoices.push(choice);
+const branch={id:uid('optionChoice'),type:'optionChoice',optionOwnerId:owner.id,optionChoiceId:choice.id,x:owner.x+250,y:owner.y+(owner.optionChoices.length-1)*95};
+state.nodes.push(branch);
+state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
+commitEditorHistory(before);
+renderNodes();renderSettings();
+}
+function removeOptionChoice(owner,choiceId){
+const before=editorSnapshot();
+owner.optionChoices=owner.optionChoices.filter(c=>c.id!==choiceId);
+const removed=optionChoiceNodes(owner).filter(n=>n.optionChoiceId===choiceId);
+const ids=new Set(removed.map(n=>n.id));
+state.nodes=state.nodes.filter(n=>!ids.has(n.id));
+state.connections=state.connections.filter(c=>!ids.has(c.from)&&!ids.has(c.to));
+commitEditorHistory(before);
+renderNodes();renderSettings();
+}
 function addNode(type,x,y){
 const editBefore=editorSnapshot();
 const node={
@@ -266,6 +293,9 @@ frameInUndo:[],
 frameInRedo:[],
 dialoguePages:[],
 dialogueEditIndex:0,
+optionChoices:[],
+optionOwnerId:null,
+optionChoiceId:null,
 dialogueView:{yaw:0,pitch:0,zoom:1,initialized:false},
 dialogueThumbnail:null,
 dialogueFontSize:24,
@@ -377,6 +407,8 @@ node.type==='time'?'時間':
 node.type==='click'?'クリック':
 node.type==='frameIn'?'フレームイン':
 node.type==='dialogue'?'ダイアローグ':
+node.type==='option'?'オプション':
+node.type==='optionChoice'?'選択肢':
 node.type==='media2d'?'2Dメディア':
 node.type==='fadeIn'?'フェードイン':
 node.type==='fadeOut'?'フェードアウト':
@@ -392,6 +424,8 @@ node.type==='time'?`${node.timeSeconds} 秒`:
 node.type==='click'?'範囲クリック':
 node.type==='frameIn'?'カメラ範囲トリガー':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
+node.type==='option'?'質問文と選択肢':
+node.type==='optionChoice'?(getNode(node.optionOwnerId)?.optionChoices?.find(c=>c.id===node.optionChoiceId)?.text||'選択肢'):
 node.type==='media2d'?'画像・動画を重ねて表示':
 node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
@@ -708,6 +742,13 @@ setupPanPreview(node,previousWorld);
 return;
 }
 
+if(node.type==='optionChoice'){
+const owner=getNode(node.optionOwnerId);
+const choice=owner?.optionChoices?.find(c=>c.id===node.optionChoiceId);
+settingsPanel.innerHTML=`<div class="settings-title">選択肢</div><div class="settings-empty">${escapeHtml(choice?.text||'選択肢')}：このノードの右端から遷移先につないでください。</div>`;
+return;
+}
+if(node.type==='option'){renderOptionSettings(node);return;}
 if(node.type==='media2d'){
 renderMedia2DNodeSettings(node);
 return;
@@ -860,6 +901,43 @@ return;
 }
 renderMediaNodeSettings(node);
 
+}
+
+function renderOptionSettings(node){
+if(!Array.isArray(node.optionChoices))node.optionChoices=[];
+if(!Array.isArray(node.dialoguePages))node.dialoguePages=[];
+if(node.dialoguePages.length===0)node.dialoguePages=[''];
+if(node.dialoguePages.length>1)node.dialoguePages=[node.dialoguePages[0]];
+const source=findPreviousClickMediaNode(node.id);
+ensureDialogueView(node,source);
+const text=node.dialoguePages[0]||'';
+const fontSize=Number(node.dialogueFontSize)||24;
+settingsPanel.innerHTML=`<div class="settings-title">オプション</div>
+<div class="setting-group"><div class="setting-label">発話者</div><input id="dialogueSpeakerInput" class="number-input" type="text" maxlength="40" value="${escapeHtml(node.dialogueSpeaker||'').replace(/"/g,'&quot;')}"></div>
+<div class="setting-group"><div class="setting-label">サムネイル</div><div class="dialogue-thumbnail-controls"><select id="dialogueThumbnailSelect" class="number-input">${getDialogueThumbnailOptions(node.dialogueThumbnailMediaId)}</select><img id="dialogueThumbnailSettingsImage" class="dialogue-thumbnail-settings-image hidden" alt=""></div></div>
+<div class="setting-group"><div class="setting-label">フォントサイズ（px）</div><input id="dialogueFontSizeInput" class="number-input" type="number" min="10" max="36" value="${fontSize}"></div>
+<div class="setting-group"><div class="setting-label">パネルの高さ（${state.displayMode==='pc'?'PC':'スマホ'}・画面高さの％）</div><input id="dialoguePanelHeightInput" class="number-input" type="number" min="10" max="60" value="${getDialoguePanelHeight(node)}"></div>
+<div class="setting-group"><div class="dialogue-preview-wrap"><canvas id="dialoguePreviewCanvas" class="world-preview" width="320" height="320"></canvas><div id="dialoguePreviewBox" class="dialogue-preview-box"><div id="dialoguePreviewSpeaker" class="dialogue-speaker hidden"></div><div class="dialogue-panel-content"><img id="dialoguePreviewThumbnail" class="dialogue-panel-thumbnail hidden" alt=""><div id="dialoguePreviewText" class="dialogue-preview-text"></div></div></div></div></div>
+<div class="setting-group"><div class="setting-label">質問文</div><textarea id="optionQuestion" class="dialogue-textarea" maxlength="60">${escapeHtml(text)}</textarea><div id="optionQuestionCount" class="dialogue-count">${text.length}/60</div></div>
+<div class="setting-group"><div class="setting-label">選択肢</div><div id="optionChoiceRows">${node.optionChoices.map((c,i)=>`<div class="option-choice-row"><span>選択肢${i+1}</span><input class="number-input" data-choice-text="${c.id}" maxlength="60" value="${escapeHtml(c.text).replace(/"/g,'&quot;')}"><button type="button" class="dialogue-delete-btn" data-choice-delete="${c.id}">削除</button></div>`).join('')}</div><button id="optionAddChoice" class="add-world-btn" type="button">＋</button></div>`;
+// ダイアローグと同じ背景・サムネイル・文字サイズ等の設定を共有
+setupDialogueAppearance(node);
+const originalPages=node.dialoguePages;
+const addButton=document.createElement('button');addButton.id='addDialogueBtn';addButton.hidden=true;settingsPanel.appendChild(addButton);
+setupDialogueTriggerPreview(node,source);
+addButton.remove();
+const question=document.getElementById('optionQuestion');
+question.addEventListener('input',()=>{
+node.dialoguePages=[question.value.slice(0,60)];
+const count=document.getElementById('optionQuestionCount');if(count)count.textContent=`${node.dialoguePages[0].length}/60`;
+const preview=document.getElementById('dialoguePreviewText');if(preview)preview.textContent=node.dialoguePages[0];
+});
+document.getElementById('optionAddChoice').addEventListener('click',()=>addOptionChoice(node));
+settingsPanel.querySelectorAll('[data-choice-text]').forEach(input=>input.addEventListener('input',()=>{
+const choice=node.optionChoices.find(c=>c.id===input.dataset.choiceText);if(!choice)return;
+choice.text=input.value.slice(0,60);renderNodes();
+}));
+settingsPanel.querySelectorAll('[data-choice-delete]').forEach(button=>button.addEventListener('click',()=>removeOptionChoice(node,button.dataset.choiceDelete)));
 }
 
 // 2D media uses normalized viewport coordinates and independent PC/mobile layouts.
@@ -4919,6 +4997,8 @@ pasteOffset+=40;
 const editBefore=editorSnapshot();
 const newNode=copyNodeData(copiedNodeData);
 newNode.id=uid(newNode.type);
+if(newNode.type==='option'){newNode.optionChoices=[];}
+if(newNode.type==='optionChoice')return;
 newNode.x=copiedNodeData.x+pasteOffset;
 newNode.y=copiedNodeData.y+pasteOffset;
 
@@ -4995,15 +5075,22 @@ const id=
 state.selectedNodeId;
 
 if(!id||id==='start')return;
+const removedNode=getNode(id);
+if(removedNode?.type==='optionChoice'){
+const owner=getNode(removedNode.optionOwnerId);
+if(owner){removeOptionChoice(owner,removedNode.optionChoiceId);state.selectedNodeId=null;return;}
+}
+const attached=new Set(removedNode?.type==='option'?optionChoiceNodes(removedNode).map(n=>n.id):[]);
+attached.add(id);
 
 state.nodes=
 state.nodes.filter(
-n=>n.id!==id
+n=>!attached.has(n.id)
 );
 
 state.connections=
 state.connections.filter(
-c=>c.from!==id&&c.to!==id
+c=>!attached.has(c.from)&&!attached.has(c.to)
 );
 
 state.selectedNodeId=null;
@@ -5367,6 +5454,7 @@ closePreviewBtn.addEventListener('click',stopPreview);
 gameViewport.addEventListener('click',e=>{
 if(gamePreview.classList.contains('hidden'))return;
 if(!state.previewDialogueNodeId)return;
+if(getNode(state.previewDialogueNodeId)?.type==='option')return;
 if(e.button!==0)return;
 
 e.preventDefault();
@@ -5376,6 +5464,7 @@ advanceDialogue();
 document.addEventListener('keydown',e=>{
 if(gamePreview.classList.contains('hidden'))return;
 if(!state.previewDialogueNodeId)return;
+if(getNode(state.previewDialogueNodeId)?.type==='option')return;
 if(e.isComposing||e.key==='Process'||e.keyCode===229)return;
 if(e.repeat||e.ctrlKey||e.altKey||e.metaKey)return;
 
@@ -5556,6 +5645,8 @@ previewVisited.clear();
 state.previewClickTriggerIds=[];
 state.previewFrameInIds=[];
 state.previewDialogueNodeId=null;
+optionChoicesOverlay.classList.add('hidden');
+optionChoicesOverlay.replaceChildren();
 clearMedia2DLayer();
 stopDialogueTyping();
 dialogueOverlay.classList.add('hidden');
@@ -6428,6 +6519,31 @@ return;
 }
 if(node.type==='time'){
 schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
+return;
+}
+if(node.type==='optionChoice'){previewOutgoing(node.id);return;}
+if(node.type==='option'){
+if(!node.optionChoices?.length){previewOutgoing(node.id);return;}
+state.previewDialogueNodeId=node.id;
+showDialoguePage(node,0);
+optionChoicesOverlay.replaceChildren();
+node.optionChoices.forEach((choice,i)=>{
+const button=document.createElement('button');button.type='button';
+button.className='option-choice-button';
+button.textContent=choice.text||`選択肢${i+1}`;
+button.addEventListener('click',event=>{
+event.preventDefault();event.stopPropagation();
+if(state.previewDialogueNodeId!==node.id)return;
+stopDialogueTyping();
+dialogueOverlay.classList.add('hidden');
+optionChoicesOverlay.classList.add('hidden');
+state.previewDialogueNodeId=null;
+const branch=optionChoiceNodes(node).find(n=>n.optionChoiceId===choice.id);
+if(branch){previewVisited.delete(branch.id);showPreviewNode(branch.id);}
+});
+optionChoicesOverlay.appendChild(button);
+});
+optionChoicesOverlay.classList.remove('hidden');
 return;
 }
 if(node.type==='dialogue'){

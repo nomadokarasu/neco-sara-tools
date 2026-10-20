@@ -1,3 +1,4 @@
+
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f4f6;color:#202124;overflow:hidden}
 button,input{font:inherit}
@@ -654,3 +655,12 @@ cursor:pointer;
 .dialogue-delete-btn:hover{
 background:#f2f2f2;
 }
+
+/* Options share the dialogue panel and appear on the right of the game screen. */
+.option-choices-overlay{position:absolute;right:4%;top:50%;transform:translateY(-50%);width:38%;max-height:62%;overflow-y:auto;z-index:7;display:flex;flex-direction:column;gap:calc(12px * var(--dialogue-scale,1));pointer-events:auto}
+.option-choices-overlay.hidden{display:none}
+.option-choice-button{width:100%;padding:calc(12px * var(--dialogue-scale,1));background:rgba(10,10,15,.82);border:1px solid rgba(255,255,255,.65);color:#fff;border-radius:6px;font-size:calc(18px * var(--dialogue-scale,1));line-height:1.4;cursor:pointer;text-align:center;white-space:normal;overflow-wrap:anywhere}
+.option-choice-button:hover,.option-choice-button:focus-visible{background:rgba(70,70,84,.95)}
+.option-choice-row{display:flex;align-items:center;gap:6px;margin:8px 0}
+.option-choice-row span{font-size:12px;white-space:nowrap}
+.option-choice-row input{min-width:0;flex:1}
