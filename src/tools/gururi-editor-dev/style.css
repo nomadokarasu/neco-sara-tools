@@ -760,3 +760,16 @@ flex-shrink:0;
 
 /* クリックノード：追加用アイテム選択欄 */
 .click-item-branch-add-select{display:block;width:100%;min-width:0;}
+/* クリック分岐：削除ボタン */
+#clickBranchRemove {
+  display:block;
+  width:100%;
+  height:auto;
+  min-height:38px;
+  padding:8px 12px;
+  font-size:13px;
+  line-height:1.5;
+  white-space:nowrap;
+  text-align:center;
+  cursor:pointer;
+}
