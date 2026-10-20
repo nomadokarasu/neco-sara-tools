@@ -1009,11 +1009,20 @@ function renderItemUseSettings(node){
  document.getElementById('itemUseSelect').addEventListener('change',e=>{node.itemUseTargetId=e.target.value||null;});
  setupClickTriggerPreview(node,source);
 }
+const inventoryMenu=document.getElementById('inventoryMenu');
+const inventoryToolboxButton=document.getElementById('inventoryToolboxButton');
+
+function closeInventoryMenu(){
+ inventoryMenu.classList.add('hidden');
+ inventoryButton.setAttribute('aria-expanded','false');
+}
+
 function refreshInventory(){
  inventoryButton.classList.toggle('hidden',!state.inventoryEnabled);
+ if(!state.inventoryEnabled)closeInventoryMenu();
  const ids=[...state.inventory].filter(id=>getInventoryItem(id));
  inventoryOverlay.replaceChildren();
- const header=document.createElement('div');header.className='inventory-header';header.textContent='インベントリ';
+ const header=document.createElement('div');header.className='inventory-header';header.textContent='アイテム一覧';
  const close=document.createElement('button');close.textContent='×';close.type='button';close.addEventListener('click',()=>inventoryOverlay.classList.add('hidden'));header.append(close);
  inventoryOverlay.append(header);
  const grid=document.createElement('div');grid.className='inventory-grid';
@@ -1028,14 +1037,30 @@ function refreshInventory(){
  grid.append(b);
  }
  inventoryOverlay.append(grid);
- const details=document.createElement('div');details.className='inventory-details';
+
+ const instruction=document.createElement('div');
+ instruction.className='inventory-instruction';
+ instruction.textContent='アイテムを選択後、使う場所をクリック';
+ inventoryOverlay.append(instruction);
+
+ const details=document.createElement('div');
+ details.className='inventory-details';
  const selected=getInventoryItem(state.selectedInventoryItemId);
- details.textContent=selected?(selected.itemDescription||itemDisplayName(selected)):'アイテムを選択すると、使用対象に指定できます。';
+ details.textContent=selected?(selected.itemDescription||itemDisplayName(selected)):'';
  inventoryOverlay.append(details);
 }
+
 inventoryButton.addEventListener('click',()=>{
  if(!state.inventoryEnabled)return;
- refreshInventory();inventoryOverlay.classList.toggle('hidden');
+ const willOpen=inventoryMenu.classList.contains('hidden');
+ inventoryMenu.classList.toggle('hidden',!willOpen);
+ inventoryButton.setAttribute('aria-expanded',String(willOpen));
+});
+
+inventoryToolboxButton.addEventListener('click',()=>{
+ closeInventoryMenu();
+ refreshInventory();
+ inventoryOverlay.classList.remove('hidden');
 });
 // 2D media uses normalized viewport coordinates and independent PC/mobile layouts.
 function getMedia2DLayout(node){
