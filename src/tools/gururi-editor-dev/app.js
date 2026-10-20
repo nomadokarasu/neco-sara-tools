@@ -339,6 +339,7 @@ media2DId:null,
 media2DLayouts:{pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}}
 };
 state.nodes.push(node);
+if(type==='click')ensureClickOtherBranch(node);
 commitEditorHistory(editBefore);
 renderNodes();
 selectNode(node.id);
@@ -411,6 +412,8 @@ return null;
 }
 
 function renderNodes(){
+// 既存データ内のクリックノードにも「その他」の分岐を補完する
+for(const node of [...state.nodes]){if(node.type==='click')ensureClickOtherBranch(node);}
 nodesLayer.innerHTML='';
 for(const node of state.nodes){
 const el=document.createElement('div');
@@ -849,25 +852,6 @@ settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameCo
 setupClickTriggerPreview(node,sourceNode);
 renderClickItemBranchSettings(node);
 
-const onceGroup=document.createElement('div');
-onceGroup.className='setting-group';
-
-const onceLabel=document.createElement('label');
-const onceCheckbox=document.createElement('input');
-onceCheckbox.type='checkbox';
-onceCheckbox.checked=node.triggerOnce===true;
-
-onceLabel.append(
- onceCheckbox,
- document.createTextNode(' 一度だけ実行する')
-);
-onceGroup.append(onceLabel);
-settingsPanel.append(onceGroup);
-
-onceCheckbox.addEventListener('change',()=>{
- node.triggerOnce=onceCheckbox.checked;
-});
-
 return;
 }
 if(node.type==='media'){
@@ -1011,37 +995,49 @@ function deleteClickItemBranch(branch){
  state.connections=state.connections.filter(c=>c.from!==branch.id&&c.to!==branch.id);
  commitEditorHistory(before);renderNodes();renderSettings();
 }
+function ensureClickOtherBranch(owner){
+ if(owner.type!=='click'||clickBranches(owner).some(b=>b.clickBranchItemId==='__other__'))return;
+ const branch={id:uid('clickBranch'),type:'clickBranch',clickBranchOwnerId:owner.id,clickBranchItemId:'__other__',clickBranchOnce:false,clickBranchConsume:false,x:owner.x+250,y:owner.y+95*(clickBranches(owner).length+1)};
+ state.nodes.push(branch);
+ state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
+}
 function renderClickItemBranchSettings(node){
- const group=document.createElement('div');group.className='setting-group';
- const heading=document.createElement('div');heading.className='setting-label';heading.textContent='アイテム使用時の分岐';group.append(heading);
- const help=document.createElement('div');help.className='settings-empty';help.textContent='通常クリックは従来どおり右端から接続。アイテム使用時は下の分岐ノードへ進みます。';group.append(help);
- const rows=document.createElement('div');
- for(const branch of clickBranches(node)){
-  const row=document.createElement('div');row.className='setting-group';
-  const open=document.createElement('button');open.type='button';open.className='add-world-btn';
-  open.textContent=branch.clickBranchItemId==='__other__'?'その他のアイテム':itemDisplayName(getNode(branch.clickBranchItemId));
+ const group=document.createElement('div');group.className='setting-group';group.classList.add('click-item-branch-settings');
+ const heading=document.createElement('div');heading.className='setting-label';heading.textContent='アイテム使用時';group.append(heading);
+ const help=document.createElement('div');help.className='settings-empty';help.textContent='登録したアイテムに応じて分岐します。通常クリックはノード右端から接続します。';group.append(help);
+ const rows=document.createElement('div');rows.className='click-item-branch-list';
+ for(const branch of clickBranches(node).filter(b=>b.clickBranchItemId!=='__other__')){
+  const row=document.createElement('div');row.className='click-item-branch-row';
+  const open=document.createElement('button');open.type='button';open.className='click-item-branch-open';
+  open.textContent=itemDisplayName(getNode(branch.clickBranchItemId));
+  open.title='この分岐の設定を開く';
   open.addEventListener('click',()=>selectNode(branch.id));
-  row.append(open);rows.append(row);
+  const remove=document.createElement('button');remove.type='button';remove.className='click-item-branch-remove';remove.textContent='×';remove.title='分岐を削除';
+  remove.addEventListener('click',()=>deleteClickItemBranch(branch));
+  row.append(open,remove);rows.append(row);
  }
  group.append(rows);
- const select=document.createElement('select');select.className='number-input';
- select.innerHTML='<option value="">分岐に追加するアイテム</option>'+state.nodes.filter(n=>n.type==='itemAcquire'&&!clickBranches(node).some(b=>b.clickBranchItemId===n.id)).map(n=>`<option value="${n.id}">${escapeHtml(itemDisplayName(n))}</option>`).join('');
+ const select=document.createElement('select');select.className='number-input';select.setAttribute('aria-label','追加するアイテム');
+ select.innerHTML='<option value="">追加するアイテムを選択</option>'+state.nodes.filter(n=>n.type==='itemAcquire'&&!clickBranches(node).some(b=>b.clickBranchItemId===n.id)).map(n=>`<option value="${n.id}">${escapeHtml(itemDisplayName(n))}</option>`).join('');
  group.append(select);
- const add=document.createElement('button');add.type='button';add.className='add-world-btn';add.textContent='＋ アイテム分岐を追加';
+ const add=document.createElement('button');add.type='button';add.className='click-item-branch-add';add.textContent='＋ 使用するアイテムを追加';
  add.addEventListener('click',()=>addClickItemBranch(node,select.value));group.append(add);
- if(!clickBranches(node).some(n=>n.clickBranchItemId==='__other__')){
-  const other=document.createElement('button');other.type='button';other.className='add-world-btn';other.textContent='＋ その他のアイテム分岐を追加';
-  other.addEventListener('click',()=>addClickItemBranch(node,'__other__'));group.append(other);
+ const otherHeading=document.createElement('div');otherHeading.className='setting-label';otherHeading.textContent='その他のアイテムを使用した場合';group.append(otherHeading);
+ const note=document.createElement('div');note.className='settings-empty';note.textContent='ここに登録していないアイテムを使用した場合の分岐です。';group.append(note);
+ const other=clickBranches(node).find(b=>b.clickBranchItemId==='__other__');
+ if(other){
+  const open=document.createElement('button');open.type='button';open.className='click-item-branch-add';open.textContent='その他のアイテムの分岐を設定';
+  open.addEventListener('click',()=>selectNode(other.id));group.append(open);
  }
  settingsPanel.append(group);
 }
 function renderClickBranchSettings(branch){
  const item=branch.clickBranchItemId==='__other__'?null:getNode(branch.clickBranchItemId);
  const label=branch.clickBranchItemId==='__other__'?'その他のアイテム':itemDisplayName(item);
- settingsPanel.innerHTML=`<div class="settings-title">クリック分岐：${escapeHtml(label)}</div><div class="setting-group"><label><input id="clickBranchOnce" type="checkbox" ${branch.clickBranchOnce?'checked':''}> 一度だけ実行する</label></div>${item?`<div class="setting-group"><label><input id="clickBranchConsume" type="checkbox" ${branch.clickBranchConsume?'checked':''}> 使用後にアイテムを消費する</label></div>`:''}<div class="setting-group"><button id="clickBranchRemove" type="button" class="add-world-btn">この分岐を削除</button></div><div class="settings-empty">右端からダイアローグやメディアへ接続してください。</div>`;
+ settingsPanel.innerHTML=`<div class="settings-title">クリック分岐：${escapeHtml(label)}</div><div class="setting-group"><label><input id="clickBranchOnce" type="checkbox" ${branch.clickBranchOnce?'checked':''}> 一度だけ実行する</label></div>${item?`<div class="setting-group"><label><input id="clickBranchConsume" type="checkbox" ${branch.clickBranchConsume?'checked':''}> 使用後にアイテムを消費する</label></div>`:''}${item?`<div class="setting-group"><button id="clickBranchRemove" type="button" class="add-world-btn">この分岐を削除</button></div>`:``}<div class="settings-empty">右端からダイアローグやメディアへ接続してください。</div>`;
  document.getElementById('clickBranchOnce').addEventListener('change',e=>branch.clickBranchOnce=e.target.checked);
  document.getElementById('clickBranchConsume')?.addEventListener('change',e=>branch.clickBranchConsume=e.target.checked);
- document.getElementById('clickBranchRemove').addEventListener('click',()=>deleteClickItemBranch(branch));
+ document.getElementById('clickBranchRemove')?.addEventListener('click',()=>deleteClickItemBranch(branch));
 }
 function runClickItemBranch(click,itemId){
  const branches=clickBranches(click);

@@ -740,16 +740,12 @@ min-height:0;
 .inventory-instruction{
 flex-shrink:0;
 }
-/* クリックノード：アイテム分岐ボタン */
-.settings-panel .add-world-btn:not([id]){
-  width:100%;
-  height:auto;
-  min-height:38px;
-  padding:8px 12px;
-  font-size:13px;
-  line-height:1.5;
-  text-align:center;
-  white-space:normal;
-  overflow-wrap:break-word;
-  margin-top:8px;
-}
+
+/* クリックノード：アイテム分岐設定 */
+.click-item-branch-settings{display:flex;flex-direction:column;gap:9px}
+.click-item-branch-list{display:flex;flex-direction:column;gap:6px}
+.click-item-branch-row{display:flex;align-items:center;gap:8px}
+.click-item-branch-open{flex:1;min-width:0;padding:9px 10px;text-align:left;white-space:normal;overflow-wrap:anywhere;background:#fff;border:1px solid #cad0d9;border-radius:6px;cursor:pointer}
+.click-item-branch-remove{flex:none;width:32px;height:36px;border:1px solid #cad0d9;border-radius:6px;background:#fff;cursor:pointer}
+.click-item-branch-add{display:block;width:100%;height:auto;min-height:36px;padding:8px 12px;background:#fff;border:1px solid #cad0d9;border-radius:6px;white-space:normal;cursor:pointer}
+.click-item-branch-settings .setting-label:not(:first-child){margin-top:12px}
