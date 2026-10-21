@@ -43,7 +43,7 @@ button{cursor:pointer}
 .connection-plus circle{fill:#fff;stroke:#7b828c;stroke-width:1.5}
 .connection-plus text{font-size:15px;font-weight:700;text-anchor:middle;dominant-baseline:middle;fill:#333}
 .temp-path{fill:none;stroke:#3b82f6;stroke-width:2;stroke-dasharray:5 4}
-.context-menu{position:absolute;z-index:20;width:260px;max-width:calc(100vw - 24px);background:#fff;border:1px solid #cfd4dc;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px}
+.context-menu{position:absolute;z-index:20;width:260px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;background:#fff;border:1px solid #cfd4dc;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px}
 .context-menu button{width:100%;text-align:left;border:0;background:transparent;padding:9px 10px;border-radius:5px}
 .context-menu button:hover{background:#f0f2f5}
 .submenu{margin:2px 0 4px 0;padding:2px 0 2px 18px;border-left:2px solid #eceff3}

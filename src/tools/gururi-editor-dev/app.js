@@ -5258,7 +5258,10 @@ function openContextMenu(x,y,connection=null){
 state.menuPoint=screenToWorkspace(x,y);
 state.insertConnection=connection;
 contextMenu.style.left=`${x}px`;
-contextMenu.style.top=`${y}px`;
+const menuTop=Math.min(Math.max(8,y),Math.max(8,workspace.clientHeight-160));
+contextMenu.style.top=`${menuTop}px`;
+contextMenu.style.maxHeight=`${Math.max(48,workspace.clientHeight-menuTop-8)}px`;
+contextMenu.scrollTop=0;
 contextMenu.classList.remove('hidden');
 updateNodeMenuCategories();
 }
