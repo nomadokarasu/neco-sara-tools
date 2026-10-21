@@ -336,6 +336,31 @@ state.connections=state.connections.filter(c=>!ids.has(c.from)&&!ids.has(c.to));
 commitEditorHistory(before);
 renderNodes();renderSettings();
 }
+function conditionBranches(owner){
+ return state.nodes.filter(n=>n.type==='conditionBranch'&&n.conditionOwnerId===owner.id);
+}
+function ensureConditionBranches(owner){
+ if(owner?.type!=='condition')return;
+ for(const result of ['yes','no']){
+  if(conditionBranches(owner).some(n=>n.conditionResult===result))continue;
+  const branch={id:uid('conditionBranch'),type:'conditionBranch',conditionOwnerId:owner.id,conditionResult:result,x:owner.x+250,y:owner.y+(result==='yes'?0:100)};
+  state.nodes.push(branch);
+  state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
+ }
+}
+function renderConditionSettings(node){
+ const items=state.nodes.filter(n=>n.type==='itemAcquire');
+ settingsPanel.innerHTML=`<div class="settings-title">条件</div>
+ <div class="setting-group"><div class="setting-label">判定方法</div><select id="conditionMode" class="number-input"><option value="owned">アイテムを所持している</option><option value="acquired">アイテムを取得済み</option></select></div>
+ <div class="setting-group"><div class="setting-label">対象アイテム</div><select id="conditionItem" class="number-input"><option value="">アイテムを選択してください</option>${items.map(item=>`<option value="${escapeHtml(item.id)}">${escapeHtml(itemDisplayName(item))}</option>`).join('')}</select></div>
+ <div class="settings-empty">条件を満たす場合は「はい」、満たさない場合は「いいえ」に進みます。アイテム未選択時は「いいえ」に進みます。</div>`;
+ const mode=document.getElementById('conditionMode');
+ const item=document.getElementById('conditionItem');
+ mode.value=node.conditionMode==='acquired'?'acquired':'owned';
+ item.value=items.some(n=>n.id===node.conditionItemId)?node.conditionItemId:'';
+ mode.addEventListener('change',()=>{node.conditionMode=mode.value;renderNodes();});
+ item.addEventListener('change',()=>{node.conditionItemId=item.value;renderNodes();});
+}
 function textAnswerBranches(owner){
  return state.nodes.filter(n=>n.type==='textAnswerBranch'&&n.textAnswerOwnerId===owner.id);
 }
@@ -437,6 +462,10 @@ optionChoices:[],
 textAnswerQuestion:'',
 textAnswerCorrect:'',
 textAnswerMode:'text',
+conditionMode:'owned',
+conditionItemId:'',
+conditionOwnerId:null,
+conditionResult:null,
 textAnswerOwnerId:null,
 textAnswerResult:null,
 clickItemBranches:[],
@@ -479,6 +508,7 @@ media2DLayouts:{pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}}
 state.nodes.push(node);
 if(type==='click')ensureClickOtherBranch(node);
 if(type==='textAnswer')ensureTextAnswerBranches(node);
+if(type==='condition')ensureConditionBranches(node);
 commitEditorHistory(editBefore);
 renderNodes();
 selectNode(node.id);
@@ -569,6 +599,8 @@ node.type==='frameIn'?'フレームイン':
 node.type==='dialogue'?'ダイアローグ':
 node.type==='option'?'オプション':
 node.type==='textAnswer'?'テキスト入力':
+node.type==='condition'?'条件':
+node.type==='conditionBranch'?(node.conditionResult==='yes'?'はい':'いいえ'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解':'不正解'):
 node.type==='itemAcquire'?'アイテム取得':
 node.type==='inventory'?'インベントリ表示':
@@ -592,6 +624,8 @@ node.type==='frameIn'?'カメラ範囲トリガー':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='option'?'質問文と選択肢':
 node.type==='textAnswer'?'入力した回答を判定':
+node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='acquired'?'取得済み':'所持'}：${itemDisplayName(getNode(node.conditionItemId))}`:'対象アイテム未設定'):
+node.type==='conditionBranch'?(node.conditionResult==='yes'?'条件成立':'条件不成立'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解ルート':'不正解ルート'):
 node.type==='itemAcquire'?(node.itemName||'アイテム名未設定'):
 node.type==='inventory'?'所持アイテム一覧':
@@ -923,6 +957,8 @@ return;
 }
 if(node.type==='option'){renderOptionSettings(node);return;}
 if(node.type==='textAnswer'){renderTextAnswerSettings(node);return;}
+if(node.type==='condition'){renderConditionSettings(node);return;}
+if(node.type==='conditionBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.conditionResult==='yes'?'はい':'いいえ'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
 if(node.type==='textAnswerBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.textAnswerResult==='correct'?'正解':'不正解'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
 if(node.type==='clickBranch'){renderClickBranchSettings(node);return;}
 if(node.type==='itemAcquire'){renderItemAcquireSettings(node);return;}
@@ -5586,13 +5622,14 @@ const editBefore=editorSnapshot();
 const newNode=copyNodeData(copiedNodeData);
 newNode.id=uid(newNode.type);
 if(newNode.type==='option'){newNode.optionChoices=[];}
-if(newNode.type==='optionChoice'||newNode.type==='textAnswerBranch')return;
+if(newNode.type==='optionChoice'||newNode.type==='textAnswerBranch'||newNode.type==='conditionBranch')return;
 if(newNode.type==='textAnswer'){newNode.textAnswerOwnerId=null;newNode.textAnswerResult=null;}
 newNode.x=copiedNodeData.x+pasteOffset;
 newNode.y=copiedNodeData.y+pasteOffset;
 
 state.nodes.push(newNode);
 if(newNode.type==='textAnswer')ensureTextAnswerBranches(newNode);
+if(newNode.type==='condition')ensureConditionBranches(newNode);
 commitEditorHistory(editBefore);
 renderNodes();
 selectNode(newNode.id);
@@ -5666,12 +5703,12 @@ state.selectedNodeId;
 
 if(!id||id==='start')return;
 const removedNode=getNode(id);
-if(removedNode?.type==='textAnswerBranch')return;
+if(removedNode?.type==='textAnswerBranch'||removedNode?.type==='conditionBranch')return;
 if(removedNode?.type==='optionChoice'){
 const owner=getNode(removedNode.optionOwnerId);
 if(owner){removeOptionChoice(owner,removedNode.optionChoiceId);state.selectedNodeId=null;return;}
 }
-const attached=new Set(removedNode?.type==='option'?optionChoiceNodes(removedNode).map(n=>n.id):removedNode?.type==='textAnswer'?textAnswerBranches(removedNode).map(n=>n.id):[]);
+const attached=new Set(removedNode?.type==='option'?optionChoiceNodes(removedNode).map(n=>n.id):removedNode?.type==='textAnswer'?textAnswerBranches(removedNode).map(n=>n.id):removedNode?.type==='condition'?conditionBranches(removedNode).map(n=>n.id):[]);
 attached.add(id);
 
 state.nodes=
@@ -6311,7 +6348,7 @@ const targets=state.connections
 .map(c=>getNode(c.to))
 .filter(Boolean)
 .filter(target=>{
-if(!sourceIsMedia)return !(source?.type==='click'&&target.type==='clickBranch');
+if(!sourceIsMedia)return !(source?.type==='click'&&target.type==='clickBranch')&&!(source?.type==='condition'&&target.type==='conditionBranch');
 
 const targetEndsScene=target.type==='world'||target.type==='animation'||target.type==='start';
 
@@ -7222,6 +7259,14 @@ if(node.type==='itemUse'){
 }
 if(node.type==='clickBranch'){previewOutgoing(node.id);return;}
 if(node.type==='textAnswerBranch'){previewOutgoing(node.id);return;}
+if(node.type==='conditionBranch'){previewOutgoing(node.id);return;}
+if(node.type==='condition'){
+ const meets=!!node.conditionItemId&&(node.conditionMode==='acquired'?acquiredItems.has(node.conditionItemId):state.inventory.has(node.conditionItemId));
+ recordPreviewDiagnostic('condition-evaluated',{nodeId:node.id,mode:node.conditionMode,itemId:node.conditionItemId,result:meets?'yes':'no'});
+ const branch=conditionBranches(node).find(n=>n.conditionResult===(meets?'yes':'no'));
+ if(branch)showPreviewNode(branch.id);
+ return;
+}
 if(node.type==='textAnswer'){showTextAnswerPanel(node);return;}
 if(node.type==='optionChoice'){previewOutgoing(node.id);return;}
 if(node.type==='option'){
@@ -7514,7 +7559,7 @@ if(node.animation)node.animation.raw=null;
 cancelPreviewScene();
 state.nodes=data.nodes;
 state.connections=data.connections;
-for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);
+for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);
 resetEditorHistory();
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
@@ -7686,7 +7731,7 @@ if(node.animation)node.animation.raw=null;
 mediaLibrary.splice(0,mediaLibrary.length,...loaded);
 state.nodes=data.nodes;
 state.connections=data.connections;
-for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);
+for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
 state.displayMode=['pc','mobile'].includes(data.displayMode)?data.displayMode:'pc';
