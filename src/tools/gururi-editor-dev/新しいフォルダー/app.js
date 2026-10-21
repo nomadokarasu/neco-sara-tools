@@ -2090,10 +2090,59 @@ const start=clamp(Number(node.animation.startTime)||0,0,Math.max(0,duration-0.00
 return Math.min(Math.max(0,duration-0.001),(start+elapsed)%duration);
 }
 
+function renderMediaVariantSettings(node){
+ const v=mediaVariantConfig(node);
+ const expectedType=node.type==='world'?'png':'mp4';
+ const eligible=mediaLibrary.filter(m=>m.fileType===expectedType&&m.width===m.height*2);
+ const choiceOptions=selected=>'<option value="">通常の素材を使用</option>'+eligible.map(m=>`<option value="${escapeHtml(m.id)}" ${m.id===selected?'selected':''}>${escapeHtml(m.fileName)}</option>`).join('');
+ const itemOptions=state.nodes.filter(n=>n.type==='itemAcquire'&&!v.itemIds.includes(n.id)).map(n=>`<option value="${escapeHtml(n.id)}">${escapeHtml(n.itemName||n.id)}</option>`).join('');
+ const rows=Array.from({length:2**v.itemIds.length},(_,mask)=>{
+  const label=v.itemIds.filter((_,i)=>mask&(2**i)).map(id=>getNode(id)?.itemName||'不明').join('・')||'未取得';
+  return `<div class="setting-group"><div class="setting-label">${escapeHtml(label)}</div><select class="number-input media-variant-select" data-mask="${mask}">${choiceOptions(v.byMask[String(mask)])}</select></div>`;
+ }).join('');
+ return `<details data-media-section="variants"><summary>取得状況別メディア（${2**v.itemIds.length}通り）</summary><div class="media-section-body">
+ <div class="setting-group"><div class="setting-label">判定するアイテム（取得済み）</div>${v.itemIds.map(id=>`<div class="setting-group" style="display:flex;align-items:center;gap:8px"><span style="flex:1">${escapeHtml(getNode(id)?.itemName||'不明')}</span><button type="button" class="media-variant-remove" data-id="${escapeHtml(id)}">削除</button></div>`).join('')}</div>
+ <div class="setting-group"><select class="number-input" id="mediaVariantAdd"><option value="">アイテムを追加</option>${itemOptions}</select></div>
+ <div class="settings-empty">各状態に同じ形式（${expectedType.toUpperCase()}）の素材を指定します。未設定時は通常の素材を使用します。</div>
+ ${rows}</div></details>`;
+}
+function setupMediaVariantSettings(node){
+ const config=mediaVariantConfig(node);
+ const add=document.getElementById('mediaVariantAdd');
+ add?.addEventListener('change',e=>{
+  if(!e.target.value||config.itemIds.includes(e.target.value))return;
+  if(config.itemIds.length>=6){alert('対象アイテムは最大6個です。');return;}
+  // Preserve existing state assignments when adding a new item.
+  const old={...config.byMask};
+  for(const [mask,id] of Object.entries(old))config.byMask[String(Number(mask)+2**config.itemIds.length)]=id;
+  config.itemIds.push(e.target.value);
+  renderSettings();
+ });
+ document.querySelectorAll('.media-variant-remove').forEach(button=>button.addEventListener('click',()=>{
+  const index=config.itemIds.indexOf(button.dataset.id);
+  if(index<0)return;
+  const next={};
+  for(let mask=0;mask<2**(config.itemIds.length-1);mask++){
+   const low=mask&((2**index)-1);
+   const high=mask-low;
+   const oldMask=low+high*2;
+   if(config.byMask[String(oldMask)])next[String(mask)]=config.byMask[String(oldMask)];
+  }
+  config.itemIds.splice(index,1);
+  config.byMask=next;
+  renderSettings();
+ }));
+ document.querySelectorAll('.media-variant-select').forEach(select=>select.addEventListener('change',e=>{
+  if(e.target.value)config.byMask[e.target.dataset.mask]=e.target.value;
+  else delete config.byMask[e.target.dataset.mask];
+ }));
+}
+
 function renderMediaNodeSettings(node){
 const videoMode=node.type==='animation';
 const media=mediaLibrary.find(m=>m.id===(videoMode?node.animation.mediaId:node.world.mediaId));
 const duration=getMediaPlaybackDuration(node,media);
+mediaVariantConfig(node);
 
 const collapsible=(id,label,contents)=>`<details data-media-section="${id}"><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
 const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
@@ -2143,6 +2192,7 @@ const loops=videoMode?`
 settingsPanel.innerHTML=`
 <div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div>
 ${mediaSelect}
+${renderMediaVariantSettings(node)}
 ${pngSettings}
 ${inheritControl}
 ${previewControls}
@@ -2152,6 +2202,7 @@ ${videoMode?loops:''}
 ${angleInfo}`;
 
 document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
+setupMediaVariantSettings(node);
 
 if(!videoMode){
 document.getElementById('mediaWorldDuration').addEventListener('change',e=>{
@@ -2233,6 +2284,56 @@ seek(0);
 }
 
 const mediaLibrary=[];
+
+// State-specific media: one base asset and optional overrides for acquired-item combinations.
+function mediaVariantConfig(node){
+ if(!node.mediaVariants||!Array.isArray(node.mediaVariants.itemIds))node.mediaVariants={itemIds:[],byMask:{}};
+ if(!node.mediaVariants.byMask||typeof node.mediaVariants.byMask!=='object')node.mediaVariants.byMask={};
+ return node.mediaVariants;
+}
+function mediaVariantMask(config){
+ return config.itemIds.reduce((mask,id,index)=>mask|(acquiredItems.has(id)?(2**index):0),0);
+}
+function chosenSceneMedia(node){
+ const config=mediaVariantConfig(node);
+ const mask=mediaVariantMask(config);
+ const baseId=node.type==='world'?node.world.mediaId:node.animation.mediaId;
+ const expectedType=node.type==='world'?'png':'mp4';
+ const override=mediaLibrary.find(m=>m.id===config.byMask[String(mask)]&&m.fileType===expectedType);
+ return override||mediaLibrary.find(m=>m.id===baseId&&m.fileType===expectedType)||null;
+}
+function refreshAcquiredMediaScene(){
+ if(gamePreview.classList.contains('hidden'))return;
+ const node=getNode(state.previewNodeId);
+ if(!node||!['world','animation'].includes(node.type))return;
+ const media=chosenSceneMedia(node);
+ if(!media)return;
+ if(node.type==='world'){
+  if(node.world.image!==media.image){
+   node.world.image=media.image;
+   previewMessage.textContent=media.fileName;
+   drawPanoramaPreview(gameCanvas,node.world);
+   recordPreviewDiagnostic('media-variant',{nodeId:node.id,mediaId:media.id,mask:mediaVariantMask(mediaVariantConfig(node))});
+  }
+ }else{
+  const playback=state.previewAnimation;
+  if(!playback||playback.nodeId!==node.id||playback.variantMediaId===media.id)return;
+  playback.variantMediaId=media.id;
+  const video=playback.video;
+  const resumeTime=video.currentTime||0;
+  const wasPlaying=!video.paused;
+  video.src=media.url;
+  video.load();
+  video.addEventListener('loadedmetadata',()=>{
+   if(state.previewAnimation!==playback)return;
+   try{video.currentTime=Math.min(resumeTime,Math.max(0,(video.duration||0)-.02));}catch(_error){}
+   if(wasPlaying)video.play().catch(console.error);
+  },{once:true});
+  previewMessage.textContent=media.fileName;
+  recordPreviewDiagnostic('media-variant',{nodeId:node.id,mediaId:media.id,mask:mediaVariantMask(mediaVariantConfig(node))});
+ }
+}
+
 
 const addMediaBtn=document.getElementById('addMediaBtn');
 const mediaList=document.getElementById('mediaList');
@@ -2346,7 +2447,8 @@ info.className='media-item-info';
 
 const count=state.nodes.filter(node=>{
 return node.world?.mediaId===media.id||
-node.animation?.mediaId===media.id;
+node.animation?.mediaId===media.id||
+Object.values(node.mediaVariants?.byMask||{}).includes(media.id);
 }).length;
 
 info.textContent=`${media.fileType.toUpperCase()}・使用中 ${count} ノード`;
@@ -6480,9 +6582,7 @@ playback.video.load();
 }
 
 function playPreviewAnimation(node){
-const media=mediaLibrary.find(item=>{
-return item.id===node.animation.mediaId&&item.fileType==='mp4';
-});
+const media=chosenSceneMedia(node);
 
 if(!media||!media.url||!(media.duration>0)){
 previewMessage.textContent='MP4素材を選択してください';
@@ -6555,6 +6655,7 @@ video,
 world,
 frameId:null,
 nodeId:node.id,
+variantMediaId:media.id,
 startedAt:null
 };
 
@@ -7150,7 +7251,9 @@ playPreviewAnimation(node);
 }else{
 state.previewWorldNodeId=node.id;
 applyWorldInitialView(node);
-previewMessage.textContent=node.world.fileName||'ビュー素材未設定';
+const initialVariant=chosenSceneMedia(node);
+node.world.image=initialVariant?.image||null;
+previewMessage.textContent=initialVariant?.fileName||node.world.fileName||'ビュー素材未設定';
 drawPanoramaPreview(gameCanvas,node.world);
 const epoch=previewSceneEpoch;
 const duration=getMediaPlaybackDuration(node,null);
@@ -7239,6 +7342,7 @@ return;
 if(node.type==='itemAcquire'){
  if(acquiredItems.has(node.id)){previewOutgoing(node.id);return;}
  acquiredItems.add(node.id);
+ refreshAcquiredMediaScene();
  if(!state.inventory.has(node.id))state.inventory.add(node.id);
  refreshInventory();
  node.dialoguePages=[node.itemDescription||''];node.dialogueSpeaker=node.itemName||'';

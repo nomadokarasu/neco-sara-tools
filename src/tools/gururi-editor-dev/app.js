@@ -4819,32 +4819,37 @@ draw();
 }
 
 function isPointInsideClickPolygon(point,polygon){
-if(!Array.isArray(polygon)||polygon.length<3){
-return false;
+if(!Array.isArray(polygon)||polygon.length<3)return false;
+
+// Unwrap each vertex relative to the PREVIOUS vertex, rather than
+// wrapping every vertex relative to the clicked point. The latter
+// can produce a false positive on the opposite side of the sphere.
+const points=[{x:0,y:polygon[0].pitch}];
+let minX=0,maxX=0;
+for(let i=1;i<polygon.length;i++){
+ const x=points[i-1].x+angleDiff(polygon[i].yaw,polygon[i-1].yaw);
+ points.push({x,y:polygon[i].pitch});
+ minX=Math.min(minX,x);
+ maxX=Math.max(maxX,x);
 }
+
+// A normal screen-drawn lasso never covers more than half the sphere
+// horizontally. Ignore ambiguous polygons instead of treating their
+// antipodal counterpart as part of the selection.
+if(maxX-minX>=Math.PI)return false;
+
+let x=angleDiff(point.yaw,polygon[0].yaw);
+const center=(minX+maxX)/2;
+x+=Math.round((center-x)/(Math.PI*2))*Math.PI*2;
+if(x<minX||x>maxX)return false;
 
 let inside=false;
-
-for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
-const a=polygon[i];
-const b=polygon[j];
-
-const ax=angleDiff(a.yaw,point.yaw);
-const bx=angleDiff(b.yaw,point.yaw);
-const ay=a.pitch;
-const by=b.pitch;
-
-if((ay>point.pitch)===(by>point.pitch)){
-continue;
+for(let i=0,j=points.length-1;i<points.length;j=i++){
+ const a=points[i],b=points[j];
+ if((a.y>point.pitch)===(b.y>point.pitch))continue;
+ const intersectX=a.x+(b.x-a.x)*(point.pitch-a.y)/(b.y-a.y);
+ if(intersectX>x)inside=!inside;
 }
-
-const intersectX=ax+(bx-ax)*(point.pitch-ay)/(by-ay);
-
-if(intersectX>0){
-inside=!inside;
-}
-}
-
 return inside;
 }
 
