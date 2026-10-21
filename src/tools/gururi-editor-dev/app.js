@@ -476,6 +476,7 @@ clickBranchOnce:false,
 clickBranchConsume:false,
 itemName:'',
 itemDescription:'',
+itemRemoveOriginClick:false,
 itemThumbnailMediaId:null,
 itemConsumable:true,
 itemUseTargetId:null,
@@ -1283,6 +1284,7 @@ function renderClickBranchSettings(branch){
  document.getElementById('clickBranchRemove')?.addEventListener('click',()=>deleteClickItemBranch(branch));
 }
 function runClickItemBranch(click,itemId){
+ previewAcquisitionSourceClickId=click.id;
 recordPreviewDiagnostic('item-click',{clickId:click.id,itemId});
  const branches=clickBranches(click);
  const branch=branches.find(n=>n.clickBranchItemId===itemId)||branches.find(n=>n.clickBranchItemId==='__other__');
@@ -1357,6 +1359,7 @@ function renderItemAcquireSettings(node){
  <div class="setting-group"><div class="setting-label">アイテム名</div><input id="itemNameInput" class="number-input" maxlength="40" value="${escapeHtml(node.itemName||'').replace(/"/g,'&quot;')}"></div>
  <div class="setting-group"><div class="setting-label">サムネイル（正方形）</div><select id="itemThumbnailInput" class="number-input">${options}</select></div>
  <div class="setting-group"><div class="setting-label">説明</div><textarea id="itemDescriptionInput" class="dialogue-textarea" maxlength="60">${escapeHtml(node.itemDescription||'')}</textarea></div>
+ <div class="setting-group"><label><input id="itemRemoveOriginClick" type="checkbox" ${node.itemRemoveOriginClick?'checked':''}> 取得後にクリック範囲を削除する</label><div class="pan-help">取得に使用したクリック範囲を、ゲーム再生中だけ無効にします。</div></div>
  
  <div class="setting-group"><div class="dialogue-preview-wrap"><canvas id="dialoguePreviewCanvas" class="world-preview" width="320" height="320"></canvas><div id="dialoguePreviewBox" class="dialogue-preview-box"><div id="dialoguePreviewSpeaker" class="dialogue-speaker"></div><div class="dialogue-panel-content"><img id="dialoguePreviewThumbnail" class="dialogue-panel-thumbnail hidden" alt=""><div id="dialoguePreviewText" class="dialogue-preview-text"></div></div></div></div></div>`;
  const addButton=document.createElement('button');addButton.id='addDialogueBtn';addButton.hidden=true;settingsPanel.append(addButton);
@@ -1372,6 +1375,7 @@ function renderItemAcquireSettings(node){
  document.getElementById('itemNameInput').addEventListener('input',e=>{node.itemName=e.target.value;sync();renderNodes();});
  document.getElementById('itemDescriptionInput').addEventListener('input',e=>{node.itemDescription=e.target.value;sync();});
  document.getElementById('itemThumbnailInput').addEventListener('change',e=>{node.itemThumbnailMediaId=e.target.value||null;sync();});
+ document.getElementById('itemRemoveOriginClick').addEventListener('change',e=>{node.itemRemoveOriginClick=e.target.checked;});
  sync();
 }
 function renderItemUseSettings(node){
@@ -4930,7 +4934,7 @@ function findBestPreviewClick(clientX,clientY,world,animation,itemId){
  const matches=[];
  for(const id of state.previewClickTriggerIds){
   const node=getNode(id);
-  if(!node||!canFireExplorationTrigger(node))continue;
+  if(!node||previewRemovedClickIds.has(node.id)||!canFireExplorationTrigger(node))continue;
   let regions=null;
   let frameKey='static';
   if(animation&&node.clickAnimationMode){
@@ -6350,6 +6354,7 @@ if(action.kind==='item'){
  runClickItemBranch(trigger,state.selectedInventoryItemId);
  return;
 }
+previewAcquisitionSourceClickId=trigger.id;
 if(trigger.clickNormalOnce===true){
  previewCompletedTriggers.add(`normal:${trigger.id}`);
  recordPreviewDiagnostic('normal-click-once',{clickId:trigger.id});
@@ -6394,6 +6399,9 @@ const previewVisited=new Set();
 // ゲーム中に一度でも取得したアイテム
 const acquiredItems=new Set();
 const previewCompletedTriggers=new Set();
+// Acquiring an item can disable the click region that led to it for this playthrough.
+const previewRemovedClickIds=new Set();
+let previewAcquisitionSourceClickId=null;
 
 // 一度だけ実行するトリガーかどうか
 function canFireExplorationTrigger(node){
@@ -6529,6 +6537,7 @@ function startPreview(preserveInventory=false){
 recordPreviewDiagnostic('preview-start',{preserveInventory});
 previewClickAreaCache.clear();
 if(!preserveInventory){
+previewRemovedClickIds.clear();
 state.inventory=new Set();
 state.selectedInventoryItemId=null;
 state.inventoryEnabled=false;
@@ -6536,6 +6545,7 @@ previewCompletedTriggers.clear();
 acquiredItems.clear();
 }
 cancelPreviewScene();
+previewAcquisitionSourceClickId=null;
 refreshInventory();
 stopEffectAnimation();
 state.previewNodeId=null;
@@ -7373,6 +7383,11 @@ return;
 if(node.type==='itemAcquire'){
  if(acquiredItems.has(node.id)){previewOutgoing(node.id);return;}
  acquiredItems.add(node.id);
+ if(node.itemRemoveOriginClick&&previewAcquisitionSourceClickId){
+  previewRemovedClickIds.add(previewAcquisitionSourceClickId);
+  state.previewClickTriggerIds=state.previewClickTriggerIds.filter(id=>id!==previewAcquisitionSourceClickId);
+  recordPreviewDiagnostic('item-click-region-disabled',{itemId:node.id,clickId:previewAcquisitionSourceClickId});
+ }
  refreshAcquiredMediaScene();
  if(!state.inventory.has(node.id))state.inventory.add(node.id);
  refreshInventory();
