@@ -6092,6 +6092,7 @@ return getKeyframeNodeFrames(controller.node).length>0;
 }
 
 gameCanvas.addEventListener('pointerdown',e=>{
+if(previewKeyframeBusy)return;
 if(state.previewDialogueNodeId)return;
 if(e.button!==0)return;
 
@@ -6137,6 +6138,7 @@ drawPanoramaPreview(gameCanvas,world);
 });
 
 gameCanvas.addEventListener('pointerup',e=>{
+if(previewKeyframeBusy){gamePreviewDrag=null;return;}
 if(!gamePreviewDrag)return;
 
 const moved=gamePreviewDrag.moved;
@@ -6177,6 +6179,7 @@ gamePreviewDrag=null;
 });
 gameCanvas.addEventListener('wheel',e=>{
 if(gamePreview.classList.contains('hidden'))return;
+if(previewKeyframeBusy){e.preventDefault();return;}
 
 const world=getActivePreviewWorld();
 if(!world)return;
@@ -6198,6 +6201,7 @@ drawPanoramaPreview(gameCanvas,world);
 // Parallel preview: media owns the background; triggers run independently.
 let previewSceneEpoch=0;
 let activeIndependentKeyframe=null;
+let previewKeyframeBusy=false;
 const previewBranchTimers=new Set();
 const previewVisited=new Set();
 
@@ -6262,6 +6266,7 @@ if(state.previewTimer){clearTimeout(state.previewTimer);state.previewTimer=null;
 }
 function cancelPreviewScene(){
 activeIndependentKeyframe=null;
+previewKeyframeBusy=false;
 previewSceneEpoch++;
 clearPreviewBranchTimers();
 previewVisited.clear();
@@ -6541,8 +6546,12 @@ const cameraNode=activeIndependentKeyframe?.sourceId===node.id
 :null;
 
 if(cameraNode&&getKeyframeNodeFrames(cameraNode).length>0){
-const elapsed=(now-playback.startedAt)/1000;
-const cameraTime=getMediaCameraLoopTime(node,media,elapsed);
+const elapsed=activeIndependentKeyframe?.startedAt===undefined
+?(now-playback.startedAt)/1000
+:Math.max(0,(now-activeIndependentKeyframe.startedAt)/1000);
+const cameraTime=activeIndependentKeyframe?.duration===undefined
+?getMediaCameraLoopTime(node,media,elapsed)
+:Math.min(activeIndependentKeyframe.duration,elapsed);
 const camera=getIndependentCameraAt(cameraNode,cameraTime,getMediaCameraBase(node));
 
 world.yaw=camera.yaw;
@@ -7125,26 +7134,33 @@ return;
 }
 if(node.type==='keyframe'){
 const source=findPreviousClickMediaNode(node.id);
-if(source){
-const media=source.type==='animation'?getClickAnimationMedia(source):null;
-activeIndependentKeyframe={node,sourceId:source.id,offset:getTriggerPreviewTime(node.id,source)};
-// If this keyframe is started after a wait, its timeline begins at this moment.
-if(source.type==='world'&&state.previewWorldNodeId===source.id&&!state.cameraAnimationFrame){
+const frames=getKeyframeNodeFrames(node).filter(frame=>Number.isFinite(frame.time));
+const duration=frames.length?Math.max(0,...frames.map(frame=>frame.time)):0;
+if(!source||duration<=0){previewOutgoing(node.id);return;}
 const epoch=previewSceneEpoch;
-const duration=getMediaPlaybackDuration(source,null);
 const start=performance.now();
+previewKeyframeBusy=true;
+activeIndependentKeyframe={node,sourceId:source.id,offset:0,startedAt:start,duration};
+recordPreviewDiagnostic('keyframe-start',{nodeId:node.id,duration});
+// The preview waits until the last keyframe has finished before continuing.
+if(source.type==='world'&&state.previewWorldNodeId===source.id){
+if(state.cameraAnimationFrame){cancelAnimationFrame(state.cameraAnimationFrame);state.cameraAnimationFrame=null;}
 const tick=now=>{
-if(epoch!==previewSceneEpoch)return;
-const elapsed=(now-start)/1000;
-const camera=getIndependentCameraAt(node,Math.min(duration,elapsed),getMediaCameraBase(source));
-Object.assign(source.world,camera);drawPanoramaPreview(gameCanvas,source.world);
+if(epoch!==previewSceneEpoch||gamePreview.classList.contains('hidden'))return;
+const elapsed=Math.min(duration,(now-start)/1000);
+Object.assign(source.world,getIndependentCameraAt(node,elapsed,getMediaCameraBase(source)));
+drawPanoramaPreview(gameCanvas,source.world);
 if(elapsed<duration)state.cameraAnimationFrame=requestAnimationFrame(tick);
 else state.cameraAnimationFrame=null;
 };
 state.cameraAnimationFrame=requestAnimationFrame(tick);
 }
-}
+schedulePreviewBranch(duration,()=>{
+if(epoch!==previewSceneEpoch)return;
+previewKeyframeBusy=false;
+recordPreviewDiagnostic('keyframe-end',{nodeId:node.id,duration});
 previewOutgoing(node.id);
+});
 return;
 }
 if(node.type==='media2d'){
