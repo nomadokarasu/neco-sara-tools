@@ -4901,6 +4901,31 @@ function getEffectiveClickArea(node,regions,frameKey='static'){
  return area;
 }
 
+// Determine which action is available at a location before comparing overlapping hit regions.
+// A specifically registered equipped item takes priority; other clicks use the normal path.
+function resolvePreviewClickAction(node,itemId){
+ const branches=clickBranches(node);
+ const specific=itemId?branches.find(b=>b.clickBranchItemId===itemId):null;
+ if(specific){
+  if(specific.clickBranchOnce&&previewCompletedTriggers.has(specific.id))return null;
+  return {kind:'item',branch:specific};
+ }
+ // The regular click path remains available even while an unrelated item is equipped.
+ const hasNormalPath=state.connections.some(c=>c.from===node.id);
+ const normalAlreadyDone=node.clickNormalOnce===true&&previewCompletedTriggers.has(`normal:${node.id}`);
+ if(hasNormalPath){
+  return normalAlreadyDone?null:{kind:'normal'};
+ }
+ // Preserve an explicitly wired 'other items' branch when there is no normal destination.
+ if(itemId){
+  const other=branches.find(b=>b.clickBranchItemId==='__other__');
+  if(other&&state.connections.some(c=>c.from===other.id)){
+   return other.clickBranchOnce&&previewCompletedTriggers.has(other.id)?null:{kind:'item',branch:other};
+  }
+ }
+ return normalAlreadyDone?null:{kind:'normal'};
+}
+
 function findBestPreviewClick(clientX,clientY,world,animation,itemId){
  const matches=[];
  for(const id of state.previewClickTriggerIds){
@@ -4915,23 +4940,23 @@ function findBestPreviewClick(clientX,clientY,world,animation,itemId){
    regions=getClickFrameRegions(node,frame);
   }
   if(!isClickTargetHit(node,world,clientX,clientY,regions))continue;
-  if(!itemId&&node.clickNormalOnce===true&&previewCompletedTriggers.has(`normal:${node.id}`))continue;
-  if(itemId){
-   const branches=clickBranches(node);
-   const branch=branches.find(b=>b.clickBranchItemId===itemId)
-    ||branches.find(b=>b.clickBranchItemId==='__other__');
-   // A completed once-only branch cannot obstruct another clickable place.
-   if(!branch||(branch.clickBranchOnce&&previewCompletedTriggers.has(branch.id)))continue;
-  }
-  matches.push({node,area:getEffectiveClickArea(node,regions,frameKey)});
+  const action=resolvePreviewClickAction(node,itemId);
+  if(!action)continue;
+  matches.push({node,action,area:getEffectiveClickArea(node,regions,frameKey)});
  }
- matches.sort((a,b)=>a.area-b.area);
+ // An explicitly registered equipped item wins over normal clicks in overlapping regions.
+ // Within the same priority group, keep the existing smallest-effective-area rule.
+ matches.sort((a,b)=>{
+  const pa=itemId&&a.action.kind==='item'&&a.action.branch.clickBranchItemId===itemId?0:1;
+  const pb=itemId&&b.action.kind==='item'&&b.action.branch.clickBranchItemId===itemId?0:1;
+  return pa-pb||a.area-b.area;
+ });
  recordPreviewDiagnostic('click-candidates',{
   x:clientX,y:clientY,selectedItem:itemId||null,
-  candidates:matches.map(m=>({clickId:m.node.id,area:m.area})),
+  candidates:matches.map(m=>({clickId:m.node.id,area:m.area,action:m.action.kind,branchId:m.action.branch?.id||null})),
   chosen:matches[0]?.node.id||null
  });
- return matches[0]?.node||null;
+ return matches[0]||null;
 }
 
 function escapeHtml(value){
@@ -6312,15 +6337,16 @@ const world=getActivePreviewWorld();
 if(!world)return;
 
 const animation=state.previewAnimation;
-const trigger=findBestPreviewClick(
+const picked=findBestPreviewClick(
  e.clientX,e.clientY,world,animation,state.selectedInventoryItemId
 );
-if(!trigger)return;
+if(!picked)return;
+const {node:trigger,action}=picked;
 recordPreviewDiagnostic('click-hit',{
  clickId:trigger.id,x:e.clientX,y:e.clientY,
- selectedItem:state.selectedInventoryItemId
+ selectedItem:state.selectedInventoryItemId,action:action.kind
 });
-if(state.selectedInventoryItemId){
+if(action.kind==='item'){
  runClickItemBranch(trigger,state.selectedInventoryItemId);
  return;
 }
