@@ -422,6 +422,7 @@ timeSeconds:1,
 clickTarget:{yaw:0,pitch:0,width:0.5,height:0.35,initialized:false},
 clickView:{yaw:0,pitch:0,zoom:1,initialized:false},
 clickInheritRegions:true,
+clickNormalOnce:false,
 frameInMode:'contain',
 frameInTool:'target',
 frameInView:{yaw:0,pitch:0,zoom:1,initialized:false},
@@ -994,6 +995,13 @@ const inheritControl=isAnimation
 settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameControls}<div class="setting-group"><div class="setting-section-heading">範囲設定</div><div class="click-inherit-row">${inheritControl}</div><div class="click-preview-wrap"><canvas id="clickPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="clickLassoCanvas" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="clickLassoAddBtn" class="click-lasso-mode active" type="button" title="選択範囲に追加" aria-pressed="true">＋</button><button id="clickLassoSubtractBtn" class="click-lasso-mode" type="button" title="選択範囲から削除" aria-pressed="false">－</button></div></div><div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div><div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
 
 setupClickTriggerPreview(node,sourceNode);
+const normalOnceGroup=document.createElement('div');
+normalOnceGroup.className='setting-group';
+normalOnceGroup.innerHTML=`<label><input id="clickNormalOnceInput" type="checkbox" ${node.clickNormalOnce===true?'checked':''}> 通常のクリックを一度だけ実行する</label>`;
+settingsPanel.appendChild(normalOnceGroup);
+document.getElementById('clickNormalOnceInput').addEventListener('change',e=>{
+ node.clickNormalOnce=e.target.checked;
+});
 renderClickItemBranchSettings(node);
 
 return;
@@ -4764,6 +4772,7 @@ function findBestPreviewClick(clientX,clientY,world,animation,itemId){
    regions=getClickFrameRegions(node,frame);
   }
   if(!isClickTargetHit(node,world,clientX,clientY,regions))continue;
+  if(!itemId&&node.clickNormalOnce===true&&previewCompletedTriggers.has(`normal:${node.id}`))continue;
   if(itemId){
    const branches=clickBranches(node);
    const branch=branches.find(b=>b.clickBranchItemId===itemId)
@@ -6170,6 +6179,10 @@ recordPreviewDiagnostic('click-hit',{
 if(state.selectedInventoryItemId){
  runClickItemBranch(trigger,state.selectedInventoryItemId);
  return;
+}
+if(trigger.clickNormalOnce===true){
+ previewCompletedTriggers.add(`normal:${trigger.id}`);
+ recordPreviewDiagnostic('normal-click-once',{clickId:trigger.id});
 }
 fireExplorationTrigger(trigger);
 if(!state.connections.some(c=>c.from===trigger.id)){
