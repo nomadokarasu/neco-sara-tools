@@ -856,3 +856,7 @@ flex-shrink:0;
 /* World settings: flattened 2:1 preview, including every registered layer */
 .world-settings-preview{display:block;width:100%;height:auto;aspect-ratio:2/1;border:1px solid #aab4c2;border-radius:5px;background:#edf0f4;object-fit:contain}
 .world-settings-preview-note{font-size:11px;line-height:1.5;color:#697586;margin-top:6px}
+
+/* Panoramic world settings camera preview */
+.world-settings-preview{display:block;width:100%;height:auto;aspect-ratio:1/1;touch-action:none;cursor:grab;background:#151923;object-fit:contain}
+.world-settings-preview:active{cursor:grabbing}

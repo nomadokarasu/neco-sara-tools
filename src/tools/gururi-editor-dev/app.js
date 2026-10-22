@@ -8191,7 +8191,7 @@ function renderWorldFolderEditor(){
  const media=folderMediaSelect(folderBacker(folder)?.world?.mediaId,['png','jpg','mp4'],id=>{const b=folderBacker(folder);const m=mediaLibrary.find(m=>m.id===id);b.world.mediaId=id;b.world.fileName=m?.fileName||'';b.world.fileType=m?.fileType||'';b.world.image=m?.image||m?.video||null;worldComposites.delete(folder.id);});addFolderRow(section,'基本360度PNG / MP4',media);
  const previewGroup=document.createElement('div');previewGroup.className='setting-group';
  const previewHeading=document.createElement('div');previewHeading.className='setting-label';previewHeading.textContent='ワールドプレビュー（全レイヤー表示）';
- const previewCanvas=document.createElement('canvas');previewCanvas.className='world-settings-preview world-preview';previewCanvas.width=320;previewCanvas.height=320;
+ const previewCanvas=document.createElement('canvas');previewCanvas.className='world-settings-preview world-preview';previewCanvas.width=320;previewCanvas.height=Math.round(320*getActiveLayout().height/getActiveLayout().width);
  previewCanvas.dataset.folderId=folder.id;
  const previewNote=document.createElement('div');previewNote.className='world-settings-preview-note';previewNote.textContent='ドラッグ：カメラ回転 / ホイール：ズーム。現在の方向と画角がゲーム開始時の初期表示位置になります。透明PNGレイヤーはすべて表示します。';
  previewGroup.append(previewHeading,previewCanvas,previewNote);section.append(previewGroup);
