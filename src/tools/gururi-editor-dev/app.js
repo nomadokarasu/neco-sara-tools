@@ -8191,11 +8191,11 @@ function renderWorldFolderEditor(){
  const media=folderMediaSelect(folderBacker(folder)?.world?.mediaId,['png','jpg','mp4'],id=>{const b=folderBacker(folder);const m=mediaLibrary.find(m=>m.id===id);b.world.mediaId=id;b.world.fileName=m?.fileName||'';b.world.fileType=m?.fileType||'';b.world.image=m?.image||m?.video||null;worldComposites.delete(folder.id);});addFolderRow(section,'基本360度PNG / MP4',media);
  const previewGroup=document.createElement('div');previewGroup.className='setting-group';
  const previewHeading=document.createElement('div');previewHeading.className='setting-label';previewHeading.textContent='ワールドプレビュー（全レイヤー表示）';
- const previewCanvas=document.createElement('canvas');previewCanvas.className='world-settings-preview';previewCanvas.width=640;previewCanvas.height=320;
+ const previewCanvas=document.createElement('canvas');previewCanvas.className='world-settings-preview world-preview';previewCanvas.width=320;previewCanvas.height=320;
  previewCanvas.dataset.folderId=folder.id;
- const previewNote=document.createElement('div');previewNote.className='world-settings-preview-note';previewNote.textContent='表示条件にかかわらず、登録済みの透明PNGレイヤーをすべて重ねて表示します。';
+ const previewNote=document.createElement('div');previewNote.className='world-settings-preview-note';previewNote.textContent='ドラッグ：カメラ回転 / ホイール：ズーム。現在の方向と画角がゲーム開始時の初期表示位置になります。透明PNGレイヤーはすべて表示します。';
  previewGroup.append(previewHeading,previewCanvas,previewNote);section.append(previewGroup);
- drawWorldSettingsPreview(previewCanvas,folder);
+ setupWorldSettingsCameraPreview(previewCanvas,folder);
  const heading=document.createElement('h3');heading.textContent='透明PNGレイヤー';section.append(heading);
  for(const layer of folder.layers){const panel=document.createElement('div');panel.className='world-layer-entry';section.append(panel);
   const label=document.createElement('input');label.className='number-input';label.placeholder='レイヤー名';label.value=layer.name||'';label.oninput=()=>layer.name=label.value;addFolderRow(panel,'レイヤー名',label);
@@ -8221,29 +8221,74 @@ renderSettings=function(){
 };
 // The editor preview is intentionally independent of the game-state visibility rules.
 // It always shows every registered layer, including event-gated layers.
-function drawWorldSettingsPreview(canvas,folder){
- const ctx=canvas.getContext('2d');
- const w=canvas.width,h=canvas.height;
- ctx.clearRect(0,0,w,h);
- ctx.fillStyle='#edf0f4';ctx.fillRect(0,0,w,h);
+// A panoramic editor preview with all layers, irrespective of runtime visibility rules.
+// Use the exact same panorama renderer and camera model as the legacy media-node preview.
+const worldSettingsCameraPreviews=new WeakMap();
+function composeAllWorldLayers(folder,canvas){
  const base=getFolderMedia(folder);
  const source=base?.image||base?.video;
- if(source){try{ctx.drawImage(source,0,0,w,h);}catch(_e){}}
+ const ctx=canvas.getContext('2d');
+ if(!ctx)return false;
+ const width=1024,height=512;
+ if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+ ctx.clearRect(0,0,width,height);
+ if(!source||source instanceof HTMLVideoElement&&source.readyState<2)return false;
+ try{ctx.drawImage(source,0,0,width,height);}catch(_error){return false;}
  for(const layer of folder.layers||[]){
   const media=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png');
-  if(media?.image){try{ctx.drawImage(media.image,0,0,w,h);}catch(_e){}}
+  if(media?.image){try{ctx.drawImage(media.image,0,0,width,height);}catch(_error){}}
  }
- if(!source){
-  ctx.fillStyle='#667085';ctx.font='14px sans-serif';ctx.textAlign='center';
-  ctx.fillText('基本メディアが未設定です',w/2,h/2);
- }
+ return true;
+}
+function setupWorldSettingsCameraPreview(canvas,folder){
+ const backer=folderBacker(folder);
+ if(!backer)return;
+ const saved=getWorldInitialView(backer);
+ const view={yaw:Number(saved.yaw)||0,pitch:Number(saved.pitch)||0,zoom:Number(saved.zoom)||1};
+ const composite=document.createElement('canvas');
+ const persist=()=>{
+  const target=getWorldInitialView(backer);
+  Object.assign(target,view);
+  // Keep the legacy per-world current view in sync as well.
+  backer.world.yaw=view.yaw;backer.world.pitch=view.pitch;backer.world.zoom=view.zoom;
+ };
+ let syncInputs=()=>{};
+ const draw=()=>{
+  if(!canvas.isConnected)return;
+  const valid=composeAllWorldLayers(folder,composite);
+  drawPanoramaPreview(canvas,{image:valid?composite:null,...view});
+  syncInputs();
+ };
+ syncInputs=setupCameraNumberInputs(canvas,view,()=>{persist();draw();});
+ let drag=null;
+ canvas.addEventListener('pointerdown',e=>{
+  if(e.button!==0)return;
+  drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch,pointerId:e.pointerId};
+  canvas.setPointerCapture(e.pointerId);
+ });
+ canvas.addEventListener('pointermove',e=>{
+  if(!drag||e.pointerId!==drag.pointerId)return;
+  view.yaw=drag.yaw-(e.clientX-drag.x)*0.008;
+  view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*0.008,-Math.PI/2+.02,Math.PI/2-.02);
+  persist();draw();
+ });
+ canvas.addEventListener('pointerup',()=>drag=null);
+ canvas.addEventListener('pointercancel',()=>drag=null);
+ canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  view.zoom=clamp(view.zoom+(e.deltaY>0?-0.1:0.1),0.75,75/35);
+  persist();draw();
+ },{passive:false});
+ worldSettingsCameraPreviews.set(canvas,{folder,draw});
+ draw();
 }
 let worldSettingsPreviewFrames=0;
 function refreshWorldSettingsPreview(){
  if(++worldSettingsPreviewFrames%6!==0)return;
  const canvas=settingsPanel.querySelector('canvas.world-settings-preview');
- const folder=activeFolder();
- if(canvas&&folder&&canvas.dataset.folderId===folder.id)drawWorldSettingsPreview(canvas,folder);
+ if(!canvas)return;
+ const controller=worldSettingsCameraPreviews.get(canvas);
+ if(controller&&controller.folder===activeFolder())controller.draw();
 }
 function enterWorldFolder(folderId){
  const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;

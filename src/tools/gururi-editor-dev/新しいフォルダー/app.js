@@ -5041,7 +5041,9 @@ function getDialogueViewWorld(node,sourceNode){
 let image=null;
 
 if(sourceNode?.type==='world'){
-image=sourceNode.world.image;
+// 編集時は表示条件に関係なく全ての透明PNGレイヤーを表示する。
+// クリック範囲プレビューと同じ合成処理を利用する。
+image=getClickEditorComposite(sourceNode);
 }
 
 if(sourceNode?.type==='animation'){
