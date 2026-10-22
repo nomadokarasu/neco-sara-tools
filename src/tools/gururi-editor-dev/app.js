@@ -8115,6 +8115,7 @@ function refreshWorldComposite(){
  if(image){backer.world.image=image;drawPanoramaPreview(gameCanvas,backer.world);}
 }
 function worldCompositeTick(){
+ refreshWorldSettingsPreview();
  if(!gamePreview.classList.contains('hidden')&&state.previewWorldNodeId)refreshWorldComposite();
  worldCompositeFrame=requestAnimationFrame(worldCompositeTick);
 }
@@ -8162,6 +8163,13 @@ function renderWorldFolderEditor(){
  const name=document.createElement('input');name.className='number-input';name.value=folder.name;name.addEventListener('change',()=>{folder.name=name.value||'ワールド';updateWorldTabs();});addFolderRow(section,'ワールド名',name);
  const begin=document.createElement('label');const radio=document.createElement('input');radio.type='radio';radio.name='startWorld';radio.checked=state.startFolderId===folder.id;radio.onchange=()=>state.startFolderId=folder.id;begin.append(radio,document.createTextNode(' 開始ワールドにする'));addFolderRow(section,'開始位置',begin);
  const media=folderMediaSelect(folderBacker(folder)?.world?.mediaId,['png','jpg','mp4'],id=>{const b=folderBacker(folder);const m=mediaLibrary.find(m=>m.id===id);b.world.mediaId=id;b.world.fileName=m?.fileName||'';b.world.fileType=m?.fileType||'';b.world.image=m?.image||m?.video||null;worldComposites.delete(folder.id);});addFolderRow(section,'基本360度PNG / MP4',media);
+ const previewGroup=document.createElement('div');previewGroup.className='setting-group';
+ const previewHeading=document.createElement('div');previewHeading.className='setting-label';previewHeading.textContent='ワールドプレビュー（全レイヤー表示）';
+ const previewCanvas=document.createElement('canvas');previewCanvas.className='world-settings-preview';previewCanvas.width=640;previewCanvas.height=320;
+ previewCanvas.dataset.folderId=folder.id;
+ const previewNote=document.createElement('div');previewNote.className='world-settings-preview-note';previewNote.textContent='表示条件にかかわらず、登録済みの透明PNGレイヤーをすべて重ねて表示します。';
+ previewGroup.append(previewHeading,previewCanvas,previewNote);section.append(previewGroup);
+ drawWorldSettingsPreview(previewCanvas,folder);
  const heading=document.createElement('h3');heading.textContent='透明PNGレイヤー';section.append(heading);
  for(const layer of folder.layers){const panel=document.createElement('div');panel.className='world-layer-entry';section.append(panel);
   const label=document.createElement('input');label.className='number-input';label.placeholder='レイヤー名';label.value=layer.name||'';label.oninput=()=>layer.name=label.value;addFolderRow(panel,'レイヤー名',label);
@@ -8176,7 +8184,41 @@ function renderWorldFolderEditor(){
  const add=document.createElement('button');add.className='add-world-btn';add.textContent='＋ 透明PNGレイヤー';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'',mediaId:'',mode:'always',eventType:'acquire',targetId:''});renderSettings();};section.append(add);
 }
 const originalRenderSettings=renderSettings;
-renderSettings=function(){originalRenderSettings();if(state.activeFolderId)renderWorldFolderEditor();};
+renderSettings=function(){
+ if(state.activeFolderId&&!state.selectedNodeId){
+  if(cleanupAnimationSettingsPreview){cleanupAnimationSettingsPreview();cleanupAnimationSettingsPreview=null;}
+  settingsPanel.replaceChildren();
+  renderWorldFolderEditor();
+ }else{
+  originalRenderSettings();
+ }
+};
+// The editor preview is intentionally independent of the game-state visibility rules.
+// It always shows every registered layer, including event-gated layers.
+function drawWorldSettingsPreview(canvas,folder){
+ const ctx=canvas.getContext('2d');
+ const w=canvas.width,h=canvas.height;
+ ctx.clearRect(0,0,w,h);
+ ctx.fillStyle='#edf0f4';ctx.fillRect(0,0,w,h);
+ const base=getFolderMedia(folder);
+ const source=base?.image||base?.video;
+ if(source){try{ctx.drawImage(source,0,0,w,h);}catch(_e){}}
+ for(const layer of folder.layers||[]){
+  const media=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png');
+  if(media?.image){try{ctx.drawImage(media.image,0,0,w,h);}catch(_e){}}
+ }
+ if(!source){
+  ctx.fillStyle='#667085';ctx.font='14px sans-serif';ctx.textAlign='center';
+  ctx.fillText('基本メディアが未設定です',w/2,h/2);
+ }
+}
+let worldSettingsPreviewFrames=0;
+function refreshWorldSettingsPreview(){
+ if(++worldSettingsPreviewFrames%6!==0)return;
+ const canvas=settingsPanel.querySelector('canvas.world-settings-preview');
+ const folder=activeFolder();
+ if(canvas&&folder&&canvas.dataset.folderId===folder.id)drawWorldSettingsPreview(canvas,folder);
+}
 function enterWorldFolder(folderId){
  const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;
  currentWorldBackerId=folder.backerId;

@@ -852,3 +852,7 @@ flex-shrink:0;
 .world-folder-card{display:inline-flex;align-items:center;gap:4px;min-width:0;padding:6px}
 .world-folder-card button{border:1px solid #5a6a7c;border-radius:5px;background:#313e50;color:white;cursor:pointer;padding:8px}
 .world-folder-card .world-folder-open{min-width:145px;padding:16px;font-weight:600}
+
+/* World settings: flattened 2:1 preview, including every registered layer */
+.world-settings-preview{display:block;width:100%;height:auto;aspect-ratio:2/1;border:1px solid #aab4c2;border-radius:5px;background:#edf0f4;object-fit:contain}
+.world-settings-preview-note{font-size:11px;line-height:1.5;color:#697586;margin-top:6px}
