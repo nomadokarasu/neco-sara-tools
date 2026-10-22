@@ -835,3 +835,20 @@ flex-shrink:0;
  .equipped-item-label{right:8px;max-width:calc(100% - 16px);padding:0 7px;gap:4px}
  .equipped-item-label select{max-width:40vw;font-size:12px}
 }
+
+/* World folders v2 */
+.world-tabs{display:flex;gap:5px;align-items:center;overflow-x:auto;padding:8px 12px;background:#222832;border-bottom:1px solid #48505b;flex:none;white-space:nowrap}
+.world-tabs button{flex:0 0 auto;border:1px solid #566476;background:#374151;color:#f2f4f7;border-radius:5px;padding:7px 13px;cursor:pointer}
+.world-tabs button.active{background:#64748b;border-color:#8da6bf}
+.world-folder-panel{position:absolute;inset:0;background:#20252d;color:#f3f3f3;z-index:5;padding:24px;overflow:auto}
+.world-folder-panel.hidden{display:none}
+.world-folder-panel h2{font-size:18px;margin:0 0 10px}
+.world-folder-panel p{color:#cbd5e1;font-size:13px;line-height:1.6}
+.world-folder-card{display:inline-flex;align-items:center;gap:14px;padding:20px;margin:8px;border:1px solid #66758c;border-radius:9px;background:#354156;color:white;cursor:pointer;min-width:180px}
+.world-folder-card span{font-size:24px}.world-folder-card small{color:#b9c6d8}
+.world-folder-settings{border-top:1px solid #657080;padding-top:12px;margin-top:10px}.world-folder-settings h3{font-size:14px;margin:16px 0 10px}
+.world-layer-entry{border:1px solid #677484;border-radius:8px;padding:10px;margin-bottom:10px}
+
+.world-folder-card{display:inline-flex;align-items:center;gap:4px;min-width:0;padding:6px}
+.world-folder-card button{border:1px solid #5a6a7c;border-radius:5px;background:#313e50;color:white;cursor:pointer;padding:8px}
+.world-folder-card .world-folder-open{min-width:145px;padding:16px;font-weight:600}

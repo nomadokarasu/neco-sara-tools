@@ -175,6 +175,9 @@ const ratioHeightInput=document.getElementById('ratioHeightInput');
 const state={
 nodes:[],
 connections:[],
+worldFolders:[],
+activeFolderId:null,
+startFolderId:null,
 selectedNodeId:null,
 selectedNodeIds:new Set(),
 selectedConnectionId:null,
@@ -350,17 +353,22 @@ function ensureConditionBranches(owner){
 }
 function renderConditionSettings(node){
  const items=state.nodes.filter(n=>n.type==='itemAcquire');
+ const events=state.nodes.filter(n=>n.type==='eventRecord');
  settingsPanel.innerHTML=`<div class="settings-title">条件</div>
- <div class="setting-group"><div class="setting-label">判定方法</div><select id="conditionMode" class="number-input"><option value="owned">アイテムを所持している</option><option value="acquired">アイテムを取得済み</option></select></div>
- <div class="setting-group"><div class="setting-label">対象アイテム</div><select id="conditionItem" class="number-input"><option value="">アイテムを選択してください</option>${items.map(item=>`<option value="${escapeHtml(item.id)}">${escapeHtml(itemDisplayName(item))}</option>`).join('')}</select></div>
- <div class="settings-empty">条件を満たす場合は「はい」、満たさない場合は「いいえ」に進みます。アイテム未選択時は「いいえ」に進みます。</div>`;
- const mode=document.getElementById('conditionMode');
- const item=document.getElementById('conditionItem');
- mode.value=node.conditionMode==='acquired'?'acquired':'owned';
- item.value=items.some(n=>n.id===node.conditionItemId)?node.conditionItemId:'';
- mode.addEventListener('change',()=>{node.conditionMode=mode.value;renderNodes();});
+ <div class="setting-group"><div class="setting-label">判定方法</div><select id="conditionMode" class="number-input"><option value="acquired">アイテム取得済み</option><option value="event">イベント実行済み</option></select></div>
+ <div class="setting-group"><div class="setting-label">対象</div><select id="conditionItem" class="number-input"></select></div>
+ <div class="settings-empty">成立時は「はい」、不成立時は「いいえ」に進みます。</div>`;
+ const mode=document.getElementById('conditionMode');const item=document.getElementById('conditionItem');
+ const renderOptions=()=>{
+  item.replaceChildren();item.add(new Option('選択してください',''));
+  for(const n of (mode.value==='event'?events:items))item.add(new Option(n.eventName||itemDisplayName(n),n.id));
+  item.value=node.conditionItemId||'';
+ };
+ mode.value=node.conditionMode==='event'?'event':'acquired';renderOptions();
+ mode.addEventListener('change',()=>{node.conditionMode=mode.value;node.conditionItemId='';renderOptions();renderNodes();});
  item.addEventListener('change',()=>{node.conditionItemId=item.value;renderNodes();});
 }
+
 function textAnswerBranches(owner){
  return state.nodes.filter(n=>n.type==='textAnswerBranch'&&n.textAnswerOwnerId===owner.id);
 }
@@ -462,7 +470,7 @@ optionChoices:[],
 textAnswerQuestion:'',
 textAnswerCorrect:'',
 textAnswerMode:'text',
-conditionMode:'owned',
+conditionMode:'acquired',
 conditionItemId:'',
 conditionOwnerId:null,
 conditionResult:null,
@@ -506,6 +514,7 @@ panRedoStack:[],
 media2DId:null,
 media2DLayouts:{pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}}
 };
+node.folderId=state.activeFolderId;
 state.nodes.push(node);
 if(type==='click')ensureClickOtherBranch(node);
 if(type==='textAnswer')ensureTextAnswerBranches(node);
@@ -584,14 +593,18 @@ return null;
 function renderNodes(){
 // 既存データ内のクリックノードにも「その他」の分岐を補完する
 for(const node of [...state.nodes]){if(node.type==='click')ensureClickOtherBranch(node);}
+for(const n of state.nodes){if(n.folderId)continue;const owner=getNode(n.clickBranchOwnerId||n.conditionOwnerId||n.textAnswerOwnerId||n.optionOwnerId);if(owner)n.folderId=owner.folderId;}
 nodesLayer.innerHTML='';
 for(const node of state.nodes){
+if(!state.activeFolderId||node.folderId!==state.activeFolderId||node.type==='world')continue;
 const el=document.createElement('div');
 el.className=`node ${node.type==='start'?'start-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''}`;
 el.dataset.id=node.id;
 el.style.left=`${node.x}px`;
 el.style.top=`${node.y}px`;
 const title=
+node.type==='worldMove'?'ワールド移動':
+node.type==='eventRecord'?'イベント記録':
 node.type==='start'?'START':
 node.type==='media'||node.type==='world'||node.type==='animation'?'メディア':
 node.type==='time'?'時間':
@@ -616,6 +629,8 @@ node.type==='keyframe'?'キーフレーム':
 '不明';
 
 const body=
+node.type==='worldMove'?(state.worldFolders.find(w=>w.id===node.destinationFolderId)?.name||'移動先未設定'):
+node.type==='eventRecord'?(node.eventName||'イベント未設定'):
 node.type==='media'?'素材を選択してください':
 node.type==='world'?(node.world.fileName||'素材未設定'):
 node.type==='animation'?(node.animation.fileName||'素材未設定'):
@@ -625,7 +640,7 @@ node.type==='frameIn'?'カメラ範囲トリガー':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='option'?'質問文と選択肢':
 node.type==='textAnswer'?'入力した回答を判定':
-node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='acquired'?'取得済み':'所持'}：${itemDisplayName(getNode(node.conditionItemId))}`:'対象アイテム未設定'):
+node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'条件成立':'条件不成立'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解ルート':'不正解ルート'):
 node.type==='itemAcquire'?(node.itemName||'アイテム名未設定'):
@@ -869,6 +884,20 @@ settingsPanel.appendChild(group);
 }
 
 if(!node){settingsPanel.innerHTML='<div class="settings-empty">ノードを選択してください</div>';return}
+if(node.type==='worldMove'){
+ settingsPanel.innerHTML='<div class="settings-title">ワールド移動</div><div class="setting-group"><div class="setting-label">移動先ワールド</div><select id="destinationWorld" class="number-input"></select></div>';
+ const select=document.getElementById('destinationWorld');
+ select.add(new Option('選択してください',''));
+ for(const w of state.worldFolders)select.add(new Option(w.name,w.id));
+ select.value=node.destinationFolderId||'';
+ select.addEventListener('change',()=>{node.destinationFolderId=select.value;renderNodes();renderSettings();});
+ return;
+}
+if(node.type==='eventRecord'){
+ settingsPanel.innerHTML='<div class="settings-title">イベント記録</div><div class="setting-group"><div class="setting-label">イベント名</div><input id="recordEventName" class="number-input" type="text"></div><p class="settings-empty">ここを通過するとイベント実行済みになります。</p>';
+ const input=document.getElementById('recordEventName');input.value=node.eventName||'';
+ input.addEventListener('input',()=>{node.eventName=input.value;renderNodes();});return;
+}
 if(node.type==='start'){
 settingsPanel.innerHTML='<div class="settings-title">START</div><div class="settings-empty">ゲーム開始地点です。</div>';
 return;
@@ -1172,7 +1201,7 @@ function addClickItemBranch(owner,itemId){
  if(!itemId||itemId==='__other__'&&clickBranches(owner).some(n=>n.clickBranchItemId==='__other__'))return;
  if(clickBranches(owner).some(n=>n.clickBranchItemId===itemId))return;
  const before=editorSnapshot();
- const branch={id:uid('clickBranch'),type:'clickBranch',clickBranchOwnerId:owner.id,clickBranchItemId:itemId,clickBranchOnce:false,clickBranchConsume:false,x:owner.x+250,y:owner.y+95*(clickBranches(owner).length+1)};
+ const branch={folderId:owner.folderId,id:uid('clickBranch'),type:'clickBranch',clickBranchOwnerId:owner.id,clickBranchItemId:itemId,clickBranchOnce:false,clickBranchConsume:false,x:owner.x+250,y:owner.y+95*(clickBranches(owner).length+1)};
  state.nodes.push(branch);
  state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
  commitEditorHistory(before);
@@ -1201,7 +1230,7 @@ function ensureClickOtherBranch(owner){
  }
 
  if(otherBranches.length>0)return;
- const branch={id:uid('clickBranch'),type:'clickBranch',clickBranchOwnerId:owner.id,clickBranchItemId:'__other__',clickBranchOnce:false,clickBranchConsume:false,x:owner.x+250,y:owner.y+95*(branches.length+1)};
+ const branch={folderId:owner.folderId,id:uid('clickBranch'),type:'clickBranch',clickBranchOwnerId:owner.id,clickBranchItemId:'__other__',clickBranchOnce:false,clickBranchConsume:false,x:owner.x+250,y:owner.y+95*(branches.length+1)};
  state.nodes.push(branch);
  state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
 }
@@ -1291,6 +1320,7 @@ recordPreviewDiagnostic('item-click',{clickId:click.id,itemId});
  if(!branch){recordPreviewDiagnostic('item-no-branch',{clickId:click.id,itemId});return;} // Unregistered item without 'other' is silent.
  if(branch.clickBranchOnce&&previewCompletedTriggers.has(branch.id)){recordPreviewDiagnostic('branch-already-completed',{branchId:branch.id});return;}
 recordPreviewDiagnostic('branch-fired',{branchId:branch.id,itemId,consumed:!!(branch.clickBranchConsume&&branch.clickBranchItemId===itemId)});
+ usedWorldBranches.add(branch.id);refreshWorldComposite();
  if(branch.clickBranchOnce)previewCompletedTriggers.add(branch.id);
  if(branch.clickBranchConsume&&branch.clickBranchItemId===itemId){
   state.inventory.delete(itemId);
@@ -2096,7 +2126,7 @@ return Math.min(Math.max(0,duration-0.001),(start+elapsed)%duration);
 
 function renderMediaVariantSettings(node){
  const v=mediaVariantConfig(node);
- const expectedType=node.type==='world'?'png':'mp4';
+ const expectedType=node.type==='world'?(mediaLibrary.find(m=>m.id===baseId)?.fileType||'png'):'mp4';
  const eligible=mediaLibrary.filter(m=>m.fileType===expectedType&&m.width===m.height*2);
  const choiceOptions=selected=>'<option value="">通常の素材を使用</option>'+eligible.map(m=>`<option value="${escapeHtml(m.id)}" ${m.id===selected?'selected':''}>${escapeHtml(m.fileName)}</option>`).join('');
  const itemOptions=state.nodes.filter(n=>n.type==='itemAcquire'&&!v.itemIds.includes(n.id)).map(n=>`<option value="${escapeHtml(n.id)}">${escapeHtml(n.itemName||n.id)}</option>`).join('');
@@ -2302,7 +2332,7 @@ function chosenSceneMedia(node){
  const config=mediaVariantConfig(node);
  const mask=mediaVariantMask(config);
  const baseId=node.type==='world'?node.world.mediaId:node.animation.mediaId;
- const expectedType=node.type==='world'?'png':'mp4';
+ const expectedType=node.type==='world'?(mediaLibrary.find(m=>m.id===baseId)?.fileType||'png'):'mp4';
  const override=mediaLibrary.find(m=>m.id===config.byMask[String(mask)]&&m.fileType===expectedType);
  return override||mediaLibrary.find(m=>m.id===baseId&&m.fileType===expectedType)||null;
 }
@@ -3962,7 +3992,7 @@ const isVideo=world.image instanceof HTMLVideoElement;
 
 if(isVideo&&world.image.readyState<2)return;
 
-if(isVideo||renderer.image!==world.image){
+if(isVideo||world.image instanceof HTMLCanvasElement||renderer.image!==world.image){
 gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
 gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,world.image);
 renderer.image=world.image;
@@ -4044,7 +4074,9 @@ if(!visited.has(parent.id))next.push(parent.id);
 }
 frontier=next;
 }
-return null;
+const origin=getNode(nodeId);
+const folder=state.worldFolders.find(w=>w.id===origin?.folderId);
+return folder?getNode(folder.backerId):null;
 }
 
 function getClickAnimationMedia(sourceNode){
@@ -5478,6 +5510,7 @@ if(create){
 const insertConnection=state.insertConnection;
 const menuPoint={...state.menuPoint};
 const nodeType=create.dataset.create;
+if(!state.activeFolderId){alert('ワールドのタブを開いてからノードを追加してください。');return;}
 
 contextMenu.classList.add('hidden');
 state.insertConnection=null;
@@ -6482,7 +6515,12 @@ state.previewWorldNodeId=null;
 function previewOutgoing(nodeId,phase='start'){
 recordPreviewDiagnostic('node-outgoing',{nodeId,phase,targets:state.connections.filter(c=>c.from===nodeId).map(c=>c.to)});
 const source=getNode(nodeId);
-const sourceIsMedia=source?.type==='world'||source?.type==='animation';
+const sourceIsMedia=source?.type==='world';
+if(source?.type==='world'&&state.worldFolders.some(w=>w.backerId===source.id)){
+ if(phase==='end')return;
+ for(const target of state.nodes.filter(n=>n.folderId===source.folderId&&['click','frameIn','time'].includes(n.type)))showPreviewNode(target.id);
+ return;
+}
 
 const targets=state.connections
 .filter(c=>c.from===nodeId)
@@ -6543,6 +6581,7 @@ state.selectedInventoryItemId=null;
 state.inventoryEnabled=false;
 previewCompletedTriggers.clear();
 acquiredItems.clear();
+recordedWorldEvents.clear();usedWorldBranches.clear();
 }
 cancelPreviewScene();
 previewAcquisitionSourceClickId=null;
@@ -6553,9 +6592,7 @@ state.lastCameraView=null;
 state.pendingAnimationFade=null;
 fadeOverlay.style.opacity=0;
 fadeOverlay.style.pointerEvents='none';
-if(!state.connections.some(c=>c.from==='start')){
-alert('STARTからノードへ接続してください。');return;
-}
+if(!state.startFolderId){alert('開始ワールドを選択してください。');return;}
 gamePreview.classList.remove('hidden');
 resizeGameCanvas();
 
@@ -6563,7 +6600,7 @@ refreshInventory();
 inventoryButton.classList.remove('hidden');
 
 drawPanoramaPreview(gameCanvas,{image:null,yaw:0,pitch:0,zoom:1});
-previewOutgoing('start');
+enterWorldFolder(state.startFolderId);
 }
 
 
@@ -6666,9 +6703,8 @@ mobile:{yaw:0,pitch:0,zoom:1}
 
 const selectedView=views[state.displayMode]||views.pc;
 
-const effectiveView=node.inheritCamera&&state.lastCameraView
-?state.lastCameraView
-:selectedView;
+const currentWorld=getNode(currentWorldBackerId)?.world;
+const effectiveView=currentWorld||state.previewAnimation?.world||selectedView;
 
 const world={
 image:video,
@@ -6692,6 +6728,7 @@ Math.min(duration-0.001,Number(node.animation.startTime)||0)
 );
 
 const playback={
+baseWorldNodeId:state.previewWorldNodeId||currentWorldBackerId,
 video,
 world,
 frameId:null,
@@ -6719,7 +6756,14 @@ console.warn('最終フレームへの移動に失敗しました',error);
 
 drawPanoramaPreview(gameCanvas,world);
 
-// 再生終了時に接続先のメディアを開始する
+// Return to the same world, preserving its waiting click/area triggers.
+stopPreviewAnimation();
+if(playback.baseWorldNodeId&&getNode(playback.baseWorldNodeId)){
+ state.previewWorldNodeId=playback.baseWorldNodeId;
+ const underlying=getNode(playback.baseWorldNodeId)?.world;
+ if(underlying){underlying.yaw=playback.world.yaw;underlying.pitch=playback.world.pitch;underlying.zoom=playback.world.zoom;}
+ refreshWorldComposite();
+}
 previewOutgoing(node.id,'end');
 };
 
@@ -7283,8 +7327,9 @@ if(previewVisited.has(node.id))return;
 previewVisited.add(node.id);
 if(node.type==='start'){previewOutgoing(node.id);return;}
 if(node.type==='world'||node.type==='animation'){
-// Only one 360-degree scene is shown at a time.
-cancelPreviewScene();
+// An animation is a temporary overlay; world triggers stay active.
+if(node.type==='world')cancelPreviewScene();
+else stopPreviewAnimation();
 previewVisited.add(node.id);
 state.previewNodeId=node.id;
 if(node.type==='animation'){
@@ -7293,7 +7338,7 @@ playPreviewAnimation(node);
 state.previewWorldNodeId=node.id;
 applyWorldInitialView(node);
 const initialVariant=chosenSceneMedia(node);
-node.world.image=initialVariant?.image||null;
+node.world.image=recompositeFolder(state.worldFolders.find(w=>w.backerId===node.id))||initialVariant?.image||initialVariant?.video||null;
 previewMessage.textContent=initialVariant?.fileName||node.world.fileName||'ビュー素材未設定';
 drawPanoramaPreview(gameCanvas,node.world);
 const epoch=previewSceneEpoch;
@@ -7380,9 +7425,12 @@ if(node.type==='time'){
 schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
 return;
 }
+if(node.type==='worldMove'){if(node.destinationFolderId)enterWorldFolder(node.destinationFolderId);return;}
+if(node.type==='eventRecord'){recordedWorldEvents.add(node.id);refreshWorldComposite();previewOutgoing(node.id);return;}
 if(node.type==='itemAcquire'){
  if(acquiredItems.has(node.id)){previewOutgoing(node.id);return;}
  acquiredItems.add(node.id);
+ refreshWorldComposite();
  if(node.itemRemoveOriginClick&&previewAcquisitionSourceClickId){
   previewRemovedClickIds.add(previewAcquisitionSourceClickId);
   state.previewClickTriggerIds=state.previewClickTriggerIds.filter(id=>id!==previewAcquisitionSourceClickId);
@@ -7411,7 +7459,7 @@ if(node.type==='clickBranch'){previewOutgoing(node.id);return;}
 if(node.type==='textAnswerBranch'){previewOutgoing(node.id);return;}
 if(node.type==='conditionBranch'){previewOutgoing(node.id);return;}
 if(node.type==='condition'){
- const meets=!!node.conditionItemId&&(node.conditionMode==='acquired'?acquiredItems.has(node.conditionItemId):state.inventory.has(node.conditionItemId));
+ const meets=!!node.conditionItemId&&(node.conditionMode==='event'?recordedWorldEvents.has(node.conditionItemId):acquiredItems.has(node.conditionItemId));
  recordPreviewDiagnostic('condition-evaluated',{nodeId:node.id,mode:node.conditionMode,itemId:node.conditionItemId,result:meets?'yes':'no'});
  const branch=conditionBranches(node).find(n=>n.conditionResult===(meets?'yes':'no'));
  if(branch)showPreviewNode(branch.id);
@@ -7634,7 +7682,9 @@ button.disabled=true;
 try{
 const metadata={
 format:'gururi-editor-project',
-version:1,
+version:2,
+worldFolders:state.worldFolders,
+startFolderId:state.startFolderId,
 displayMode:state.displayMode,
 layouts:structuredClone(state.layouts),
 nodes:state.nodes.map(node=>({
@@ -7682,8 +7732,8 @@ const entries=await gartReadZip(file);
 const json=entries.get('project.json');
 if(!json)throw new Error('project.jsonがありません。');
 const data=JSON.parse(await json.text());
-if(data.format!=='gururi-editor-project'||data.version!==1)throw new Error('対応していない.gart形式です。');
-if(!Array.isArray(data.nodes)||!Array.isArray(data.connections)||!Array.isArray(data.media))throw new Error('プロジェクトの構造が不正です。');
+if(data.format!=='gururi-editor-project'||data.version!==2)throw new Error('対応していない.gart形式です。');
+if(!Array.isArray(data.nodes)||!Array.isArray(data.connections)||!Array.isArray(data.media)||!Array.isArray(data.worldFolders))throw new Error('プロジェクトの構造が不正です。');
 if(!data.nodes.some(node=>node.id==='start'&&node.type==='start'))throw new Error('STARTノードがありません。');
 const nodeIds=new Set(data.nodes.map(node=>node.id));
 if(nodeIds.size!==data.nodes.length||data.connections.some(c=>!nodeIds.has(c.from)||!nodeIds.has(c.to)))throw new Error('ノードの接続情報が不正です。');
@@ -7709,6 +7759,10 @@ if(node.animation)node.animation.raw=null;
 cancelPreviewScene();
 state.nodes=data.nodes;
 state.connections=data.connections;
+state.worldFolders=data.worldFolders||[];
+state.startFolderId=data.startFolderId||state.worldFolders[0]?.id||null;
+state.activeFolderId=state.startFolderId;
+worldComposites.clear();
 for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);
 resetEditorHistory();
 state.selectedNodeId=null;
@@ -7720,8 +7774,8 @@ state.layouts=structuredClone(data.layouts);
 mediaLibrary.splice(0,previousMedia.length);
 updateLayoutControls();
 renderMediaList();
-renderNodes();
-renderSettings();
+updateWorldTabs();renderNodes();
+renderSettings();renderFolderSettings();
 }catch(error){
 console.error(error);
 for(const media of mediaLibrary.slice(previousMedia.length)){
@@ -7999,7 +8053,141 @@ exportConfirmBtn.disabled=false;
 }
 });
 
+
+// ===============================================================
+// World folders v2: independent graph editing per world.
+// ===============================================================
+const worldTabs=document.getElementById('worldTabs');
+const worldFolderPanel=document.createElement('section');
+worldFolderPanel.id='worldFolderPanel';worldFolderPanel.className='world-folder-panel hidden';
+workspace.appendChild(worldFolderPanel);
+const recordedWorldEvents=new Set();
+let currentWorldBackerId=null;
+const usedWorldBranches=new Set();
+let worldCompositeFrame=0;
+const worldComposites=new Map();
+function activeFolder(){return state.worldFolders.find(w=>w.id===state.activeFolderId)||null;}
+function makeWorldFolder(name){
+ const id=uid('folder');
+ const backer={id:uid('world'),type:'world',folderId:id,x:0,y:0,world:{fileName:'',fileType:'png',mediaId:null,image:null,yaw:0,pitch:0,zoom:1,views:{pc:{yaw:0,pitch:0,zoom:1},mobile:{yaw:0,pitch:0,zoom:1}}},worldInfiniteLoop:true};
+ state.nodes.push(backer);
+ const folder={id,name,backerId:backer.id,layers:[]};state.worldFolders.push(folder);
+ if(!state.startFolderId)state.startFolderId=id;
+ return folder;
+}
+function folderBacker(folder){return getNode(folder?.backerId);}
+function assignFolderTab(folderId){
+ state.activeFolderId=folderId;
+ state.selectedNodeId=null;state.selectedNodeIds.clear();state.selectedConnectionId=null;
+ updateWorldTabs();renderNodes();renderSettings();renderFolderSettings();
+}
+function updateWorldTabs(){
+ worldTabs.replaceChildren();
+ const add=(label,id,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.className=id===state.activeFolderId?'active':'';b.addEventListener('click',fn);worldTabs.appendChild(b);};
+ add('ワールド一覧',null,()=>assignFolderTab(null));
+ for(const folder of state.worldFolders)add(folder.name,folder.id,()=>assignFolderTab(folder.id));
+ const plus=document.createElement('button');plus.textContent='＋';plus.title='ワールドを追加';plus.addEventListener('click',()=>{const folder=makeWorldFolder('ワールド'+(state.worldFolders.length+1));assignFolderTab(folder.id);});worldTabs.appendChild(plus);
+}
+function layerConditionMatches(layer){
+ if(layer.mode==='always'||!layer.mode)return true;
+ const has=layer.eventType==='acquire'?acquiredItems.has(layer.targetId):layer.eventType==='use'?usedWorldBranches.has(layer.targetId):recordedWorldEvents.has(layer.targetId);
+ return layer.mode==='after'?has:!has;
+}
+function getFolderMedia(folder){return mediaLibrary.find(m=>m.id===folderBacker(folder)?.world?.mediaId)||null;}
+function recompositeFolder(folder){
+ const base=getFolderMedia(folder);if(!base)return null;
+ const source=base.image||base.video;if(!source)return null;
+ const width=base.width||2048,height=base.height||1024;
+ let comp=worldComposites.get(folder.id);
+ if(!comp){const canvas=document.createElement('canvas');comp={canvas,ctx:canvas.getContext('2d')};worldComposites.set(folder.id,comp);}
+ if(comp.canvas.width!==width||comp.canvas.height!==height){comp.canvas.width=width;comp.canvas.height=height;}
+ const ctx=comp.ctx;ctx.clearRect(0,0,width,height);
+ try{ctx.drawImage(source,0,0,width,height);}catch(e){return null;}
+ for(const layer of folder.layers||[]){if(!layerConditionMatches(layer))continue;
+  const media=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png');
+  if(media?.image)ctx.drawImage(media.image,0,0,width,height);
+ }
+ return comp.canvas;
+}
+function refreshWorldComposite(){
+ const folder=state.worldFolders.find(w=>w.backerId===state.previewWorldNodeId);if(!folder)return;
+ const backer=folderBacker(folder);const image=recompositeFolder(folder);
+ if(image){backer.world.image=image;drawPanoramaPreview(gameCanvas,backer.world);}
+}
+function worldCompositeTick(){
+ if(!gamePreview.classList.contains('hidden')&&state.previewWorldNodeId)refreshWorldComposite();
+ worldCompositeFrame=requestAnimationFrame(worldCompositeTick);
+}
+function addFolderRow(parent,label,element){const group=document.createElement('div');group.className='setting-group';const cap=document.createElement('div');cap.className='setting-label';cap.textContent=label;group.append(cap,element);parent.append(group);}
+function folderMediaSelect(value,types,onchange){const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('素材未設定',''));for(const m of mediaLibrary.filter(m=>types.includes(m.fileType)))sel.add(new Option(m.fileName,m.id));sel.value=value||'';sel.onchange=()=>onchange(sel.value);return sel;}
+function folderEventSelect(layer,render){
+ const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('対象を選択',''));
+ const types={acquire:'itemAcquire',use:'clickBranch',event:'eventRecord'};
+ for(const n of state.nodes.filter(n=>n.type===types[layer.eventType]&&(n.type!=='clickBranch'||n.clickBranchItemId!=='__other__'))){
+  const label=n.itemName||n.eventName||n.customBody||n.clickBranchItemId||n.id;
+  sel.add(new Option(label+' ('+(state.worldFolders.find(w=>w.id===n.folderId)?.name||'')+')',n.id));
+ }
+ sel.value=layer.targetId||'';sel.onchange=()=>{layer.targetId=sel.value;render();};return sel;
+}
+function renderFolderSettings(){
+ worldFolderPanel.classList.toggle('hidden',!!state.activeFolderId);
+ if(state.activeFolderId)return;
+ worldFolderPanel.replaceChildren();
+ const heading=document.createElement('h2');heading.textContent='ワールド一覧';worldFolderPanel.append(heading);
+ const intro=document.createElement('p');intro.textContent='各ワールドを選択して基本メディア・透明PNGレイヤー・ノードを編集します。移動先はワールド内部の「ワールド移動」ノードから指定します。';worldFolderPanel.append(intro);
+ for(const folder of state.worldFolders){
+ const row=document.createElement('div');row.className='world-folder-card';
+ const open=document.createElement('button');open.type='button';open.className='world-folder-open';open.textContent='📁 '+folder.name;open.onclick=()=>assignFolderTab(folder.id);row.append(open);
+ const move=document.createElement('button');move.type='button';move.textContent='↑';move.title='並べ替え';move.onclick=()=>{const i=state.worldFolders.indexOf(folder);if(i>0){state.worldFolders.splice(i,1);state.worldFolders.splice(i-1,0,folder);updateWorldTabs();renderFolderSettings();}};row.append(move);
+ const del=document.createElement('button');del.type='button';del.textContent='削除';del.title='ワールドを削除';del.onclick=()=>{
+  if(state.worldFolders.length===1){alert('ワールドは最低1つ必要です。');return;}
+  const references=state.nodes.filter(n=>n.type==='worldMove'&&n.destinationFolderId===folder.id).length;
+  const message=folder.name+' を削除しますか？\n内部のノードは削除されます。'+(references?'\nこのワールドを参照している移動ノード：'+references+' 件（移動先を未設定にします）':'');
+  if(!confirm(message))return;
+  const ids=new Set(state.nodes.filter(n=>n.folderId===folder.id).map(n=>n.id));
+  state.nodes=state.nodes.filter(n=>!ids.has(n.id));state.connections=state.connections.filter(c=>!ids.has(c.from)&&!ids.has(c.to));
+  for(const n of state.nodes)if(n.type==='worldMove'&&n.destinationFolderId===folder.id)n.destinationFolderId='';
+  state.worldFolders=state.worldFolders.filter(w=>w.id!==folder.id);
+  if(state.startFolderId===folder.id)state.startFolderId=state.worldFolders[0].id;
+  worldComposites.delete(folder.id);updateWorldTabs();renderFolderSettings();
+ };row.append(del);
+ worldFolderPanel.append(row);
+}
+}
+function renderWorldFolderEditor(){
+ const folder=activeFolder();if(!folder)return;
+ const title=document.createElement('div');title.className='setting-group';title.innerHTML='<div class="settings-title">ワールド設定</div>';
+ settingsPanel.prepend(title);
+ const section=document.createElement('div');section.className='world-folder-settings';title.after(section);
+ const name=document.createElement('input');name.className='number-input';name.value=folder.name;name.addEventListener('change',()=>{folder.name=name.value||'ワールド';updateWorldTabs();});addFolderRow(section,'ワールド名',name);
+ const begin=document.createElement('label');const radio=document.createElement('input');radio.type='radio';radio.name='startWorld';radio.checked=state.startFolderId===folder.id;radio.onchange=()=>state.startFolderId=folder.id;begin.append(radio,document.createTextNode(' 開始ワールドにする'));addFolderRow(section,'開始位置',begin);
+ const media=folderMediaSelect(folderBacker(folder)?.world?.mediaId,['png','jpg','mp4'],id=>{const b=folderBacker(folder);const m=mediaLibrary.find(m=>m.id===id);b.world.mediaId=id;b.world.fileName=m?.fileName||'';b.world.fileType=m?.fileType||'';b.world.image=m?.image||m?.video||null;worldComposites.delete(folder.id);});addFolderRow(section,'基本360度PNG / MP4',media);
+ const heading=document.createElement('h3');heading.textContent='透明PNGレイヤー';section.append(heading);
+ for(const layer of folder.layers){const panel=document.createElement('div');panel.className='world-layer-entry';section.append(panel);
+  const label=document.createElement('input');label.className='number-input';label.placeholder='レイヤー名';label.value=layer.name||'';label.oninput=()=>layer.name=label.value;addFolderRow(panel,'レイヤー名',label);
+  addFolderRow(panel,'画像',folderMediaSelect(layer.mediaId,['png'],id=>layer.mediaId=id));
+  const mode=document.createElement('select');mode.className='number-input';for(const [value,text] of [['always','常に表示'],['before','イベント実行前'],['after','イベント実行後']])mode.add(new Option(text,value));mode.value=layer.mode||'always';mode.onchange=()=>{layer.mode=mode.value;renderSettings();};addFolderRow(panel,'表示条件',mode);
+  if(layer.mode!=='always'){
+   const type=document.createElement('select');type.className='number-input';for(const [value,text] of [['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント記録']])type.add(new Option(text,value));type.value=layer.eventType||'acquire';type.onchange=()=>{layer.eventType=type.value;layer.targetId='';renderSettings();};addFolderRow(panel,'イベント種類',type);
+   addFolderRow(panel,'対象イベント',folderEventSelect(layer,()=>renderSettings()));
+  }
+  const remove=document.createElement('button');remove.textContent='レイヤーを削除';remove.onclick=()=>{folder.layers=folder.layers.filter(l=>l!==layer);renderSettings();};panel.append(remove);
+ }
+ const add=document.createElement('button');add.className='add-world-btn';add.textContent='＋ 透明PNGレイヤー';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'',mediaId:'',mode:'always',eventType:'acquire',targetId:''});renderSettings();};section.append(add);
+}
+const originalRenderSettings=renderSettings;
+renderSettings=function(){originalRenderSettings();if(state.activeFolderId)renderWorldFolderEditor();};
+function enterWorldFolder(folderId){
+ const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;
+ currentWorldBackerId=folder.backerId;
+ const media=getFolderMedia(folder);
+ if(media?.video){try{media.video.loop=true;media.video.currentTime=0;media.video.play().catch(()=>{});}catch(_e){}}
+ const backer=folderBacker(folder);if(!backer)return;
+ showPreviewNode(backer.id);
+}
 applyGameAspectRatio();
 updateLayoutControls();
 addStartNode();
-renderSettings();
+const firstFolder=makeWorldFolder('ワールド1');
+assignFolderTab(firstFolder.id);
+requestAnimationFrame(worldCompositeTick);

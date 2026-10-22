@@ -19,7 +19,7 @@
 <div id="editorHomeHero" class="editor-home__hero">
 <img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
-<p class="editor-home__version">ver.0.1.77</p>
+<p class="editor-home__version">ver.0.1.55</p>
 <h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
 <img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
 <img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
@@ -54,13 +54,13 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
-<span class="editor-version">ver.0.1.77</span>
+<span class="editor-version">ver.0.1.55</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
 </div>
 <div class="top-actions">
 <button id="saveGartBtn" type="button" class="primary-btn">保存 .gart</button>
 <button id="openGartBtn" type="button" class="primary-btn">開く .gart</button>
-<button id="exportWorkBtn" type="button" class="primary-btn">作品を書き出す</button>
+<button id="exportWorkBtn" disabled title="ワールドフォルダ形式の書き出しは未対応" type="button" class="primary-btn">作品を書き出す</button>
 <div id="exportSettingsModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="exportSettingsTitle" style="position:fixed;inset:0;z-index:10000;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
 <form id="exportSettingsForm" style="width:min(420px,100%);background:#292929;border:1px solid #666;border-radius:12px;padding:24px;color:#fff;box-sizing:border-box;box-shadow:0 12px 35px #0009">
 <h2 id="exportSettingsTitle" style="font-size:20px;margin:0 0 20px">作品を書き出す</h2>
@@ -99,6 +99,7 @@
 <div class="settings-empty">素材はまだありません</div>
 </div>
 </section>
+<nav id="worldTabs" class="world-tabs" aria-label="ワールド編集タブ"></nav>
 <div class="main-layout">
 <main id="workspace" class="workspace" tabindex="0" aria-label="ゲーム作業エリア">
 <div id="workspaceScene" class="workspace-scene">
@@ -108,7 +109,7 @@
 <div id="contextMenu" class="context-menu hidden" role="menu">
 <button type="button" class="menu-parent" data-menu="material">▶ 素材</button>
 <div id="materialMenu" class="submenu hidden">
-<button type="button" data-create="media">メディア</button>
+<button type="button" data-create="animation">アニメーション</button>
 </div>
 <button type="button" class="menu-parent" data-menu="trigger">▶ トリガー</button>
 <div id="triggerMenu" class="submenu hidden">
@@ -116,6 +117,8 @@
 <button type="button" data-create="click">クリック</button>
 <button type="button" data-create="frameIn">フレームイン</button>
 <button type="button" data-create="condition">条件</button>
+<button type="button" data-create="worldMove">ワールド移動</button>
+<button type="button" data-create="eventRecord">イベント記録</button>
 </div>
 <button type="button" class="menu-parent" data-menu="effect">▶ 効果</button>
 <div id="effectMenu" class="submenu hidden">
