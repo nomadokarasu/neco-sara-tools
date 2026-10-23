@@ -872,3 +872,10 @@ flex-shrink:0;
 /* World tab and layer-button layout fixes */
 #worldTabs.world-tabs{display:flex;flex:none;min-height:48px;align-items:center;gap:5px;overflow-x:auto;}
 .world-folder-settings .add-world-btn,.settings-panel .add-world-btn{display:block;width:100%;min-width:0;height:auto;min-height:38px;padding:8px 12px;font-size:13px;line-height:1.5;white-space:nowrap;text-align:center;}
+
+/* World camera settings: collapsible and positioned below layers */
+.world-camera-section{border:1px solid #677484;border-radius:8px;margin:14px 0 8px;overflow:hidden;}
+.world-camera-section>summary{cursor:pointer;padding:10px 12px;font-weight:600;list-style:disclosure-closed;}
+.world-camera-section[open]>summary{list-style:disclosure-open;border-bottom:1px solid #677484;}
+.world-camera-section>.camera-number-settings{padding:12px;}
+.world-camera-section .camera-copy-view{display:block;width:100%;height:auto;min-height:34px;white-space:nowrap;}

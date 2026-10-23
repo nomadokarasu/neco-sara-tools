@@ -464,7 +464,7 @@ frameInTarget:[],
 frameInFrame:[],
 frameInUndo:[],
 frameInRedo:[],
-dialoguePages:[],
+dialoguePages:type==='dialogue'?['']:[],
 dialogueEditIndex:0,
 optionChoices:[],
 textAnswerQuestion:'',
@@ -506,6 +506,7 @@ panPath:[],
 panKeyframes:[],
 cameraKeyframes:{pc:[],mobile:[]},
 keyframeViews:{pc:[],mobile:[]},
+keyframeDuration:null,
 worldDuration:3,
 worldInfiniteLoop:false,
 panView:{yaw:0,pitch:0,zoom:1,initialized:false},
@@ -1151,10 +1152,10 @@ settingsPanel.innerHTML=`
 </div>
 </div>
 </div>
+<div id="dialogueEditors">${editors}</div>
 <div class="setting-group">
-<button id="addDialogueBtn" class="add-world-btn" type="button">＋</button>
-</div>
-<div id="dialogueEditors">${editors}</div>`;
+<button id="addDialogueBtn" class="add-world-btn dialogue-add-full" type="button">ダイアローグを追加</button>
+</div>`;
 
 setupDialogueTriggerPreview(node,previousMedia);
 setupDialogueAppearance(node);
@@ -1987,7 +1988,11 @@ return;
 }
 const videoMode=sourceNode.type==='animation';
 const media=mediaLibrary.find(m=>m.id===(videoMode?sourceNode.animation.mediaId:sourceNode.world.mediaId));
-const duration=getMediaPlaybackDuration(sourceNode,media);
+const sourceDuration=getMediaPlaybackDuration(sourceNode,media);
+const framesForDuration=getKeyframeNodeFrames(node);
+const lastFrameTime=Math.max(0,...framesForDuration.map(f=>Number(f.time)||0));
+const savedDuration=Number(node.keyframeDuration);
+const duration=Number.isFinite(savedDuration)&&savedDuration>0?Math.max(savedDuration,lastFrameTime):Math.max(sourceDuration,lastFrameTime);
 const fps=videoMode?Number(media?.fps):8;
 const validFps=Number.isFinite(fps)&&fps>0;
 const frames=getKeyframeNodeFrames(node);
@@ -1996,6 +2001,8 @@ settingsPanel.innerHTML=`
 <div class="settings-title">キーフレーム</div>
 <div class="setting-group"><div class="setting-label">参照メディア</div><div class="file-name">${escapeHtml(videoMode?sourceNode.animation.fileName:sourceNode.world.fileName)}</div></div>
 <div class="setting-group"><canvas id="keyframeCameraCanvas" class="world-preview" width="320" height="320"></canvas><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div>
+<div class="setting-group"><div class="setting-label">キーフレームの再生時間（秒）</div><input id="keyframeDurationInput" class="number-input" type="number" min="0.001" max="3600" step="0.1" value="${duration.toFixed(3)}"></div>
+<div class="setting-group"><div class="setting-label">現在の時間（秒）</div><input id="keyframeSecondInput" class="number-input" type="number" min="0" max="${duration}" step="0.001" value="0"></div>
 <div class="setting-group"><div class="media-camera-time-header"><div class="setting-label">再生位置</div><div class="media-camera-step-buttons"><button id="keyframePrevious" type="button">◀</button><button id="keyframeNext" type="button">▶</button></div></div><input id="keyframeTime" type="range" min="0" max="${duration}" step="0.001" value="0" style="width:100%"><div id="keyframeTimeLabel" class="settings-empty"></div></div>
 <div class="setting-group"><button id="keyframeAdd" class="add-world-btn" type="button">＋ キーフレームを登録</button><div id="keyframeList" class="pan-keyframe-list"></div></div>
 <div id="keyframeAngleFields" class="setting-group"></div>`;
@@ -2025,6 +2032,8 @@ const seek=time=>{
 second=clamp(Number(time)||0,0,duration);
 
 range.value=String(second);
+const currentTimeInput=document.getElementById('keyframeSecondInput');
+if(currentTimeInput&&document.activeElement!==currentTimeInput)currentTimeInput.value=second.toFixed(3);
 label.textContent=`${second.toFixed(3)} / ${duration.toFixed(3)} 秒`;
 
 const loopTime=getMediaCameraLoopTime(sourceNode,media,second);
@@ -2060,6 +2069,13 @@ row.append(select,remove);list.appendChild(row);
 }
 };
 range.addEventListener('input',()=>seek(range.value),{signal});
+document.getElementById('keyframeSecondInput').addEventListener('change',e=>seek(e.target.value),{signal});
+document.getElementById('keyframeDurationInput').addEventListener('change',e=>{
+const number=Number(e.target.value);
+if(!Number.isFinite(number)||number<=0){e.target.value=duration.toFixed(3);return;}
+node.keyframeDuration=Math.max(number,Math.max(0,...frames.map(f=>Number(f.time)||0)));
+renderSettings();
+},{signal});
 const step=direction=>{if(!validFps)return;seek((Math.round(second*fps)+direction)/fps);};
 prev.addEventListener('click',()=>step(-1),{signal});next.addEventListener('click',()=>step(1),{signal});
 if(videoMode&&source?.addEventListener){source.addEventListener('seeked',draw,{signal});source.addEventListener('loadeddata',draw,{signal});}
@@ -5340,6 +5356,7 @@ if(index<0||index>=node.dialoguePages.length)return;
 node.dialoguePages.splice(index,1);
 
 if(node.dialoguePages.length===0){
+node.dialoguePages=[''];
 node.dialogueEditIndex=0;
 }else if(node.dialogueEditIndex>index){
 node.dialogueEditIndex--;
@@ -7428,7 +7445,9 @@ return;
 if(node.type==='keyframe'){
 const source=findPreviousClickMediaNode(node.id);
 const frames=getKeyframeNodeFrames(node).filter(frame=>Number.isFinite(frame.time));
-const duration=frames.length?Math.max(0,...frames.map(frame=>frame.time)):0;
+const lastKeyframeTime=frames.length?Math.max(0,...frames.map(frame=>frame.time)):0;
+const configuredDuration=Number(node.keyframeDuration);
+const duration=Math.max(lastKeyframeTime,Number.isFinite(configuredDuration)&&configuredDuration>0?configuredDuration:0);
 if(!source||duration<=0){previewOutgoing(node.id);return;}
 const epoch=previewSceneEpoch;
 const start=performance.now();
