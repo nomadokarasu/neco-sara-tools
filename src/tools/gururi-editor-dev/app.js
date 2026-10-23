@@ -8243,6 +8243,32 @@ function renderWorldFolderEditor(){
  const previewNote=document.createElement('div');previewNote.className='world-settings-preview-note';previewNote.textContent='ドラッグ：カメラ回転 / ホイール：ズーム。現在の方向と画角がゲーム開始時の初期表示位置になります。透明PNGレイヤーはすべて表示します。';
  previewGroup.append(previewHeading,previewCanvas,previewNote);section.append(previewGroup);
  setupWorldSettingsCameraPreview(previewCanvas,folder);
+ const cameraInputs=previewCanvas.nextElementSibling;
+ if(cameraInputs?.classList.contains('camera-number-settings')){
+  const cameraSection=document.createElement('details');
+  cameraSection.className='world-camera-section';
+  cameraSection.open=Boolean(folder.editorCameraOpen);
+  const cameraSummary=document.createElement('summary');cameraSummary.textContent='カメラ情報';
+  cameraSection.append(cameraSummary);
+  cameraSection.append(cameraInputs);
+  cameraSection.addEventListener('toggle',()=>{folder.editorCameraOpen=cameraSection.open;});
+  // The camera controls are placed below the layer add button.
+  section.dataset.hasCameraSection='true';
+  section._cameraSection=cameraSection;
+  const copyGroup=cameraInputs.querySelector('.camera-copy-view')?.closest('.setting-group');
+  if(copyGroup){
+   const copyButton=copyGroup.querySelector('.camera-copy-view');
+   const newCopyGroup=document.createElement('div');newCopyGroup.className='setting-group';
+   if(copyButton)newCopyGroup.append(copyButton);
+   cameraInputs.prepend(newCopyGroup);
+  }
+  const yawLabel=cameraInputs.querySelector('[data-camera-value="yaw"]')?.closest('.setting-group')?.querySelector('.setting-label');
+  if(yawLabel)yawLabel.textContent='水平方向（°）';
+  const pitchLabel=cameraInputs.querySelector('[data-camera-value="pitch"]')?.closest('.setting-group')?.querySelector('.setting-label');
+  if(pitchLabel)pitchLabel.textContent='垂直方向（°）';
+  const fovLabel=cameraInputs.querySelector('[data-camera-value="fov"]')?.closest('.setting-group')?.querySelector('.setting-label');
+  if(fovLabel)fovLabel.textContent='FOV値（°）';
+ }
  const heading=document.createElement('h3');heading.textContent='透明PNGレイヤー';section.append(heading);
  for(const layer of folder.layers){
   const details=document.createElement('details');details.className='world-layer-entry';
@@ -8275,11 +8301,11 @@ function renderWorldFolderEditor(){
   drawTarget();
   const remove=document.createElement('button');remove.type='button';remove.textContent='レイヤーを削除';remove.onclick=()=>{folder.layers=folder.layers.filter(l=>l!==layer);renderSettings();};panel.append(remove);
  }
- const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);
+ const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);if(section._cameraSection)section.append(section._cameraSection);
 }
 const originalRenderSettings=renderSettings;
 renderSettings=function(){
- if(state.activeFolderId&&!state.selectedNodeId){
+ if(state.activeFolderId&&(!state.selectedNodeId||getNode(state.selectedNodeId)?.type==='worldDisplay')){
   if(cleanupAnimationSettingsPreview){cleanupAnimationSettingsPreview();cleanupAnimationSettingsPreview=null;}
   settingsPanel.replaceChildren();
   renderWorldFolderEditor();
