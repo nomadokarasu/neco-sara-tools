@@ -2463,6 +2463,14 @@ return;
 for(const media of mediaLibrary){
 const item=document.createElement('div');
 item.className='media-item';
+const removeMediaButton=document.createElement('button');
+removeMediaButton.type='button';
+removeMediaButton.className='media-item-remove';
+removeMediaButton.textContent='×';
+removeMediaButton.title='素材を削除';
+removeMediaButton.setAttribute('aria-label',media.fileName+'を削除');
+removeMediaButton.addEventListener('click',event=>{event.stopPropagation();removeLibraryMedia(media.id);});
+item.appendChild(removeMediaButton);
 
 const thumbnail=document.createElement('div');
 thumbnail.className='media-thumbnail';
@@ -2527,6 +2535,33 @@ item.appendChild(name);
 item.appendChild(info);
 mediaList.appendChild(item);
 }
+}
+
+function removeLibraryMedia(mediaId){
+ const index=mediaLibrary.findIndex(m=>m.id===mediaId);
+ if(index<0)return;
+ const media=mediaLibrary[index];
+ if(!confirm(`素材「${media.fileName}」を削除しますか？\n使用中のワールド・レイヤー・ノードの素材指定も解除されます。`))return;
+ for(const node of state.nodes){
+  if(node.world?.mediaId===mediaId){
+   node.world.mediaId='';node.world.fileName='';node.world.fileType='';node.world.image=null;node.world.raw=null;
+  }
+  if(node.animation?.mediaId===mediaId){node.animation.mediaId='';node.animation.fileName='';node.animation.raw=null;}
+  if(node.media2DId===mediaId)node.media2DId='';
+  if(node.clickSourceMediaId===mediaId)node.clickSourceMediaId='';
+  if(node.mediaVariants?.byMask){
+   for(const [mask,id] of Object.entries(node.mediaVariants.byMask))if(id===mediaId)delete node.mediaVariants.byMask[mask];
+  }
+ }
+ for(const folder of state.worldFolders||[]){
+  for(const layer of folder.layers||[])if(layer.mediaId===mediaId)layer.mediaId='';
+ }
+ // Rebuild world composites after any source asset is removed.
+ if(typeof worldComposites!=='undefined')worldComposites.clear();
+ mediaLibrary.splice(index,1);
+ if(media.video){try{media.video.pause();media.video.removeAttribute('src');media.video.load();}catch(_error){}}
+ if(media.url)URL.revokeObjectURL(media.url);
+ renderMediaList();renderSettings();renderNodes();
 }
 
 function assignMediaToNode(node,mediaId){
@@ -8306,15 +8341,15 @@ function renderWorldFolderEditor(){
  for(const layer of folder.layers){
   const details=document.createElement('details');details.className='world-layer-entry';
   details.open=!!layer.editorOpen;
-  const summary=document.createElement('summary');summary.textContent=layer.name||'名称未設定レイヤー';
-  details.append(summary);
+  const summary=document.createElement('summary');
+  const layerName=document.createElement('span');layerName.textContent=layer.name||'名称未設定レイヤー';summary.append(layerName);
   const remove=document.createElement('button');remove.type='button';remove.className='world-layer-remove';remove.textContent='削除';remove.setAttribute('aria-label',`${layer.name||'レイヤー'}を削除`);
-  remove.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();folder.layers=folder.layers.filter(l=>l!==layer);renderSettings();});
-  details.append(remove);section.append(details);
+  remove.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();folder.layers=folder.layers.filter(l=>l!==layer);worldComposites.delete(folder.id);renderSettings();});
+  summary.append(remove);details.append(summary);section.append(details);
   details.addEventListener('toggle',()=>{layer.editorOpen=details.open;});
   const panel=document.createElement('div');panel.className='world-layer-fields';details.append(panel);
   const label=document.createElement('input');label.className='number-input';label.placeholder='レイヤー名';label.value=layer.name||'';
-  label.oninput=()=>{layer.name=label.value;summary.textContent=label.value||'名称未設定レイヤー';};addFolderRow(panel,'レイヤー名',label);
+  label.oninput=()=>{layer.name=label.value;layerName.textContent=label.value||'名称未設定レイヤー';};addFolderRow(panel,'レイヤー名',label);
   addFolderRow(panel,'画像',folderMediaSelect(layer.mediaId,['png'],id=>layer.mediaId=id));
   const heading=document.createElement('div');heading.className='setting-label';heading.textContent='このレイヤーをいつ表示しますか？';panel.append(heading);
   const eventType=document.createElement('select');eventType.className='number-input';

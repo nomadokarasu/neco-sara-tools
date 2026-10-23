@@ -895,3 +895,13 @@ flex-shrink:0;
 .world-layer-entry>.world-layer-remove:hover{background:#f4e9e9;}
 #keyframeAngleFields .world-camera-section{margin:0;}
 .world-layer-entry[open]>.world-layer-remove{display:none;}
+
+/* Asset library removal control */
+.media-item{position:relative}
+.media-item-remove{position:absolute;right:5px;top:5px;z-index:3;width:25px;height:25px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #d0d6df;border-radius:5px;color:#303741;cursor:pointer;font-size:19px;line-height:1;padding:0}
+.media-item-remove:hover{background:#fff0f0;border-color:#cc7777}
+/* Layer name and delete live together in the native collapsible heading. */
+.world-layer-entry>summary{display:flex;align-items:center;gap:8px;padding:9px 10px;min-height:42px;cursor:pointer}
+.world-layer-entry>summary>span{flex:1;min-width:0;overflow-wrap:anywhere}
+.world-layer-entry>summary>.world-layer-remove{position:static;display:inline-flex;flex:none;width:auto;min-width:44px;height:28px;align-items:center;justify-content:center;padding:3px 8px;z-index:auto}
+.world-layer-entry[open]>summary>.world-layer-remove{display:none}
