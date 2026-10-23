@@ -905,3 +905,7 @@ flex-shrink:0;
 .world-layer-entry>summary>span{flex:1;min-width:0;overflow-wrap:anywhere}
 .world-layer-entry>summary>.world-layer-remove{position:static;display:inline-flex;flex:none;width:auto;min-width:44px;height:28px;align-items:center;justify-content:center;padding:3px 8px;z-index:auto}
 .world-layer-entry[open]>summary>.world-layer-remove{display:none}
+
+/* World tabs: removable worlds 2+; world 1 is protected. */
+#worldTabs .world-tab-remove{padding:4px 7px;margin-left:-4px;margin-right:5px;min-width:25px;border-color:#6e7888;background:#404755;color:#fff;font-weight:700;line-height:1.25}
+#worldTabs .world-tab-remove:hover{background:#873b3b;border-color:#c66}

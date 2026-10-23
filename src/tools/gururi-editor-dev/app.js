@@ -8213,6 +8213,24 @@ function assignFolderTab(folderId){
  worldTabs.querySelectorAll('button[data-folder-tab]').forEach(button=>button.classList.toggle('active',button.dataset.folderTab===(folderId||'__all__')));
  renderNodes();renderSettings();renderFolderSettings();
 }
+function deleteWorldFolder(folder){
+ const index=state.worldFolders.findIndex(w=>w.id===folder?.id);
+ if(index<=0){alert('ワールド1は削除できません。');return;}
+ const references=state.nodes.filter(n=>n.type==='worldMove'&&n.destinationFolderId===folder.id).length;
+ const message=folder.name+' を削除しますか？\nこのワールド内のノード・接続・透明PNGレイヤーも削除されます。'+(references?'\nこのワールドを参照するワールド移動ノード：'+references+'件（移動先は未設定になります）':'');
+ if(!window.confirm(message))return;
+ const ids=new Set(state.nodes.filter(n=>n.folderId===folder.id).map(n=>n.id));
+ ids.add(folder.backerId);
+ state.nodes=state.nodes.filter(n=>!ids.has(n.id));
+ state.connections=state.connections.filter(c=>!ids.has(c.from)&&!ids.has(c.to));
+ for(const node of state.nodes){if(node.type==='worldMove'&&node.destinationFolderId===folder.id)node.destinationFolderId='';}
+ state.worldFolders.splice(index,1);
+ state.startFolderId=state.worldFolders[0].id;
+ state.selectedNodeId=null;state.selectedNodeIds.clear();state.selectedConnectionId=null;
+ worldComposites.delete(folder.id);
+ if(state.activeFolderId===folder.id)state.activeFolderId=state.worldFolders[0].id;
+ updateWorldTabs();renderNodes();renderSettings();renderFolderSettings();
+}
 function updateWorldTabs(){
  worldTabs.replaceChildren();
  const add=(label,id,fn)=>{const b=document.createElement('button');b.type='button';b.dataset.folderTab=id||'__all__';b.textContent=label;b.className=id===state.activeFolderId?'active':'';b.addEventListener('click',fn);worldTabs.appendChild(b);};
@@ -8226,7 +8244,13 @@ function updateWorldTabs(){
     const save=()=>{folder.name=input.value.trim()||folder.name;updateWorldTabs();renderFolderSettings();renderSettings();};
     input.onkeydown=ev=>{if(ev.key==='Enter')save();if(ev.key==='Escape')updateWorldTabs();};
     input.onblur=save;
-  };worldTabs.appendChild(b);
+  };
+  worldTabs.appendChild(b);
+  if(folder!==state.worldFolders[0]){
+   const remove=document.createElement('button');remove.type='button';remove.className='world-tab-remove';remove.textContent='×';remove.title=folder.name+'を削除';remove.setAttribute('aria-label',folder.name+'を削除');
+   remove.onclick=e=>{e.preventDefault();e.stopPropagation();deleteWorldFolder(folder);};
+   worldTabs.appendChild(remove);
+  }
  }
  const plus=document.createElement('button');plus.textContent='＋';plus.title='ワールドを追加';plus.addEventListener('click',()=>{const folder=makeWorldFolder('ワールド'+(state.worldFolders.length+1));updateWorldTabs();assignFolderTab(folder.id);});worldTabs.appendChild(plus);
 }
@@ -8281,19 +8305,10 @@ function renderFolderSettings(){
  for(const folder of state.worldFolders){
  const row=document.createElement('div');row.className='world-folder-card';
  const open=document.createElement('button');open.type='button';open.className='world-folder-open';open.textContent='📁 '+folder.name;open.onclick=()=>assignFolderTab(folder.id);row.append(open);
- const move=document.createElement('button');move.type='button';move.textContent='↑';move.title='並べ替え';move.onclick=()=>{const i=state.worldFolders.indexOf(folder);if(i>0){state.worldFolders.splice(i,1);state.worldFolders.splice(i-1,0,folder);updateWorldTabs();renderFolderSettings();}};row.append(move);
- const del=document.createElement('button');del.type='button';del.textContent='削除';del.title='ワールドを削除';del.onclick=()=>{
-  if(state.worldFolders.length===1){alert('ワールドは最低1つ必要です。');return;}
-  const references=state.nodes.filter(n=>n.type==='worldMove'&&n.destinationFolderId===folder.id).length;
-  const message=folder.name+' を削除しますか？\n内部のノードは削除されます。'+(references?'\nこのワールドを参照している移動ノード：'+references+' 件（移動先を未設定にします）':'');
-  if(!confirm(message))return;
-  const ids=new Set(state.nodes.filter(n=>n.folderId===folder.id).map(n=>n.id));
-  state.nodes=state.nodes.filter(n=>!ids.has(n.id));state.connections=state.connections.filter(c=>!ids.has(c.from)&&!ids.has(c.to));
-  for(const n of state.nodes)if(n.type==='worldMove'&&n.destinationFolderId===folder.id)n.destinationFolderId='';
-  state.worldFolders=state.worldFolders.filter(w=>w.id!==folder.id);
-  state.startFolderId=state.worldFolders[0].id;
-  worldComposites.delete(folder.id);updateWorldTabs();renderFolderSettings();
- };row.append(del);
+ const move=document.createElement('button');move.type='button';move.textContent='↑';move.title='並べ替え';move.onclick=()=>{const i=state.worldFolders.indexOf(folder);if(i>1){state.worldFolders.splice(i,1);state.worldFolders.splice(i-1,0,folder);updateWorldTabs();renderFolderSettings();}};row.append(move);
+ if(folder!==state.worldFolders[0]){
+  const del=document.createElement('button');del.type='button';del.textContent='削除';del.title='ワールドを削除';del.onclick=()=>deleteWorldFolder(folder);row.append(del);
+ }
  worldFolderPanel.append(row);
 }
 }
