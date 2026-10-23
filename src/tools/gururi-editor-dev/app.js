@@ -517,7 +517,7 @@ media2DLayouts:{pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}}
 };
 node.folderId=state.activeFolderId;
 state.nodes.push(node);
-if(type==='click')ensureClickOtherBranch(node);
+
 if(type==='textAnswer')ensureTextAnswerBranches(node);
 if(type==='condition')ensureConditionBranches(node);
 commitEditorHistory(editBefore);
@@ -592,8 +592,8 @@ return null;
 }
 
 function renderNodes(){
-// 既存データ内のクリックノードにも「その他」の分岐を補完する
-for(const node of [...state.nodes]){if(node.type==='click')ensureClickOtherBranch(node);}
+// 旧仕様の『その他のアイテム』分岐だけを除去する。接続先ノードは残す。
+removeLegacyOtherClickBranches();
 for(const n of state.nodes){if(n.folderId)continue;const owner=getNode(n.clickBranchOwnerId||n.conditionOwnerId||n.textAnswerOwnerId||n.optionOwnerId);if(owner)n.folderId=owner.folderId;}
 nodesLayer.innerHTML='';
 for(const node of state.nodes){
@@ -1207,7 +1207,7 @@ function clickBranches(owner){
  return state.nodes.filter(n=>n.type==='clickBranch'&&n.clickBranchOwnerId===owner.id);
 }
 function addClickItemBranch(owner,itemId){
- if(!itemId||itemId==='__other__'&&clickBranches(owner).some(n=>n.clickBranchItemId==='__other__'))return;
+ if(!itemId||itemId==='__other__')return;
  if(clickBranches(owner).some(n=>n.clickBranchItemId===itemId))return;
  const before=editorSnapshot();
  const branch={folderId:owner.folderId,id:uid('clickBranch'),type:'clickBranch',clickBranchOwnerId:owner.id,clickBranchItemId:itemId,clickBranchOnce:false,clickBranchConsume:false,x:owner.x+250,y:owner.y+95*(clickBranches(owner).length+1)};
@@ -1222,26 +1222,13 @@ function deleteClickItemBranch(branch){
  state.connections=state.connections.filter(c=>c.from!==branch.id&&c.to!==branch.id);
  commitEditorHistory(before);renderNodes();renderSettings();
 }
-function ensureClickOtherBranch(owner){
- if(owner.type!=='click')return;
- const branches=clickBranches(owner);
- const itemBranches=branches.filter(b=>b.clickBranchItemId!=='__other__');
- const otherBranches=branches.filter(b=>b.clickBranchItemId==='__other__');
-
- // 登録アイテムがない場合は「その他」の分岐を表示しない
- if(itemBranches.length===0){
-  const ids=new Set(otherBranches.map(b=>b.id));
-  if(!ids.size)return;
-  state.nodes=state.nodes.filter(n=>!ids.has(n.id));
-  state.connections=state.connections.filter(c=>!ids.has(c.from)&&!ids.has(c.to));
-  if(ids.has(state.selectedNodeId))state.selectedNodeId=owner.id;
-  return;
- }
-
- if(otherBranches.length>0)return;
- const branch={folderId:owner.folderId,id:uid('clickBranch'),type:'clickBranch',clickBranchOwnerId:owner.id,clickBranchItemId:'__other__',clickBranchOnce:false,clickBranchConsume:false,x:owner.x+250,y:owner.y+95*(branches.length+1)};
- state.nodes.push(branch);
- state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
+function removeLegacyOtherClickBranches(){
+ const legacyIds=new Set(state.nodes.filter(n=>n.type==='clickBranch'&&n.clickBranchItemId==='__other__').map(n=>n.id));
+ if(!legacyIds.size)return;
+ state.nodes=state.nodes.filter(n=>!legacyIds.has(n.id));
+ state.connections=state.connections.filter(c=>!legacyIds.has(c.from)&&!legacyIds.has(c.to));
+ if(legacyIds.has(state.selectedNodeId))state.selectedNodeId=null;
+ for(const id of legacyIds)state.selectedNodeIds?.delete(id);
 }
 function renderClickItemBranchSettings(node){
  const group=document.createElement('div');
@@ -1325,7 +1312,7 @@ function runClickItemBranch(click,itemId){
  previewAcquisitionSourceClickId=click.id;
 recordPreviewDiagnostic('item-click',{clickId:click.id,itemId});
  const branches=clickBranches(click);
- const branch=branches.find(n=>n.clickBranchItemId===itemId)||branches.find(n=>n.clickBranchItemId==='__other__');
+ const branch=branches.find(n=>n.clickBranchItemId===itemId);
  if(!branch){recordPreviewDiagnostic('item-no-branch',{clickId:click.id,itemId});return;} // Unregistered item without 'other' is silent.
  if(branch.clickBranchOnce&&previewCompletedTriggers.has(branch.id)){recordPreviewDiagnostic('branch-already-completed',{branchId:branch.id});return;}
 recordPreviewDiagnostic('branch-fired',{branchId:branch.id,itemId,consumed:!!(branch.clickBranchConsume&&branch.clickBranchItemId===itemId)});
@@ -5041,17 +5028,10 @@ function resolvePreviewClickAction(node,itemId){
   return {kind:'item',branch:specific};
  }
  // The regular click path remains available even while an unrelated item is equipped.
- const hasNormalPath=state.connections.some(c=>c.from===node.id);
+ const hasNormalPath=state.connections.some(c=>c.from===node.id&&getNode(c.to)?.type!=='clickBranch');
  const normalAlreadyDone=node.clickNormalOnce===true&&previewCompletedTriggers.has(`normal:${node.id}`);
  if(hasNormalPath){
   return normalAlreadyDone?null:{kind:'normal'};
- }
- // Preserve an explicitly wired 'other items' branch when there is no normal destination.
- if(itemId){
-  const other=branches.find(b=>b.clickBranchItemId==='__other__');
-  if(other&&state.connections.some(c=>c.from===other.id)){
-   return other.clickBranchOnce&&previewCompletedTriggers.has(other.id)?null:{kind:'item',branch:other};
-  }
  }
  return normalAlreadyDone?null:{kind:'normal'};
 }
@@ -6496,7 +6476,7 @@ if(trigger.clickNormalOnce===true){
  recordPreviewDiagnostic('normal-click-once',{clickId:trigger.id});
 }
 fireExplorationTrigger(trigger);
-if(!state.connections.some(c=>c.from===trigger.id)){
+if(!state.connections.some(c=>c.from===trigger.id&&getNode(c.to)?.type!=='clickBranch')){
  previewMessage.textContent='クリック発火・接続先なし';
 }
 });
