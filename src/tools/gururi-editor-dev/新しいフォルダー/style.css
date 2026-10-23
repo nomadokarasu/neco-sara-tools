@@ -858,5 +858,5 @@ flex-shrink:0;
 .world-settings-preview-note{font-size:11px;line-height:1.5;color:#697586;margin-top:6px}
 
 /* Panoramic world settings camera preview */
-.world-settings-preview{display:block;width:100%;height:auto;aspect-ratio:1/1;touch-action:none;cursor:grab;background:#151923;object-fit:contain}
+.world-settings-preview{display:block;width:100%;height:auto;aspect-ratio:var(--game-aspect,16/9);touch-action:none;cursor:grab;background:#151923;object-fit:fill}
 .world-settings-preview:active{cursor:grabbing}

@@ -603,6 +603,8 @@ el.dataset.id=node.id;
 el.style.left=`${node.x}px`;
 el.style.top=`${node.y}px`;
 const title=
+node.type==='folderStart'?'START':
+node.type==='worldDisplay'?'ワールド表示':
 node.type==='worldMove'?'ワールド移動':
 node.type==='eventRecord'?'イベント記録':
 node.type==='start'?'START':
@@ -629,6 +631,8 @@ node.type==='keyframe'?'キーフレーム':
 '不明';
 
 const body=
+node.type==='folderStart'?'ワールド開始':
+node.type==='worldDisplay'?'探索を開始する':
 node.type==='worldMove'?(state.worldFolders.find(w=>w.id===node.destinationFolderId)?.name||'移動先未設定'):
 node.type==='eventRecord'?(node.eventName||'イベント未設定'):
 node.type==='media'?'素材を選択してください':
@@ -884,6 +888,10 @@ settingsPanel.appendChild(group);
 }
 
 if(!node){settingsPanel.innerHTML='<div class="settings-empty">ノードを選択してください</div>';return}
+if(node.type==='folderStart'||node.type==='worldDisplay'){
+ settingsPanel.innerHTML=`<div class="settings-title">${node.type==='folderStart'?'START':'ワールド表示'}</div><p class="settings-empty">${node.type==='folderStart'?'ここからワールドの開始演出を接続します。':'ワールドの基本メディアとレイヤーを表示して探索を開始します。'}</p>`;
+ return;
+}
 if(node.type==='worldMove'){
  settingsPanel.innerHTML='<div class="settings-title">ワールド移動</div><div class="setting-group"><div class="setting-label">移動先ワールド</div><select id="destinationWorld" class="number-input"></select></div>';
  const select=document.getElementById('destinationWorld');
@@ -5798,7 +5806,7 @@ return;
 }
 
 if((e.ctrlKey||e.metaKey)&&!e.altKey&&key==='c'){
-if(!selectedNode||selectedNode.type==='start')return;
+if(!selectedNode||['start','folderStart','worldDisplay'].includes(selectedNode.type))return;
 
 e.preventDefault();
 copiedNodeData=copyNodeData(selectedNode);
@@ -5816,6 +5824,7 @@ pasteOffset+=40;
 const editBefore=editorSnapshot();
 const newNode=copyNodeData(copiedNodeData);
 newNode.id=uid(newNode.type);
+if(['folderStart','worldDisplay'].includes(newNode.type))return;
 if(newNode.type==='option'){newNode.optionChoices=[];}
 if(newNode.type==='optionChoice'||newNode.type==='textAnswerBranch'||newNode.type==='conditionBranch')return;
 if(newNode.type==='textAnswer'){newNode.textAnswerOwnerId=null;newNode.textAnswerResult=null;}
@@ -5881,10 +5890,11 @@ if(e.key!=='Delete')return;
 
 const editBefore=editorSnapshot();
 if(state.selectedConnectionId){
-state.connections=
-state.connections.filter(
-c=>c.id!==state.selectedConnectionId
-);
+const selectedConnection=state.connections.find(c=>c.id===state.selectedConnectionId);
+if(selectedConnection&&getNode(selectedConnection.from)?.type==='folderStart'&&!state.connections.some(c=>c.from===selectedConnection.from&&c.id!==selectedConnection.id)){
+  // START must always retain an outgoing path. It may be reconnected before the old link is removed.
+}
+state.connections=state.connections.filter(c=>c.id!==state.selectedConnectionId);
 
 state.selectedConnectionId=null;
 commitEditorHistory(editBefore);
@@ -5897,6 +5907,7 @@ const id=
 state.selectedNodeId;
 
 if(!id||id==='start')return;
+if(['folderStart','worldDisplay'].includes(getNode(id)?.type))return;
 const removedNode=getNode(id);
 if(removedNode?.type==='textAnswerBranch'||removedNode?.type==='conditionBranch')return;
 if(removedNode?.type==='optionChoice'){
@@ -6543,7 +6554,7 @@ recordPreviewDiagnostic('node-outgoing',{nodeId,phase,targets:state.connections.
 const source=getNode(nodeId);
 const sourceIsMedia=source?.type==='world';
 if(source?.type==='world'&&state.worldFolders.some(w=>w.backerId===source.id)){
- if(phase==='end')return;
+ if(phase==='end'||worldEntryFadeActive)return;
  for(const target of state.nodes.filter(n=>n.folderId===source.folderId&&['click','frameIn','time'].includes(n.type)))showPreviewNode(target.id);
  return;
 }
@@ -6618,6 +6629,7 @@ state.lastCameraView=null;
 state.pendingAnimationFade=null;
 fadeOverlay.style.opacity=0;
 fadeOverlay.style.pointerEvents='none';
+pendingWorldEntryFade=null;worldEntryFadeActive=false;
 if(!state.startFolderId){alert('開始ワールドを選択してください。');return;}
 gamePreview.classList.remove('hidden');
 resizeGameCanvas();
@@ -6626,7 +6638,7 @@ refreshInventory();
 inventoryButton.classList.remove('hidden');
 
 drawPanoramaPreview(gameCanvas,{image:null,yaw:0,pitch:0,zoom:1});
-enterWorldFolder(state.startFolderId);
+enterWorldFolder(state.worldFolders[0]?.id||state.startFolderId);
 }
 
 
@@ -7351,6 +7363,19 @@ if(!node||gamePreview.classList.contains('hidden'))return;
 // A branch converging on an already-active node is executed only once per scene.
 if(previewVisited.has(node.id))return;
 previewVisited.add(node.id);
+if(node.type==='folderStart'){previewOutgoing(node.id);return;}
+if(node.type==='worldDisplay'){
+  const folder=state.worldFolders.find(w=>w.id===node.folderId);
+  if(folder){const backer=folderBacker(folder);if(backer){
+    const seconds=pendingWorldEntryFade;pendingWorldEntryFade=null;
+    worldEntryFadeActive=seconds!==null;
+    showPreviewNode(backer.id);
+    if(worldEntryFadeActive){
+      runFadeEffect({effectSeconds:seconds},1,0,()=>{worldEntryFadeActive=false;previewOutgoing(backer.id);});
+    }
+  }}
+  return;
+}
 if(node.type==='start'){previewOutgoing(node.id);return;}
 if(node.type==='world'||node.type==='animation'){
 // An animation is a temporary overlay; world triggers stay active.
@@ -7524,6 +7549,11 @@ showDialoguePage(node,0);
 return;
 }
 if(node.type==='fadeIn'){
+ if(!state.previewWorldNodeId){
+   pendingWorldEntryFade=Math.max(0,Number(node.effectSeconds)||0);
+   fadeOverlay.classList.remove('hidden');fadeOverlay.style.opacity='1';fadeOverlay.style.pointerEvents='none';
+   previewOutgoing(node.id);return;
+ }
 stopEffectAnimation();
 
 fadeOverlay.classList.remove('hidden');
@@ -7787,6 +7817,7 @@ state.nodes=data.nodes;
 state.connections=data.connections;
 state.worldFolders=data.worldFolders||[];
 state.startFolderId=data.startFolderId||state.worldFolders[0]?.id||null;
+state.startFolderId=state.worldFolders[0]?.id||null;
 state.activeFolderId=state.startFolderId;
 worldComposites.clear();
 for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);
@@ -8089,6 +8120,8 @@ worldFolderPanel.id='worldFolderPanel';worldFolderPanel.className='world-folder-
 workspace.appendChild(worldFolderPanel);
 const recordedWorldEvents=new Set();
 let currentWorldBackerId=null;
+let pendingWorldEntryFade=null;
+let worldEntryFadeActive=false;
 const usedWorldBranches=new Set();
 let worldCompositeFrame=0;
 const worldComposites=new Map();
@@ -8098,6 +8131,10 @@ function makeWorldFolder(name){
  const backer={id:uid('world'),type:'world',folderId:id,x:0,y:0,world:{fileName:'',fileType:'png',mediaId:null,image:null,yaw:0,pitch:0,zoom:1,views:{pc:{yaw:0,pitch:0,zoom:1},mobile:{yaw:0,pitch:0,zoom:1}}},worldInfiniteLoop:true};
  state.nodes.push(backer);
  const folder={id,name,backerId:backer.id,layers:[]};state.worldFolders.push(folder);
+ const start={id:uid('folderStart'),type:'folderStart',folderId:id,x:70,y:120};
+ const display={id:uid('worldDisplay'),type:'worldDisplay',folderId:id,x:380,y:120};
+ state.nodes.push(start,display);
+ state.connections.push({id:uid('connection'),from:start.id,to:display.id});
  if(!state.startFolderId)state.startFolderId=id;
  return folder;
 }
@@ -8105,14 +8142,25 @@ function folderBacker(folder){return getNode(folder?.backerId);}
 function assignFolderTab(folderId){
  state.activeFolderId=folderId;
  state.selectedNodeId=null;state.selectedNodeIds.clear();state.selectedConnectionId=null;
- updateWorldTabs();renderNodes();renderSettings();renderFolderSettings();
+ worldTabs.querySelectorAll('button[data-folder-tab]').forEach(button=>button.classList.toggle('active',button.dataset.folderTab===(folderId||'__all__')));
+ renderNodes();renderSettings();renderFolderSettings();
 }
 function updateWorldTabs(){
  worldTabs.replaceChildren();
- const add=(label,id,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.className=id===state.activeFolderId?'active':'';b.addEventListener('click',fn);worldTabs.appendChild(b);};
+ const add=(label,id,fn)=>{const b=document.createElement('button');b.type='button';b.dataset.folderTab=id||'__all__';b.textContent=label;b.className=id===state.activeFolderId?'active':'';b.addEventListener('click',fn);worldTabs.appendChild(b);};
  add('ワールド一覧',null,()=>assignFolderTab(null));
- for(const folder of state.worldFolders)add(folder.name,folder.id,()=>assignFolderTab(folder.id));
- const plus=document.createElement('button');plus.textContent='＋';plus.title='ワールドを追加';plus.addEventListener('click',()=>{const folder=makeWorldFolder('ワールド'+(state.worldFolders.length+1));assignFolderTab(folder.id);});worldTabs.appendChild(plus);
+ for(const folder of state.worldFolders){
+  const b=document.createElement('button');b.type='button';b.dataset.folderTab=folder.id;b.textContent=folder.name;b.className=folder.id===state.activeFolderId?'active':'';
+  b.onclick=()=>assignFolderTab(folder.id);
+  b.ondblclick=e=>{e.preventDefault();e.stopPropagation();
+    const input=document.createElement('input');input.className='world-tab-rename';input.value=folder.name;
+    b.replaceWith(input);input.focus();input.select();
+    const save=()=>{folder.name=input.value.trim()||folder.name;updateWorldTabs();renderFolderSettings();renderSettings();};
+    input.onkeydown=ev=>{if(ev.key==='Enter')save();if(ev.key==='Escape')updateWorldTabs();};
+    input.onblur=save;
+  };worldTabs.appendChild(b);
+ }
+ const plus=document.createElement('button');plus.textContent='＋';plus.title='ワールドを追加';plus.addEventListener('click',()=>{const folder=makeWorldFolder('ワールド'+(state.worldFolders.length+1));updateWorldTabs();assignFolderTab(folder.id);});worldTabs.appendChild(plus);
 }
 function layerConditionMatches(layer){
  if(layer.mode==='always'||!layer.mode)return true;
@@ -8175,7 +8223,7 @@ function renderFolderSettings(){
   state.nodes=state.nodes.filter(n=>!ids.has(n.id));state.connections=state.connections.filter(c=>!ids.has(c.from)&&!ids.has(c.to));
   for(const n of state.nodes)if(n.type==='worldMove'&&n.destinationFolderId===folder.id)n.destinationFolderId='';
   state.worldFolders=state.worldFolders.filter(w=>w.id!==folder.id);
-  if(state.startFolderId===folder.id)state.startFolderId=state.worldFolders[0].id;
+  state.startFolderId=state.worldFolders[0].id;
   worldComposites.delete(folder.id);updateWorldTabs();renderFolderSettings();
  };row.append(del);
  worldFolderPanel.append(row);
@@ -8186,8 +8234,7 @@ function renderWorldFolderEditor(){
  const title=document.createElement('div');title.className='setting-group';title.innerHTML='<div class="settings-title">ワールド設定</div>';
  settingsPanel.prepend(title);
  const section=document.createElement('div');section.className='world-folder-settings';title.after(section);
- const name=document.createElement('input');name.className='number-input';name.value=folder.name;name.addEventListener('change',()=>{folder.name=name.value||'ワールド';updateWorldTabs();});addFolderRow(section,'ワールド名',name);
- const begin=document.createElement('label');const radio=document.createElement('input');radio.type='radio';radio.name='startWorld';radio.checked=state.startFolderId===folder.id;radio.onchange=()=>state.startFolderId=folder.id;begin.append(radio,document.createTextNode(' 開始ワールドにする'));addFolderRow(section,'開始位置',begin);
+ 
  const media=folderMediaSelect(folderBacker(folder)?.world?.mediaId,['png','jpg','mp4'],id=>{const b=folderBacker(folder);const m=mediaLibrary.find(m=>m.id===id);b.world.mediaId=id;b.world.fileName=m?.fileName||'';b.world.fileType=m?.fileType||'';b.world.image=m?.image||m?.video||null;worldComposites.delete(folder.id);});addFolderRow(section,'基本360度PNG / MP4',media);
  const previewGroup=document.createElement('div');previewGroup.className='setting-group';
  const previewHeading=document.createElement('div');previewHeading.className='setting-label';previewHeading.textContent='ワールドプレビュー（全レイヤー表示）';
@@ -8197,17 +8244,38 @@ function renderWorldFolderEditor(){
  previewGroup.append(previewHeading,previewCanvas,previewNote);section.append(previewGroup);
  setupWorldSettingsCameraPreview(previewCanvas,folder);
  const heading=document.createElement('h3');heading.textContent='透明PNGレイヤー';section.append(heading);
- for(const layer of folder.layers){const panel=document.createElement('div');panel.className='world-layer-entry';section.append(panel);
-  const label=document.createElement('input');label.className='number-input';label.placeholder='レイヤー名';label.value=layer.name||'';label.oninput=()=>layer.name=label.value;addFolderRow(panel,'レイヤー名',label);
+ for(const layer of folder.layers){
+  const details=document.createElement('details');details.className='world-layer-entry';
+  details.open=!!layer.editorOpen;
+  const summary=document.createElement('summary');summary.textContent=layer.name||'名称未設定レイヤー';
+  details.append(summary);section.append(details);
+  details.addEventListener('toggle',()=>{layer.editorOpen=details.open;});
+  const panel=document.createElement('div');panel.className='world-layer-fields';details.append(panel);
+  const label=document.createElement('input');label.className='number-input';label.placeholder='レイヤー名';label.value=layer.name||'';
+  label.oninput=()=>{layer.name=label.value;summary.textContent=label.value||'名称未設定レイヤー';};addFolderRow(panel,'レイヤー名',label);
   addFolderRow(panel,'画像',folderMediaSelect(layer.mediaId,['png'],id=>layer.mediaId=id));
-  const mode=document.createElement('select');mode.className='number-input';for(const [value,text] of [['always','常に表示'],['before','イベント実行前'],['after','イベント実行後']])mode.add(new Option(text,value));mode.value=layer.mode||'always';mode.onchange=()=>{layer.mode=mode.value;renderSettings();};addFolderRow(panel,'表示条件',mode);
-  if(layer.mode!=='always'){
-   const type=document.createElement('select');type.className='number-input';for(const [value,text] of [['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント記録']])type.add(new Option(text,value));type.value=layer.eventType||'acquire';type.onchange=()=>{layer.eventType=type.value;layer.targetId='';renderSettings();};addFolderRow(panel,'イベント種類',type);
-   addFolderRow(panel,'対象イベント',folderEventSelect(layer,()=>renderSettings()));
-  }
-  const remove=document.createElement('button');remove.textContent='レイヤーを削除';remove.onclick=()=>{folder.layers=folder.layers.filter(l=>l!==layer);renderSettings();};panel.append(remove);
+  const heading=document.createElement('div');heading.className='setting-label';heading.textContent='このレイヤーをいつ表示しますか？';panel.append(heading);
+  const eventType=document.createElement('select');eventType.className='number-input';
+  for(const [value,text] of [['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了']])eventType.add(new Option(text,value));
+  eventType.value=layer.eventType||'acquire';addFolderRow(panel,'表示条件',eventType);
+  const timing=document.createElement('select');timing.className='number-input';timing.add(new Option('前','before'));timing.add(new Option('後','after'));
+  timing.value=layer.mode==='after'?'after':'before';addFolderRow(panel,'前後',timing);
+  const targetContainer=document.createElement('div');panel.append(targetContainer);
+  const explanation=document.createElement('p');explanation.className='world-layer-explanation';panel.append(explanation);
+  const updateExplanation=()=>{
+    const target=getNode(layer.targetId);
+    const name=target?.itemName||target?.eventName||target?.customBody||(target?.clickBranchItemId?itemDisplayName(getNode(target.clickBranchItemId)):null);
+    const action=layer.eventType==='acquire'?'を取得':layer.eventType==='use'?'を使用':'が終了';
+    explanation.textContent=name?`このレイヤーは「${name}」${action}${layer.mode==='after'?'した後に表示します':'するまで表示します'}`:'対象を選ぶと表示条件がここに表示されます。';
+  };
+  const drawTarget=()=>{targetContainer.replaceChildren();addFolderRow(targetContainer,'対象',folderEventSelect(layer,updateExplanation));updateExplanation();};
+  eventType.onchange=()=>{layer.eventType=eventType.value;layer.targetId='';drawTarget();};
+  timing.onchange=()=>{layer.mode=timing.value;updateExplanation();};
+  if(layer.mode==='always')layer.mode='before';
+  drawTarget();
+  const remove=document.createElement('button');remove.type='button';remove.textContent='レイヤーを削除';remove.onclick=()=>{folder.layers=folder.layers.filter(l=>l!==layer);renderSettings();};panel.append(remove);
  }
- const add=document.createElement('button');add.className='add-world-btn';add.textContent='＋ 透明PNGレイヤー';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'',mediaId:'',mode:'always',eventType:'acquire',targetId:''});renderSettings();};section.append(add);
+ const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);
 }
 const originalRenderSettings=renderSettings;
 renderSettings=function(){
@@ -8296,7 +8364,9 @@ function enterWorldFolder(folderId){
  const media=getFolderMedia(folder);
  if(media?.video){try{media.video.loop=true;media.video.currentTime=0;media.video.play().catch(()=>{});}catch(_e){}}
  const backer=folderBacker(folder);if(!backer)return;
- showPreviewNode(backer.id);
+ cancelPreviewScene();pendingWorldEntryFade=null;worldEntryFadeActive=false;
+ const start=state.nodes.find(n=>n.type==='folderStart'&&n.folderId===folder.id);
+ if(start)showPreviewNode(start.id);else showPreviewNode(backer.id);
 }
 applyGameAspectRatio();
 updateLayoutControls();

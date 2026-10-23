@@ -860,3 +860,11 @@ flex-shrink:0;
 /* Panoramic world settings camera preview */
 .world-settings-preview{display:block;width:100%;height:auto;aspect-ratio:var(--game-aspect,16/9);touch-action:none;cursor:grab;background:#151923;object-fit:fill}
 .world-settings-preview:active{cursor:grabbing}
+
+/* World editing refinements */
+#worldTabs .world-tab-rename{min-width:110px;max-width:180px;padding:5px 9px;font-size:13px;border:1px solid #8799b0;border-radius:5px}
+.world-layer-entry{padding:0;overflow:hidden}
+.world-layer-entry>summary{cursor:pointer;padding:10px 12px;font-weight:600;list-style:disclosure-closed}
+.world-layer-entry[open]>summary{list-style:disclosure-open;border-bottom:1px solid #677484}
+.world-layer-fields{padding:10px 12px}
+.world-layer-explanation{font-size:12px;line-height:1.5;color:#536478;margin:10px 0}
