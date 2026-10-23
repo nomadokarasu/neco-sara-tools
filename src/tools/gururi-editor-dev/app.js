@@ -2148,7 +2148,8 @@ return Math.min(Math.max(0,duration-0.001),(start+elapsed)%duration);
 
 function renderMediaVariantSettings(node){
  const v=mediaVariantConfig(node);
- const expectedType=node.type==='world'?(mediaLibrary.find(m=>m.id===baseId)?.fileType||'png'):'mp4';
+ const baseId=node.type==='world'?node.world.mediaId:node.animation.mediaId;
+ const expectedType=node.type==='world'?(mediaLibrary.find(m=>m.id===baseId)?.fileType||'png'):(mediaLibrary.find(m=>m.id===baseId)?.fileType||'mp4');
  const eligible=mediaLibrary.filter(m=>m.fileType===expectedType&&m.width===m.height*2);
  const choiceOptions=selected=>'<option value="">通常の素材を使用</option>'+eligible.map(m=>`<option value="${escapeHtml(m.id)}" ${m.id===selected?'selected':''}>${escapeHtml(m.fileName)}</option>`).join('');
  const itemOptions=state.nodes.filter(n=>n.type==='itemAcquire'&&!v.itemIds.includes(n.id)).map(n=>`<option value="${escapeHtml(n.id)}">${escapeHtml(n.itemName||n.id)}</option>`).join('');
@@ -2202,6 +2203,7 @@ mediaVariantConfig(node);
 
 const collapsible=(id,label,contents)=>`<details data-media-section="${id}"><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
 const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
+const sequenceFpsSettings=videoMode&&media?.fileType==='pngseq'?`<div class="setting-group"><div class="setting-label">連番PNGのFPS</div><input id="sequenceFpsSetting" class="number-input" type="number" min="1" max="120" step="1" value="${Number(media.fps)||8}"></div>`:'';
 const durationSettings='';
 const pngSettings=videoMode?'':`
 <div class="setting-group">
@@ -2246,8 +2248,9 @@ const loops=videoMode?`
 </label>
 </div>`:'';
 settingsPanel.innerHTML=`
-<div class="settings-title">メディア（${videoMode?'360度MP4':'360度PNG'}）</div>
+<div class="settings-title">メディア（${videoMode?'360度アニメーション':'360度PNG'}）</div>
 ${mediaSelect}
+${sequenceFpsSettings}
 ${renderMediaVariantSettings(node)}
 ${pngSettings}
 ${inheritControl}
@@ -2259,6 +2262,15 @@ ${angleInfo}`;
 
 document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
 setupMediaVariantSettings(node);
+ const sequenceFpsField=document.getElementById('sequenceFpsSetting');
+ sequenceFpsField?.addEventListener('change',()=>{
+  if(!media?.frameImages?.length)return;
+  const fps=Number(sequenceFpsField.value);
+  if(!Number.isFinite(fps)||fps<1||fps>120){sequenceFpsField.value=String(media.fps);return;}
+  media.video?.pause();media.fps=fps;media.duration=media.frameImages.length/fps;
+  node.animation.playDuration=media.duration*(Number(node.animation.loopCount)||1);
+  renderSettings();
+ });
 
 if(!videoMode){
 document.getElementById('mediaWorldDuration').addEventListener('change',e=>{
@@ -2354,7 +2366,7 @@ function chosenSceneMedia(node){
  const config=mediaVariantConfig(node);
  const mask=mediaVariantMask(config);
  const baseId=node.type==='world'?node.world.mediaId:node.animation.mediaId;
- const expectedType=node.type==='world'?(mediaLibrary.find(m=>m.id===baseId)?.fileType||'png'):'mp4';
+ const expectedType=node.type==='world'?(mediaLibrary.find(m=>m.id===baseId)?.fileType||'png'):(mediaLibrary.find(m=>m.id===baseId)?.fileType||'mp4');
  const override=mediaLibrary.find(m=>m.id===config.byMask[String(mask)]&&m.fileType===expectedType);
  return override||mediaLibrary.find(m=>m.id===baseId&&m.fileType===expectedType)||null;
 }
@@ -2425,7 +2437,7 @@ setMediaPanelOpen(false);
 function getMediaOptions(type,selectedId){
 const available=mediaLibrary.filter(media=>{
 return media.width===media.height*2&&
-(media.fileType==='png'||media.fileType==='mp4');
+(media.fileType==='png'||isAnimationAsset(media));
 });
 
 const options=available.map(media=>{
@@ -2462,7 +2474,7 @@ item.appendChild(removeMediaButton);
 const thumbnail=document.createElement('div');
 thumbnail.className='media-thumbnail';
 
-if(media.fileType==='mp4'){
+if(isAnimationAsset(media)){
 thumbnail.classList.add('media-thumbnail--video');
 }
 
@@ -2476,7 +2488,7 @@ if(context){
 context.fillStyle='#252525';
 context.fillRect(0,0,canvas.width,canvas.height);
 
-const source=media.fileType==='mp4'?media.video:media.image;
+const source=isAnimationAsset(media)?media.video:media.image;
 
 if(source){
 try{
@@ -2494,10 +2506,10 @@ console.warn('サムネイルの描画に失敗しました',error);
 
 thumbnail.appendChild(canvas);
 
-if(media.fileType==='mp4'){
+if(isAnimationAsset(media)){
 const badge=document.createElement('span');
 badge.className='media-thumbnail-badge';
-badge.textContent='MP4';
+badge.textContent=media.fileType==='pngseq'?'連番PNG':'MP4';
 thumbnail.appendChild(badge);
 }
 
@@ -2566,7 +2578,7 @@ node.type==='world'||
 node.type==='animation'
 )
 ){
-node.type=media.fileType==='mp4'?'animation':'world';
+node.type=isAnimationAsset(media)?'animation':'world';
 }
 
 if(node.type==='world'){
@@ -2579,7 +2591,7 @@ node.world.raw=null;
 }
 
 if(node.type==='animation'){
-const animationMedia=media?.fileType==='mp4'?media:null;
+const animationMedia=isAnimationAsset(media)?media:null;
 node.animation.mediaId=animationMedia?animationMedia.id:null;
 node.animation.fileName=animationMedia?animationMedia.fileName:'';
 node.animation.raw=null;
@@ -2687,6 +2699,42 @@ return fps;
 return null;
 }
 
+// 連番PNGは1つの素材として管理し、フレームを共通の360度キャンバスで再生する。
+function isAnimationAsset(media){return !!media&&(media.fileType==='mp4'||media.fileType==='pngseq');}
+function naturalFrameOrder(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'});}
+function createSequencePlayback(media){
+ const canvas=document.createElement('canvas');canvas.width=media.width;canvas.height=media.height;
+ const ctx=canvas.getContext('2d');let time=0,playing=false,started=0,frameHandle=0;
+ const draw=()=>{const n=media.frameImages.length;const i=Math.min(n-1,Math.max(0,Math.floor(time*media.fps)%n));ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(media.frameImages[i],0,0);};
+ const advance=now=>{if(!playing)return;time=(now-started)/1000;if(time>=media.duration){if(canvas.loop){time=time%media.duration;started=now-time*1000;}else{time=media.duration;playing=false;canvas.dispatchEvent(new Event('ended'));}}draw();if(playing)frameHandle=requestAnimationFrame(advance);};
+ Object.defineProperties(canvas,{
+  currentTime:{get:()=>time,set:v=>{time=Math.max(0,Math.min(Number(v)||0,Math.max(0,media.duration-0.0001)));if(playing)started=performance.now()-time*1000;draw();queueMicrotask(()=>canvas.dispatchEvent(new Event('seeked')));}},
+  duration:{get:()=>media.duration},videoWidth:{get:()=>media.width},videoHeight:{get:()=>media.height},readyState:{get:()=>4},paused:{get:()=>!playing},ended:{get:()=>!playing&&time>=media.duration},seeking:{get:()=>false}
+ });
+ canvas.loop=false;canvas.muted=true;canvas.playsInline=true;
+ canvas.play=async()=>{if(playing)return;playing=true;started=performance.now()-time*1000;frameHandle=requestAnimationFrame(advance);};
+ canvas.pause=()=>{playing=false;cancelAnimationFrame(frameHandle);};
+ canvas.load=()=>{};
+ draw();return canvas;
+}
+async function importPngSequence(files,fps=8){
+ const ordered=[...files].sort(naturalFrameOrder);
+ if(!ordered.length||ordered.some(file=>!file.name.toLowerCase().endsWith('.png')))throw new Error('連番PNGのみを選択してください。');
+ const frames=[];const images=[];
+ try{
+  for(const file of ordered){
+   const url=URL.createObjectURL(file);let img;
+   try{img=await new Promise((resolve,reject)=>{const pic=new Image();pic.onload=()=>resolve(pic);pic.onerror=()=>reject(new Error(file.name+' を読み込めません'));pic.src=url;});}finally{URL.revokeObjectURL(url);}
+   if(images.length&&(img.naturalWidth!==images[0].naturalWidth||img.naturalHeight!==images[0].naturalHeight))throw new Error('すべての画像の解像度を統一してください。');
+   images.push(img);frames.push(file);
+  }
+  const width=images[0].naturalWidth,height=images[0].naturalHeight;
+  if(width!==height*2)throw new Error('360度アニメーションは2:1のPNG画像を選択してください。');
+  const media={id:uid('media'),fileName:ordered.length+'枚の連番PNG（'+ordered[0].name+'）',fileType:'pngseq',image:null,video:null,url:null,raw:null,frames:[],frameFiles:frames,frameImages:images,duration:images.length/fps,fps,width,height,sourceFile:null};
+  media.video=createSequencePlayback(media);
+  mediaLibrary.push(media);renderMediaList();renderSettings();return media;
+ }catch(e){throw e;}
+}
 async function importMediaFile(file){
 const extension=file.name.toLowerCase();
 const isPng=extension.endsWith('.png');
@@ -2774,6 +2822,7 @@ renderSettings();
 return media;
 }
 
+document.getElementById('addSequenceBtn').addEventListener('click',()=>document.getElementById('sequenceFileInput').click());
 addMediaBtn.addEventListener('click',()=>{
 worldFileInput.value='';
 worldFileInput.click();
@@ -2810,6 +2859,15 @@ alert(`${file.name} の読み込みに失敗しました。\n${error.message}`);
 animationFileInput.value='';
 if(files.length>0)setMediaPanelOpen(false);
 });
+let sequenceInsertionNodeId=null;
+const sequenceFileInput=document.getElementById('sequenceFileInput');
+sequenceFileInput.addEventListener('change',async e=>{
+ const files=Array.from(e.target.files||[]);sequenceFileInput.value='';if(!files.length){sequenceInsertionNodeId=null;return;}
+ const fps=Number(prompt('連番PNGのFPSを入力してください（例：8）','8'));
+ if(!Number.isFinite(fps)||fps<=0||fps>120){sequenceInsertionNodeId=null;alert('FPSは0より大きく120以下にしてください。');return;}
+ try{const media=await importPngSequence(files,fps);if(sequenceInsertionNodeId){const node=getNode(sequenceInsertionNodeId);if(node?.type==='animation')assignMediaToNode(node,media.id);}setMediaPanelOpen(false);}catch(error){console.error(error);alert('連番PNGを読み込めませんでした。\n'+error.message);}finally{sequenceInsertionNodeId=null;}
+});
+
 
 renderMediaList();
 
@@ -3300,7 +3358,7 @@ let image=null;
 
 if(worldNode.type==='animation'){
 const media=mediaLibrary.find(item=>
-item.id===worldNode.animation.mediaId&&item.fileType==='mp4'
+item.id===worldNode.animation.mediaId&&isAnimationAsset(item)
 );
 
 image=media?.video?.readyState>=2?media.video:null;
@@ -3369,7 +3427,7 @@ if(!canvas||!range||!label||!addButton||!list)return;
 pathCanvas.style.pointerEvents='none';
 
 const media=mediaLibrary.find(item=>
-item.id===sourceNode.animation.mediaId&&item.fileType==='mp4'
+item.id===sourceNode.animation.mediaId&&isAnimationAsset(item)
 );
 
 const video=media?.video;
@@ -3576,7 +3634,7 @@ ensurePanView(node,worldNode);
 
 if(worldNode.type==='animation'){
 const media=mediaLibrary.find(item=>
-item.id===worldNode.animation.mediaId&&item.fileType==='mp4'
+item.id===worldNode.animation.mediaId&&isAnimationAsset(item)
 );
 
 if(media?.video){
@@ -4141,7 +4199,7 @@ if(sourceNode?.type!=='animation')return null;
 
 return mediaLibrary.find(media=>
 media.id===sourceNode.animation.mediaId&&
-media.fileType==='mp4'
+isAnimationAsset(media)
 )||null;
 }
 
@@ -5099,7 +5157,7 @@ image=getClickEditorComposite(sourceNode);
 if(sourceNode?.type==='animation'){
 const media=mediaLibrary.find(item=>
 item.id===sourceNode.animation.mediaId&&
-item.fileType==='mp4'
+isAnimationAsset(item)
 );
 image=media?.video||null;
 }
@@ -5295,7 +5353,7 @@ drawPanoramaPreview(canvas,getDialogueViewWorld(node,sourceNode));
 if(sourceNode?.type==='animation'){
 const media=mediaLibrary.find(item=>
 item.id===sourceNode.animation.mediaId&&
-item.fileType==='mp4'
+isAnimationAsset(item)
 );
 
 const video=media?.video;
@@ -5589,24 +5647,22 @@ const create=e.target.closest('[data-create]');
 if(create){
 const insertConnection=state.insertConnection;
 const menuPoint={...state.menuPoint};
-const nodeType=create.dataset.create;
+const sequenceNode=create.dataset.create==='animationSeq';
+const nodeType=sequenceNode?'animation':create.dataset.create;
 if(!state.activeFolderId){alert('ワールドのタブを開いてからノードを追加してください。');return;}
 
 contextMenu.classList.add('hidden');
 state.insertConnection=null;
 
+let created=null;
 if(insertConnection){
-insertNodeIntoConnection(
-nodeType,
-insertConnection,
-menuPoint
-);
+created=insertNodeIntoConnection(nodeType,insertConnection,menuPoint);
 }else{
-addNode(
-nodeType,
-menuPoint.x,
-menuPoint.y
-);
+created=addNode(nodeType,menuPoint.x,menuPoint.y);
+}
+if(sequenceNode){
+ sequenceInsertionNodeId=created?.id||state.selectedNodeId;
+ document.getElementById('sequenceFileInput').click();
 }
 }
 });
@@ -6304,7 +6360,7 @@ to:newNode.id
 finishEditorHistory();
 renderNodes();
 renderSettings();
-return;
+return newNode;
 }
 
 const newNode=addNode(type,mid.x-75,mid.y-35);
@@ -6326,6 +6382,7 @@ to:toId
 finishEditorHistory();
 renderNodes();
 renderSettings();
+return newNode;
 }
 
 document.getElementById('exportPreviewDiagnosticBtn').addEventListener('click',exportPreviewDiagnostics);
@@ -6746,18 +6803,18 @@ playback.video.load();
 function playPreviewAnimation(node){
 const media=chosenSceneMedia(node);
 
-if(!media||!media.url||!(media.duration>0)){
+if(!media||!(media.fileType==='pngseq'||media.url)||!(media.duration>0)){
 previewMessage.textContent='MP4素材を選択してください';
 return;
 }
 
-const video=document.createElement('video');
+const video=media.fileType==='pngseq'?createSequencePlayback(media):document.createElement('video');
 
 video.muted=true;
 video.playsInline=true;
 video.preload='auto';
 video.loop=false;
-video.src=media.url;
+if(media.fileType==='mp4')video.src=media.url;
 
 video.addEventListener('ended',()=>{
 if(state.previewAnimation?.video!==video||state.previewAnimation.finished)return;
@@ -6942,6 +6999,7 @@ previewMessage.textContent='MP4を再生できませんでした';
 stopPreviewAnimation();
 }
 },{once:true});
+if(media.fileType==='pngseq')queueMicrotask(()=>video.dispatchEvent(new Event('loadeddata')));
 
 video.load();
 }
@@ -7780,10 +7838,23 @@ pos+=46+nameLength+extraLength+commentLength;
 return result;
 }
 
-async function saveGartProject(){
+const saveProgressUI=()=>({root:document.getElementById('saveProgressOverlay'),bar:document.getElementById('saveProgressBar'),message:document.getElementById('saveProgressMessage')});
+function setSaveProgress(percent,message){const ui=saveProgressUI();if(!ui.root)return;ui.root.hidden=false;ui.bar.value=percent;ui.message.textContent=message;}
+function endSaveProgress(){const ui=saveProgressUI();if(ui.root)ui.root.hidden=true;}
+let currentGartSaveHandle=null;
+async function writeProjectFile(blob,saveAs=false){
+ if(currentGartSaveHandle){const stream=await currentGartSaveHandle.createWritable();setSaveProgress(92,'上書き保存しています…');await stream.write(blob);await stream.close();return true;}
+ const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='project.gart';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);return true;
+}
+async function saveGartProject(saveAs=false){
 const button=document.getElementById('saveGartBtn');
 button.disabled=true;
 try{
+if(typeof window.showSaveFilePicker==='function'&&window.isSecureContext&&(saveAs||!currentGartSaveHandle)){
+ try{currentGartSaveHandle=await window.showSaveFilePicker({suggestedName:'project.gart',types:[{description:'ぐるりエディタ データ',accept:{'application/octet-stream':['.gart']}}]});}
+ catch(error){if(error?.name==='AbortError')return;console.warn('保存先の選択を利用できませんでした',error);}
+}
+setSaveProgress(5,'保存データを準備しています…');
 const metadata={
 format:'gururi-editor-project',
 version:2,
@@ -7801,29 +7872,30 @@ media:mediaLibrary.map((media,index)=>({
 id:media.id,
 fileName:media.fileName,
 fileType:media.fileType,
-path:`assets/${index}.${media.fileType}`
+path:media.fileType==='pngseq'?`assets/${index}/`:`assets/${index}.${media.fileType}`,fps:media.fps||null,frameNames:media.fileType==='pngseq'?media.frameFiles.map(f=>f.name):undefined
 }))
 };
-const entries=[{name:'project.json',data:gartEncoder.encode(JSON.stringify(metadata))}];
+const entries=[{name:'project.json',data:gartEncoder.encode(JSON.stringify(metadata))}];setSaveProgress(20,'素材をまとめています…');
 for(const item of metadata.media){
 const media=mediaLibrary.find(candidate=>candidate.id===item.id);
+if(item.fileType==='pngseq'){
+ if(!media?.frameFiles?.length)throw new Error(item.fileName+' の連番PNGがありません。');
+ media.frameFiles.forEach((file,index)=>entries.push({name:item.path+String(index).padStart(5,'0')+'.png',data:file}));
+ continue;
+}
 if(!media?.sourceFile)throw new Error(`${item.fileName} の元ファイルがありません。再度読み込んでください。`);
 entries.push({name:item.path,data:media.sourceFile});
 }
+setSaveProgress(65,'プロジェクトを圧縮しています…');
+await new Promise(requestAnimationFrame);
 const blob=await gartCreateZip(entries);
-const url=URL.createObjectURL(blob);
-const link=document.createElement('a');
-link.href=url;
-link.download='project.gart';
-document.body.appendChild(link);
-link.click();
-link.remove();
-setTimeout(()=>URL.revokeObjectURL(url),60000);
+setSaveProgress(90,'保存先を選択してください…');
+const saved=await writeProjectFile(blob,saveAs);if(saved)setSaveProgress(100,'保存処理が完了しました');
 }catch(error){
 console.error(error);
 alert(`プロジェクトを保存できませんでした。\n${error.message}`);
 }finally{
-button.disabled=false;
+button.disabled=false;endSaveProgress();
 }
 }
 
@@ -7842,9 +7914,16 @@ if(!data.nodes.some(node=>node.id==='start'&&node.type==='start'))throw new Erro
 const nodeIds=new Set(data.nodes.map(node=>node.id));
 if(nodeIds.size!==data.nodes.length||data.connections.some(c=>!nodeIds.has(c.from)||!nodeIds.has(c.to)))throw new Error('ノードの接続情報が不正です。');
 for(const item of data.media){
-if(!item||!['png','jpg','mp4'].includes(item.fileType)||!entries.has(item.path))throw new Error('素材が不足しています。');
+if(!item||!['png','jpg','mp4','pngseq'].includes(item.fileType))throw new Error('素材が不足しています。');
+ if(item.fileType==='pngseq'){
+  if(!Array.isArray(item.frameNames)||!item.frameNames.length||item.frameNames.some((_,i)=>!entries.has(item.path+String(i).padStart(5,'0')+'.png')))throw new Error('連番PNGが不足しています。');
+ }else if(!entries.has(item.path))throw new Error('素材が不足しています。');
 }
 for(const item of data.media){
+if(item.fileType==='pngseq'){
+ const files=item.frameNames.map((name,i)=>new File([entries.get(item.path+String(i).padStart(5,'0')+'.png')],name,{type:'image/png'}));
+ const imported=await importPngSequence(files,Number(item.fps)||8);imported.id=item.id;imported.fileName=item.fileName;continue;
+}
 const blob=entries.get(item.path);
 const mimeType=item.fileType==='png'?'image/png':item.fileType==='jpg'?'image/jpeg':'video/mp4';
 const assetFile=new File([blob],item.fileName,{type:mimeType});
@@ -7864,6 +7943,7 @@ cancelPreviewScene();
 state.nodes=data.nodes;
 state.connections=data.connections;
 state.worldFolders=data.worldFolders||[];
+currentGartSaveHandle=null;
 state.startFolderId=data.startFolderId||state.worldFolders[0]?.id||null;
 state.startFolderId=state.worldFolders[0]?.id||null;
 state.activeFolderId=state.startFolderId;
@@ -7895,7 +7975,7 @@ button.disabled=false;
 }
 }
 
-document.getElementById('saveGartBtn').addEventListener('click',saveGartProject);
+document.getElementById('saveGartBtn').addEventListener('click',()=>saveGartProject(false));
 document.getElementById('openGartBtn').addEventListener('click',()=>document.getElementById('gartFileInput').click());
 document.getElementById('gartFileInput').addEventListener('change',async e=>{
 const file=e.target.files?.[0];
@@ -7924,7 +8004,7 @@ media:mediaLibrary.map((media,index)=>({
 id:media.id,
 fileName:media.fileName,
 fileType:media.fileType,
-path:`assets/${index}.${media.fileType}`
+path:media.fileType==='pngseq'?`assets/${index}/`:`assets/${index}.${media.fileType}`,fps:media.fps||null,frameNames:media.fileType==='pngseq'?media.frameFiles.map(f=>f.name):undefined
 }))
 };
 if(!metadata.connections.some(c=>c.from==='start')){
@@ -8026,7 +8106,7 @@ if(item.fileType==='png'||item.fileType==='jpg'){
 const picture=new Image();
 await new Promise((resolve,reject)=>{picture.onload=resolve;picture.onerror=()=>reject(new Error(item.fileName+' を開けません'));picture.src=url;});
 loaded.push({id:item.id,fileName:item.fileName,fileType:item.fileType,image:picture,video:null,url,width:picture.naturalWidth,height:picture.naturalHeight,duration:0});
-}else if(item.fileType==='mp4'){
+}else if(isAnimationAsset(item)){
 const video=document.createElement('video');
 video.preload='auto';video.playsInline=true;video.muted=true;
 await new Promise((resolve,reject)=>{video.onloadeddata=resolve;video.onerror=()=>reject(new Error(item.fileName+' を開けません'));video.src=url;video.load();});
@@ -8467,3 +8547,6 @@ const firstFolder=makeWorldFolder('ワールド1');
 updateWorldTabs();
 assignFolderTab(firstFolder.id);
 requestAnimationFrame(worldCompositeTick);
+
+const saveAsGartButton=document.getElementById('saveAsGartBtn');
+if(saveAsGartButton)saveAsGartButton.addEventListener('click',()=>saveGartProject(true));
