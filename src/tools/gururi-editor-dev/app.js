@@ -8372,5 +8372,6 @@ applyGameAspectRatio();
 updateLayoutControls();
 addStartNode();
 const firstFolder=makeWorldFolder('ワールド1');
+updateWorldTabs();
 assignFolderTab(firstFolder.id);
 requestAnimationFrame(worldCompositeTick);
