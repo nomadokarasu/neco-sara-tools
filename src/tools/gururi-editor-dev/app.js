@@ -8527,8 +8527,16 @@ function renderWorldFolderEditor(){
   const eventType=document.createElement('select');eventType.className='number-input';
   for(const [value,text] of [['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']])eventType.add(new Option(text,value));
   eventType.value=layer.eventType||'acquire';addFolderRow(panel,'表示条件',eventType);
-  const timing=document.createElement('select');timing.className='number-input';timing.add(new Option('OFF','before'));timing.add(new Option('ON','after'));
-  timing.value=layer.mode==='after'?'after':'before';addFolderRow(panel,'ON/OFF',timing);
+  const timing=document.createElement('select');timing.className='number-input';
+  timing.value=layer.mode==='after'?'after':'before';addFolderRow(panel,'前/後',timing);
+  const timingLabel=timing.parentElement.querySelector('.setting-label');
+  const updateTimingLabels=()=>{
+    const isToggle=layer.eventType==='toggle';
+    timingLabel.textContent=isToggle?'ON/OFF':'前/後';
+    timing.replaceChildren(new Option(isToggle?'OFF':'前','before'),new Option(isToggle?'ON':'後','after'));
+    timing.value=layer.mode==='after'?'after':'before';
+  };
+  updateTimingLabels();
   const targetContainer=document.createElement('div');panel.append(targetContainer);
   const explanation=document.createElement('p');explanation.className='world-layer-explanation';panel.append(explanation);
   const updateExplanation=()=>{
@@ -8539,7 +8547,7 @@ function renderWorldFolderEditor(){
     explanation.textContent=name?`このレイヤーは「${name}」${action}${layer.mode==='after'?'した後に表示します':'するまで表示します'}`:'対象を選ぶと表示条件がここに表示されます。';
   };
   const drawTarget=()=>{targetContainer.replaceChildren();addFolderRow(targetContainer,'対象',folderEventSelect(layer,updateExplanation));updateExplanation();};
-  eventType.onchange=()=>{layer.eventType=eventType.value;layer.targetId='';drawTarget();};
+  eventType.onchange=()=>{layer.eventType=eventType.value;layer.targetId='';updateTimingLabels();drawTarget();};
   timing.onchange=()=>{layer.mode=timing.value;updateExplanation();};
   if(layer.mode==='always')layer.mode='before';
   drawTarget();
