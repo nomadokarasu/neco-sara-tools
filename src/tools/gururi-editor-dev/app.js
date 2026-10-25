@@ -2222,6 +2222,7 @@ function setupMediaVariantSettings(node){
  }));
 }
 
+let sequenceSelectedIndex=0;
 function renderMediaNodeSettings(node){
 const videoMode=node.type==='animation';
 const media=mediaLibrary.find(m=>m.id===(videoMode?node.animation.mediaId:node.world.mediaId));
@@ -2230,7 +2231,8 @@ mediaVariantConfig(node);
 
 const collapsible=(id,label,contents)=>`<details data-media-section="${id}"><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
 const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
-const sequenceFpsSettings=videoMode&&media?.fileType==='pngseq'?`<div class="setting-group"><div class="setting-label">連番PNGのFPS</div><input id="sequenceFpsSetting" class="number-input" type="number" min="1" max="120" step="1" value="${Number(media.fps)||8}"></div>`:'';
+const sequenceFpsSettings=videoMode&&media?.fileType==='pngseq'?`<div class="setting-group"><div class="setting-label">FPS</div><input id="sequenceFpsSetting" class="number-input" type="number" min="1" max="120" step="1" value="${Number(media.fps)||8}"></div>
+<div class="setting-group"><div class="setting-label">連番PNGの画像</div><div class="sequence-frame-tabs" role="tablist">${media.frameFiles.map((f,i)=>`<button type="button" class="sequence-frame-tab ${i===Math.min(sequenceSelectedIndex,media.frameFiles.length-1)?'is-active':''}" data-frame-index="${i}">${i+1}枚目</button>`).join('')}</div><div class="sequence-frame-editor"><div class="settings-empty" id="sequenceFrameName">${escapeHtml(media.frameFiles[Math.min(sequenceSelectedIndex,media.frameFiles.length-1)]?.name||'')}</div><button type="button" id="sequenceFrameReplace">画像を選択</button><input type="file" id="sequenceFrameFileInput" accept="image/png,.png" hidden></div></div>`:'';
 const durationSettings='';
 const pngSettings=videoMode?'':`
 <div class="setting-group">
@@ -2278,7 +2280,6 @@ settingsPanel.innerHTML=`
 <div class="settings-title">メディア（${videoMode?'360度アニメーション':'360度PNG'}）</div>
 ${mediaSelect}
 ${sequenceFpsSettings}
-${renderMediaVariantSettings(node)}
 ${pngSettings}
 ${inheritControl}
 ${previewControls}
@@ -2288,8 +2289,27 @@ ${videoMode?loops:''}
 ${angleInfo}`;
 
 document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
-setupMediaVariantSettings(node);
- const sequenceFpsField=document.getElementById('sequenceFpsSetting');
+ if(videoMode&&media?.fileType==='pngseq'){
+  const tabs=Array.from(document.querySelectorAll('.sequence-frame-tab'));
+  const refreshTab=()=>{sequenceSelectedIndex=Math.max(0,Math.min(sequenceSelectedIndex,media.frameFiles.length-1));tabs.forEach((b,i)=>{b.classList.toggle('is-active',i===sequenceSelectedIndex);b.setAttribute('aria-selected',String(i===sequenceSelectedIndex));});document.getElementById('sequenceFrameName').textContent=media.frameFiles[sequenceSelectedIndex]?.name||'';};
+  tabs.forEach(b=>b.addEventListener('click',()=>{sequenceSelectedIndex=Number(b.dataset.frameIndex);refreshTab();}));
+  const frameInput=document.getElementById('sequenceFrameFileInput');
+  document.getElementById('sequenceFrameReplace').addEventListener('click',()=>frameInput.click());
+  frameInput.addEventListener('change',async()=>{
+   const file=frameInput.files?.[0];frameInput.value='';if(!file)return;
+   try{
+    if(!file.name.toLowerCase().endsWith('.png'))throw new Error('PNGを指定してください。');
+    const url=URL.createObjectURL(file);
+    let img;try{img=await new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('画像を読み込めません'));image.src=url;});}finally{URL.revokeObjectURL(url);}
+    if(img.naturalWidth!==media.width||img.naturalHeight!==media.height)throw new Error('既存フレームと同じ解像度のPNGを指定してください。');
+    media.video?.pause();media.frameFiles[sequenceSelectedIndex]=file;media.frameImages[sequenceSelectedIndex]=img;
+    media.video=createSequencePlayback(media);
+    renderMediaList();renderSettings();
+   }catch(error){alert('フレームを変更できませんでした。\n'+error.message);}
+  });
+  refreshTab();
+ }
+const sequenceFpsField=document.getElementById('sequenceFpsSetting');
  sequenceFpsField?.addEventListener('change',()=>{
   if(!media?.frameImages?.length)return;
   const fps=Number(sequenceFpsField.value);
@@ -2744,8 +2764,8 @@ function createSequencePlayback(media){
  canvas.load=()=>{};
  draw();return canvas;
 }
-async function importPngSequence(files,fps=8){
- const ordered=[...files].sort(naturalFrameOrder);
+async function importPngSequence(files,fps=8,preserveOrder=false){
+ const ordered=preserveOrder?[...files]:[...files].sort(naturalFrameOrder);
  if(!ordered.length||ordered.some(file=>!file.name.toLowerCase().endsWith('.png')))throw new Error('連番PNGのみを選択してください。');
  const frames=[];const images=[];
  try{
@@ -2849,7 +2869,7 @@ renderSettings();
 return media;
 }
 
-document.getElementById('addSequenceBtn').addEventListener('click',()=>document.getElementById('sequenceFileInput').click());
+
 addMediaBtn.addEventListener('click',()=>{
 worldFileInput.value='';
 worldFileInput.click();
@@ -2887,13 +2907,30 @@ animationFileInput.value='';
 if(files.length>0)setMediaPanelOpen(false);
 });
 let sequenceInsertionNodeId=null;
-const sequenceFileInput=document.getElementById('sequenceFileInput');
-sequenceFileInput.addEventListener('change',async e=>{
- const files=Array.from(e.target.files||[]);sequenceFileInput.value='';if(!files.length){sequenceInsertionNodeId=null;return;}
- const fps=Number(prompt('連番PNGのFPSを入力してください（例：8）','8'));
- if(!Number.isFinite(fps)||fps<=0||fps>120){sequenceInsertionNodeId=null;alert('FPSは0より大きく120以下にしてください。');return;}
- try{const media=await importPngSequence(files,fps);if(sequenceInsertionNodeId){const node=getNode(sequenceInsertionNodeId);if(node?.type==='animation')assignMediaToNode(node,media.id);}setMediaPanelOpen(false);}catch(error){console.error(error);alert('連番PNGを読み込めませんでした。\n'+error.message);}finally{sequenceInsertionNodeId=null;}
-});
+function openSequenceWizard(){
+ const overlay=document.createElement('div');overlay.className='sequence-wizard-overlay';
+ const files=[null];let active=0;
+ overlay.innerHTML=`<div class="sequence-wizard" role="dialog" aria-modal="true" aria-label="連番PNGを追加"><div class="sequence-wizard-head"><strong>アニメーション（連番PNG）</strong><button type="button" data-seq-close>×</button></div><label>FPS <input class="number-input" data-seq-fps type="number" min="1" max="120" step="1" value="8"></label><div class="sequence-frame-tabs" data-seq-tabs></div><div class="sequence-frame-editor"><div data-seq-name>画像未選択</div><button type="button" data-seq-choose>画像を選択</button><input type="file" accept="image/png,.png" data-seq-file hidden></div><div class="sequence-wizard-footer"><button type="button" data-seq-add>＋ フレームを追加</button><button type="button" data-seq-save>登録する</button></div></div>`;
+ document.body.appendChild(overlay);
+ const $=q=>overlay.querySelector(q);
+ const refresh=()=>{$('[data-seq-tabs]').innerHTML=files.map((file,i)=>`<button type="button" class="sequence-frame-tab ${i===active?'is-active':''}" data-seq-tab="${i}">${i+1}枚目</button>`).join('');$('[data-seq-name]').textContent=files[active]?.name||'画像未選択';};
+ const close=()=>{overlay.remove();sequenceInsertionNodeId=null;};
+ $('[data-seq-close]').addEventListener('click',close);
+ $('[data-seq-tabs]').addEventListener('click',e=>{const btn=e.target.closest('[data-seq-tab]');if(!btn)return;active=Number(btn.dataset.seqTab);refresh();});
+ $('[data-seq-add]').addEventListener('click',()=>{files.push(null);active=files.length-1;refresh();});
+ $('[data-seq-choose]').addEventListener('click',()=>$('[data-seq-file]').click());
+ $('[data-seq-file]').addEventListener('change',e=>{const file=e.target.files?.[0];if(file){files[active]=file;refresh();}e.target.value='';});
+ $('[data-seq-save]').addEventListener('click',async()=>{
+  const fps=Number($('[data-seq-fps]').value);
+  if(!Number.isFinite(fps)||fps<1||fps>120){alert('FPSは1～120で指定してください。');return;}
+  if(files.some(f=>!f)){alert('すべてのフレームにPNG画像を選択してください。');return;}
+  if(files.some(f=>!f.name.toLowerCase().endsWith('.png'))){alert('PNG画像だけを指定してください。');return;}
+  const button=$('[data-seq-save]');button.disabled=true;
+  try{const media=await importPngSequence(files,fps,true);if(sequenceInsertionNodeId){const node=getNode(sequenceInsertionNodeId);if(node?.type==='animation')assignMediaToNode(node,media.id);}setMediaPanelOpen(false);close();}catch(error){console.error(error);alert('連番PNGを登録できませんでした。\n'+error.message);button.disabled=false;}
+ });
+ refresh();
+}
+
 
 
 renderMediaList();
@@ -5686,7 +5723,7 @@ created=addNode(nodeType,menuPoint.x,menuPoint.y);
 }
 if(sequenceNode){
  sequenceInsertionNodeId=created?.id||state.selectedNodeId;
- document.getElementById('sequenceFileInput').click();
+ openSequenceWizard();
 }
 }
 });
