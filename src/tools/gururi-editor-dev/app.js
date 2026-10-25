@@ -5600,13 +5600,10 @@ openContextMenu(e.clientX-rect.left,e.clientY-rect.top);
 const nodeMenuCategories={
 material:{label:'素材',element:materialMenu},
 trigger:{label:'トリガー',element:triggerMenu},
-condition:{label:'条件',element:document.getElementById('conditionMenu')},
-navigation:{label:'移動',element:document.getElementById('navigationMenu')},
-state:{label:'状態',element:document.getElementById('stateMenu')},
 effect:{label:'効果',element:effectMenu},
-camera:{label:'カメラ',element:cameraMenu},
-panel:{label:'UI',element:panelMenu},
-item:{label:'アイテム',element:document.getElementById('itemMenu')}
+event:{label:'イベント',element:document.getElementById('eventMenu')},
+branch:{label:'分岐',element:document.getElementById('branchMenu')},
+panel:{label:'UI',element:panelMenu}
 };
 
 function updateNodeMenuCategories(openCategory=null){

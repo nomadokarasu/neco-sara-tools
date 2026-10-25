@@ -916,3 +916,6 @@ flex-shrink:0;
 .save-progress-dialog progress{appearance:none;border:0;border-radius:6px;overflow:hidden;background:#4b4b4b}
 .save-progress-dialog progress::-webkit-progress-bar{background:#4b4b4b;border-radius:6px}
 .save-progress-dialog progress::-webkit-progress-value{background:#8ec5fc;border-radius:6px}
+
+/* 右クリックメニューの独立項目 */
+.context-menu .menu-separator{border-top:1px solid #e4e7ec;margin:6px 4px}
