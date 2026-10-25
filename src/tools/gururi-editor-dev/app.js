@@ -153,6 +153,10 @@ const worldFileInput=document.getElementById('worldFileInput');
 const animationFileInput=document.getElementById('animationFileInput');
 const playBtn=document.getElementById('playBtn');
 const gamePreview=document.getElementById('gamePreview');
+const uiButtonPreviewLayer=document.createElement('div');
+uiButtonPreviewLayer.className='game-ui-button-layer';
+document.getElementById('gameViewport').appendChild(uiButtonPreviewLayer);
+function clearUiButtonPreview(){uiButtonPreviewLayer.replaceChildren();}
 const closePreviewBtn=document.getElementById('closePreviewBtn');
 const gameCanvas=document.getElementById('gameCanvas');
 const previewMessage=document.getElementById('previewMessage');
@@ -487,6 +491,10 @@ optionChoices:[],
 textAnswerQuestion:'',
 textAnswerCorrect:'',
 textAnswerMode:'text',
+uiButtonText:'ボタン',
+uiButtonWidth:180,
+uiButtonHeight:56,
+uiButtonFontSize:20,
 conditionMode:'acquired',
 conditionItemId:'',
 conditionOwnerId:null,
@@ -635,6 +643,7 @@ node.type==='time'?'時間':
 node.type==='click'?'クリック':
 node.type==='frameIn'?'フレームイン':
 node.type==='dialogue'?'ダイアローグ':
+node.type==='uiButton'?'ボタン':
 node.type==='option'?'オプション':
 node.type==='textAnswer'?'テキスト入力':
 node.type==='condition'?'条件':
@@ -666,6 +675,7 @@ node.type==='time'?`${node.timeSeconds} 秒`:
 node.type==='click'?'範囲クリック':
 node.type==='frameIn'?'カメラ範囲トリガー':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
+node.type==='uiButton'?(node.uiButtonText||'ボタン'):
 node.type==='option'?'質問文と選択肢':
 node.type==='textAnswer'?'入力した回答を判定':
 node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
@@ -916,6 +926,16 @@ settingsPanel.appendChild(group);
 if(!node){settingsPanel.innerHTML='<div class="settings-empty">ノードを選択してください</div>';return}
 if(node.type==='folderStart'||node.type==='worldDisplay'){
  settingsPanel.innerHTML=`<div class="settings-title">${node.type==='folderStart'?'START':'ワールド表示'}</div><p class="settings-empty">${node.type==='folderStart'?'ここからワールドの開始演出を接続します。':'ワールドの基本メディアとレイヤーを表示して探索を開始します。'}</p>`;
+ return;
+}
+if(node.type==='uiButton'){
+ const fields=[['uiButtonWidth','ボタンの幅（px）',40,1000,180],['uiButtonHeight','ボタンの高さ（px）',24,500,56],['uiButtonFontSize','文字サイズ（px）',8,120,20]];
+ settingsPanel.innerHTML=`<div class="settings-title">ボタン</div>
+ <div class="setting-group"><div class="setting-label">ボタンのテキスト</div><input id="uiButtonTextInput" class="number-input" type="text" maxlength="100" value="${escapeHtml(node.uiButtonText??'ボタン')}"></div>
+ ${fields.map(([id,label,min,max,fallback])=>`<div class="setting-group"><div class="setting-label">${label}</div><input id="${id}" class="number-input" type="number" min="${min}" max="${max}" step="1" value="${Math.max(min,Math.min(max,Number(node[id])||fallback))}"></div>`).join('')}
+ <p class="settings-empty">ゲーム画面にボタンを表示し、押すと右側に接続したノードへ進みます。</p>`;
+ document.getElementById('uiButtonTextInput').addEventListener('input',e=>{node.uiButtonText=e.target.value;renderNodes();});
+ for(const [id,,min,max,fallback] of fields){document.getElementById(id).addEventListener('change',e=>{node[id]=Math.max(min,Math.min(max,Number(e.target.value)||fallback));e.target.value=String(node[id]);});}
  return;
 }
 if(node.type==='worldMove'){
@@ -6756,6 +6776,7 @@ state.previewFrameInIds=[];
 state.previewDialogueNodeId=null;
 optionChoicesOverlay.classList.add('hidden');
 optionChoicesOverlay.replaceChildren();
+clearUiButtonPreview();
 closeTextAnswerPanel();
 inventoryOverlay.classList.add('hidden');
 clearMedia2DLayer();
@@ -7679,6 +7700,23 @@ if(node.type==='media2d'){
 showMedia2D(node);
 previewOutgoing(node.id);
 return;
+}
+if(node.type==='uiButton'){
+ clearUiButtonPreview();
+ const button=document.createElement('button');
+ button.type='button';button.className='game-ui-button';
+ button.textContent=node.uiButtonText??'ボタン';
+ button.style.width=`min(${Math.max(40,Number(node.uiButtonWidth)||180)}px, 90%)`;
+ button.style.height=`${Math.max(24,Number(node.uiButtonHeight)||56)}px`;
+ button.style.fontSize=`${Math.max(8,Number(node.uiButtonFontSize)||20)}px`;
+ button.addEventListener('click',event=>{
+  event.preventDefault();event.stopPropagation();
+  if(gamePreview.classList.contains('hidden')||!button.isConnected)return;
+  clearUiButtonPreview();
+  previewOutgoing(node.id);
+ });
+ uiButtonPreviewLayer.appendChild(button);
+ return;
 }
 if(node.type==='frameIn'){
 if(!state.previewFrameInIds.includes(node.id))state.previewFrameInIds.push(node.id);

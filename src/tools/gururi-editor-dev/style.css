@@ -933,3 +933,8 @@ flex-shrink:0;
 .click-layer-visibility-row{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:13px;cursor:pointer;}
 .click-layer-visibility-row input{margin:0;flex:none;}
 .click-layer-visibility-row span{overflow-wrap:anywhere;}
+
+/* UI button node: only visible while waiting for a click in game preview. */
+.game-ui-button-layer{position:absolute;inset:0;z-index:8;display:flex;align-items:flex-end;justify-content:center;padding:5% 2%;pointer-events:none}
+.game-ui-button{pointer-events:auto;max-width:90%;max-height:90%;border:1px solid rgba(255,255,255,.75);border-radius:7px;background:rgba(13,13,18,.86);color:#fff;line-height:1.2;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+.game-ui-button:hover,.game-ui-button:focus-visible{background:rgba(60,60,75,.95)}
