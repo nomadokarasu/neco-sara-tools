@@ -372,6 +372,17 @@ function renderToggleSettings(node){
  const input=document.getElementById('toggleName');input.value=node.toggleName||'';
  input.addEventListener('input',()=>{node.toggleName=input.value;renderNodes();});
 }
+function renderToggleSetSettings(node){
+ const toggles=state.nodes.filter(n=>n.type==='toggle');
+ settingsPanel.innerHTML=`<div class="settings-title">トグル切り替え</div>
+ <div class="setting-group"><div class="setting-label">対象のトグル</div><select id="toggleSetTarget" class="number-input"><option value="">選択してください</option>${toggles.map(n=>`<option value="${escapeHtml(n.id)}">${escapeHtml(n.toggleName||'トグル '+n.id)}</option>`).join('')}</select></div>
+ <div class="setting-group"><div class="setting-label">操作</div><select id="toggleSetAction" class="number-input"><option value="on">ONにする</option><option value="off">OFFにする</option><option value="toggle">反転する</option></select></div>
+ <p class="settings-empty">指定したトグルの状態を変更し、右端に接続された次のノードに進みます。対象トグルのON／OFF分岐は実行しません。</p>`;
+ const target=document.getElementById('toggleSetTarget');target.value=node.toggleSetTargetId||'';
+ target.onchange=()=>{node.toggleSetTargetId=target.value;renderNodes();};
+ const action=document.getElementById('toggleSetAction');action.value=['on','off','toggle'].includes(node.toggleSetAction)?node.toggleSetAction:'on';
+ action.onchange=()=>{node.toggleSetAction=action.value;renderNodes();};
+}
 function renderConditionSettings(node){
  const items=state.nodes.filter(n=>n.type==='itemAcquire');
  const events=state.nodes.filter(n=>n.type==='eventRecord');
@@ -502,6 +513,8 @@ conditionOwnerId:null,
 toggleOwnerId:null,
 toggleResult:null,
 toggleName:'',
+toggleSetTargetId:'',
+toggleSetAction:'on',
 conditionResult:null,
 textAnswerOwnerId:null,
 textAnswerResult:null,
@@ -649,6 +662,7 @@ node.type==='option'?'オプション':
 node.type==='textAnswer'?'テキスト入力':
 node.type==='condition'?'条件':
 node.type==='toggle'?'トグル':
+node.type==='toggleSet'?'トグル切り替え':
 node.type==='toggleBranch'?(node.toggleResult==='on'?'ON':'OFF'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'はい':'いいえ'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解':'不正解'):
@@ -680,6 +694,7 @@ node.type==='uiButton'?(node.uiButtonText||'ボタン'):
 node.type==='option'?'質問文と選択肢':
 node.type==='textAnswer'?'入力した回答を判定':
 node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
+node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：'+({on:'ONにする',off:'OFFにする',toggle:'反転する'}[node.toggleSetAction]||'ONにする')):
 node.type==='toggleBranch'?(node.toggleResult==='on'?'ONルート':'OFFルート'):
 node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'条件成立':'条件不成立'):
@@ -1090,6 +1105,7 @@ return;
 if(node.type==='option'){renderOptionSettings(node);return;}
 if(node.type==='textAnswer'){renderTextAnswerSettings(node);return;}
 if(node.type==='toggle'){renderToggleSettings(node);return;}
+if(node.type==='toggleSet'){renderToggleSetSettings(node);return;}
 if(node.type==='toggleBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.toggleResult==='on'?'ON':'OFF'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
 if(node.type==='condition'){renderConditionSettings(node);return;}
 if(node.type==='conditionBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.conditionResult==='yes'?'はい':'いいえ'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
@@ -7794,6 +7810,20 @@ if(node.type==='toggle'){
  refreshWorldComposite();
  const branch=toggleBranches(node).find(n=>n.toggleResult===(nextOn?'on':'off'));
  if(branch)previewOutgoing(branch.id);
+ return;
+}
+if(node.type==='toggleSet'){
+ const target=getNode(node.toggleSetTargetId);
+ if(target?.type==='toggle'){
+  const wasOn=toggleWorldStates.has(target.id);
+  const nextOn=node.toggleSetAction==='toggle'?!wasOn:node.toggleSetAction==='off'?false:true;
+  if(nextOn)toggleWorldStates.add(target.id);else toggleWorldStates.delete(target.id);
+  recordPreviewDiagnostic('toggle-set',{nodeId:node.id,targetId:target.id,state:nextOn?'on':'off'});
+  refreshWorldComposite();
+ }else{
+  recordPreviewDiagnostic('toggle-set-no-target',{nodeId:node.id,targetId:node.toggleSetTargetId});
+ }
+ previewOutgoing(node.id);
  return;
 }
 if(node.type==='toggleBranch'){previewOutgoing(node.id);return;}
