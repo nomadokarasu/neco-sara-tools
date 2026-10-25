@@ -938,3 +938,13 @@ flex-shrink:0;
 .game-ui-button-layer{position:absolute;inset:0;z-index:8;display:flex;align-items:flex-end;justify-content:center;padding:5% 2%;pointer-events:none}
 .game-ui-button{pointer-events:auto;max-width:90%;max-height:90%;border:1px solid rgba(255,255,255,.75);border-radius:7px;background:rgba(13,13,18,.86);color:#fff;line-height:1.2;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
 .game-ui-button:hover,.game-ui-button:focus-visible{background:rgba(60,60,75,.95)}
+
+/* ボタンノード：PC・スマホ別配置プレビュー */
+.ui-button-mode-tabs{display:flex;gap:6px;margin:8px 0}
+.ui-button-mode-tabs button{flex:1;padding:7px;border:1px solid #777;background:#28282b;color:#eee;border-radius:4px;cursor:pointer}
+.ui-button-mode-tabs button.active{background:#555d71;border-color:#b3c7f5}
+.ui-button-position-preview{position:relative;aspect-ratio:16/9;width:100%;overflow:hidden;background:linear-gradient(160deg,#454954,#20242c);border:1px solid #888;border-radius:4px;touch-action:none}
+.ui-button-position-preview.mobile{aspect-ratio:9/16;width:min(65%,240px);margin:0 auto}
+#uiButtonPositionTarget{position:absolute;transform:translate(-50%,-50%);border:1px solid #fff;border-radius:5px;background:#292932;color:white;white-space:normal;overflow:hidden;cursor:grab;touch-action:none;user-select:none;padding:0}
+#uiButtonPositionTarget:active{cursor:grabbing}
+.game-ui-button-layer{display:block;padding:0}

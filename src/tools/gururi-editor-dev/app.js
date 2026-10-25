@@ -495,6 +495,7 @@ uiButtonText:'ボタン',
 uiButtonWidth:180,
 uiButtonHeight:56,
 uiButtonFontSize:20,
+uiButtonPositions:{pc:{x:50,y:88},mobile:{x:50,y:88}},
 conditionMode:'acquired',
 conditionItemId:'',
 conditionOwnerId:null,
@@ -930,12 +931,59 @@ if(node.type==='folderStart'||node.type==='worldDisplay'){
 }
 if(node.type==='uiButton'){
  const fields=[['uiButtonWidth','ボタンの幅（px）',40,1000,180],['uiButtonHeight','ボタンの高さ（px）',24,500,56],['uiButtonFontSize','文字サイズ（px）',8,120,20]];
+ node.uiButtonPositions ||= {pc:{x:50,y:88},mobile:{x:50,y:88}};
+ let buttonEditorMode='pc';
  settingsPanel.innerHTML=`<div class="settings-title">ボタン</div>
  <div class="setting-group"><div class="setting-label">ボタンのテキスト</div><input id="uiButtonTextInput" class="number-input" type="text" maxlength="100" value="${escapeHtml(node.uiButtonText??'ボタン')}"></div>
  ${fields.map(([id,label,min,max,fallback])=>`<div class="setting-group"><div class="setting-label">${label}</div><input id="${id}" class="number-input" type="number" min="${min}" max="${max}" step="1" value="${Math.max(min,Math.min(max,Number(node[id])||fallback))}"></div>`).join('')}
- <p class="settings-empty">ゲーム画面にボタンを表示し、押すと右側に接続したノードへ進みます。</p>`;
- document.getElementById('uiButtonTextInput').addEventListener('input',e=>{node.uiButtonText=e.target.value;renderNodes();});
- for(const [id,,min,max,fallback] of fields){document.getElementById(id).addEventListener('change',e=>{node[id]=Math.max(min,Math.min(max,Number(e.target.value)||fallback));e.target.value=String(node[id]);});}
+ <div class="setting-group"><div class="setting-label">ボタンの表示位置</div>
+ <div class="ui-button-mode-tabs"><button type="button" data-mode="pc" class="active">PC（16:9）</button><button type="button" data-mode="mobile">スマホ（9:16）</button></div>
+ <div class="ui-button-position-preview" id="uiButtonPositionPreview"><button id="uiButtonPositionTarget" type="button"></button></div>
+ <div class="pan-help">ボタンをドラッグして位置を変更します。PCとスマホの位置は別々に保存されます。</div></div>
+ <p class="settings-empty">ゲーム画面でボタンを押すと、接続先のノードへ進みます。</p>`;
+ const preview=settingsPanel.querySelector('#uiButtonPositionPreview');
+ const target=settingsPanel.querySelector('#uiButtonPositionTarget');
+ const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+ const redraw=()=>{
+  preview.classList.toggle('mobile',buttonEditorMode==='mobile');
+  settingsPanel.querySelectorAll('.ui-button-mode-tabs button').forEach(el=>el.classList.toggle('active',el.dataset.mode===buttonEditorMode));
+  const pos=node.uiButtonPositions[buttonEditorMode]||{x:50,y:88};
+  target.style.left=`${pos.x}%`;target.style.top=`${pos.y}%`;
+  const scale=preview.clientWidth/(buttonEditorMode==='pc'?960:540);
+  target.style.width=`${Math.max(40,Number(node.uiButtonWidth)||180)*scale}px`;
+  target.style.height=`${Math.max(24,Number(node.uiButtonHeight)||56)*scale}px`;
+  target.style.fontSize=`${Math.max(8,Number(node.uiButtonFontSize)||20)*scale}px`;
+  target.textContent=node.uiButtonText??'ボタン';
+ };
+ settingsPanel.querySelectorAll('.ui-button-mode-tabs button').forEach(el=>el.addEventListener('click',()=>{buttonEditorMode=el.dataset.mode;redraw();}));
+ // Drag the button without jumping its center to the initial pointer location.
+ // Positions are stored in percentages so each device preview remains independent.
+ let buttonDrag=null;
+ target.addEventListener('pointerdown',e=>{
+  if(e.button!==0 && e.pointerType==='mouse')return;
+  e.preventDefault();
+  const initial=node.uiButtonPositions[buttonEditorMode]||{x:50,y:88};
+  buttonDrag={pointerId:e.pointerId,mode:buttonEditorMode,startX:e.clientX,startY:e.clientY,x:initial.x,y:initial.y};
+  target.setPointerCapture(e.pointerId);
+ });
+ target.addEventListener('pointermove',e=>{
+  if(!buttonDrag||e.pointerId!==buttonDrag.pointerId)return;
+  e.preventDefault();
+  const r=preview.getBoundingClientRect();
+  if(!r.width||!r.height)return;
+  node.uiButtonPositions[buttonDrag.mode]={
+   x:clamp(buttonDrag.x+(e.clientX-buttonDrag.startX)/r.width*100,0,100),
+   y:clamp(buttonDrag.y+(e.clientY-buttonDrag.startY)/r.height*100,0,100)
+  };
+  redraw();
+ });
+ const endButtonDrag=e=>{if(buttonDrag&&e.pointerId===buttonDrag.pointerId)buttonDrag=null;};
+ target.addEventListener('pointerup',endButtonDrag);
+ target.addEventListener('pointercancel',endButtonDrag);
+ target.addEventListener('lostpointercapture',endButtonDrag);
+ document.getElementById('uiButtonTextInput').addEventListener('input',e=>{node.uiButtonText=e.target.value;renderNodes();redraw();});
+ for(const [id,,min,max,fallback] of fields){document.getElementById(id).addEventListener('input',e=>{node[id]=clamp(Number(e.target.value)||fallback,min,max);redraw();});}
+ requestAnimationFrame(()=>{if(preview.isConnected)redraw();});
  return;
 }
 if(node.type==='worldMove'){
@@ -7709,6 +7757,11 @@ if(node.type==='uiButton'){
  button.style.width=`min(${Math.max(40,Number(node.uiButtonWidth)||180)}px, 90%)`;
  button.style.height=`${Math.max(24,Number(node.uiButtonHeight)||56)}px`;
  button.style.fontSize=`${Math.max(8,Number(node.uiButtonFontSize)||20)}px`;
+ const pos=(node.uiButtonPositions||{})[state.displayMode]||{x:50,y:88};
+ button.style.position='absolute';
+ button.style.left=`${Math.max(0,Math.min(100,Number(pos.x)??50))}%`;
+ button.style.top=`${Math.max(0,Math.min(100,Number(pos.y)??88))}%`;
+ button.style.transform='translate(-50%, -50%)';
  button.addEventListener('click',event=>{
   event.preventDefault();event.stopPropagation();
   if(gamePreview.classList.contains('hidden')||!button.isConnected)return;
