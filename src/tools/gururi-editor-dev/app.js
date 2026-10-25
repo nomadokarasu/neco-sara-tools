@@ -351,6 +351,23 @@ function ensureConditionBranches(owner){
   state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
  }
 }
+function toggleBranches(owner){
+ return state.nodes.filter(n=>n.type==='toggleBranch'&&n.toggleOwnerId===owner.id);
+}
+function ensureToggleBranches(owner){
+ if(owner?.type!=='toggle')return;
+ for(const result of ['on','off']){
+  if(toggleBranches(owner).some(n=>n.toggleResult===result))continue;
+  const branch={id:uid('toggleBranch'),type:'toggleBranch',folderId:owner.folderId,toggleOwnerId:owner.id,toggleResult:result,x:owner.x+250,y:owner.y+(result==='on'?0:105)};
+  state.nodes.push(branch);
+  state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
+ }
+}
+function renderToggleSettings(node){
+ settingsPanel.innerHTML='<div class="settings-title">トグル</div><div class="setting-group"><div class="setting-label">トグル名</div><input type="text" id="toggleName" class="number-input" placeholder="例：照明"></div><p class="settings-empty">初期状態：OFF。実行するたびに ON／OFF が切り替わり、対応する分岐へ進みます。ワールド間でも状態を保持し、ゲーム再開時にリセットします。</p>';
+ const input=document.getElementById('toggleName');input.value=node.toggleName||'';
+ input.addEventListener('input',()=>{node.toggleName=input.value;renderNodes();});
+}
 function renderConditionSettings(node){
  const items=state.nodes.filter(n=>n.type==='itemAcquire');
  const events=state.nodes.filter(n=>n.type==='eventRecord');
@@ -473,6 +490,9 @@ textAnswerMode:'text',
 conditionMode:'acquired',
 conditionItemId:'',
 conditionOwnerId:null,
+toggleOwnerId:null,
+toggleResult:null,
+toggleName:'',
 conditionResult:null,
 textAnswerOwnerId:null,
 textAnswerResult:null,
@@ -520,6 +540,7 @@ state.nodes.push(node);
 
 if(type==='textAnswer')ensureTextAnswerBranches(node);
 if(type==='condition')ensureConditionBranches(node);
+if(type==='toggle')ensureToggleBranches(node);
 commitEditorHistory(editBefore);
 renderNodes();
 selectNode(node.id);
@@ -594,7 +615,7 @@ return null;
 function renderNodes(){
 // 旧仕様の『その他のアイテム』分岐だけを除去する。接続先ノードは残す。
 removeLegacyOtherClickBranches();
-for(const n of state.nodes){if(n.folderId)continue;const owner=getNode(n.clickBranchOwnerId||n.conditionOwnerId||n.textAnswerOwnerId||n.optionOwnerId);if(owner)n.folderId=owner.folderId;}
+for(const n of state.nodes){if(n.folderId)continue;const owner=getNode(n.clickBranchOwnerId||n.conditionOwnerId||n.toggleOwnerId||n.textAnswerOwnerId||n.optionOwnerId);if(owner)n.folderId=owner.folderId;}
 nodesLayer.innerHTML='';
 for(const node of state.nodes){
 if(!state.activeFolderId||node.folderId!==state.activeFolderId||node.type==='world')continue;
@@ -617,6 +638,8 @@ node.type==='dialogue'?'ダイアローグ':
 node.type==='option'?'オプション':
 node.type==='textAnswer'?'テキスト入力':
 node.type==='condition'?'条件':
+node.type==='toggle'?'トグル':
+node.type==='toggleBranch'?(node.toggleResult==='on'?'ON':'OFF'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'はい':'いいえ'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解':'不正解'):
 node.type==='itemAcquire'?'アイテム取得':
@@ -645,6 +668,8 @@ node.type==='frameIn'?'カメラ範囲トリガー':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='option'?'質問文と選択肢':
 node.type==='textAnswer'?'入力した回答を判定':
+node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
+node.type==='toggleBranch'?(node.toggleResult==='on'?'ONルート':'OFFルート'):
 node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'条件成立':'条件不成立'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解ルート':'不正解ルート'):
@@ -996,6 +1021,8 @@ return;
 }
 if(node.type==='option'){renderOptionSettings(node);return;}
 if(node.type==='textAnswer'){renderTextAnswerSettings(node);return;}
+if(node.type==='toggle'){renderToggleSettings(node);return;}
+if(node.type==='toggleBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.toggleResult==='on'?'ON':'OFF'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
 if(node.type==='condition'){renderConditionSettings(node);return;}
 if(node.type==='conditionBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.conditionResult==='yes'?'はい':'いいえ'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
 if(node.type==='textAnswerBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.textAnswerResult==='correct'?'正解':'不正解'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
@@ -5928,7 +5955,7 @@ const newNode=copyNodeData(copiedNodeData);
 newNode.id=uid(newNode.type);
 if(['folderStart','worldDisplay'].includes(newNode.type))return;
 if(newNode.type==='option'){newNode.optionChoices=[];}
-if(newNode.type==='optionChoice'||newNode.type==='textAnswerBranch'||newNode.type==='conditionBranch')return;
+if(newNode.type==='optionChoice'||newNode.type==='textAnswerBranch'||newNode.type==='conditionBranch'||newNode.type==='toggleBranch')return;
 if(newNode.type==='textAnswer'){newNode.textAnswerOwnerId=null;newNode.textAnswerResult=null;}
 newNode.x=copiedNodeData.x+pasteOffset;
 newNode.y=copiedNodeData.y+pasteOffset;
@@ -5936,6 +5963,7 @@ newNode.y=copiedNodeData.y+pasteOffset;
 state.nodes.push(newNode);
 if(newNode.type==='textAnswer')ensureTextAnswerBranches(newNode);
 if(newNode.type==='condition')ensureConditionBranches(newNode);
+if(newNode.type==='toggle')ensureToggleBranches(newNode);
 commitEditorHistory(editBefore);
 renderNodes();
 selectNode(newNode.id);
@@ -6011,12 +6039,12 @@ state.selectedNodeId;
 if(!id||id==='start')return;
 if(['folderStart','worldDisplay'].includes(getNode(id)?.type))return;
 const removedNode=getNode(id);
-if(removedNode?.type==='textAnswerBranch'||removedNode?.type==='conditionBranch')return;
+if(removedNode?.type==='textAnswerBranch'||removedNode?.type==='conditionBranch'||removedNode?.type==='toggleBranch')return;
 if(removedNode?.type==='optionChoice'){
 const owner=getNode(removedNode.optionOwnerId);
 if(owner){removeOptionChoice(owner,removedNode.optionChoiceId);state.selectedNodeId=null;return;}
 }
-const attached=new Set(removedNode?.type==='option'?optionChoiceNodes(removedNode).map(n=>n.id):removedNode?.type==='textAnswer'?textAnswerBranches(removedNode).map(n=>n.id):removedNode?.type==='condition'?conditionBranches(removedNode).map(n=>n.id):[]);
+const attached=new Set(removedNode?.type==='option'?optionChoiceNodes(removedNode).map(n=>n.id):removedNode?.type==='textAnswer'?textAnswerBranches(removedNode).map(n=>n.id):removedNode?.type==='condition'?conditionBranches(removedNode).map(n=>n.id):removedNode?.type==='toggle'?toggleBranches(removedNode).map(n=>n.id):[]);
 attached.add(id);
 
 state.nodes=
@@ -6667,7 +6695,7 @@ const targets=state.connections
 .map(c=>getNode(c.to))
 .filter(Boolean)
 .filter(target=>{
-if(!sourceIsMedia)return !(source?.type==='click'&&target.type==='clickBranch')&&!(source?.type==='condition'&&target.type==='conditionBranch');
+if(!sourceIsMedia)return !(source?.type==='click'&&target.type==='clickBranch')&&!(source?.type==='condition'&&target.type==='conditionBranch')&&!(source?.type==='toggle'&&target.type==='toggleBranch');
 
 const targetEndsScene=target.type==='world'||target.type==='animation'||target.type==='start';
 
@@ -6721,7 +6749,7 @@ state.selectedInventoryItemId=null;
 state.inventoryEnabled=false;
 previewCompletedTriggers.clear();
 acquiredItems.clear();
-recordedWorldEvents.clear();usedWorldBranches.clear();
+recordedWorldEvents.clear();usedWorldBranches.clear();toggleWorldStates.clear();
 }
 cancelPreviewScene();
 previewAcquisitionSourceClickId=null;
@@ -7583,6 +7611,16 @@ schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
 return;
 }
 if(node.type==='worldMove'){if(node.destinationFolderId)enterWorldFolder(node.destinationFolderId);return;}
+if(node.type==='toggle'){
+ const nextOn=!toggleWorldStates.has(node.id);
+ if(nextOn)toggleWorldStates.add(node.id);else toggleWorldStates.delete(node.id);
+ recordPreviewDiagnostic('toggle-switched',{nodeId:node.id,state:nextOn?'on':'off'});
+ refreshWorldComposite();
+ const branch=toggleBranches(node).find(n=>n.toggleResult===(nextOn?'on':'off'));
+ if(branch)previewOutgoing(branch.id);
+ return;
+}
+if(node.type==='toggleBranch'){previewOutgoing(node.id);return;}
 if(node.type==='eventRecord'){recordedWorldEvents.add(node.id);refreshWorldComposite();previewOutgoing(node.id);return;}
 if(node.type==='itemAcquire'){
  if(acquiredItems.has(node.id)){previewOutgoing(node.id);return;}
@@ -7948,7 +7986,7 @@ state.startFolderId=data.startFolderId||state.worldFolders[0]?.id||null;
 state.startFolderId=state.worldFolders[0]?.id||null;
 state.activeFolderId=state.startFolderId;
 worldComposites.clear();
-for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);
+for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);else if(n.type==='toggle')ensureToggleBranches(n);
 resetEditorHistory();
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
@@ -8120,7 +8158,7 @@ if(node.animation)node.animation.raw=null;
 mediaLibrary.splice(0,mediaLibrary.length,...loaded);
 state.nodes=data.nodes;
 state.connections=data.connections;
-for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);
+for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);else if(n.type==='toggle')ensureToggleBranches(n);
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
 state.displayMode=['pc','mobile'].includes(data.displayMode)?data.displayMode:'pc';
@@ -8247,6 +8285,7 @@ const worldFolderPanel=document.createElement('section');
 worldFolderPanel.id='worldFolderPanel';worldFolderPanel.className='world-folder-panel hidden';
 workspace.appendChild(worldFolderPanel);
 const recordedWorldEvents=new Set();
+const toggleWorldStates=new Set();
 let currentWorldBackerId=null;
 let pendingWorldEntryFade=null;
 let worldEntryFadeActive=false;
@@ -8316,7 +8355,7 @@ function updateWorldTabs(){
 }
 function layerConditionMatches(layer){
  if(layer.mode==='always'||!layer.mode)return true;
- const has=layer.eventType==='acquire'?acquiredItems.has(layer.targetId):layer.eventType==='use'?usedWorldBranches.has(layer.targetId):recordedWorldEvents.has(layer.targetId);
+ const has=layer.eventType==='toggle'?toggleWorldStates.has(layer.targetId):layer.eventType==='acquire'?acquiredItems.has(layer.targetId):layer.eventType==='use'?usedWorldBranches.has(layer.targetId):recordedWorldEvents.has(layer.targetId);
  return layer.mode==='after'?has:!has;
 }
 function getFolderMedia(folder){return mediaLibrary.find(m=>m.id===folderBacker(folder)?.world?.mediaId)||null;}
@@ -8349,9 +8388,9 @@ function addFolderRow(parent,label,element){const group=document.createElement('
 function folderMediaSelect(value,types,onchange){const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('素材未設定',''));for(const m of mediaLibrary.filter(m=>types.includes(m.fileType)))sel.add(new Option(m.fileName,m.id));sel.value=value||'';sel.onchange=()=>onchange(sel.value);return sel;}
 function folderEventSelect(layer,render){
  const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('対象を選択',''));
- const types={acquire:'itemAcquire',use:'clickBranch',event:'eventRecord'};
+ const types={acquire:'itemAcquire',use:'clickBranch',event:'eventRecord',toggle:'toggle'};
  for(const n of state.nodes.filter(n=>n.type===types[layer.eventType]&&(n.type!=='clickBranch'||n.clickBranchItemId!=='__other__'))){
-  const label=n.itemName||n.eventName||n.customBody||n.clickBranchItemId||n.id;
+  const label=n.toggleName||n.itemName||n.eventName||n.customBody||n.clickBranchItemId||n.id;
   sel.add(new Option(label+' ('+(state.worldFolders.find(w=>w.id===n.folderId)?.name||'')+')',n.id));
  }
  sel.value=layer.targetId||'';sel.onchange=()=>{layer.targetId=sel.value;render();};return sel;
@@ -8428,7 +8467,7 @@ function renderWorldFolderEditor(){
   addFolderRow(panel,'画像',folderMediaSelect(layer.mediaId,['png'],id=>layer.mediaId=id));
   const heading=document.createElement('div');heading.className='setting-label';heading.textContent='このレイヤーをいつ表示しますか？';panel.append(heading);
   const eventType=document.createElement('select');eventType.className='number-input';
-  for(const [value,text] of [['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了']])eventType.add(new Option(text,value));
+  for(const [value,text] of [['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']])eventType.add(new Option(text,value));
   eventType.value=layer.eventType||'acquire';addFolderRow(panel,'表示条件',eventType);
   const timing=document.createElement('select');timing.className='number-input';timing.add(new Option('前','before'));timing.add(new Option('後','after'));
   timing.value=layer.mode==='after'?'after':'before';addFolderRow(panel,'前後',timing);
@@ -8436,8 +8475,9 @@ function renderWorldFolderEditor(){
   const explanation=document.createElement('p');explanation.className='world-layer-explanation';panel.append(explanation);
   const updateExplanation=()=>{
     const target=getNode(layer.targetId);
-    const name=target?.itemName||target?.eventName||target?.customBody||(target?.clickBranchItemId?itemDisplayName(getNode(target.clickBranchItemId)):null);
-    const action=layer.eventType==='acquire'?'を取得':layer.eventType==='use'?'を使用':'が終了';
+    const name=(target?.type==='toggle'?(target.toggleName||'トグル '+target.id):null)||target?.itemName||target?.eventName||target?.customBody||(target?.clickBranchItemId?itemDisplayName(getNode(target.clickBranchItemId)):null);
+    const action=layer.eventType==='toggle'?'':layer.eventType==='acquire'?'を取得':layer.eventType==='use'?'を使用':'が終了';
+    if(layer.eventType==='toggle'){explanation.textContent=name?`このレイヤーは「${name}」が${layer.mode==='after'?'ON':'OFF'}の間に表示します`:'対象のトグルを選択してください。';return;}
     explanation.textContent=name?`このレイヤーは「${name}」${action}${layer.mode==='after'?'した後に表示します':'するまで表示します'}`:'対象を選ぶと表示条件がここに表示されます。';
   };
   const drawTarget=()=>{targetContainer.replaceChildren();addFolderRow(targetContainer,'対象',folderEventSelect(layer,updateExplanation));updateExplanation();};
