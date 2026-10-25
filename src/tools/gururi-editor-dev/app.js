@@ -376,27 +376,25 @@ function renderToggleSetSettings(node){
  const toggles=state.nodes.filter(n=>n.type==='toggle');
  settingsPanel.innerHTML=`<div class="settings-title">トグル切り替え</div>
  <div class="setting-group"><div class="setting-label">対象のトグル</div><select id="toggleSetTarget" class="number-input"><option value="">選択してください</option>${toggles.map(n=>`<option value="${escapeHtml(n.id)}">${escapeHtml(n.toggleName||'トグル '+n.id)}</option>`).join('')}</select></div>
- <div class="setting-group"><div class="setting-label">操作</div><select id="toggleSetAction" class="number-input"><option value="on">ONにする</option><option value="off">OFFにする</option><option value="toggle">反転する</option></select></div>
- <p class="settings-empty">指定したトグルの状態を変更し、右端に接続された次のノードに進みます。対象トグルのON／OFF分岐は実行しません。</p>`;
+ <p class="settings-empty">指定したトグルのON／OFFを反転して、次のノードへ進みます。対象トグルのON／OFF分岐は実行しません。</p>`;
  const target=document.getElementById('toggleSetTarget');target.value=node.toggleSetTargetId||'';
  target.onchange=()=>{node.toggleSetTargetId=target.value;renderNodes();};
- const action=document.getElementById('toggleSetAction');action.value=['on','off','toggle'].includes(node.toggleSetAction)?node.toggleSetAction:'on';
- action.onchange=()=>{node.toggleSetAction=action.value;renderNodes();};
 }
 function renderConditionSettings(node){
  const items=state.nodes.filter(n=>n.type==='itemAcquire');
  const events=state.nodes.filter(n=>n.type==='eventRecord');
+ const toggles=state.nodes.filter(n=>n.type==='toggle');
  settingsPanel.innerHTML=`<div class="settings-title">条件</div>
- <div class="setting-group"><div class="setting-label">判定方法</div><select id="conditionMode" class="number-input"><option value="acquired">アイテム取得済み</option><option value="event">イベント実行済み</option></select></div>
+ <div class="setting-group"><div class="setting-label">判定方法</div><select id="conditionMode" class="number-input"><option value="acquired">アイテム取得済み</option><option value="event">イベント実行済み</option><option value="toggle">トグルON</option></select></div>
  <div class="setting-group"><div class="setting-label">対象</div><select id="conditionItem" class="number-input"></select></div>
  <div class="settings-empty">成立時は「はい」、不成立時は「いいえ」に進みます。</div>`;
  const mode=document.getElementById('conditionMode');const item=document.getElementById('conditionItem');
  const renderOptions=()=>{
   item.replaceChildren();item.add(new Option('選択してください',''));
-  for(const n of (mode.value==='event'?events:items))item.add(new Option(n.eventName||itemDisplayName(n),n.id));
+  for(const n of (mode.value==='event'?events:mode.value==='toggle'?toggles:items))item.add(new Option(n.toggleName||n.eventName||itemDisplayName(n),n.id));
   item.value=node.conditionItemId||'';
  };
- mode.value=node.conditionMode==='event'?'event':'acquired';renderOptions();
+ mode.value=['event','toggle'].includes(node.conditionMode)?node.conditionMode:'acquired';renderOptions();
  mode.addEventListener('change',()=>{node.conditionMode=mode.value;node.conditionItemId='';renderOptions();renderNodes();});
  item.addEventListener('change',()=>{node.conditionItemId=item.value;renderNodes();});
 }
@@ -514,7 +512,7 @@ toggleOwnerId:null,
 toggleResult:null,
 toggleName:'',
 toggleSetTargetId:'',
-toggleSetAction:'on',
+toggleSetAction:'toggle',
 conditionResult:null,
 textAnswerOwnerId:null,
 textAnswerResult:null,
@@ -694,7 +692,7 @@ node.type==='uiButton'?(node.uiButtonText||'ボタン'):
 node.type==='option'?'質問文と選択肢':
 node.type==='textAnswer'?'入力した回答を判定':
 node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
-node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：'+({on:'ONにする',off:'OFFにする',toggle:'反転する'}[node.toggleSetAction]||'ONにする')):
+node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：反転'):
 node.type==='toggleBranch'?(node.toggleResult==='on'?'ONルート':'OFFルート'):
 node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'条件成立':'条件不成立'):
@@ -1220,6 +1218,26 @@ document.getElementById('clickNormalOnceInput').addEventListener('change',e=>{
  node.clickNormalOnce=e.target.checked;
 });
 renderClickItemBranchSettings(node);
+// クリック範囲そのものの有効条件。複数のクリック範囲が重なる場合にも判定前に除外する。
+const enableGroup=document.createElement('div');enableGroup.className='setting-group';
+enableGroup.innerHTML='<div class="setting-section-heading">クリックの有効条件</div><div class="settings-empty">この条件はゲーム再生中のクリック可否を制御します。</div><select id="clickEnableType" class="number-input"><option value="always">常時有効</option><option value="acquire">アイテム取得</option><option value="toggle">トグル</option><option value="event">イベント記録</option></select><select id="clickEnableTarget" class="number-input"></select><select id="clickEnableState" class="number-input"></select>';
+settingsPanel.appendChild(enableGroup);
+const et=enableGroup.querySelector('#clickEnableType'),tg=enableGroup.querySelector('#clickEnableTarget'),es=enableGroup.querySelector('#clickEnableState');
+et.value=node.clickEnableType||'always';
+const updateEnable=()=>{
+ const kind=et.value;
+ tg.replaceChildren(new Option('対象を選択',''));
+ const typeMap={acquire:'itemAcquire',toggle:'toggle',event:'eventRecord'};
+ for(const targetNode of state.nodes.filter(n=>n.type===typeMap[kind]))tg.add(new Option(targetNode.toggleName||targetNode.itemName||targetNode.eventName||targetNode.id,targetNode.id));
+ tg.value=node.clickEnableTargetId||'';
+ es.replaceChildren(new Option(kind==='toggle'?'OFF':'前','before'),new Option(kind==='toggle'?'ON':'後','after'));
+ es.value=node.clickEnableState||'after';
+ tg.hidden=es.hidden=kind==='always';
+};
+updateEnable();
+et.onchange=()=>{node.clickEnableType=et.value;node.clickEnableTargetId='';node.clickEnableState='after';updateEnable();};
+tg.onchange=()=>{node.clickEnableTargetId=tg.value;};
+es.onchange=()=>{node.clickEnableState=es.value;};
 
 return;
 }
@@ -5293,11 +5311,20 @@ function resolvePreviewClickAction(node,itemId){
  return normalAlreadyDone?null:{kind:'normal'};
 }
 
+// ワールドのクリック判定だけに適用する有効条件（設定プレビューは常時表示）。
+function isClickConditionActive(node){
+ const mode=node.clickEnableType||'always';
+ if(mode==='always')return true;
+ const target=node.clickEnableTargetId;
+ if(!target)return false;
+ const yes=mode==='toggle'?toggleWorldStates.has(target):mode==='acquire'?acquiredItems.has(target):mode==='event'?recordedWorldEvents.has(target):false;
+ return node.clickEnableState==='before'?!yes:yes;
+}
 function findBestPreviewClick(clientX,clientY,world,animation,itemId){
  const matches=[];
  for(const id of state.previewClickTriggerIds){
   const node=getNode(id);
-  if(!node||previewRemovedClickIds.has(node.id)||!canFireExplorationTrigger(node))continue;
+  if(!node||previewRemovedClickIds.has(node.id)||!canFireExplorationTrigger(node)||!isClickConditionActive(node))continue;
   let regions=null;
   let frameKey='static';
   if(animation&&node.clickAnimationMode){
@@ -7816,7 +7843,7 @@ if(node.type==='toggleSet'){
  const target=getNode(node.toggleSetTargetId);
  if(target?.type==='toggle'){
   const wasOn=toggleWorldStates.has(target.id);
-  const nextOn=node.toggleSetAction==='toggle'?!wasOn:node.toggleSetAction==='off'?false:true;
+  const nextOn=!wasOn;
   if(nextOn)toggleWorldStates.add(target.id);else toggleWorldStates.delete(target.id);
   recordPreviewDiagnostic('toggle-set',{nodeId:node.id,targetId:target.id,state:nextOn?'on':'off'});
   refreshWorldComposite();
@@ -7829,7 +7856,7 @@ if(node.type==='toggleSet'){
 if(node.type==='toggleBranch'){previewOutgoing(node.id);return;}
 if(node.type==='eventRecord'){recordedWorldEvents.add(node.id);refreshWorldComposite();previewOutgoing(node.id);return;}
 if(node.type==='itemAcquire'){
- if(acquiredItems.has(node.id)){previewOutgoing(node.id);return;}
+ if(state.inventory.has(node.id)){previewOutgoing(node.id);return;}
  acquiredItems.add(node.id);
  refreshWorldComposite();
  if(node.itemRemoveOriginClick&&previewAcquisitionSourceClickId){
@@ -7860,7 +7887,7 @@ if(node.type==='clickBranch'){previewOutgoing(node.id);return;}
 if(node.type==='textAnswerBranch'){previewOutgoing(node.id);return;}
 if(node.type==='conditionBranch'){previewOutgoing(node.id);return;}
 if(node.type==='condition'){
- const meets=!!node.conditionItemId&&(node.conditionMode==='event'?recordedWorldEvents.has(node.conditionItemId):acquiredItems.has(node.conditionItemId));
+ const meets=!!node.conditionItemId&&(node.conditionMode==='event'?recordedWorldEvents.has(node.conditionItemId):node.conditionMode==='toggle'?toggleWorldStates.has(node.conditionItemId):acquiredItems.has(node.conditionItemId));
  recordPreviewDiagnostic('condition-evaluated',{nodeId:node.id,mode:node.conditionMode,itemId:node.conditionItemId,result:meets?'yes':'no'});
  const branch=conditionBranches(node).find(n=>n.conditionResult===(meets?'yes':'no'));
  if(branch)showPreviewNode(branch.id);
