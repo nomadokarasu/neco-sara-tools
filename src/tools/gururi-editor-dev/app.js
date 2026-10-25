@@ -1221,26 +1221,40 @@ document.getElementById('clickNormalOnceInput').addEventListener('change',e=>{
  node.clickNormalOnce=e.target.checked;
 });
 renderClickItemBranchSettings(node);
-// クリック範囲そのものの有効条件。複数のクリック範囲が重なる場合にも判定前に除外する。
+// クリック範囲そのものの有効条件。2条件の場合のみ AND / OR を適用する。
 const enableGroup=document.createElement('div');enableGroup.className='setting-group';
-enableGroup.innerHTML='<div class="setting-section-heading">クリックの有効条件</div><div class="settings-empty">この条件はゲーム再生中のクリック可否を制御します。</div><select id="clickEnableType" class="number-input"><option value="always">常時有効</option><option value="acquire">アイテム取得</option><option value="toggle">トグル</option><option value="event">イベント記録</option></select><select id="clickEnableTarget" class="number-input"></select><select id="clickEnableState" class="number-input"></select>';
+enableGroup.innerHTML='<div class="setting-section-heading">クリックの有効条件</div><div class="settings-empty">この条件はゲーム再生中のクリック可否を制御します。</div><div id="clickEnablePrimary"></div><div id="clickEnableSecondaryControls" style="margin-top:10px"><button type="button" id="clickEnableAddSecond" class="secondary-button">＋ 条件を追加</button><div id="clickEnableSecond" hidden><label class="setting-label" for="clickEnableOperator">条件の組み合わせ</label><select id="clickEnableOperator" class="number-input"><option value="and">かつ（両方を満たす）</option><option value="or">または（どちらかを満たす）</option></select><div id="clickEnableSecondary"></div><button type="button" id="clickEnableRemoveSecond" class="secondary-button">2つ目の条件を削除</button></div></div>';
 settingsPanel.appendChild(enableGroup);
-const et=enableGroup.querySelector('#clickEnableType'),tg=enableGroup.querySelector('#clickEnableTarget'),es=enableGroup.querySelector('#clickEnableState');
-et.value=node.clickEnableType||'always';
-const updateEnable=()=>{
- const kind=et.value;
- tg.replaceChildren(new Option('対象を選択',''));
- const typeMap={acquire:'itemAcquire',toggle:'toggle',event:'eventRecord'};
- for(const targetNode of state.nodes.filter(n=>n.type===typeMap[kind]))tg.add(new Option(targetNode.toggleName||targetNode.itemName||targetNode.eventName||targetNode.id,targetNode.id));
- tg.value=node.clickEnableTargetId||'';
- es.replaceChildren(new Option(kind==='toggle'?'OFF':'前','before'),new Option(kind==='toggle'?'ON':'後','after'));
- es.value=node.clickEnableState||'after';
- tg.hidden=es.hidden=kind==='always';
+const makeConditionControls=(container,fields,prefix)=>{
+ container.innerHTML=`<select id="${prefix}Type" class="number-input"><option value="always">常時有効</option><option value="acquire">アイテム取得</option><option value="toggle">トグル</option><option value="event">イベント記録</option></select><select id="${prefix}Target" class="number-input"></select><select id="${prefix}State" class="number-input"></select>`;
+ const type=container.querySelector(`#${prefix}Type`),target=container.querySelector(`#${prefix}Target`),status=container.querySelector(`#${prefix}State`);
+ type.value=node[fields.type]||'always';
+ const refresh=()=>{
+  const kind=type.value;
+  target.replaceChildren(new Option('対象を選択',''));
+  const typeMap={acquire:'itemAcquire',toggle:'toggle',event:'eventRecord'};
+  for(const targetNode of state.nodes.filter(n=>n.type===typeMap[kind]))target.add(new Option(targetNode.toggleName||targetNode.itemName||targetNode.eventName||targetNode.id,targetNode.id));
+  target.value=node[fields.target]||'';
+  status.replaceChildren(new Option(kind==='toggle'?'OFF':'前','before'),new Option(kind==='toggle'?'ON':'後','after'));
+  status.value=node[fields.state]||'after';
+  target.hidden=status.hidden=kind==='always';
+ };
+ refresh();
+ type.onchange=()=>{node[fields.type]=type.value;node[fields.target]='';node[fields.state]='after';refresh();};
+ target.onchange=()=>{node[fields.target]=target.value;};
+ status.onchange=()=>{node[fields.state]=status.value;};
 };
-updateEnable();
-et.onchange=()=>{node.clickEnableType=et.value;node.clickEnableTargetId='';node.clickEnableState='after';updateEnable();};
-tg.onchange=()=>{node.clickEnableTargetId=tg.value;};
-es.onchange=()=>{node.clickEnableState=es.value;};
+makeConditionControls(enableGroup.querySelector('#clickEnablePrimary'),{type:'clickEnableType',target:'clickEnableTargetId',state:'clickEnableState'},'clickEnable');
+const secondWrap=enableGroup.querySelector('#clickEnableSecond');
+const addSecond=enableGroup.querySelector('#clickEnableAddSecond');
+const op=enableGroup.querySelector('#clickEnableOperator');
+const syncSecond=()=>{const active=node.clickEnableSecondEnabled===true;secondWrap.hidden=!active;addSecond.hidden=active;};
+makeConditionControls(enableGroup.querySelector('#clickEnableSecondary'),{type:'clickEnableSecondType',target:'clickEnableSecondTargetId',state:'clickEnableSecondState'},'clickEnableSecond');
+op.value=node.clickEnableOperator==='or'?'or':'and';
+op.onchange=()=>{node.clickEnableOperator=op.value;};
+addSecond.onclick=()=>{node.clickEnableSecondEnabled=true;syncSecond();};
+enableGroup.querySelector('#clickEnableRemoveSecond').onclick=()=>{node.clickEnableSecondEnabled=false;syncSecond();};
+syncSecond();
 
 return;
 }
@@ -5316,13 +5330,18 @@ function resolvePreviewClickAction(node,itemId){
 
 // ワールドのクリック判定だけに適用する有効条件（設定プレビューは常時表示）。
 function isClickConditionActive(node){
- const mode=node.clickEnableType||'always';
- if(mode==='always')return true;
- const target=node.clickEnableTargetId;
- if(!target)return false;
- const yes=mode==='toggle'?toggleWorldStates.has(target):mode==='acquire'?acquiredItems.has(target):mode==='event'?recordedWorldEvents.has(target):false;
- return node.clickEnableState==='before'?!yes:yes;
+ const check=(mode,target,stateValue)=>{
+  if((mode||'always')==='always')return true;
+  if(!target)return false;
+  const yes=mode==='toggle'?toggleWorldStates.has(target):mode==='acquire'?acquiredItems.has(target):mode==='event'?recordedWorldEvents.has(target):false;
+  return stateValue==='before'?!yes:yes;
+ };
+ const first=check(node.clickEnableType,node.clickEnableTargetId,node.clickEnableState);
+ if(node.clickEnableSecondEnabled!==true)return first;
+ const second=check(node.clickEnableSecondType,node.clickEnableSecondTargetId,node.clickEnableSecondState);
+ return node.clickEnableOperator==='or'?(first||second):(first&&second);
 }
+
 function findBestPreviewClick(clientX,clientY,world,animation,itemId){
  const matches=[];
  for(const id of state.previewClickTriggerIds){
