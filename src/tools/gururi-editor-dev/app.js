@@ -2301,6 +2301,7 @@ document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMe
     if(!file.name.toLowerCase().endsWith('.png'))throw new Error('PNGを指定してください。');
     const url=URL.createObjectURL(file);
     let img;try{img=await new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('画像を読み込めません'));image.src=url;});}finally{URL.revokeObjectURL(url);}
+    if(img.naturalWidth!==img.naturalHeight*2)throw new Error('2:1のPNG画像を選択してください。');
     if(img.naturalWidth!==media.width||img.naturalHeight!==media.height)throw new Error('既存フレームと同じ解像度のPNGを指定してください。');
     media.video?.pause();media.frameFiles[sequenceSelectedIndex]=file;media.frameImages[sequenceSelectedIndex]=img;
     media.video=createSequencePlayback(media);
@@ -2764,6 +2765,16 @@ function createSequencePlayback(media){
  canvas.load=()=>{};
  draw();return canvas;
 }
+async function validateSequencePng(file,expectedWidth=null,expectedHeight=null){
+ if(!file||!file.name.toLowerCase().endsWith('.png')||file.type&&file.type!=='image/png')throw new Error('PNG画像のみ選択できます。');
+ const url=URL.createObjectURL(file);
+ try{
+  const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('PNG画像を読み込めませんでした。'));img.src=url;});
+  if(image.naturalWidth!==image.naturalHeight*2)throw new Error('2:1のPNG画像を選択してください。');
+  if(expectedWidth!==null&&(image.naturalWidth!==expectedWidth||image.naturalHeight!==expectedHeight))throw new Error('連番PNGはすべて同じ解像度にしてください。');
+  return image;
+ }finally{URL.revokeObjectURL(url);}
+}
 async function importPngSequence(files,fps=8,preserveOrder=false){
  const ordered=preserveOrder?[...files]:[...files].sort(naturalFrameOrder);
  if(!ordered.length||ordered.some(file=>!file.name.toLowerCase().endsWith('.png')))throw new Error('連番PNGのみを選択してください。');
@@ -2919,7 +2930,15 @@ function openSequenceWizard(){
  $('[data-seq-tabs]').addEventListener('click',e=>{const btn=e.target.closest('[data-seq-tab]');if(!btn)return;active=Number(btn.dataset.seqTab);refresh();});
  $('[data-seq-add]').addEventListener('click',()=>{files.push(null);active=files.length-1;refresh();});
  $('[data-seq-choose]').addEventListener('click',()=>$('[data-seq-file]').click());
- $('[data-seq-file]').addEventListener('change',e=>{const file=e.target.files?.[0];if(file){files[active]=file;refresh();}e.target.value='';});
+ $('[data-seq-file]').addEventListener('change',async e=>{
+  const file=e.target.files?.[0];e.target.value='';if(!file)return;
+  try{
+   const first=files.find((f,i)=>i!==active&&f);
+   const reference=first?await validateSequencePng(first):null;
+   await validateSequencePng(file,reference?.naturalWidth??null,reference?.naturalHeight??null);
+   files[active]=file;refresh();
+  }catch(error){alert('この画像は選択できません。\n'+error.message);}
+ });
  $('[data-seq-save]').addEventListener('click',async()=>{
   const fps=Number($('[data-seq-fps]').value);
   if(!Number.isFinite(fps)||fps<1||fps>120){alert('FPSは1～120で指定してください。');return;}
@@ -8452,6 +8471,11 @@ function renderWorldFolderEditor(){
  const section=document.createElement('div');section.className='world-folder-settings';title.after(section);
  
  const media=folderMediaSelect(folderBacker(folder)?.world?.mediaId,['png','jpg','mp4'],id=>{const b=folderBacker(folder);const m=mediaLibrary.find(m=>m.id===id);b.world.mediaId=id;b.world.fileName=m?.fileName||'';b.world.fileType=m?.fileType||'';b.world.image=m?.image||m?.video||null;worldComposites.delete(folder.id);});addFolderRow(section,'基本360度PNG / MP4',media);
+ const inheritGroup=document.createElement('div');inheritGroup.className='setting-group';
+ const inheritLabel=document.createElement('label');inheritLabel.className='media-camera-inherit';
+ const inheritCheckbox=document.createElement('input');inheritCheckbox.type='checkbox';inheritCheckbox.checked=Boolean(folderBacker(folder)?.inheritCamera);
+ inheritCheckbox.addEventListener('change',()=>{const backer=folderBacker(folder);if(backer)backer.inheritCamera=inheritCheckbox.checked;});
+ inheritLabel.append(inheritCheckbox,document.createTextNode(' 直前の画角を継承する'));inheritGroup.append(inheritLabel);section.append(inheritGroup);
  const previewGroup=document.createElement('div');previewGroup.className='setting-group';
  const previewHeading=document.createElement('div');previewHeading.className='setting-label';previewHeading.textContent='ワールドプレビュー（全レイヤー表示）';
  const previewCanvas=document.createElement('canvas');previewCanvas.className='world-settings-preview world-preview';previewCanvas.width=320;previewCanvas.height=Math.round(320*getActiveLayout().height/getActiveLayout().width);
@@ -8503,8 +8527,8 @@ function renderWorldFolderEditor(){
   const eventType=document.createElement('select');eventType.className='number-input';
   for(const [value,text] of [['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']])eventType.add(new Option(text,value));
   eventType.value=layer.eventType||'acquire';addFolderRow(panel,'表示条件',eventType);
-  const timing=document.createElement('select');timing.className='number-input';timing.add(new Option('前','before'));timing.add(new Option('後','after'));
-  timing.value=layer.mode==='after'?'after':'before';addFolderRow(panel,'前後',timing);
+  const timing=document.createElement('select');timing.className='number-input';timing.add(new Option('OFF','before'));timing.add(new Option('ON','after'));
+  timing.value=layer.mode==='after'?'after':'before';addFolderRow(panel,'ON/OFF',timing);
   const targetContainer=document.createElement('div');panel.append(targetContainer);
   const explanation=document.createElement('p');explanation.className='world-layer-explanation';panel.append(explanation);
   const updateExplanation=()=>{
@@ -8606,11 +8630,14 @@ function refreshWorldSettingsPreview(){
 }
 function enterWorldFolder(folderId){
  const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;
+ const previousWorld=getNode(currentWorldBackerId)?.world;
+ const inheritedView=previousWorld?{yaw:previousWorld.yaw,pitch:previousWorld.pitch,zoom:previousWorld.zoom}:(state.lastCameraView?{...state.lastCameraView}:null);
  currentWorldBackerId=folder.backerId;
  const media=getFolderMedia(folder);
  if(media?.video){try{media.video.loop=true;media.video.currentTime=0;media.video.play().catch(()=>{});}catch(_e){}}
  const backer=folderBacker(folder);if(!backer)return;
  cancelPreviewScene();pendingWorldEntryFade=null;worldEntryFadeActive=false;
+ if(inheritedView)state.lastCameraView=inheritedView;
  const start=state.nodes.find(n=>n.type==='folderStart'&&n.folderId===folder.id);
  if(start)showPreviewNode(start.id);else showPreviewNode(backer.id);
 }
