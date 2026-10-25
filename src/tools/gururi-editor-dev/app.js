@@ -652,6 +652,7 @@ node.type==='folderStart'?'START':
 node.type==='worldDisplay'?'ワールド表示':
 node.type==='worldMove'?'ワールド移動':
 node.type==='eventRecord'?'イベント記録':
+node.type==='gameReset'?'リセット':
 node.type==='start'?'START':
 node.type==='media'||node.type==='world'||node.type==='animation'?'メディア':
 node.type==='time'?'時間':
@@ -684,6 +685,7 @@ node.type==='folderStart'?'ワールド開始':
 node.type==='worldDisplay'?'探索を開始する':
 node.type==='worldMove'?(state.worldFolders.find(w=>w.id===node.destinationFolderId)?.name||'移動先未設定'):
 node.type==='eventRecord'?(node.eventName||'イベント未設定'):
+node.type==='gameReset'?'ワールド1からやり直す':
 node.type==='media'?'素材を選択してください':
 node.type==='world'?(node.world.fileName||'素材未設定'):
 node.type==='animation'?(node.animation.fileName||'素材未設定'):
@@ -710,7 +712,7 @@ node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
 node.type==='keyframe'?'カメラワーク':
 '開始';
-el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div><div class="port output" data-port="output"></div>`;
+el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div>${node.type==='gameReset'?'':'<div class="port output" data-port="output"></div>'}`;
 
 const bodyEl=el.querySelector('.node-body');
 bodyEl.textContent=node.customBody===undefined?body:node.customBody;
@@ -1009,6 +1011,10 @@ if(node.type==='worldMove'){
  for(const w of state.worldFolders)select.add(new Option(w.name,w.id));
  select.value=node.destinationFolderId||'';
  select.addEventListener('change',()=>{node.destinationFolderId=select.value;renderNodes();renderSettings();});
+ return;
+}
+if(node.type==='gameReset'){
+ settingsPanel.innerHTML='<div class="settings-title">リセット</div><p class="settings-empty">ゲームの進行状況、取得したアイテム、トグル、イベントの記録をすべて初期化し、ワールド1のSTARTからやり直します。出力接続はありません。</p>';
  return;
 }
 if(node.type==='eventRecord'){
@@ -5900,7 +5906,7 @@ contextMenu.classList.add('hidden');
 state.insertConnection=null;
 
 let created=null;
-if(insertConnection){
+if(insertConnection&&nodeType!=='gameReset'){
 created=insertNodeIntoConnection(nodeType,insertConnection,menuPoint);
 }else{
 created=addNode(nodeType,menuPoint.x,menuPoint.y);
@@ -6958,7 +6964,7 @@ function canUsePreviewClick(node){
 return Boolean(node.clickTarget?.initialized||Object.values(node.clickFrameRegions||{}).some(regions=>Array.isArray(regions)&&regions.some(r=>r.mode==='add'&&r.points?.length>=3)));
 }
 
-function startPreview(preserveInventory=false){
+function startPreview(preserveInventory=false,resetToInitial=false){
 recordPreviewDiagnostic('preview-start',{preserveInventory});
 previewClickAreaCache.clear();
 if(!preserveInventory){
@@ -6988,7 +6994,7 @@ refreshInventory();
 inventoryButton.classList.remove('hidden');
 
 drawPanoramaPreview(gameCanvas,{image:null,yaw:0,pitch:0,zoom:1});
-enterWorldFolder(state.worldFolders[0]?.id||state.startFolderId);
+enterWorldFolder(state.worldFolders[0]?.id||state.startFolderId,resetToInitial);
 }
 
 
@@ -7852,6 +7858,11 @@ schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
 return;
 }
 if(node.type==='worldMove'){if(node.destinationFolderId)enterWorldFolder(node.destinationFolderId);return;}
+if(node.type==='gameReset'){
+ recordPreviewDiagnostic('game-reset',{nodeId:node.id});
+ startPreview(false,true);
+ return;
+}
 if(node.type==='toggle'){
  const nextOn=!toggleWorldStates.has(node.id);
  if(nextOn)toggleWorldStates.add(node.id);else toggleWorldStates.delete(node.id);
@@ -8839,16 +8850,17 @@ function refreshWorldSettingsPreview(){
  const controller=worldSettingsCameraPreviews.get(canvas);
  if(controller&&controller.folder===activeFolder())controller.draw();
 }
-function enterWorldFolder(folderId){
+function enterWorldFolder(folderId,resetToInitial=false){
  const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;
  const previousWorld=getNode(currentWorldBackerId)?.world;
- const inheritedView=previousWorld?{yaw:previousWorld.yaw,pitch:previousWorld.pitch,zoom:previousWorld.zoom}:(state.lastCameraView?{...state.lastCameraView}:null);
+ const inheritedView=resetToInitial?null:(previousWorld?{yaw:previousWorld.yaw,pitch:previousWorld.pitch,zoom:previousWorld.zoom}:(state.lastCameraView?{...state.lastCameraView}:null));
  currentWorldBackerId=folder.backerId;
  const media=getFolderMedia(folder);
  if(media?.video){try{media.video.loop=true;media.video.currentTime=0;media.video.play().catch(()=>{});}catch(_e){}}
  const backer=folderBacker(folder);if(!backer)return;
  cancelPreviewScene();pendingWorldEntryFade=null;worldEntryFadeActive=false;
- if(inheritedView)state.lastCameraView=inheritedView;
+ if(resetToInitial){state.lastCameraView=null;applyWorldInitialView(backer);}
+ else if(inheritedView)state.lastCameraView=inheritedView;
  const start=state.nodes.find(n=>n.type==='folderStart'&&n.folderId===folder.id);
  if(start)showPreviewNode(start.id);else showPreviewNode(backer.id);
 }
