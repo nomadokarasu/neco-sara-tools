@@ -928,3 +928,8 @@ flex-shrink:0;
 .sequence-frame-editor button{border:1px solid #cfd4dc;background:#fff;border-radius:5px;padding:7px 12px;cursor:pointer}
 
 .sequence-wizard-overlay{position:fixed;inset:0;z-index:11000;background:#0008;display:grid;place-items:center;padding:20px}.sequence-wizard{background:#fff;color:#222;padding:20px;width:min(510px,100%);max-height:90vh;overflow:auto;border-radius:10px;box-shadow:0 10px 35px #0005;display:flex;flex-direction:column;gap:15px}.sequence-wizard-head{display:flex;justify-content:space-between;align-items:center}.sequence-wizard-head button{font-size:23px;background:transparent;border:0;cursor:pointer}.sequence-wizard-footer{display:flex;justify-content:space-between;gap:12px}.sequence-wizard-footer button{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}.sequence-wizard-footer [data-seq-save]{background:#2666bb;color:white;border-color:#2666bb}
+
+/* クリック設定: 編集プレビュー用透明レイヤー表示 */
+.click-layer-visibility-row{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:13px;cursor:pointer;}
+.click-layer-visibility-row input{margin:0;flex:none;}
+.click-layer-visibility-row span{overflow-wrap:anywhere;}

@@ -1096,6 +1096,37 @@ const inheritControl=isAnimation
 
 settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameControls}<div class="setting-group"><div class="setting-section-heading">範囲設定</div><div class="click-inherit-row">${inheritControl}</div><div class="click-preview-wrap"><canvas id="clickPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="clickLassoCanvas" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="clickLassoAddBtn" class="click-lasso-mode active" type="button" title="選択範囲に追加" aria-pressed="true">＋</button><button id="clickLassoSubtractBtn" class="click-lasso-mode" type="button" title="選択範囲から削除" aria-pressed="false">－</button></div></div><div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div><div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
 
+// クリック範囲の編集プレビュー専用。ゲーム再生時の表示条件には影響しない。
+const clickLayerFolder=sourceNode.type==='world'
+ ?state.worldFolders?.find(folder=>folder.backerId===sourceNode.id)
+ :null;
+if(clickLayerFolder?.layers?.length){
+ const group=document.createElement('div');
+ group.className='setting-group';
+ const heading=document.createElement('div');
+ heading.className='setting-section-heading';
+ heading.textContent='透明レイヤー（編集画面のみ）';
+ group.appendChild(heading);
+ const note=document.createElement('div');note.className='settings-empty';
+ note.textContent='チェックを外すとクリック範囲のプレビューから非表示になります。ゲーム再生には影響しません。';
+ group.appendChild(note);
+ if(!Array.isArray(node.clickHiddenLayerIds))node.clickHiddenLayerIds=[];
+ for(const layer of clickLayerFolder.layers){
+  const label=document.createElement('label');label.className='click-layer-visibility-row';
+  const input=document.createElement('input');input.type='checkbox';
+  input.checked=!node.clickHiddenLayerIds.includes(layer.id);
+  const name=document.createElement('span');name.textContent=layer.name||'新規レイヤー';
+  label.append(input,name);group.append(label);
+  input.addEventListener('change',()=>{
+   const hidden=new Set(node.clickHiddenLayerIds||[]);
+   if(input.checked)hidden.delete(layer.id);else hidden.add(layer.id);
+   node.clickHiddenLayerIds=[...hidden];
+   const canvas=document.getElementById('clickPreviewCanvas');
+   if(canvas){drawPanoramaPreview(canvas,getClickLassoWorld(node,sourceNode));drawClickLassoOverlay(node,sourceNode);}
+  });
+ }
+ settingsPanel.appendChild(group);
+}
 setupClickTriggerPreview(node,sourceNode);
 const normalOnceGroup=document.createElement('div');
 normalOnceGroup.className='setting-group';
@@ -4547,7 +4578,7 @@ node.clickPolygon=cloneClickPolygon(points);
 // 編集時はワールドの基本画像に、登録済みの透明PNGを全て重ねる。
 // ゲーム内の表示条件は無視し、投げ縄の位置合わせをしやすくする。
 const clickEditorCompositeCanvases=new Map();
-function getClickEditorComposite(sourceNode){
+function getClickEditorComposite(sourceNode,clickNode=null){
  const folder=state.worldFolders?.find(f=>f.backerId===sourceNode?.id);
  if(!folder)return sourceNode?.world?.image||null;
  const media=getFolderMedia(folder);
@@ -4562,6 +4593,7 @@ function getClickEditorComposite(sourceNode){
  ctx.clearRect(0,0,width,height);
  try{ctx.drawImage(base,0,0,width,height);}catch(_e){return base;}
  for(const layer of folder.layers||[]){
+  if(clickNode?.clickHiddenLayerIds?.includes(layer.id))continue;
   const overlay=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png')?.image;
   if(overlay){try{ctx.drawImage(overlay,0,0,width,height);}catch(_e){}}
  }
@@ -4571,7 +4603,7 @@ function getClickLassoWorld(node,sourceNode){
  const image=sourceNode.type==='animation'
  ?getClickAnimationMedia(sourceNode)?.video||null
  :sourceNode.type==='world'
- ?getClickEditorComposite(sourceNode)
+ ?getClickEditorComposite(sourceNode,node)
  :sourceNode.world.image;
  return{
  image,
