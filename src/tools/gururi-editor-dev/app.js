@@ -376,9 +376,12 @@ function renderToggleSetSettings(node){
  const toggles=state.nodes.filter(n=>n.type==='toggle');
  settingsPanel.innerHTML=`<div class="settings-title">トグル切り替え</div>
  <div class="setting-group"><div class="setting-label">対象のトグル</div><select id="toggleSetTarget" class="number-input"><option value="">選択してください</option>${toggles.map(n=>`<option value="${escapeHtml(n.id)}">${escapeHtml(n.toggleName||'トグル '+n.id)}</option>`).join('')}</select></div>
- <p class="settings-empty">指定したトグルのON／OFFを反転して、次のノードへ進みます。対象トグルのON／OFF分岐は実行しません。</p>`;
+ <div class="setting-group"><div class="setting-label">操作</div><select id="toggleSetAction" class="number-input"><option value="on">ONにする</option><option value="off">OFFにする</option><option value="toggle">反転する（ON ↔ OFF）</option></select></div>
+ <p class="settings-empty">指定したトグルの状態を変更して次のノードへ進みます。対象トグルのON／OFF分岐は実行しません。</p>`;
  const target=document.getElementById('toggleSetTarget');target.value=node.toggleSetTargetId||'';
  target.onchange=()=>{node.toggleSetTargetId=target.value;renderNodes();};
+ const action=document.getElementById('toggleSetAction');action.value=['on','off','toggle'].includes(node.toggleSetAction)?node.toggleSetAction:'toggle';
+ action.onchange=()=>{node.toggleSetAction=action.value;renderNodes();};
 }
 function renderConditionSettings(node){
  const items=state.nodes.filter(n=>n.type==='itemAcquire');
@@ -692,7 +695,7 @@ node.type==='uiButton'?(node.uiButtonText||'ボタン'):
 node.type==='option'?'質問文と選択肢':
 node.type==='textAnswer'?'入力した回答を判定':
 node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
-node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：反転'):
+node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：'+(node.toggleSetAction==='on'?'ON':node.toggleSetAction==='off'?'OFF':'反転')):
 node.type==='toggleBranch'?(node.toggleResult==='on'?'ONルート':'OFFルート'):
 node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'条件成立':'条件不成立'):
@@ -7843,7 +7846,8 @@ if(node.type==='toggleSet'){
  const target=getNode(node.toggleSetTargetId);
  if(target?.type==='toggle'){
   const wasOn=toggleWorldStates.has(target.id);
-  const nextOn=!wasOn;
+  const action=['on','off','toggle'].includes(node.toggleSetAction)?node.toggleSetAction:'toggle';
+  const nextOn=action==='on'?true:action==='off'?false:!wasOn;
   if(nextOn)toggleWorldStates.add(target.id);else toggleWorldStates.delete(target.id);
   recordPreviewDiagnostic('toggle-set',{nodeId:node.id,targetId:target.id,state:nextOn?'on':'off'});
   refreshWorldComposite();
