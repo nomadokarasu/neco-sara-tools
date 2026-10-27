@@ -682,6 +682,7 @@ node.type==='keyframe'?'キーフレーム':
 
 const body=
 node.type==='folderStart'?'ワールド開始':
+node.type==='worldEntry'?'他のワールドから移動してきたとき':
 node.type==='worldDisplay'?'探索を開始する':
 node.type==='worldMove'?(state.worldFolders.find(w=>w.id===node.destinationFolderId)?.name||'移動先未設定'):
 node.type==='eventRecord'?(node.eventName||'イベント未設定'):
@@ -943,9 +944,11 @@ settingsPanel.appendChild(group);
 }
 
 if(!node){settingsPanel.innerHTML='<div class="settings-empty">ノードを選択してください</div>';return}
-if(node.type==='folderStart'||node.type==='worldDisplay'){
- settingsPanel.innerHTML=`<div class="settings-title">${node.type==='folderStart'?'START':'ワールド表示'}</div><p class="settings-empty">${node.type==='folderStart'?'ここからワールドの開始演出を接続します。':'ワールドの基本メディアとレイヤーを表示して探索を開始します。'}</p>`;
- return;
+if(['folderStart','worldEntry','worldDisplay'].includes(node.type)){
+const title=node.type==='folderStart'?'START':node.type==='worldEntry'?'前のワールドからの移動':'ワールド表示';
+const description=node.type==='folderStart'?'ここからワールドの開始演出を接続します。':node.type==='worldEntry'?'別のワールドから移動してきたときに実行します。右端から任意のノードに接続してください。未接続の場合はSTARTから開始します。':'ワールドの基本メディアとレイヤーを表示して探索を開始します。';
+settingsPanel.innerHTML=`<div class="settings-title">${title}</div><p class="settings-empty">${description}</p>`;
+return;
 }
 if(node.type==='uiButton'){
  const fields=[['uiButtonWidth','ボタンの幅（px）',40,1000,180],['uiButtonHeight','ボタンの高さ（px）',24,500,56],['uiButtonFontSize','文字サイズ（px）',8,120,20]];
@@ -6167,7 +6170,7 @@ return;
 }
 
 if((e.ctrlKey||e.metaKey)&&!e.altKey&&key==='c'){
-if(!selectedNode||['start','folderStart','worldDisplay'].includes(selectedNode.type))return;
+if(!selectedNode||['start','folderStart','worldEntry','worldDisplay'].includes(selectedNode.type))return;
 
 e.preventDefault();
 copiedNodeData=copyNodeData(selectedNode);
@@ -6185,7 +6188,7 @@ pasteOffset+=40;
 const editBefore=editorSnapshot();
 const newNode=copyNodeData(copiedNodeData);
 newNode.id=uid(newNode.type);
-if(['folderStart','worldDisplay'].includes(newNode.type))return;
+if(['folderStart','worldEntry','worldDisplay'].includes(newNode.type))return;
 if(newNode.type==='option'){newNode.optionChoices=[];}
 if(newNode.type==='optionChoice'||newNode.type==='textAnswerBranch'||newNode.type==='conditionBranch'||newNode.type==='toggleBranch')return;
 if(newNode.type==='textAnswer'){newNode.textAnswerOwnerId=null;newNode.textAnswerResult=null;}
@@ -6269,7 +6272,7 @@ const id=
 state.selectedNodeId;
 
 if(!id||id==='start')return;
-if(['folderStart','worldDisplay'].includes(getNode(id)?.type))return;
+if(['folderStart','worldEntry','worldDisplay'].includes(getNode(id)?.type))return;
 const removedNode=getNode(id);
 if(removedNode?.type==='textAnswerBranch'||removedNode?.type==='conditionBranch'||removedNode?.type==='toggleBranch')return;
 if(removedNode?.type==='optionChoice'){
@@ -6323,7 +6326,7 @@ const input=target?.closest?.('.port.input');
 if(input){
 const to=input.closest('.node')?.dataset.id;
 const from=state.connecting.from;
-if(to&&to!==from&&getNode(from)&&getNode(to)&&!state.connections.some(c=>c.from===from&&c.to===to)){
+if(to&&to!==from&&getNode(from)&&getNode(to)&&getNode(to).type!=='worldEntry'&&!state.connections.some(c=>c.from===from&&c.to===to)){
 state.connections.push({id:uid('conn'),from,to});
 }
 }
@@ -7731,6 +7734,16 @@ if(!node||gamePreview.classList.contains('hidden'))return;
 if(previewVisited.has(node.id))return;
 previewVisited.add(node.id);
 if(node.type==='folderStart'){previewOutgoing(node.id);return;}
+if(node.type==='worldEntry'){
+const hasOutgoing=state.connections.some(c=>c.from===node.id&&getNode(c.to));
+if(hasOutgoing){
+previewOutgoing(node.id);
+}else{
+const start=state.nodes.find(n=>n.type==='folderStart'&&n.folderId===node.folderId);
+if(start)showPreviewNode(start.id);
+}
+return;
+}
 if(node.type==='worldDisplay'){
   const folder=state.worldFolders.find(w=>w.id===node.folderId);
   if(folder){const backer=folderBacker(folder);if(backer){
@@ -8575,10 +8588,11 @@ function makeWorldFolder(name){
  const backer={id:uid('world'),type:'world',folderId:id,x:0,y:0,world:{fileName:'',fileType:'png',mediaId:null,image:null,yaw:0,pitch:0,zoom:1,views:{pc:{yaw:0,pitch:0,zoom:1},mobile:{yaw:0,pitch:0,zoom:1}}},worldInfiniteLoop:true};
  state.nodes.push(backer);
  const folder={id,name,backerId:backer.id,layers:[]};state.worldFolders.push(folder);
- const start={id:uid('folderStart'),type:'folderStart',folderId:id,x:70,y:120};
- const display={id:uid('worldDisplay'),type:'worldDisplay',folderId:id,x:380,y:120};
- state.nodes.push(start,display);
- state.connections.push({id:uid('connection'),from:start.id,to:display.id});
+const start={id:uid('folderStart'),type:'folderStart',folderId:id,x:70,y:120};
+const entry={id:uid('worldEntry'),type:'worldEntry',folderId:id,x:70,y:260};
+const display={id:uid('worldDisplay'),type:'worldDisplay',folderId:id,x:380,y:120};
+state.nodes.push(start,entry,display);
+state.connections.push({id:uid('connection'),from:start.id,to:display.id});
  if(!state.startFolderId)state.startFolderId=id;
  return folder;
 }
@@ -8608,7 +8622,18 @@ function deleteWorldFolder(folder){
  updateWorldTabs();renderNodes();renderSettings();renderFolderSettings();
 }
 function updateWorldTabs(){
- worldTabs.replaceChildren();
+for(const folder of state.worldFolders){
+if(!state.nodes.some(n=>n.type==='worldEntry'&&n.folderId===folder.id)){
+state.nodes.push({
+id:uid('worldEntry'),
+type:'worldEntry',
+folderId:folder.id,
+x:70,
+y:260
+});
+}
+}
+worldTabs.replaceChildren();
  const add=(label,id,fn)=>{const b=document.createElement('button');b.type='button';b.dataset.folderTab=id||'__all__';b.textContent=label;b.className=id===state.activeFolderId?'active':'';b.addEventListener('click',fn);worldTabs.appendChild(b);};
  add('ワールド一覧',null,()=>assignFolderTab(null));
  for(const folder of state.worldFolders){
@@ -8905,8 +8930,15 @@ function enterWorldFolder(folderId,resetToInitial=false){
  cancelPreviewScene();pendingWorldEntryFade=null;worldEntryFadeActive=false;
  if(resetToInitial){state.lastCameraView=null;applyWorldInitialView(backer);}
  else if(inheritedView)state.lastCameraView=inheritedView;
- const start=state.nodes.find(n=>n.type==='folderStart'&&n.folderId===folder.id);
- if(start)showPreviewNode(start.id);else showPreviewNode(backer.id);
+const start=state.nodes.find(n=>n.type==='folderStart'&&n.folderId===folder.id);
+const entry=state.nodes.find(n=>n.type==='worldEntry'&&n.folderId===folder.id);
+if(!resetToInitial&&entry){
+showPreviewNode(entry.id);
+}else if(start){
+showPreviewNode(start.id);
+}else{
+showPreviewNode(backer.id);
+}
 }
 applyGameAspectRatio();
 updateLayoutControls();
