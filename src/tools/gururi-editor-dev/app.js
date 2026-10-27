@@ -895,6 +895,27 @@ const node=getNode(state.selectedNodeId);
 if(node){
 queueMicrotask(()=>{
 if(state.selectedNodeId!==node.id)return;
+
+if(isPreviewOnceTarget(node)&&!settingsPanel.querySelector('#nodeExecuteOnceInput')){
+const onceGroup=document.createElement('div');
+onceGroup.className='setting-group';
+
+const onceLabel=document.createElement('label');
+const onceCheckbox=document.createElement('input');
+onceCheckbox.type='checkbox';
+onceCheckbox.id='nodeExecuteOnceInput';
+onceCheckbox.checked=node.executeOnce===true;
+
+onceLabel.append(onceCheckbox,document.createTextNode(' 一回だけ実行'));
+onceGroup.appendChild(onceLabel);
+
+onceCheckbox.addEventListener('change',()=>{
+node.executeOnce=onceCheckbox.checked;
+});
+
+settingsPanel.appendChild(onceGroup);
+}
+
 if(node.type==='dialogue'||node.type==='clickBranch')return;
 if(settingsPanel.querySelector('#nodeMemoInput'))return;
 
@@ -6938,6 +6959,24 @@ let previewKeyframeBusy=false;
 const previewBranchTimers=new Set();
 const previewVisited=new Set();
 
+// 一回だけ実行するノードの実行履歴
+const previewExecutedOnceNodes=new Set();
+
+function isPreviewOnceTarget(node){
+return Boolean(node&&!['start','folderStart','worldDisplay','gameReset','world'].includes(node.type));
+}
+
+function isPreviewOnceCompleted(node){
+return Boolean(isPreviewOnceTarget(node)&&node.executeOnce===true&&previewExecutedOnceNodes.has(node.id));
+}
+
+function markPreviewOnceExecuted(node){
+if(isPreviewOnceTarget(node)&&node.executeOnce===true){
+previewExecutedOnceNodes.add(node.id);
+recordPreviewDiagnostic('node-execute-once',{nodeId:node.id,nodeType:node.type});
+}
+}
+
 // ゲーム中に一度でも取得したアイテム
 const acquiredItems=new Set();
 const previewCompletedTriggers=new Set();
@@ -6985,14 +7024,17 @@ function prepareExplorationBranch(nodeId){
 }
 
 function fireExplorationTrigger(node){
- if(!canFireExplorationTrigger(node))return;
+if(!canFireExplorationTrigger(node))return;
+if(isPreviewOnceCompleted(node))return;
 
- if(node.triggerOnce){
-  previewCompletedTriggers.add(node.id);
- }
+markPreviewOnceExecuted(node);
 
- prepareExplorationBranch(node.id);
- previewOutgoing(node.id);
+if(node.triggerOnce){
+previewCompletedTriggers.add(node.id);
+}
+
+prepareExplorationBranch(node.id);
+previewOutgoing(node.id);
 }
 
 function clearPreviewBranchTimers(){
@@ -7068,9 +7110,11 @@ checkingFrameIn=true;
 try{
 for(const id of [...state.previewFrameInIds]){
 const node=getNode(id);if(!node)continue;
+if(isPreviewOnceCompleted(node))continue;
 if(!isFrameInTriggered(node,gameCanvas,view))continue;
 state.previewFrameInIds=[];
 clearPreviewBranchTimers();
+markPreviewOnceExecuted(node);
 previewOutgoing(id);
 if(!state.connections.some(c=>c.from===id))previewMessage.textContent='フレームイン発火・接続先なし';
 break;
@@ -7090,6 +7134,7 @@ state.inventory=new Set();
 state.selectedInventoryItemId=null;
 state.inventoryEnabled=false;
 previewCompletedTriggers.clear();
+previewExecutedOnceNodes.clear();
 acquiredItems.clear();
 recordedWorldEvents.clear();usedWorldBranches.clear();toggleWorldStates.clear();
 }
@@ -7836,9 +7881,41 @@ function showPreviewNode(nodeId){
 recordPreviewDiagnostic('node-enter',{nodeId,nodeType:getNode(nodeId)?.type||'missing',alreadyVisited:previewVisited.has(nodeId)});
 const node=getNode(nodeId);
 if(!node||gamePreview.classList.contains('hidden'))return;
+
+// 一回だけ実行したノードへの再到達を処理する
+if(isPreviewOnceCompleted(node)){
+recordPreviewDiagnostic('node-once-skipped',{nodeId:node.id,nodeType:node.type});
+
+const blockingTypes=new Set([
+'click',
+'frameIn',
+'itemUse',
+'condition',
+'toggle',
+'textAnswer',
+'option',
+'optionChoice',
+'conditionBranch',
+'toggleBranch',
+'textAnswerBranch',
+'clickBranch'
+]);
+
+if(!blockingTypes.has(node.type)){
+previewOutgoing(node.id);
+}
+return;
+}
+
 // A branch converging on an already-active node is executed only once per scene.
 if(previewVisited.has(node.id))return;
 previewVisited.add(node.id);
+
+// 待機型トリガーは発火時に実行済みとする
+if(!['click','frameIn','itemUse'].includes(node.type)){
+markPreviewOnceExecuted(node);
+}
+
 if(node.type==='folderStart'){previewOutgoing(node.id);return;}
 if(node.type==='worldDisplay'){
   const folder=state.worldFolders.find(w=>w.id===node.folderId);
