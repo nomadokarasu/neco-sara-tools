@@ -387,21 +387,17 @@ function renderConditionSettings(node){
  const items=state.nodes.filter(n=>n.type==='itemAcquire');
  const events=state.nodes.filter(n=>n.type==='eventRecord');
  const toggles=state.nodes.filter(n=>n.type==='toggle');
- const uses=state.nodes.filter(n=>n.type==='itemAction'||(n.type==='clickBranch'&&n.clickBranchItemId&&n.clickBranchItemId!=='__other__'));
  settingsPanel.innerHTML=`<div class="settings-title">条件</div>
- <div class="setting-group"><div class="setting-label">判定方法</div><select id="conditionMode" class="number-input"><option value="acquired">アイテム取得済み</option><option value="event">イベント実行済み</option><option value="toggle">トグルON</option><option value="used">アイテム使用済み</option></select></div>
+ <div class="setting-group"><div class="setting-label">判定方法</div><select id="conditionMode" class="number-input"><option value="acquired">アイテム取得済み</option><option value="event">イベント実行済み</option><option value="toggle">トグルON</option></select></div>
  <div class="setting-group"><div class="setting-label">対象</div><select id="conditionItem" class="number-input"></select></div>
  <div class="settings-empty">成立時は「はい」、不成立時は「いいえ」に進みます。</div>`;
  const mode=document.getElementById('conditionMode');const item=document.getElementById('conditionItem');
  const renderOptions=()=>{
   item.replaceChildren();item.add(new Option('選択してください',''));
-  for(const n of (mode.value==='event'?events:mode.value==='toggle'?toggles:mode.value==='used'?uses:items)){
-   const name=n.type==='itemAction'?`アイテム使用：${itemDisplayName(getNode(n.itemActionTargetId))}`:n.type==='clickBranch'?`クリック使用：${itemDisplayName(getNode(n.clickBranchItemId))}`:(n.toggleName||n.eventName||itemDisplayName(n));
-   item.add(new Option(name,n.id));
-  }
+  for(const n of (mode.value==='event'?events:mode.value==='toggle'?toggles:items))item.add(new Option(n.toggleName||n.eventName||itemDisplayName(n),n.id));
   item.value=node.conditionItemId||'';
  };
- mode.value=['event','toggle','used'].includes(node.conditionMode)?node.conditionMode:'acquired';renderOptions();
+ mode.value=['event','toggle'].includes(node.conditionMode)?node.conditionMode:'acquired';renderOptions();
  mode.addEventListener('change',()=>{node.conditionMode=mode.value;node.conditionItemId='';renderOptions();renderNodes();});
  item.addEventListener('change',()=>{node.conditionItemId=item.value;renderNodes();});
 }
@@ -535,8 +531,6 @@ itemRemoveOriginClick:false,
 itemThumbnailMediaId:null,
 itemConsumable:true,
 itemUseTargetId:null,
-itemActionTargetId:null,
-itemActionConsume:true,
 optionOwnerId:null,
 optionChoiceId:null,
 dialogueView:{yaw:0,pitch:0,zoom:1,initialized:false},
@@ -675,7 +669,6 @@ node.type==='toggleBranch'?(node.toggleResult==='on'?'ON':'OFF'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'はい':'いいえ'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解':'不正解'):
 node.type==='itemAcquire'?'アイテム取得':
-node.type==='itemAction'?'アイテム使用':
 node.type==='inventory'?'インベントリ表示':
 node.type==='itemUse'?'アイテム使用':
 node.type==='optionChoice'?'選択肢':
@@ -706,11 +699,10 @@ node.type==='textAnswer'?'入力した回答を判定':
 node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
 node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：'+(node.toggleSetAction==='on'?'ON':node.toggleSetAction==='off'?'OFF':'反転')):
 node.type==='toggleBranch'?(node.toggleResult==='on'?'ONルート':'OFFルート'):
-node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':node.conditionMode==='toggle'?'トグルON':node.conditionMode==='used'?'アイテム使用済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
+node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'条件成立':'条件不成立'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解ルート':'不正解ルート'):
 node.type==='itemAcquire'?(node.itemName||'アイテム名未設定'):
-node.type==='itemAction'?(getNode(node.itemActionTargetId)?.itemName||'使用アイテム未設定')+(node.itemActionConsume?'（消費）':''):
 node.type==='inventory'?'所持アイテム一覧':
 node.type==='itemUse'?'選択アイテムを使用':
 node.type==='optionChoice'?(getNode(node.optionOwnerId)?.optionChoices?.find(c=>c.id===node.optionChoiceId)?.text||'選択肢'):
@@ -1127,7 +1119,6 @@ if(node.type==='conditionBranch'){settingsPanel.innerHTML=`<div class="settings-
 if(node.type==='textAnswerBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.textAnswerResult==='correct'?'正解':'不正解'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
 if(node.type==='clickBranch'){renderClickBranchSettings(node);return;}
 if(node.type==='itemAcquire'){renderItemAcquireSettings(node);return;}
-if(node.type==='itemAction'){renderItemActionSettings(node);return;}
 if(node.type==='inventory'){settingsPanel.innerHTML='<div class="settings-title">インベントリ表示</div><div class="settings-empty">このノードを実行すると、ゲーム画面にインベントリボタンが表示されます。取得したアイテムを一覧表示できます。</div>';return;}
 if(node.type==='itemUse'){renderItemUseSettings(node);return;}
 if(node.type==='media2d'){
@@ -1595,16 +1586,6 @@ function renderItemAcquireSettings(node){
  document.getElementById('itemThumbnailInput').addEventListener('change',e=>{node.itemThumbnailMediaId=e.target.value||null;sync();});
  document.getElementById('itemRemoveOriginClick').addEventListener('change',e=>{node.itemRemoveOriginClick=e.target.checked;});
  sync();
-}
-function renderItemActionSettings(node){
- const items=state.nodes.filter(n=>n.type==='itemAcquire');
- settingsPanel.innerHTML='<div class="settings-title">アイテム使用</div><div class="setting-group"><div class="setting-label">使用するアイテム</div><select id="itemActionTarget" class="number-input"></select></div><div class="setting-group"><label><input type="checkbox" id="itemActionConsume"> 使用後にアイテムを消費する</label></div><p class="settings-empty">指定したアイテムを所持していれば使用し、次のノードへ進みます。所持していなければ実行しません。</p>';
- const select=document.getElementById('itemActionTarget');select.add(new Option('アイテムを選択',''));
- for(const item of items)select.add(new Option(itemDisplayName(item),item.id));
- select.value=node.itemActionTargetId||'';
- select.onchange=()=>{node.itemActionTargetId=select.value;renderNodes();};
- const consume=document.getElementById('itemActionConsume');consume.checked=node.itemActionConsume!==false;
- consume.onchange=()=>{node.itemActionConsume=consume.checked;renderNodes();};
 }
 function renderItemUseSettings(node){
  const source=findPreviousClickMediaNode(node.id);
@@ -7931,12 +7912,6 @@ if(node.type==='inventory'){
  previewOutgoing(node.id);
  return;
 }
-if(node.type==='itemAction'){
- if(!node.itemActionTargetId||!state.inventory.has(node.itemActionTargetId))return;
- usedWorldBranches.add(node.id);
- if(node.itemActionConsume!==false){state.inventory.delete(node.itemActionTargetId);if(state.selectedInventoryItemId===node.itemActionTargetId)state.selectedInventoryItemId=null;refreshInventory();}
- refreshWorldComposite();previewOutgoing(node.id);return;
-}
 if(node.type==='itemUse'){
  if(!node.itemUseTargetId){return;}
  if(!state.previewItemUseTriggerIds.includes(node.id))state.previewItemUseTriggerIds.push(node.id);
@@ -7946,7 +7921,7 @@ if(node.type==='clickBranch'){previewOutgoing(node.id);return;}
 if(node.type==='textAnswerBranch'){previewOutgoing(node.id);return;}
 if(node.type==='conditionBranch'){previewOutgoing(node.id);return;}
 if(node.type==='condition'){
- const meets=!!node.conditionItemId&&(node.conditionMode==='event'?recordedWorldEvents.has(node.conditionItemId):node.conditionMode==='toggle'?toggleWorldStates.has(node.conditionItemId):node.conditionMode==='used'?usedWorldBranches.has(node.conditionItemId):acquiredItems.has(node.conditionItemId));
+ const meets=!!node.conditionItemId&&(node.conditionMode==='event'?recordedWorldEvents.has(node.conditionItemId):node.conditionMode==='toggle'?toggleWorldStates.has(node.conditionItemId):acquiredItems.has(node.conditionItemId));
  recordPreviewDiagnostic('condition-evaluated',{nodeId:node.id,mode:node.conditionMode,itemId:node.conditionItemId,result:meets?'yes':'no'});
  const branch=conditionBranches(node).find(n=>n.conditionResult===(meets?'yes':'no'));
  if(branch)showPreviewNode(branch.id);
@@ -8645,16 +8620,10 @@ function updateWorldTabs(){
  }
  const plus=document.createElement('button');plus.textContent='＋';plus.title='ワールドを追加';plus.addEventListener('click',()=>{const folder=makeWorldFolder('ワールド'+(state.worldFolders.length+1));updateWorldTabs();assignFolderTab(folder.id);});worldTabs.appendChild(plus);
 }
-function singleLayerConditionMatches(condition){
- if(!condition||condition.mode==='always'||!condition.mode)return true;
- const has=condition.eventType==='toggle'?toggleWorldStates.has(condition.targetId):condition.eventType==='acquire'?acquiredItems.has(condition.targetId):condition.eventType==='use'?usedWorldBranches.has(condition.targetId):recordedWorldEvents.has(condition.targetId);
- return condition.mode==='after'?has:!has;
-}
 function layerConditionMatches(layer){
- const first=singleLayerConditionMatches(layer);
- if(!layer.secondCondition)return first;
- const second=singleLayerConditionMatches(layer.secondCondition);
- return layer.conditionOperator==='or'?(first||second):(first&&second);
+ if(layer.mode==='always'||!layer.mode)return true;
+ const has=layer.eventType==='toggle'?toggleWorldStates.has(layer.targetId):layer.eventType==='acquire'?acquiredItems.has(layer.targetId):layer.eventType==='use'?usedWorldBranches.has(layer.targetId):recordedWorldEvents.has(layer.targetId);
+ return layer.mode==='after'?has:!has;
 }
 function getFolderMedia(folder){return mediaLibrary.find(m=>m.id===folderBacker(folder)?.world?.mediaId)||null;}
 function recompositeFolder(folder){
@@ -8686,8 +8655,8 @@ function addFolderRow(parent,label,element){const group=document.createElement('
 function folderMediaSelect(value,types,onchange){const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('素材未設定',''));for(const m of mediaLibrary.filter(m=>types.includes(m.fileType)))sel.add(new Option(m.fileName,m.id));sel.value=value||'';sel.onchange=()=>onchange(sel.value);return sel;}
 function folderEventSelect(layer,render){
  const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('対象を選択',''));
- const types={acquire:'itemAcquire',use:'itemAction',event:'eventRecord',toggle:'toggle'};
- for(const n of state.nodes.filter(n=>(n.type===types[layer.eventType]||(layer.eventType==='use'&&n.type==='clickBranch'))&&(n.type!=='clickBranch'||n.clickBranchItemId!=='__other__'))){
+ const types={acquire:'itemAcquire',use:'clickBranch',event:'eventRecord',toggle:'toggle'};
+ for(const n of state.nodes.filter(n=>n.type===types[layer.eventType]&&(n.type!=='clickBranch'||n.clickBranchItemId!=='__other__'))){
   const label=n.toggleName||n.itemName||n.eventName||n.customBody||n.clickBranchItemId||n.id;
   sel.add(new Option(label+' ('+(state.worldFolders.find(w=>w.id===n.folderId)?.name||'')+')',n.id));
  }
@@ -8769,52 +8738,33 @@ function renderWorldFolderEditor(){
   label.oninput=()=>{layer.name=label.value;layerName.textContent=label.value||'名称未設定レイヤー';};addFolderRow(panel,'レイヤー名',label);
   addFolderRow(panel,'画像',folderMediaSelect(layer.mediaId,['png'],id=>layer.mediaId=id));
   const heading=document.createElement('div');heading.className='setting-label';heading.textContent='このレイヤーをいつ表示しますか？';panel.append(heading);
-  const renderLayerCondition=(condition,parent)=>{
-   const eventType=document.createElement('select');eventType.className='number-input';
-   for(const [value,text] of [['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']])eventType.add(new Option(text,value));
-   eventType.value=condition.eventType||'acquire';addFolderRow(parent,'表示条件',eventType);
-   const timing=document.createElement('select');timing.className='number-input';addFolderRow(parent,'前/後',timing);
-   const timingLabel=timing.parentElement.querySelector('.setting-label');
-   const updateTimingLabels=()=>{
-    const isToggle=condition.eventType==='toggle';timingLabel.textContent=isToggle?'ON/OFF':'前/後';
+  const eventType=document.createElement('select');eventType.className='number-input';
+  for(const [value,text] of [['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']])eventType.add(new Option(text,value));
+  eventType.value=layer.eventType||'acquire';addFolderRow(panel,'表示条件',eventType);
+  const timing=document.createElement('select');timing.className='number-input';
+  timing.value=layer.mode==='after'?'after':'before';addFolderRow(panel,'前/後',timing);
+  const timingLabel=timing.parentElement.querySelector('.setting-label');
+  const updateTimingLabels=()=>{
+    const isToggle=layer.eventType==='toggle';
+    timingLabel.textContent=isToggle?'ON/OFF':'前/後';
     timing.replaceChildren(new Option(isToggle?'OFF':'前','before'),new Option(isToggle?'ON':'後','after'));
-    timing.value=condition.mode==='after'?'after':'before';
-   };
-   updateTimingLabels();
-   const targetContainer=document.createElement('div');parent.append(targetContainer);
-   const explanation=document.createElement('p');explanation.className='world-layer-explanation';parent.append(explanation);
-   const updateExplanation=()=>{
-    const target=getNode(condition.targetId);
+    timing.value=layer.mode==='after'?'after':'before';
+  };
+  updateTimingLabels();
+  const targetContainer=document.createElement('div');panel.append(targetContainer);
+  const explanation=document.createElement('p');explanation.className='world-layer-explanation';panel.append(explanation);
+  const updateExplanation=()=>{
+    const target=getNode(layer.targetId);
     const name=(target?.type==='toggle'?(target.toggleName||'トグル '+target.id):null)||target?.itemName||target?.eventName||target?.customBody||(target?.clickBranchItemId?itemDisplayName(getNode(target.clickBranchItemId)):null);
-    const action=condition.eventType==='acquire'?'を取得':condition.eventType==='use'?'を使用':'が終了';
-    if(condition.eventType==='toggle'){explanation.textContent=name?`「${name}」が${condition.mode==='after'?'ON':'OFF'}の間`:'対象のトグルを選択してください。';return;}
-    explanation.textContent=name?`「${name}」${action}${condition.mode==='after'?'した後':'する前'}`:'対象を選ぶと条件が表示されます。';
-   };
-   const drawTarget=()=>{targetContainer.replaceChildren();addFolderRow(targetContainer,'対象',folderEventSelect(condition,updateExplanation));updateExplanation();};
-   eventType.onchange=()=>{condition.eventType=eventType.value;condition.targetId='';updateTimingLabels();drawTarget();};
-   timing.onchange=()=>{condition.mode=timing.value;updateExplanation();};
-   if(condition.mode==='always')condition.mode='before';
-   drawTarget();
+    const action=layer.eventType==='toggle'?'':layer.eventType==='acquire'?'を取得':layer.eventType==='use'?'を使用':'が終了';
+    if(layer.eventType==='toggle'){explanation.textContent=name?`このレイヤーは「${name}」が${layer.mode==='after'?'ON':'OFF'}の間に表示します`:'対象のトグルを選択してください。';return;}
+    explanation.textContent=name?`このレイヤーは「${name}」${action}${layer.mode==='after'?'した後に表示します':'するまで表示します'}`:'対象を選ぶと表示条件がここに表示されます。';
   };
-  renderLayerCondition(layer,panel);
-  const secondaryArea=document.createElement('div');panel.append(secondaryArea);
-  const redrawSecond=()=>{
-   secondaryArea.replaceChildren();
-   if(!layer.secondCondition){
-    const addSecond=document.createElement('button');addSecond.type='button';addSecond.className='add-world-btn';addSecond.textContent='＋ 条件を追加';
-    addSecond.onclick=()=>{layer.secondCondition={eventType:'acquire',targetId:'',mode:'before'};layer.conditionOperator='and';redrawSecond();};
-    secondaryArea.append(addSecond);return;
-   }
-   const operator=document.createElement('select');operator.className='number-input';
-   operator.add(new Option('かつ（両方成立）','and'));operator.add(new Option('または（どちらか成立）','or'));
-   operator.value=layer.conditionOperator==='or'?'or':'and';operator.onchange=()=>{layer.conditionOperator=operator.value;};
-   addFolderRow(secondaryArea,'条件の組み合わせ',operator);
-   const secondHeading=document.createElement('div');secondHeading.className='setting-label';secondHeading.textContent='条件2';secondaryArea.append(secondHeading);
-   renderLayerCondition(layer.secondCondition,secondaryArea);
-   const removeSecond=document.createElement('button');removeSecond.type='button';removeSecond.className='add-world-btn';removeSecond.textContent='2つ目の条件を削除';
-   removeSecond.onclick=()=>{delete layer.secondCondition;delete layer.conditionOperator;redrawSecond();};secondaryArea.append(removeSecond);
-  };
-  redrawSecond();
+  const drawTarget=()=>{targetContainer.replaceChildren();addFolderRow(targetContainer,'対象',folderEventSelect(layer,updateExplanation));updateExplanation();};
+  eventType.onchange=()=>{layer.eventType=eventType.value;layer.targetId='';updateTimingLabels();drawTarget();};
+  timing.onchange=()=>{layer.mode=timing.value;updateExplanation();};
+  if(layer.mode==='always')layer.mode='before';
+  drawTarget();
   
  }
  const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);if(section._cameraSection)section.append(section._cameraSection);
