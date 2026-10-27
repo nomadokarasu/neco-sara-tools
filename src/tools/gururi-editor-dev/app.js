@@ -8621,9 +8621,16 @@ function updateWorldTabs(){
  const plus=document.createElement('button');plus.textContent='＋';plus.title='ワールドを追加';plus.addEventListener('click',()=>{const folder=makeWorldFolder('ワールド'+(state.worldFolders.length+1));updateWorldTabs();assignFolderTab(folder.id);});worldTabs.appendChild(plus);
 }
 function layerConditionMatches(layer){
- if(layer.mode==='always'||!layer.mode)return true;
- const has=layer.eventType==='toggle'?toggleWorldStates.has(layer.targetId):layer.eventType==='acquire'?acquiredItems.has(layer.targetId):layer.eventType==='use'?usedWorldBranches.has(layer.targetId):recordedWorldEvents.has(layer.targetId);
- return layer.mode==='after'?has:!has;
+ const matches=(eventType,targetId,mode)=>{
+  if(mode==='always'||!mode)return true;
+  if(!targetId)return false;
+  const has=eventType==='toggle'?toggleWorldStates.has(targetId):eventType==='acquire'?acquiredItems.has(targetId):eventType==='use'?usedWorldBranches.has(targetId):recordedWorldEvents.has(targetId);
+  return mode==='after'?has:!has;
+ };
+ const first=matches(layer.eventType,layer.targetId,layer.mode);
+ if(layer.secondConditionEnabled!==true)return first;
+ const second=matches(layer.secondEventType,layer.secondTargetId,layer.secondMode);
+ return layer.conditionOperator==='or'?(first||second):(first&&second);
 }
 function getFolderMedia(folder){return mediaLibrary.find(m=>m.id===folderBacker(folder)?.world?.mediaId)||null;}
 function recompositeFolder(folder){
@@ -8738,33 +8745,60 @@ function renderWorldFolderEditor(){
   label.oninput=()=>{layer.name=label.value;layerName.textContent=label.value||'名称未設定レイヤー';};addFolderRow(panel,'レイヤー名',label);
   addFolderRow(panel,'画像',folderMediaSelect(layer.mediaId,['png'],id=>layer.mediaId=id));
   const heading=document.createElement('div');heading.className='setting-label';heading.textContent='このレイヤーをいつ表示しますか？';panel.append(heading);
-  const eventType=document.createElement('select');eventType.className='number-input';
-  for(const [value,text] of [['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']])eventType.add(new Option(text,value));
-  eventType.value=layer.eventType||'acquire';addFolderRow(panel,'表示条件',eventType);
-  const timing=document.createElement('select');timing.className='number-input';
-  timing.value=layer.mode==='after'?'after':'before';addFolderRow(panel,'前/後',timing);
-  const timingLabel=timing.parentElement.querySelector('.setting-label');
-  const updateTimingLabels=()=>{
-    const isToggle=layer.eventType==='toggle';
-    timingLabel.textContent=isToggle?'ON/OFF':'前/後';
-    timing.replaceChildren(new Option(isToggle?'OFF':'前','before'),new Option(isToggle?'ON':'後','after'));
-    timing.value=layer.mode==='after'?'after':'before';
-  };
-  updateTimingLabels();
-  const targetContainer=document.createElement('div');panel.append(targetContainer);
-  const explanation=document.createElement('p');explanation.className='world-layer-explanation';panel.append(explanation);
-  const updateExplanation=()=>{
-    const target=getNode(layer.targetId);
+  const eventOptions=[['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']];
+  const renderLayerCondition=(container,keys,label)=>{
+   const cap=document.createElement('div');cap.className='setting-label';cap.textContent=label;container.append(cap);
+   const eventType=document.createElement('select');eventType.className='number-input';
+   for(const [value,text] of eventOptions)eventType.add(new Option(text,value));
+   eventType.value=layer[keys.eventType]||'acquire';addFolderRow(container,'表示条件',eventType);
+   const timing=document.createElement('select');timing.className='number-input';addFolderRow(container,'前/後',timing);
+   const timingLabel=timing.parentElement.querySelector('.setting-label');
+   const targetContainer=document.createElement('div');container.append(targetContainer);
+   const explanation=document.createElement('p');explanation.className='world-layer-explanation';container.append(explanation);
+   const updateExplanation=()=>{
+    const target=getNode(layer[keys.targetId]);
     const name=(target?.type==='toggle'?(target.toggleName||'トグル '+target.id):null)||target?.itemName||target?.eventName||target?.customBody||(target?.clickBranchItemId?itemDisplayName(getNode(target.clickBranchItemId)):null);
-    const action=layer.eventType==='toggle'?'':layer.eventType==='acquire'?'を取得':layer.eventType==='use'?'を使用':'が終了';
-    if(layer.eventType==='toggle'){explanation.textContent=name?`このレイヤーは「${name}」が${layer.mode==='after'?'ON':'OFF'}の間に表示します`:'対象のトグルを選択してください。';return;}
-    explanation.textContent=name?`このレイヤーは「${name}」${action}${layer.mode==='after'?'した後に表示します':'するまで表示します'}`:'対象を選ぶと表示条件がここに表示されます。';
+    const type=layer[keys.eventType];const after=layer[keys.mode]==='after';
+    if(type==='toggle'){explanation.textContent=name?`「${name}」が${after?'ON':'OFF'}の間に表示`:'対象のトグルを選択してください。';return;}
+    const action=type==='acquire'?'取得':type==='use'?'使用':'終了';
+    explanation.textContent=name?`「${name}」の${action}${after?'後':'前'}に表示`:'対象を選ぶと表示条件がここに表示されます。';
+   };
+   const drawTarget=()=>{
+    targetContainer.replaceChildren();
+    const adapter={eventType:layer[keys.eventType],targetId:layer[keys.targetId]};
+    addFolderRow(targetContainer,'対象',folderEventSelect(adapter,()=>{layer[keys.targetId]=adapter.targetId;updateExplanation();}));
+    updateExplanation();
+   };
+   const updateTimingLabels=()=>{
+    const toggle=layer[keys.eventType]==='toggle';
+    timingLabel.textContent=toggle?'ON/OFF':'前/後';
+    timing.replaceChildren(new Option(toggle?'OFF':'前','before'),new Option(toggle?'ON':'後','after'));
+    timing.value=layer[keys.mode]==='after'?'after':'before';
+   };
+   if(layer[keys.mode]==='always')layer[keys.mode]='before';
+   updateTimingLabels();drawTarget();
+   eventType.onchange=()=>{layer[keys.eventType]=eventType.value;layer[keys.targetId]='';updateTimingLabels();drawTarget();};
+   timing.onchange=()=>{layer[keys.mode]=timing.value;updateExplanation();};
   };
-  const drawTarget=()=>{targetContainer.replaceChildren();addFolderRow(targetContainer,'対象',folderEventSelect(layer,updateExplanation));updateExplanation();};
-  eventType.onchange=()=>{layer.eventType=eventType.value;layer.targetId='';updateTimingLabels();drawTarget();};
-  timing.onchange=()=>{layer.mode=timing.value;updateExplanation();};
-  if(layer.mode==='always')layer.mode='before';
-  drawTarget();
+  renderLayerCondition(panel,{eventType:'eventType',targetId:'targetId',mode:'mode'},'条件1');
+  const additional=document.createElement('div');additional.className='world-layer-extra-condition';panel.append(additional);
+  const renderAdditional=()=>{
+   additional.replaceChildren();
+   if(layer.secondConditionEnabled!==true){
+    const addSecond=document.createElement('button');addSecond.type='button';addSecond.className='secondary-button';addSecond.textContent='＋ 条件を追加';
+    addSecond.onclick=()=>{layer.secondConditionEnabled=true;layer.secondEventType=layer.secondEventType||'acquire';layer.secondMode=layer.secondMode||'before';renderAdditional();};
+    additional.append(addSecond);return;
+   }
+   const operator=document.createElement('select');operator.className='number-input';
+   operator.add(new Option('かつ（両方を満たす）','and'));operator.add(new Option('または（どちらかを満たす）','or'));
+   operator.value=layer.conditionOperator==='or'?'or':'and';
+   operator.onchange=()=>{layer.conditionOperator=operator.value;};
+   addFolderRow(additional,'条件の組み合わせ',operator);
+   renderLayerCondition(additional,{eventType:'secondEventType',targetId:'secondTargetId',mode:'secondMode'},'条件2');
+   const removeSecond=document.createElement('button');removeSecond.type='button';removeSecond.className='secondary-button';removeSecond.textContent='2つ目の条件を削除';
+   removeSecond.onclick=()=>{layer.secondConditionEnabled=false;renderAdditional();};additional.append(removeSecond);
+  };
+  renderAdditional();
   
  }
  const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);if(section._cameraSection)section.append(section._cameraSection);
