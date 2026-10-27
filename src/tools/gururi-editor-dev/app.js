@@ -6021,7 +6021,132 @@ stepEditorHistory(key==='y'||(key==='z'&&e.shiftKey));
 },true);
 
 let copiedNodeData=null;
+let copiedNodeGroup=null;
 let pasteOffset=0;
+
+function copySelectedNodeGroup(){
+const selectedIds=state.selectedNodeIds.size>0
+?new Set(state.selectedNodeIds)
+:new Set(state.selectedNodeId?[state.selectedNodeId]:[]);
+
+const excludedTypes=new Set(['start','folderStart','worldDisplay']);
+const nodes=state.nodes.filter(node=>selectedIds.has(node.id)&&!excludedTypes.has(node.type));
+
+if(nodes.length===0)return null;
+
+const nodeIds=new Set(nodes.map(node=>node.id));
+const connections=state.connections.filter(connection=>nodeIds.has(connection.from)&&nodeIds.has(connection.to));
+
+return{
+nodes:cloneEditorValue(nodes),
+connections:cloneEditorValue(connections)
+};
+}
+
+function pasteSelectedNodeGroup(group,offset){
+if(!group?.nodes?.length)return;
+
+const before=editorSnapshot();
+const idMap=new Map();
+const choiceIdMap=new Map();
+
+for(const node of group.nodes){
+idMap.set(node.id,uid(node.type));
+if(Array.isArray(node.optionChoices)){
+for(const choice of node.optionChoices){
+choiceIdMap.set(choice.id,uid('choice'));
+}
+}
+}
+
+const clonedNodes=cloneEditorValue(group.nodes);
+const clonedConnections=cloneEditorValue(group.connections);
+
+const remapReferences=(value)=>{
+if(!value||typeof value!=='object')return;
+
+if(Array.isArray(value)){
+for(const item of value)remapReferences(item);
+return;
+}
+
+if(value instanceof Set||value instanceof Map||value instanceof Blob||value instanceof Element)return;
+if(Object.getPrototypeOf(value)!==Object.prototype)return;
+
+for(const [key,item] of Object.entries(value)){
+if(key==='folderId'||key==='destinationFolderId'||key==='optionOwnerId'&&item===null)continue;
+
+if(typeof item==='string'){
+if(idMap.has(item)){
+value[key]=idMap.get(item);
+}else if(choiceIdMap.has(item)){
+value[key]=choiceIdMap.get(item);
+}
+}else if(item&&typeof item==='object'){
+remapReferences(item);
+}
+}
+};
+
+for(const node of clonedNodes){
+const originalId=node.id;
+node.id=idMap.get(originalId);
+node.x=(Number(node.x)||0)+offset;
+node.y=(Number(node.y)||0)+offset;
+
+if(node.folderId!==undefined)node.folderId=state.activeFolderId;
+
+remapReferences(node);
+
+if(Array.isArray(node.optionChoices)){
+for(const choice of node.optionChoices){
+const original=group.nodes.find(n=>n.id===originalId)?.optionChoices?.find(c=>c.text===choice.text);
+if(original&&choiceIdMap.has(original.id))choice.id=choiceIdMap.get(original.id);
+}
+}
+
+if('clickUndoStack'in node)node.clickUndoStack=[];
+if('clickRedoStack'in node)node.clickRedoStack=[];
+if('panUndoStack'in node)node.panUndoStack=[];
+if('panRedoStack'in node)node.panRedoStack=[];
+if('frameInUndo'in node)node.frameInUndo=[];
+if('frameInRedo'in node)node.frameInRedo=[];
+}
+
+for(const connection of clonedConnections){
+connection.id=uid('conn');
+connection.from=idMap.get(connection.from);
+connection.to=idMap.get(connection.to);
+
+if(Array.isArray(connection.anchors)){
+connection.anchors=connection.anchors.map(anchor=>({
+...anchor,
+x:anchor.x+offset,
+y:anchor.y+offset
+}));
+}
+}
+
+state.nodes.push(...clonedNodes);
+state.connections.push(...clonedConnections);
+
+const copiedIds=new Set(clonedNodes.map(node=>node.id));
+
+for(const node of clonedNodes){
+if(node.type==='condition'&&!clonedNodes.some(n=>n.conditionOwnerId===node.id))ensureConditionBranches(node);
+if(node.type==='toggle'&&!clonedNodes.some(n=>n.toggleOwnerId===node.id))ensureToggleBranches(node);
+if(node.type==='textAnswer'&&!clonedNodes.some(n=>n.textAnswerOwnerId===node.id))ensureTextAnswerBranches(node);
+}
+
+state.selectedNodeIds=new Set([...copiedIds]);
+state.selectedNodeId=null;
+state.selectedConnectionId=null;
+
+commitEditorHistory(before);
+renderNodes();
+renderSettings();
+renderConnections();
+}
 
 function copyNodeData(node){
 const copied={
@@ -6167,38 +6292,22 @@ return;
 }
 
 if((e.ctrlKey||e.metaKey)&&!e.altKey&&key==='c'){
-if(!selectedNode||['start','folderStart','worldDisplay'].includes(selectedNode.type))return;
+const group=copySelectedNodeGroup();
+if(!group)return;
 
 e.preventDefault();
-copiedNodeData=copyNodeData(selectedNode);
+copiedNodeGroup=group;
+copiedNodeData=null;
 pasteOffset=0;
 return;
 }
 
 if((e.ctrlKey||e.metaKey)&&!e.altKey&&key==='v'){
-if(!copiedNodeData)return;
+if(!copiedNodeGroup)return;
 
 e.preventDefault();
-
 pasteOffset+=40;
-
-const editBefore=editorSnapshot();
-const newNode=copyNodeData(copiedNodeData);
-newNode.id=uid(newNode.type);
-if(['folderStart','worldDisplay'].includes(newNode.type))return;
-if(newNode.type==='option'){newNode.optionChoices=[];}
-if(newNode.type==='optionChoice'||newNode.type==='textAnswerBranch'||newNode.type==='conditionBranch'||newNode.type==='toggleBranch')return;
-if(newNode.type==='textAnswer'){newNode.textAnswerOwnerId=null;newNode.textAnswerResult=null;}
-newNode.x=copiedNodeData.x+pasteOffset;
-newNode.y=copiedNodeData.y+pasteOffset;
-
-state.nodes.push(newNode);
-if(newNode.type==='textAnswer')ensureTextAnswerBranches(newNode);
-if(newNode.type==='condition')ensureConditionBranches(newNode);
-if(newNode.type==='toggle')ensureToggleBranches(newNode);
-commitEditorHistory(editBefore);
-renderNodes();
-selectNode(newNode.id);
+pasteSelectedNodeGroup(copiedNodeGroup,pasteOffset);
 return;
 }
 
