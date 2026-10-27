@@ -387,17 +387,21 @@ function renderConditionSettings(node){
  const items=state.nodes.filter(n=>n.type==='itemAcquire');
  const events=state.nodes.filter(n=>n.type==='eventRecord');
  const toggles=state.nodes.filter(n=>n.type==='toggle');
+ const uses=state.nodes.filter(n=>n.type==='itemAction'||(n.type==='clickBranch'&&n.clickBranchItemId&&n.clickBranchItemId!=='__other__'));
  settingsPanel.innerHTML=`<div class="settings-title">条件</div>
- <div class="setting-group"><div class="setting-label">判定方法</div><select id="conditionMode" class="number-input"><option value="acquired">アイテム取得済み</option><option value="event">イベント実行済み</option><option value="toggle">トグルON</option></select></div>
+ <div class="setting-group"><div class="setting-label">判定方法</div><select id="conditionMode" class="number-input"><option value="acquired">アイテム取得済み</option><option value="event">イベント実行済み</option><option value="toggle">トグルON</option><option value="used">アイテム使用済み</option></select></div>
  <div class="setting-group"><div class="setting-label">対象</div><select id="conditionItem" class="number-input"></select></div>
  <div class="settings-empty">成立時は「はい」、不成立時は「いいえ」に進みます。</div>`;
  const mode=document.getElementById('conditionMode');const item=document.getElementById('conditionItem');
  const renderOptions=()=>{
   item.replaceChildren();item.add(new Option('選択してください',''));
-  for(const n of (mode.value==='event'?events:mode.value==='toggle'?toggles:items))item.add(new Option(n.toggleName||n.eventName||itemDisplayName(n),n.id));
+  for(const n of (mode.value==='event'?events:mode.value==='toggle'?toggles:mode.value==='used'?uses:items)){
+   const name=n.type==='itemAction'?`アイテム使用：${itemDisplayName(getNode(n.itemActionTargetId))}`:n.type==='clickBranch'?`クリック使用：${itemDisplayName(getNode(n.clickBranchItemId))}`:(n.toggleName||n.eventName||itemDisplayName(n));
+   item.add(new Option(name,n.id));
+  }
   item.value=node.conditionItemId||'';
  };
- mode.value=['event','toggle'].includes(node.conditionMode)?node.conditionMode:'acquired';renderOptions();
+ mode.value=['event','toggle','used'].includes(node.conditionMode)?node.conditionMode:'acquired';renderOptions();
  mode.addEventListener('change',()=>{node.conditionMode=mode.value;node.conditionItemId='';renderOptions();renderNodes();});
  item.addEventListener('change',()=>{node.conditionItemId=item.value;renderNodes();});
 }
@@ -702,7 +706,7 @@ node.type==='textAnswer'?'入力した回答を判定':
 node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
 node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：'+(node.toggleSetAction==='on'?'ON':node.toggleSetAction==='off'?'OFF':'反転')):
 node.type==='toggleBranch'?(node.toggleResult==='on'?'ONルート':'OFFルート'):
-node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
+node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':node.conditionMode==='toggle'?'トグルON':node.conditionMode==='used'?'アイテム使用済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'条件成立':'条件不成立'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解ルート':'不正解ルート'):
 node.type==='itemAcquire'?(node.itemName||'アイテム名未設定'):
@@ -7942,7 +7946,7 @@ if(node.type==='clickBranch'){previewOutgoing(node.id);return;}
 if(node.type==='textAnswerBranch'){previewOutgoing(node.id);return;}
 if(node.type==='conditionBranch'){previewOutgoing(node.id);return;}
 if(node.type==='condition'){
- const meets=!!node.conditionItemId&&(node.conditionMode==='event'?recordedWorldEvents.has(node.conditionItemId):node.conditionMode==='toggle'?toggleWorldStates.has(node.conditionItemId):acquiredItems.has(node.conditionItemId));
+ const meets=!!node.conditionItemId&&(node.conditionMode==='event'?recordedWorldEvents.has(node.conditionItemId):node.conditionMode==='toggle'?toggleWorldStates.has(node.conditionItemId):node.conditionMode==='used'?usedWorldBranches.has(node.conditionItemId):acquiredItems.has(node.conditionItemId));
  recordPreviewDiagnostic('condition-evaluated',{nodeId:node.id,mode:node.conditionMode,itemId:node.conditionItemId,result:meets?'yes':'no'});
  const branch=conditionBranches(node).find(n=>n.conditionResult===(meets?'yes':'no'));
  if(branch)showPreviewNode(branch.id);
