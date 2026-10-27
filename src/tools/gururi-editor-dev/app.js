@@ -2906,10 +2906,18 @@ return null;
 // 連番PNGは1つの素材として管理し、フレームを共通の360度キャンバスで再生する。
 function isAnimationAsset(media){return !!media&&(media.fileType==='mp4'||media.fileType==='pngseq');}
 function naturalFrameOrder(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'});}
-function createSequencePlayback(media){
- const canvas=document.createElement('canvas');canvas.width=media.width;canvas.height=media.height;
- const ctx=canvas.getContext('2d');let time=0,playing=false,started=0,frameHandle=0;
- const draw=()=>{const n=media.frameImages.length;const i=Math.min(n-1,Math.max(0,Math.floor(time*media.fps)%n));ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(media.frameImages[i],0,0);};
+function createSequencePlayback(media,backgroundImage=null){
+const canvas=document.createElement('canvas');canvas.width=media.width;canvas.height=media.height;
+const ctx=canvas.getContext('2d');let time=0,playing=false,started=0,frameHandle=0;
+const draw=()=>{
+const n=media.frameImages.length;
+const i=Math.min(n-1,Math.max(0,Math.floor(time*media.fps)%n));
+ctx.clearRect(0,0,canvas.width,canvas.height);
+if(backgroundImage){
+ctx.drawImage(backgroundImage,0,0,canvas.width,canvas.height);
+}
+ctx.drawImage(media.frameImages[i],0,0,canvas.width,canvas.height);
+};
  const advance=now=>{if(!playing)return;time=(now-started)/1000;if(time>=media.duration){if(canvas.loop){time=time%media.duration;started=now-time*1000;}else{time=media.duration;playing=false;canvas.dispatchEvent(new Event('ended'));}}draw();if(playing)frameHandle=requestAnimationFrame(advance);};
  Object.defineProperties(canvas,{
   currentTime:{get:()=>time,set:v=>{time=Math.max(0,Math.min(Number(v)||0,Math.max(0,media.duration-0.0001)));if(playing)started=performance.now()-time*1000;draw();queueMicrotask(()=>canvas.dispatchEvent(new Event('seeked')));}},
@@ -7061,7 +7069,9 @@ previewMessage.textContent='MP4素材を選択してください';
 return;
 }
 
-const video=media.fileType==='pngseq'?createSequencePlayback(media):document.createElement('video');
+const backgroundWorldNode=getNode(state.previewWorldNodeId||currentWorldBackerId);
+const backgroundImage=backgroundWorldNode?.world?.image||null;
+const video=media.fileType==='pngseq'?createSequencePlayback(media,backgroundImage):document.createElement('video');
 
 video.muted=true;
 video.playsInline=true;
