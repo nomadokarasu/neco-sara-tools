@@ -9127,54 +9127,157 @@ function composeAllWorldLayers(folder,canvas){
  return true;
 }
 function setupWorldSettingsCameraPreview(canvas,folder){
- const backer=folderBacker(folder);
- if(!backer)return;
- const saved=getWorldInitialView(backer);
- const view={yaw:Number(saved.yaw)||0,pitch:Number(saved.pitch)||0,zoom:Number(saved.zoom)||1};
- const composite=document.createElement('canvas');
- const persist=()=>{
-  const target=getWorldInitialView(backer);
-  Object.assign(target,view);
-  // Keep the legacy per-world current view in sync as well.
-  backer.world.yaw=view.yaw;backer.world.pitch=view.pitch;backer.world.zoom=view.zoom;
- };
- let syncInputs=()=>{};
- const draw=()=>{
-  if(!canvas.isConnected)return;
-  const valid=composeAllWorldLayers(folder,composite);
-  drawPanoramaPreview(canvas,{image:valid?composite:null,...view});
-  syncInputs();
- };
- syncInputs=setupCameraNumberInputs(canvas,view,()=>{persist();draw();});
- let drag=null;
- canvas.addEventListener('pointerdown',e=>{
-  if(e.button!==0)return;
-  drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch,pointerId:e.pointerId};
-  canvas.setPointerCapture(e.pointerId);
- });
- canvas.addEventListener('pointermove',e=>{
-  if(!drag||e.pointerId!==drag.pointerId)return;
-  view.yaw=drag.yaw-(e.clientX-drag.x)*0.008;
-  view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*0.008,-Math.PI/2+.02,Math.PI/2-.02);
-  persist();draw();
- });
- canvas.addEventListener('pointerup',()=>drag=null);
- canvas.addEventListener('pointercancel',()=>drag=null);
- canvas.addEventListener('wheel',e=>{
-  e.preventDefault();
-  view.zoom=clamp(view.zoom+(e.deltaY>0?-0.1:0.1),0.75,75/35);
-  persist();draw();
- },{passive:false});
- worldSettingsCameraPreviews.set(canvas,{folder,draw});
- draw();
+const backer=folderBacker(folder);
+if(!backer)return;
+
+const saved=getWorldInitialView(backer);
+const view={yaw:Number(saved.yaw)||0,pitch:Number(saved.pitch)||0,zoom:Number(saved.zoom)||1};
+const composite=document.createElement('canvas');
+
+let cachedSignature=null;
+let cachedSources=[];
+let cachedValid=false;
+let syncInputs=()=>{};
+
+const getCompositionState=()=>{
+const base=getFolderMedia(folder);
+const source=base?.image||base?.video||null;
+const sources=[source];
+const signatureParts=[base?.id||'',base?.width||0,base?.height||0];
+
+for(const layer of folder.layers||[]){
+const media=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png');
+const image=media?.image||null;
+
+sources.push(image);
+signatureParts.push(layer.id,layer.mediaId||'');
+}
+
+for(const sourceItem of sources){
+if(sourceItem instanceof HTMLImageElement){
+signatureParts.push(sourceItem.naturalWidth,sourceItem.naturalHeight,sourceItem.complete?1:0);
+}else if(sourceItem instanceof HTMLVideoElement){
+signatureParts.push(sourceItem.videoWidth,sourceItem.videoHeight,sourceItem.readyState>=2?1:0);
+}else{
+signatureParts.push(0,0,0);
+}
+}
+
+return{
+signature:JSON.stringify(signatureParts),
+sources,
+dynamic:source instanceof HTMLVideoElement
+};
+};
+
+const compositionChanged=status=>{
+if(status.signature!==cachedSignature)return true;
+if(status.sources.length!==cachedSources.length)return true;
+
+for(let i=0;i<status.sources.length;i++){
+if(status.sources[i]!==cachedSources[i])return true;
+}
+
+return false;
+};
+
+const updateComposite=(status,force=false)=>{
+if(!force&&!status.dynamic&&!compositionChanged(status))return false;
+
+cachedValid=composeAllWorldLayers(folder,composite);
+cachedSignature=status.signature;
+cachedSources=status.sources.slice();
+
+return true;
+};
+
+const persist=()=>{
+const target=getWorldInitialView(backer);
+Object.assign(target,view);
+backer.world.yaw=view.yaw;
+backer.world.pitch=view.pitch;
+backer.world.zoom=view.zoom;
+};
+
+const draw=()=>{
+if(!canvas.isConnected)return;
+
+const status=getCompositionState();
+updateComposite(status);
+
+drawPanoramaPreview(canvas,{
+image:cachedValid?composite:null,
+...view
+});
+
+syncInputs();
+};
+
+const refresh=()=>{
+if(!canvas.isConnected)return;
+
+const status=getCompositionState();
+
+if(!status.dynamic&&!compositionChanged(status))return;
+
+updateComposite(status);
+
+drawPanoramaPreview(canvas,{
+image:cachedValid?composite:null,
+...view
+});
+};
+
+syncInputs=setupCameraNumberInputs(canvas,view,()=>{
+persist();
+draw();
+});
+
+let drag=null;
+
+canvas.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch,pointerId:e.pointerId};
+canvas.setPointerCapture(e.pointerId);
+});
+
+canvas.addEventListener('pointermove',e=>{
+if(!drag||e.pointerId!==drag.pointerId)return;
+
+view.yaw=drag.yaw-(e.clientX-drag.x)*0.008;
+view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*0.008,-Math.PI/2+.02,Math.PI/2-.02);
+
+persist();
+draw();
+});
+
+canvas.addEventListener('pointerup',()=>drag=null);
+canvas.addEventListener('pointercancel',()=>drag=null);
+
+canvas.addEventListener('wheel',e=>{
+e.preventDefault();
+
+view.zoom=clamp(view.zoom+(e.deltaY>0?-0.1:0.1),0.75,75/35);
+
+persist();
+draw();
+},{passive:false});
+
+worldSettingsCameraPreviews.set(canvas,{folder,draw,refresh});
+draw();
 }
 let worldSettingsPreviewFrames=0;
 function refreshWorldSettingsPreview(){
- if(++worldSettingsPreviewFrames%6!==0)return;
- const canvas=settingsPanel.querySelector('canvas.world-settings-preview');
- if(!canvas)return;
- const controller=worldSettingsCameraPreviews.get(canvas);
- if(controller&&controller.folder===activeFolder())controller.draw();
+if(++worldSettingsPreviewFrames%6!==0)return;
+
+const canvas=settingsPanel.querySelector('canvas.world-settings-preview');
+if(!canvas)return;
+
+const controller=worldSettingsCameraPreviews.get(canvas);
+
+if(controller&&controller.folder===activeFolder()){
+controller.refresh();
+}
 }
 function enterWorldFolder(folderId,resetToInitial=false){
  const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;
