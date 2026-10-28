@@ -664,6 +664,7 @@ node.type==='uiButton'?'ボタン':
 node.type==='option'?'オプション':
 node.type==='textAnswer'?'テキスト入力':
 node.type==='condition'?'条件':
+node.type==='random'?'ランダム':
 node.type==='toggle'?'トグル':
 node.type==='toggleSet'?'トグル切り替え':
 node.type==='toggleBranch'?(node.toggleResult==='on'?'OFF→ON':'ON→OFF'):
@@ -701,6 +702,7 @@ node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
 node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：'+(node.toggleSetAction==='on'?'ON':node.toggleSetAction==='off'?'OFF':'反転')):
 node.type==='toggleBranch'?(node.toggleResult==='on'?'ONルート':'OFFルート'):
 node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
+node.type==='random'?'接続先をランダムに選択':
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'条件成立':'条件不成立'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解ルート':'不正解ルート'):
 node.type==='itemAcquire'?(node.itemName||'アイテム名未設定'):
@@ -1133,6 +1135,11 @@ return;
 }
 if(node.type==='option'){renderOptionSettings(node);return;}
 if(node.type==='textAnswer'){renderTextAnswerSettings(node);return;}
+if(node.type==='random'){
+const count=state.connections.filter(c=>c.from===node.id).length;
+settingsPanel.innerHTML=`<div class="settings-title">ランダム</div><p class="settings-empty">接続先のノードから1つをランダムに選んで実行します。</p><div class="setting-group"><div class="setting-label">接続先：${count}個</div><p class="settings-empty">${count>0?`各接続先の選択確率：約${(100/count).toFixed(1)}%`:'接続先がありません。ノードの右側から接続してください。'}</p></div>`;
+return;
+}
 if(node.type==='toggle'){renderToggleSettings(node);return;}
 if(node.type==='toggleSet'){renderToggleSetSettings(node);return;}
 if(node.type==='toggleBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.toggleResult==='on'?'ON':'OFF'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
@@ -7894,6 +7901,7 @@ const blockingTypes=new Set([
 'frameIn',
 'itemUse',
 'condition',
+'random',
 'toggle',
 'textAnswer',
 'option',
@@ -8056,6 +8064,30 @@ return;
 }
 if(node.type==='time'){
 schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
+return;
+}
+if(node.type==='random'){
+const targets=state.connections
+.filter(c=>c.from===node.id)
+.map(c=>getNode(c.to))
+.filter(Boolean);
+
+if(targets.length===0){
+recordPreviewDiagnostic('random-no-target',{nodeId:node.id});
+return;
+}
+
+const index=Math.floor(Math.random()*targets.length);
+const target=targets[index];
+
+recordPreviewDiagnostic('random-selected',{
+nodeId:node.id,
+targetId:target.id,
+targetCount:targets.length,
+selectedIndex:index
+});
+
+showPreviewNode(target.id);
 return;
 }
 if(node.type==='worldMove'){if(node.destinationFolderId)enterWorldFolder(node.destinationFolderId);return;}
