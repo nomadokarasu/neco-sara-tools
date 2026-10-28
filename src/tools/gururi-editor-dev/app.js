@@ -7975,7 +7975,9 @@ previewOutgoing(node.id,'end');
 });
 }
 
+if(node.type==='world'){
 previewOutgoing(node.id,'start');
+}
 return;
 }
 if(node.type==='keyframe'){
