@@ -50,6 +50,7 @@ function exportPreviewDiagnostics(){
    sceneVideo:activeVideo?{time:activeVideo.currentTime,duration:activeVideo.duration,paused:activeVideo.paused,ended:activeVideo.ended,readyState:activeVideo.readyState}:null,
    nodeCount:state.nodes.length,
    connectionCount:state.connections.length,
+   performance:getPerformanceReport(),
    errors:previewDiagnosticErrors,
    events:previewDiagnosticEvents
   };
@@ -663,9 +664,10 @@ node.type==='uiButton'?'ボタン':
 node.type==='option'?'オプション':
 node.type==='textAnswer'?'テキスト入力':
 node.type==='condition'?'条件':
+node.type==='random'?'ランダム':
 node.type==='toggle'?'トグル':
 node.type==='toggleSet'?'トグル切り替え':
-node.type==='toggleBranch'?(node.toggleResult==='on'?'ON':'OFF'):
+node.type==='toggleBranch'?(node.toggleResult==='on'?'OFF→ON':'ON→OFF'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'はい':'いいえ'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解':'不正解'):
 node.type==='itemAcquire'?'アイテム取得':
@@ -700,6 +702,7 @@ node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
 node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：'+(node.toggleSetAction==='on'?'ON':node.toggleSetAction==='off'?'OFF':'反転')):
 node.type==='toggleBranch'?(node.toggleResult==='on'?'ONルート':'OFFルート'):
 node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
+node.type==='random'?'接続先をランダムに選択':
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'条件成立':'条件不成立'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解ルート':'不正解ルート'):
 node.type==='itemAcquire'?(node.itemName||'アイテム名未設定'):
@@ -1132,6 +1135,11 @@ return;
 }
 if(node.type==='option'){renderOptionSettings(node);return;}
 if(node.type==='textAnswer'){renderTextAnswerSettings(node);return;}
+if(node.type==='random'){
+const count=state.connections.filter(c=>c.from===node.id).length;
+settingsPanel.innerHTML=`<div class="settings-title">ランダム</div><p class="settings-empty">接続先のノードから1つをランダムに選んで実行します。</p><div class="setting-group"><div class="setting-label">接続先：${count}個</div><p class="settings-empty">${count>0?`各接続先の選択確率：約${(100/count).toFixed(1)}%`:'接続先がありません。ノードの右側から接続してください。'}</p></div>`;
+return;
+}
 if(node.type==='toggle'){renderToggleSettings(node);return;}
 if(node.type==='toggleSet'){renderToggleSetSettings(node);return;}
 if(node.type==='toggleBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.toggleResult==='on'?'ON':'OFF'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
@@ -6780,7 +6788,8 @@ playBtn.addEventListener('click',()=>startPreview());
 closePreviewBtn.addEventListener('click',stopPreview);
 
 gameViewport.addEventListener('click',e=>{
-if(e.target.closest('#equippedItemLabel, #inventoryButton, #inventoryOverlay'))return;
+if(!window.matchMedia('(pointer: coarse)').matches)return;
+if(!e.target.closest('#dialogueOverlay'))return;
 if(gamePreview.classList.contains('hidden'))return;
 if(!state.previewDialogueNodeId)return;
 if(getNode(state.previewDialogueNodeId)?.type==='option')return;
@@ -6791,6 +6800,7 @@ advanceDialogue();
 });
 
 document.addEventListener('keydown',e=>{
+if(window.matchMedia('(pointer: coarse)').matches)return;
 if(gamePreview.classList.contains('hidden'))return;
 if(!state.previewDialogueNodeId)return;
 if(getNode(state.previewDialogueNodeId)?.type==='option')return;
@@ -6806,7 +6816,7 @@ target.isContentEditable||
 return;
 }
 
-if(!['Enter','Space','KeyZ'].includes(e.code))return;
+if(e.code!=='Space')return;
 
 e.preventDefault();
 e.stopImmediatePropagation();
@@ -7891,6 +7901,7 @@ const blockingTypes=new Set([
 'frameIn',
 'itemUse',
 'condition',
+'random',
 'toggle',
 'textAnswer',
 'option',
@@ -8053,6 +8064,30 @@ return;
 }
 if(node.type==='time'){
 schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
+return;
+}
+if(node.type==='random'){
+const targets=state.connections
+.filter(c=>c.from===node.id)
+.map(c=>getNode(c.to))
+.filter(Boolean);
+
+if(targets.length===0){
+recordPreviewDiagnostic('random-no-target',{nodeId:node.id});
+return;
+}
+
+const index=Math.floor(Math.random()*targets.length);
+const target=targets[index];
+
+recordPreviewDiagnostic('random-selected',{
+nodeId:node.id,
+targetId:target.id,
+targetCount:targets.length,
+selectedIndex:index
+});
+
+showPreviewNode(target.id);
 return;
 }
 if(node.type==='worldMove'){if(node.destinationFolderId)enterWorldFolder(node.destinationFolderId);return;}
@@ -9033,54 +9068,157 @@ function composeAllWorldLayers(folder,canvas){
  return true;
 }
 function setupWorldSettingsCameraPreview(canvas,folder){
- const backer=folderBacker(folder);
- if(!backer)return;
- const saved=getWorldInitialView(backer);
- const view={yaw:Number(saved.yaw)||0,pitch:Number(saved.pitch)||0,zoom:Number(saved.zoom)||1};
- const composite=document.createElement('canvas');
- const persist=()=>{
-  const target=getWorldInitialView(backer);
-  Object.assign(target,view);
-  // Keep the legacy per-world current view in sync as well.
-  backer.world.yaw=view.yaw;backer.world.pitch=view.pitch;backer.world.zoom=view.zoom;
- };
- let syncInputs=()=>{};
- const draw=()=>{
-  if(!canvas.isConnected)return;
-  const valid=composeAllWorldLayers(folder,composite);
-  drawPanoramaPreview(canvas,{image:valid?composite:null,...view});
-  syncInputs();
- };
- syncInputs=setupCameraNumberInputs(canvas,view,()=>{persist();draw();});
- let drag=null;
- canvas.addEventListener('pointerdown',e=>{
-  if(e.button!==0)return;
-  drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch,pointerId:e.pointerId};
-  canvas.setPointerCapture(e.pointerId);
- });
- canvas.addEventListener('pointermove',e=>{
-  if(!drag||e.pointerId!==drag.pointerId)return;
-  view.yaw=drag.yaw-(e.clientX-drag.x)*0.008;
-  view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*0.008,-Math.PI/2+.02,Math.PI/2-.02);
-  persist();draw();
- });
- canvas.addEventListener('pointerup',()=>drag=null);
- canvas.addEventListener('pointercancel',()=>drag=null);
- canvas.addEventListener('wheel',e=>{
-  e.preventDefault();
-  view.zoom=clamp(view.zoom+(e.deltaY>0?-0.1:0.1),0.75,75/35);
-  persist();draw();
- },{passive:false});
- worldSettingsCameraPreviews.set(canvas,{folder,draw});
- draw();
+const backer=folderBacker(folder);
+if(!backer)return;
+
+const saved=getWorldInitialView(backer);
+const view={yaw:Number(saved.yaw)||0,pitch:Number(saved.pitch)||0,zoom:Number(saved.zoom)||1};
+const composite=document.createElement('canvas');
+
+let cachedSignature=null;
+let cachedSources=[];
+let cachedValid=false;
+let syncInputs=()=>{};
+
+const getCompositionState=()=>{
+const base=getFolderMedia(folder);
+const source=base?.image||base?.video||null;
+const sources=[source];
+const signatureParts=[base?.id||'',base?.width||0,base?.height||0];
+
+for(const layer of folder.layers||[]){
+const media=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png');
+const image=media?.image||null;
+
+sources.push(image);
+signatureParts.push(layer.id,layer.mediaId||'');
+}
+
+for(const sourceItem of sources){
+if(sourceItem instanceof HTMLImageElement){
+signatureParts.push(sourceItem.naturalWidth,sourceItem.naturalHeight,sourceItem.complete?1:0);
+}else if(sourceItem instanceof HTMLVideoElement){
+signatureParts.push(sourceItem.videoWidth,sourceItem.videoHeight,sourceItem.readyState>=2?1:0);
+}else{
+signatureParts.push(0,0,0);
+}
+}
+
+return{
+signature:JSON.stringify(signatureParts),
+sources,
+dynamic:source instanceof HTMLVideoElement
+};
+};
+
+const compositionChanged=status=>{
+if(status.signature!==cachedSignature)return true;
+if(status.sources.length!==cachedSources.length)return true;
+
+for(let i=0;i<status.sources.length;i++){
+if(status.sources[i]!==cachedSources[i])return true;
+}
+
+return false;
+};
+
+const updateComposite=(status,force=false)=>{
+if(!force&&!status.dynamic&&!compositionChanged(status))return false;
+
+cachedValid=composeAllWorldLayers(folder,composite);
+cachedSignature=status.signature;
+cachedSources=status.sources.slice();
+
+return true;
+};
+
+const persist=()=>{
+const target=getWorldInitialView(backer);
+Object.assign(target,view);
+backer.world.yaw=view.yaw;
+backer.world.pitch=view.pitch;
+backer.world.zoom=view.zoom;
+};
+
+const draw=()=>{
+if(!canvas.isConnected)return;
+
+const status=getCompositionState();
+updateComposite(status);
+
+drawPanoramaPreview(canvas,{
+image:cachedValid?composite:null,
+...view
+});
+
+syncInputs();
+};
+
+const refresh=()=>{
+if(!canvas.isConnected)return;
+
+const status=getCompositionState();
+
+if(!status.dynamic&&!compositionChanged(status))return;
+
+updateComposite(status);
+
+drawPanoramaPreview(canvas,{
+image:cachedValid?composite:null,
+...view
+});
+};
+
+syncInputs=setupCameraNumberInputs(canvas,view,()=>{
+persist();
+draw();
+});
+
+let drag=null;
+
+canvas.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch,pointerId:e.pointerId};
+canvas.setPointerCapture(e.pointerId);
+});
+
+canvas.addEventListener('pointermove',e=>{
+if(!drag||e.pointerId!==drag.pointerId)return;
+
+view.yaw=drag.yaw-(e.clientX-drag.x)*0.008;
+view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*0.008,-Math.PI/2+.02,Math.PI/2-.02);
+
+persist();
+draw();
+});
+
+canvas.addEventListener('pointerup',()=>drag=null);
+canvas.addEventListener('pointercancel',()=>drag=null);
+
+canvas.addEventListener('wheel',e=>{
+e.preventDefault();
+
+view.zoom=clamp(view.zoom+(e.deltaY>0?-0.1:0.1),0.75,75/35);
+
+persist();
+draw();
+},{passive:false});
+
+worldSettingsCameraPreviews.set(canvas,{folder,draw,refresh});
+draw();
 }
 let worldSettingsPreviewFrames=0;
 function refreshWorldSettingsPreview(){
- if(++worldSettingsPreviewFrames%6!==0)return;
- const canvas=settingsPanel.querySelector('canvas.world-settings-preview');
- if(!canvas)return;
- const controller=worldSettingsCameraPreviews.get(canvas);
- if(controller&&controller.folder===activeFolder())controller.draw();
+if(++worldSettingsPreviewFrames%6!==0)return;
+
+const canvas=settingsPanel.querySelector('canvas.world-settings-preview');
+if(!canvas)return;
+
+const controller=worldSettingsCameraPreviews.get(canvas);
+
+if(controller&&controller.folder===activeFolder()){
+controller.refresh();
+}
 }
 function enterWorldFolder(folderId,resetToInitial=false){
  const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;
@@ -9103,6 +9241,93 @@ const firstFolder=makeWorldFolder('ワールド1');
 updateWorldTabs();
 assignFolderTab(firstFolder.id);
 requestAnimationFrame(worldCompositeTick);
+
+// パフォーマンス診断
+const performanceDiagnostics={
+startedAt:new Date().toISOString(),
+metrics:{},
+frames:[],
+frameCount:0
+};
+
+function measurePerformanceFunction(name,original){
+return function(...args){
+const start=performance.now();
+try{
+return original.apply(this,args);
+}finally{
+const elapsed=performance.now()-start;
+const metric=performanceDiagnostics.metrics[name]||{
+count:0,
+totalMs:0,
+maxMs:0
+};
+metric.count++;
+metric.totalMs+=elapsed;
+metric.maxMs=Math.max(metric.maxMs,elapsed);
+performanceDiagnostics.metrics[name]=metric;
+}
+};
+}
+
+function getPerformanceReport(){
+const metrics={};
+
+for(const [name,value] of Object.entries(performanceDiagnostics.metrics)){
+metrics[name]={
+calls:value.count,
+totalMs:Number(value.totalMs.toFixed(3)),
+averageMs:Number((value.totalMs/value.count).toFixed(4)),
+maxMs:Number(value.maxMs.toFixed(3))
+};
+}
+
+const frames=performanceDiagnostics.frames;
+const intervals=[];
+
+for(let i=1;i<frames.length;i++){
+const delta=frames[i]-frames[i-1];
+if(delta>0)intervals.push(delta);
+}
+
+const averageInterval=intervals.length
+?intervals.reduce((a,b)=>a+b,0)/intervals.length
+:0;
+
+return{
+startedAt:performanceDiagnostics.startedAt,
+measuredAt:new Date().toISOString(),
+nodeCount:state.nodes.length,
+connectionCount:state.connections.length,
+fps:{
+average:averageInterval?Number((1000/averageInterval).toFixed(2)):null,
+minimumApprox:intervals.length?Number((1000/Math.max(...intervals)).toFixed(2)):null,
+frameCount:performanceDiagnostics.frameCount,
+sampleCount:frames.length
+},
+functions:metrics
+};
+}
+
+getNode=measurePerformanceFunction('getNode',getNode);
+previewOutgoing=measurePerformanceFunction('previewOutgoing',previewOutgoing);
+renderConnections=measurePerformanceFunction('renderConnections',renderConnections);
+refreshWorldComposite=measurePerformanceFunction('refreshWorldComposite',refreshWorldComposite);
+
+const originalWorldCompositeTick=worldCompositeTick;
+worldCompositeTick=function(...args){
+const now=performance.now();
+if(!gamePreview.classList.contains('hidden')){
+performanceDiagnostics.frameCount++;
+performanceDiagnostics.frames.push(now);
+if(performanceDiagnostics.frames.length>300){
+performanceDiagnostics.frames.shift();
+}
+}else{
+performanceDiagnostics.frames.length=0;
+}
+return originalWorldCompositeTick.apply(this,args);
+};
 
 const saveAsGartButton=document.getElementById('saveAsGartBtn');
 if(saveAsGartButton)saveAsGartButton.addEventListener('click',()=>saveGartProject(true));

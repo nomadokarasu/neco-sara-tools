@@ -1,5 +1,6 @@
 
 
+
 <!doctype html>
 <html lang="ja">
 <head>
@@ -19,7 +20,7 @@
 <div id="editorHomeHero" class="editor-home__hero">
 <img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
-<p class="editor-home__version">ver.0.1.72</p>
+<p class="editor-home__version">ver.0.1.73</p>
 <h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
 <img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
 <img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
@@ -54,27 +55,27 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
-<span class="editor-version">ver.0.1.72</span>
+<span class="editor-version">ver.0.1.73</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
 </div>
 <div class="top-actions">
 <button id="saveGartBtn" type="button" class="primary-btn">保存 .gart</button>
 <button id="saveAsGartBtn" type="button" class="primary-btn">別名で保存</button>
 <button id="openGartBtn" type="button" class="primary-btn">開く .gart</button>
-<button id="exportWorkBtn" disabled title="ワールドフォルダ形式の書き出しは未対応" type="button" class="primary-btn">作品を書き出す</button>
-<div id="exportSettingsModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="exportSettingsTitle" style="position:fixed;inset:0;z-index:10000;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
-<form id="exportSettingsForm" style="width:min(420px,100%);background:#292929;border:1px solid #666;border-radius:12px;padding:24px;color:#fff;box-sizing:border-box;box-shadow:0 12px 35px #0009">
-<h2 id="exportSettingsTitle" style="font-size:20px;margin:0 0 20px">作品を書き出す</h2>
-<label for="exportFileName" style="display:block;margin-bottom:8px">ファイル名</label>
-<input id="exportFileName" type="text" value="gururi-work" required maxlength="120" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #777;border-radius:6px;background:#141414;color:#fff;font-size:16px">
-<p style="color:#aaa;font-size:12px;line-height:1.6;margin:8px 0 20px">拡張子 .zip は自動で付きます。対応ブラウザでは、次の画面で保存場所を選択できます。</p>
-<div style="display:flex;gap:10px;justify-content:flex-end">
-<button id="exportCancelBtn" type="button" style="padding:10px 16px">キャンセル</button>
-<button id="exportConfirmBtn" type="submit" style="padding:10px 16px">保存する</button>
+<button id="exportWorkBtn" type="button" class="primary-btn">作品を書き出す</button>
+<div id="exportSettingsModal" class="hidden export-work-overlay" role="dialog" aria-modal="true" aria-labelledby="exportSettingsTitle">
+<form id="exportSettingsForm" class="export-work-panel">
+<div class="export-work-header"><h2 id="exportSettingsTitle">ぐるり作品として書き出す</h2><button id="exportCancelBtn" type="button" aria-label="閉じる">×</button></div>
+<div class="export-work-content">
+<label>作品タイトル <input id="exportTitle" type="text" maxlength="120" required placeholder="作品タイトル"></label>
+<label>作者名 <input id="exportAuthor" type="text" maxlength="120" required placeholder="作者名"></label>
+<label>作者URL（任意） <input id="exportAuthorUrl" type="url" maxlength="500" placeholder="https://"></label>
+<label>ZIPファイル名 <input id="exportFileName" type="text" value="gururi-work" required maxlength="120"></label>
+<div class="export-work-note">開始画角は各ワールドの設定を使用します。サムネイルは開始ワールドの画像から生成します。書き出し完了後、ZIPを展開して「ぐるり作品.html」を開いてください。</div>
 </div>
+<div class="export-work-footer"><button id="exportConfirmBtn" type="submit">書き出す</button></div>
 </form>
 </div>
-<style>#exportSettingsModal.hidden{display:none!important}</style>
 <button id="playBtn" class="primary-btn" type="button">▶ 再生</button>
 <div class="device-switch">
 <button id="pcModeBtn" class="device-btn active" type="button">PC</button>
@@ -321,3 +322,4 @@ loadHomeContent().then(()=>setLanguage('ja'));
 </script>
 </body>
 </html>
+

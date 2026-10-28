@@ -1,5 +1,6 @@
 
 
+
 // Preview diagnostic recorder: bounded in-memory events, exported only on user click.
 const previewDiagnosticEvents=[];
 const previewDiagnosticErrors=[];
@@ -8525,216 +8526,155 @@ await openGartProject(file);
 
 async function exportPlayableWork(fileName,saveHandle=null){
 const button=document.getElementById('exportWorkBtn');
+const confirmButton=document.getElementById('exportConfirmBtn');
 button.disabled=true;
 try{
+const title=document.getElementById('exportTitle').value.trim();
+const author=document.getElementById('exportAuthor').value.trim();
+const authorUrl=document.getElementById('exportAuthorUrl').value.trim();
+if(!title||!author)throw new Error('作品タイトルと作者名を入力してください。');
+if(authorUrl){try{const u=new URL(authorUrl);if(!['http:','https:'].includes(u.protocol))throw new Error();}catch{throw new Error('作者URLは http:// または https:// で入力してください。');}}
+if(!state.worldFolders.length||!state.worldFolders[0]?.id)throw new Error('開始ワールドがありません。');
+setSaveProgress(5,'作品データを準備しています…');
 const metadata={
-format:'gururi-exported-work',
-version:1,
+format:'gururi-exported-work',version:2,
+title,author,authorUrl,
+startFolderId:state.worldFolders[0].id,
+worldFolders:structuredClone(state.worldFolders),
 displayMode:state.displayMode,
 layouts:structuredClone(state.layouts),
-nodes:state.nodes.map(node=>({
-...node,
-world:node.world?{...node.world,image:null,raw:null}:undefined,
-animation:node.animation?{...node.animation,raw:null}:undefined
-})),
+nodes:state.nodes.map(node=>({...node,world:node.world?{...node.world,image:null,raw:null}:undefined,animation:node.animation?{...node.animation,raw:null}:undefined})),
 connections:structuredClone(state.connections),
-media:mediaLibrary.map((media,index)=>({
-id:media.id,
-fileName:media.fileName,
-fileType:media.fileType,
-path:media.fileType==='pngseq'?`assets/${index}/`:`assets/${index}.${media.fileType}`,fps:media.fps||null,frameNames:media.fileType==='pngseq'?media.frameFiles.map(f=>f.name):undefined
-}))
+media:mediaLibrary.map((media,index)=>({id:media.id,fileName:media.fileName,fileType:media.fileType,path:media.fileType==='pngseq'?`assets/${index}/`:`assets/${index}.${media.fileType}`,fps:media.fps||null,frameNames:media.fileType==='pngseq'?media.frameFiles.map(f=>f.name):undefined}))
 };
-if(!metadata.connections.some(c=>c.from==='start')){
-throw new Error('STARTからノードを接続してください。');
-}
+const nodeIds=new Set(metadata.nodes.map(n=>n.id));
+if(metadata.connections.some(c=>!nodeIds.has(c.from)||!nodeIds.has(c.to)))throw new Error('ノードの接続情報が不正です。');
 const scriptElement=Array.from(document.scripts).find(s=>/\/app\.js(?:\?|$)/.test(s.src));
-const scriptUrl=scriptElement?.src||new URL('app.js',document.baseURI).href;
-const baseUrl=new URL('./',scriptUrl);
-const assetUrls={
-'index.html':new URL('index.html',baseUrl),
-'app.js':new URL('app.js',baseUrl),
-'style.css':new URL('style.css',baseUrl)
-};
+const baseUrl=new URL('./',scriptElement?.src||new URL('app.js',document.baseURI));
 const sourceFiles={};
-if(location.protocol==='file:'){
-const folderFiles=await new Promise((resolve,reject)=>{
-const input=document.createElement('input');
-input.type='file';
-input.multiple=true;
-input.setAttribute('webkitdirectory','');
-input.style.display='none';
-document.body.appendChild(input);
-let completed=false;
-const finish=(files,error)=>{
-if(completed)return;
-completed=true;
-input.remove();
-if(error)reject(error);
-else resolve(files);
-};
-input.addEventListener('change',()=>finish(Array.from(input.files||[])),{once:true});
-input.addEventListener('cancel',()=>finish(null,new Error('フォルダの選択がキャンセルされました。')),{once:true});
-input.click();
-});
-for(const name of Object.keys(assetUrls)){
-const file=folderFiles.find(file=>{
-const parts=(file.webkitRelativePath||'').split('/');
-return parts.length===2&&parts[1]===name;
-});
-if(!file)throw new Error(`選択したフォルダの直下に ${name} がありません。`);
-sourceFiles[name]=await file.text();
-}
-}else{
-for(const [name,url] of Object.entries(assetUrls)){
-const response=await fetch(url,{cache:'no-store'});
-if(!response.ok)throw new Error(`${name}を読み込めませんでした。`);
+for(const name of ['index.html','app.js','style.css']){
+const response=await fetch(new URL(name,baseUrl),{cache:'no-store'});
+if(!response.ok)throw new Error(name+' を読み込めませんでした。');
 sourceFiles[name]=await response.text();
 }
+setSaveProgress(20,'素材をまとめています…');
+const embeddedMedia=[];
+const entries=[];
+async function toBase64(blob){return new Promise((resolve,reject)=>{
+const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(new Error('素材を変換できませんでした。'));reader.readAsDataURL(blob);
+});}
+for(let i=0;i<metadata.media.length;i++){
+const item=metadata.media[i];
+const media=mediaLibrary.find(m=>m.id===item.id);
+if(item.fileType==='pngseq'){
+if(!media?.frameFiles?.length)throw new Error(item.fileName+' の連番PNGがありません。');
+const frames=[];
+for(let j=0;j<media.frameFiles.length;j++){
+const f=media.frameFiles[j];frames.push(await toBase64(f));
+entries.push({name:item.path+String(j).padStart(5,'0')+'.png',data:f});
+}
+embeddedMedia.push({id:item.id,frames});
+}else{
+if(!media?.sourceFile)throw new Error(item.fileName+' の元ファイルがありません。');
+embeddedMedia.push({id:item.id,base64:await toBase64(media.sourceFile)});
+entries.push({name:item.path,data:media.sourceFile});
+}
+setSaveProgress(20+Math.round((i+1)/Math.max(1,metadata.media.length)*45),'素材をまとめています…');
 }
 const playerStyle=`
 html,body{margin:0!important;background:#000!important}
-body.gururi-player .topbar,body.gururi-player .main-layout,body.gururi-player .media-popup{display:none!important}
+body.gururi-player .topbar,body.gururi-player .main-layout,body.gururi-player .media-popup,body.gururi-player #exportPreviewDiagnosticBtn{display:none!important}
 body.gururi-player #gamePreview{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:20!important;background:#000!important}
 body.gururi-player #closePreviewBtn{display:none!important}
-#gururiLaunch{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#080808;color:#fff;font-family:sans-serif;text-align:center;padding:20px;box-sizing:border-box}
+#gururiLaunch{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;gap:15px;align-items:center;justify-content:center;background:#080808;color:#fff;font-family:sans-serif;text-align:center;padding:20px;box-sizing:border-box}
 #gururiLaunch button{padding:17px 40px;border:1px solid #888;border-radius:9px;background:#242424;color:#fff;font-size:20px;cursor:pointer}
 #gururiRestart{position:fixed;top:12px;right:12px;z-index:80;border:0;border-radius:7px;padding:9px 12px;background:#111b;color:#fff;cursor:pointer}
 `;
-const mediaEncoded=[];
-for(const item of metadata.media){
-const media=mediaLibrary.find(m=>m.id===item.id);
-if(!media?.sourceFile)throw new Error(item.fileName+' の元ファイルがありません。');
-const base64=await new Promise((resolve,reject)=>{
-const reader=new FileReader();
-reader.onload=()=>resolve(String(reader.result).split(',')[1]);
-reader.onerror=()=>reject(new Error(item.fileName+' の変換に失敗しました。'));
-reader.readAsDataURL(media.sourceFile);
-});
-mediaEncoded.push({id:item.id,base64});
-}
-const playerBootstrap=`
+const playerBootstrap=String.raw`
 (async()=>{
 const launch=document.getElementById('gururiLaunch');
-const createdUrls=[];
 try{
 const data=window.GURURI_EXPORTED_WORK;
-const encodedMedia=window.GURURI_EMBEDDED_MEDIA;
-if(!data||data.format!=='gururi-exported-work'||data.version!==1)throw new Error('作品データが不正です。');
-if(!Array.isArray(data.nodes)||!Array.isArray(data.connections)||!Array.isArray(data.media))throw new Error('ノードデータが不正です。');
+const encoded=window.GURURI_EMBEDDED_MEDIA;
+if(!data||data.format!=='gururi-exported-work'||data.version!==2)throw new Error('作品データが不正です。');
+if(!Array.isArray(data.nodes)||!Array.isArray(data.connections)||!Array.isArray(data.worldFolders)||!Array.isArray(data.media))throw new Error('作品の構造が不正です。');
 const nodeIds=new Set(data.nodes.map(n=>n.id));
-if(!nodeIds.has('start')||data.connections.some(c=>!nodeIds.has(c.from)||!nodeIds.has(c.to)))throw new Error('ノード構成が不正です。');
-const loaded=[];
-for(const item of data.media){
-const entry=encodedMedia.find(m=>m.id===item.id);
-if(!entry)throw new Error(item.fileName+' が見つかりません。');
-const chunks=[];
-const text=entry.base64;
-for(let i=0;i<text.length;i+=32768){
-const binary=atob(text.slice(i,i+32768));
-const chunk=new Uint8Array(binary.length);
-for(let j=0;j<binary.length;j++)chunk[j]=binary.charCodeAt(j);
-chunks.push(chunk);
+if(data.connections.some(c=>!nodeIds.has(c.from)||!nodeIds.has(c.to)))throw new Error('ノードの接続情報が不正です。');
+function fromBase64(text,type,name){
+const parts=[];
+for(let i=0;i<text.length;i+=32768){const binary=atob(text.slice(i,i+32768));const bytes=new Uint8Array(binary.length);for(let j=0;j<bytes.length;j++)bytes[j]=binary.charCodeAt(j);parts.push(bytes);}
+return new File(parts,name,{type});
 }
-const mimeType=item.fileType==='png'?'image/png':item.fileType==='jpg'?'image/jpeg':'video/mp4';
-const blob=new Blob(chunks,{type:mimeType});
-const url=URL.createObjectURL(blob);
-createdUrls.push(url);
-if(item.fileType==='png'||item.fileType==='jpg'){
-const picture=new Image();
-await new Promise((resolve,reject)=>{picture.onload=resolve;picture.onerror=()=>reject(new Error(item.fileName+' を開けません'));picture.src=url;});
-loaded.push({id:item.id,fileName:item.fileName,fileType:item.fileType,image:picture,video:null,url,width:picture.naturalWidth,height:picture.naturalHeight,duration:0});
-}else if(isAnimationAsset(item)){
-const video=document.createElement('video');
-video.preload='auto';video.playsInline=true;video.muted=true;
-await new Promise((resolve,reject)=>{video.onloadeddata=resolve;video.onerror=()=>reject(new Error(item.fileName+' を開けません'));video.src=url;video.load();});
-loaded.push({id:item.id,fileName:item.fileName,fileType:'mp4',image:null,video,url,width:video.videoWidth,height:video.videoHeight,duration:video.duration});
-}else throw new Error('非対応のメディアです。');
+for(const item of data.media){
+const entry=encoded.find(e=>e.id===item.id);
+if(!entry)throw new Error(item.fileName+' が見つかりません。');
+if(item.fileType==='pngseq'){
+if(!Array.isArray(entry.frames)||entry.frames.length!==item.frameNames?.length)throw new Error('連番PNGが不足しています。');
+const frames=entry.frames.map((value,i)=>fromBase64(value,'image/png',item.frameNames[i]));
+const imported=await importPngSequence(frames,Number(item.fps)||8,true);
+imported.id=item.id;imported.fileName=item.fileName;
+}else{
+const mime=item.fileType==='png'?'image/png':item.fileType==='jpg'?'image/jpeg':'video/mp4';
+const file=fromBase64(entry.base64,mime,item.fileName);
+const imported=await importMediaFile(file);
+imported.id=item.id;
+}
 }
 for(const node of data.nodes){
-if(node.world){node.world.image=loaded.find(m=>m.id===node.world.mediaId&&m.fileType==='png')?.image||null;node.world.raw=null;}
+if(node.world){node.world.image=mediaLibrary.find(m=>m.id===node.world.mediaId&&m.fileType==='png')?.image||null;node.world.raw=null;}
 if(node.animation)node.animation.raw=null;
 }
-mediaLibrary.splice(0,mediaLibrary.length,...loaded);
 state.nodes=data.nodes;
 state.connections=data.connections;
+state.worldFolders=data.worldFolders;
+state.startFolderId=data.startFolderId||data.worldFolders[0]?.id||null;
+state.activeFolderId=state.startFolderId;
 for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);else if(n.type==='toggle')ensureToggleBranches(n);
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
 state.displayMode=['pc','mobile'].includes(data.displayMode)?data.displayMode:'pc';
 if(data.layouts?.pc&&data.layouts?.mobile)state.layouts=data.layouts;
 updateLayoutControls();
-renderNodes();
-renderSettings();
-const begin=()=>{launch.style.display='none';startPreview();};
-launch.innerHTML='<button type="button">▶ 作品を開始</button>';
-launch.querySelector('button').addEventListener('click',begin);
+renderNodes();renderSettings();
+const begin=()=>{launch.style.display='none';startPreview(false,true);};
+launch.replaceChildren();
+const title=document.createElement('h1');title.textContent=data.title||'ぐるり作品';title.style.margin='0';
+const author=document.createElement('div');author.textContent='作者：'+(data.author||'');
+launch.append(title,author);
+if(data.authorUrl){const a=document.createElement('a');a.href=data.authorUrl;a.target='_blank';a.rel='noopener noreferrer';a.textContent='作者のページ';a.style.color='#ddd';launch.append(a);}
+const startButton=document.createElement('button');startButton.type='button';startButton.textContent='▶ 作品を開始';startButton.addEventListener('click',begin);launch.append(startButton);
 document.getElementById('gururiRestart').addEventListener('click',begin);
-}catch(error){
-console.error(error);
-launch.textContent='作品を開けませんでした: '+error.message;
-}
+}catch(error){console.error(error);launch.textContent='作品を開けませんでした：'+error.message;}
 })();
 `;
-const escapeInlineScript=code=>code.replace(/<\/script/gi,'<\\/script');
+const escapeInline=code=>code.replace(/<\/script/gi,'<\\/script');
 const baseHtml=sourceFiles['index.html'];
-if(!baseHtml.includes('<script src="app.js"></script>')||!baseHtml.includes('<link rel="stylesheet" href="style.css">')||!baseHtml.includes('</body>')){
-throw new Error('エディタのHTML構造が想定と異なります。');
-}
-const encoded=JSON.stringify(metadata).replace(/</g,'\\u003c');
-const embedded=JSON.stringify(mediaEncoded);
-const launchHtml='<div id="gururiLaunch">作品を準備しています...</div><button id="gururiRestart" type="button">↻ 最初から</button>';
+if(!baseHtml.includes('<script src="app.js"></script>')||!baseHtml.includes('<link rel="stylesheet" href="style.css">'))throw new Error('HTML構造が想定と異なります。');
+const json=JSON.stringify(metadata).replace(/</g,'\\u003c');
+const embedded=JSON.stringify(embeddedMedia).replace(/</g,'\\u003c');
+const launchHtml='<div id="gururiLaunch">作品を準備しています…</div><button id="gururiRestart" type="button">↻ 最初から</button>';
 const viewerHtml=baseHtml
-.replace('<title>ぐるりエディタ</title>','<title>ぐるり作品</title>')
+.replace('<title>ぐるりエディタ</title>','<title>'+title.replace(/[&<>"']/g,'')+'</title>')
 .replace('<link rel="stylesheet" href="style.css">','<style>'+sourceFiles['style.css']+'\n'+playerStyle+'</style>')
 .replace('<body>','<body class="gururi-player">')
-.replace('<script src="app.js"></script>',
-'<script>'+escapeInlineScript(sourceFiles['app.js'])+'</script>')
-.replace(/<\/body>(?=\s*<\/html>\s*$)/i,launchHtml+'<script>window.GURURI_EXPORTED_WORK='+encoded+';window.GURURI_EMBEDDED_MEDIA='+embedded+';</script><script>'+escapeInlineScript(playerBootstrap)+'</script></body>');
-const entries=[
-{name:'ぐるり作品.html',data:gartEncoder.encode(viewerHtml)},
-{name:'manifest.json',data:gartEncoder.encode(JSON.stringify({...metadata,format:'gururi-editor-art',version:1},null,2))}
-];
-for(const item of metadata.media){
-const media=mediaLibrary.find(m=>m.id===item.id);
-entries.push({name:item.path,data:media.sourceFile});
-}
-const thumbnailSource=mediaLibrary.find(m=>m.fileType==='png'&&m.image)||mediaLibrary.find(m=>m.fileType==='mp4'&&m.video);
-if(thumbnailSource){
-const canvas=document.createElement('canvas');
-canvas.width=512;
-canvas.height=256;
-const ctx=canvas.getContext('2d');
-if(ctx){
-ctx.fillStyle='#111';
-ctx.fillRect(0,0,512,256);
-try{ctx.drawImage(thumbnailSource.image||thumbnailSource.video,0,0,512,256);}catch(error){console.warn('サムネイルを生成できませんでした',error);}
-const thumbnail=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-if(thumbnail)entries.push({name:'thumbnail.png',data:thumbnail});
-}
-}
+.replace('<script src="app.js"></script>','<script>'+escapeInline(sourceFiles['app.js'])+'</script>')
+.replace(/<\/body>(?=\s*<\/html>\s*$)/i,launchHtml+'<script>window.GURURI_EXPORTED_WORK='+json+';window.GURURI_EMBEDDED_MEDIA='+embedded+';</script><script>'+escapeInline(playerBootstrap)+'</script></body>');
+if(!viewerHtml.includes('GURURI_EMBEDDED_MEDIA'))throw new Error('作品HTMLを生成できませんでした。');
+entries.unshift({name:'ぐるり作品.html',data:gartEncoder.encode(viewerHtml)});
+entries.push({name:'manifest.json',data:gartEncoder.encode(JSON.stringify({...metadata,format:'gururi-editor-art'},null,2))});
+const world=state.worldFolders[0];const backer=getNode(world?.backerId);
+const thumbnailMedia=mediaLibrary.find(m=>m.id===backer?.world?.mediaId&&m.image)||mediaLibrary.find(m=>m.fileType==='png'&&m.image);
+if(thumbnailMedia){const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;const ctx=canvas.getContext('2d');ctx.drawImage(thumbnailMedia.image,0,0,512,512);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(blob)entries.push({name:'thumbnail.png',data:blob});}
+setSaveProgress(85,'ZIPを作成しています…');
+await new Promise(requestAnimationFrame);
 const archive=await gartCreateZip(entries);
-if(saveHandle){
-const writable=await saveHandle.createWritable();
-await writable.write(archive);
-await writable.close();
-}else{
-const url=URL.createObjectURL(archive);
-const link=document.createElement('a');
-link.href=url;
-link.download=fileName;
-document.body.appendChild(link);
-link.click();
-link.remove();
-setTimeout(()=>URL.revokeObjectURL(url),60000);
-}
+setSaveProgress(95,'作品を書き出しています…');
+if(saveHandle){const stream=await saveHandle.createWritable();await stream.write(archive);await stream.close();}
+else{const url=URL.createObjectURL(archive);const link=document.createElement('a');link.href=url;link.download=fileName;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+setSaveProgress(100,'書き出しが完了しました');
 document.getElementById('exportSettingsModal').classList.add('hidden');
-}catch(error){
-console.error(error);
-alert('作品を書き出せませんでした。\\n'+error.message);
-}finally{
-button.disabled=false;
-}
+}catch(error){console.error(error);alert('作品を書き出せませんでした。\\n'+error.message);}
+finally{button.disabled=false;endSaveProgress();}
 }
 
 const exportSettingsModal=document.getElementById('exportSettingsModal');
@@ -9331,3 +9271,4 @@ return originalWorldCompositeTick.apply(this,args);
 
 const saveAsGartButton=document.getElementById('saveAsGartBtn');
 if(saveAsGartButton)saveAsGartButton.addEventListener('click',()=>saveGartProject(true));
+
