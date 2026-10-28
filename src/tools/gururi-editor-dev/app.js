@@ -8833,29 +8833,122 @@ function layerConditionMatches(layer){
 }
 function getFolderMedia(folder){return mediaLibrary.find(m=>m.id===folderBacker(folder)?.world?.mediaId)||null;}
 function recompositeFolder(folder){
- const base=getFolderMedia(folder);if(!base)return null;
- const source=base.image||base.video;if(!source)return null;
- const width=base.width||2048,height=base.height||1024;
- let comp=worldComposites.get(folder.id);
- if(!comp){const canvas=document.createElement('canvas');comp={canvas,ctx:canvas.getContext('2d')};worldComposites.set(folder.id,comp);}
- if(comp.canvas.width!==width||comp.canvas.height!==height){comp.canvas.width=width;comp.canvas.height=height;}
- const ctx=comp.ctx;ctx.clearRect(0,0,width,height);
- try{ctx.drawImage(source,0,0,width,height);}catch(e){return null;}
- for(const layer of folder.layers||[]){if(!layerConditionMatches(layer))continue;
-  const media=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png');
-  if(media?.image)ctx.drawImage(media.image,0,0,width,height);
- }
- return comp.canvas;
+if(!folder)return null;
+
+const base=getFolderMedia(folder);
+if(!base)return null;
+
+const source=base.image||base.video;
+if(!source)return null;
+
+const width=base.width||2048;
+const height=base.height||1024;
+const isDynamic=source instanceof HTMLVideoElement;
+
+let comp=worldComposites.get(folder.id);
+
+if(!comp){
+const canvas=document.createElement('canvas');
+comp={
+canvas,
+ctx:canvas.getContext('2d'),
+signature:null,
+changed:true,
+dynamic:isDynamic,
+source:null
+};
+worldComposites.set(folder.id,comp);
 }
-function refreshWorldComposite(){
- const folder=state.worldFolders.find(w=>w.backerId===state.previewWorldNodeId);if(!folder)return;
- const backer=folderBacker(folder);const image=recompositeFolder(folder);
- if(image){backer.world.image=image;drawPanoramaPreview(gameCanvas,backer.world);}
+
+const sizeChanged=comp.canvas.width!==width||comp.canvas.height!==height;
+
+if(sizeChanged){
+comp.canvas.width=width;
+comp.canvas.height=height;
 }
+
+const visibleLayers=[];
+const signatureParts=[base.id,width,height];
+
+for(const layer of folder.layers||[]){
+const visible=layerConditionMatches(layer);
+signatureParts.push(layer.id,layer.mediaId,visible?1:0);
+
+if(!visible)continue;
+
+const media=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png');
+
+if(media?.image){
+visibleLayers.push(media.image);
+signatureParts.push(media.image.src||'',media.image.naturalWidth||0,media.image.naturalHeight||0);
+}
+}
+
+const signature=JSON.stringify(signatureParts);
+
+if(!isDynamic&&!sizeChanged&&comp.signature===signature&&comp.source===source){
+comp.changed=false;
+comp.dynamic=false;
+return comp.canvas;
+}
+
+const ctx=comp.ctx;
+ctx.clearRect(0,0,width,height);
+
+try{
+ctx.drawImage(source,0,0,width,height);
+
+for(const image of visibleLayers){
+ctx.drawImage(image,0,0,width,height);
+}
+}catch(error){
+comp.signature=null;
+comp.changed=false;
+return null;
+}
+
+comp.signature=signature;
+comp.source=source;
+comp.changed=true;
+comp.dynamic=isDynamic;
+
+return comp.canvas;
+}
+let lastCompositeDisplayedWorldId=null;
+
+function refreshWorldComposite(forceDraw=true){
+const folder=state.worldFolders.find(w=>w.backerId===state.previewWorldNodeId);
+if(!folder)return;
+
+const backer=folderBacker(folder);
+if(!backer)return;
+
+const image=recompositeFolder(folder);
+if(!image)return;
+
+const composite=worldComposites.get(folder.id);
+
+const worldChanged=lastCompositeDisplayedWorldId!==backer.id;
+const needsUpdate=forceDraw||worldChanged||composite?.changed||composite?.dynamic;
+
+backer.world.image=image;
+
+if(needsUpdate){
+drawPanoramaPreview(gameCanvas,backer.world);
+lastCompositeDisplayedWorldId=backer.id;
+}
+}
+
 function worldCompositeTick(){
- refreshWorldSettingsPreview();
- if(!gamePreview.classList.contains('hidden')&&state.previewWorldNodeId)refreshWorldComposite();
- worldCompositeFrame=requestAnimationFrame(worldCompositeTick);
+refreshWorldSettingsPreview();
+
+if(gamePreview.classList.contains('hidden')){
+lastCompositeDisplayedWorldId=null;
+}else if(state.previewWorldNodeId){
+refreshWorldComposite(false);
+}
+
+worldCompositeFrame=requestAnimationFrame(worldCompositeTick);
 }
 function addFolderRow(parent,label,element){const group=document.createElement('div');group.className='setting-group';const cap=document.createElement('div');cap.className='setting-label';cap.textContent=label;group.append(cap,element);parent.append(group);}
 function folderMediaSelect(value,types,onchange){const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('素材未設定',''));for(const m of mediaLibrary.filter(m=>types.includes(m.fileType)))sel.add(new Option(m.fileName,m.id));sel.value=value||'';sel.onchange=()=>onchange(sel.value);return sel;}
