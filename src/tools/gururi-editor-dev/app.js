@@ -666,7 +666,7 @@ node.type==='textAnswer'?'テキスト入力':
 node.type==='condition'?'条件':
 node.type==='toggle'?'トグル':
 node.type==='toggleSet'?'トグル切り替え':
-node.type==='toggleBranch'?(node.toggleResult==='on'?'ON':'OFF'):
+node.type==='toggleBranch'?(node.toggleResult==='on'?'OFF→ON':'ON→OFF'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'はい':'いいえ'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解':'不正解'):
 node.type==='itemAcquire'?'アイテム取得':
