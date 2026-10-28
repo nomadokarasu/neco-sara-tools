@@ -50,6 +50,7 @@ function exportPreviewDiagnostics(){
    sceneVideo:activeVideo?{time:activeVideo.currentTime,duration:activeVideo.duration,paused:activeVideo.paused,ended:activeVideo.ended,readyState:activeVideo.readyState}:null,
    nodeCount:state.nodes.length,
    connectionCount:state.connections.length,
+   performance:getPerformanceReport(),
    errors:previewDiagnosticErrors,
    events:previewDiagnosticEvents
   };
@@ -9103,6 +9104,93 @@ const firstFolder=makeWorldFolder('ワールド1');
 updateWorldTabs();
 assignFolderTab(firstFolder.id);
 requestAnimationFrame(worldCompositeTick);
+
+// パフォーマンス診断
+const performanceDiagnostics={
+startedAt:new Date().toISOString(),
+metrics:{},
+frames:[],
+frameCount:0
+};
+
+function measurePerformanceFunction(name,original){
+return function(...args){
+const start=performance.now();
+try{
+return original.apply(this,args);
+}finally{
+const elapsed=performance.now()-start;
+const metric=performanceDiagnostics.metrics[name]||{
+count:0,
+totalMs:0,
+maxMs:0
+};
+metric.count++;
+metric.totalMs+=elapsed;
+metric.maxMs=Math.max(metric.maxMs,elapsed);
+performanceDiagnostics.metrics[name]=metric;
+}
+};
+}
+
+function getPerformanceReport(){
+const metrics={};
+
+for(const [name,value] of Object.entries(performanceDiagnostics.metrics)){
+metrics[name]={
+calls:value.count,
+totalMs:Number(value.totalMs.toFixed(3)),
+averageMs:Number((value.totalMs/value.count).toFixed(4)),
+maxMs:Number(value.maxMs.toFixed(3))
+};
+}
+
+const frames=performanceDiagnostics.frames;
+const intervals=[];
+
+for(let i=1;i<frames.length;i++){
+const delta=frames[i]-frames[i-1];
+if(delta>0)intervals.push(delta);
+}
+
+const averageInterval=intervals.length
+?intervals.reduce((a,b)=>a+b,0)/intervals.length
+:0;
+
+return{
+startedAt:performanceDiagnostics.startedAt,
+measuredAt:new Date().toISOString(),
+nodeCount:state.nodes.length,
+connectionCount:state.connections.length,
+fps:{
+average:averageInterval?Number((1000/averageInterval).toFixed(2)):null,
+minimumApprox:intervals.length?Number((1000/Math.max(...intervals)).toFixed(2)):null,
+frameCount:performanceDiagnostics.frameCount,
+sampleCount:frames.length
+},
+functions:metrics
+};
+}
+
+getNode=measurePerformanceFunction('getNode',getNode);
+previewOutgoing=measurePerformanceFunction('previewOutgoing',previewOutgoing);
+renderConnections=measurePerformanceFunction('renderConnections',renderConnections);
+refreshWorldComposite=measurePerformanceFunction('refreshWorldComposite',refreshWorldComposite);
+
+const originalWorldCompositeTick=worldCompositeTick;
+worldCompositeTick=function(...args){
+const now=performance.now();
+if(!gamePreview.classList.contains('hidden')){
+performanceDiagnostics.frameCount++;
+performanceDiagnostics.frames.push(now);
+if(performanceDiagnostics.frames.length>300){
+performanceDiagnostics.frames.shift();
+}
+}else{
+performanceDiagnostics.frames.length=0;
+}
+return originalWorldCompositeTick.apply(this,args);
+};
 
 const saveAsGartButton=document.getElementById('saveAsGartBtn');
 if(saveAsGartButton)saveAsGartButton.addEventListener('click',()=>saveGartProject(true));

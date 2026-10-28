@@ -153,6 +153,10 @@ const worldFileInput=document.getElementById('worldFileInput');
 const animationFileInput=document.getElementById('animationFileInput');
 const playBtn=document.getElementById('playBtn');
 const gamePreview=document.getElementById('gamePreview');
+const uiButtonPreviewLayer=document.createElement('div');
+uiButtonPreviewLayer.className='game-ui-button-layer';
+document.getElementById('gameViewport').appendChild(uiButtonPreviewLayer);
+function clearUiButtonPreview(){uiButtonPreviewLayer.replaceChildren();}
 const closePreviewBtn=document.getElementById('closePreviewBtn');
 const gameCanvas=document.getElementById('gameCanvas');
 const previewMessage=document.getElementById('previewMessage');
@@ -351,20 +355,49 @@ function ensureConditionBranches(owner){
   state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
  }
 }
+function toggleBranches(owner){
+ return state.nodes.filter(n=>n.type==='toggleBranch'&&n.toggleOwnerId===owner.id);
+}
+function ensureToggleBranches(owner){
+ if(owner?.type!=='toggle')return;
+ for(const result of ['on','off']){
+  if(toggleBranches(owner).some(n=>n.toggleResult===result))continue;
+  const branch={id:uid('toggleBranch'),type:'toggleBranch',folderId:owner.folderId,toggleOwnerId:owner.id,toggleResult:result,x:owner.x+250,y:owner.y+(result==='on'?0:105)};
+  state.nodes.push(branch);
+  state.connections.push({id:uid('conn'),from:owner.id,to:branch.id});
+ }
+}
+function renderToggleSettings(node){
+ settingsPanel.innerHTML='<div class="settings-title">トグル</div><div class="setting-group"><div class="setting-label">トグル名</div><input type="text" id="toggleName" class="number-input" placeholder="例：照明"></div><p class="settings-empty">初期状態：OFF。実行するたびに ON／OFF が切り替わり、対応する分岐へ進みます。ワールド間でも状態を保持し、ゲーム再開時にリセットします。</p>';
+ const input=document.getElementById('toggleName');input.value=node.toggleName||'';
+ input.addEventListener('input',()=>{node.toggleName=input.value;renderNodes();});
+}
+function renderToggleSetSettings(node){
+ const toggles=state.nodes.filter(n=>n.type==='toggle');
+ settingsPanel.innerHTML=`<div class="settings-title">トグル切り替え</div>
+ <div class="setting-group"><div class="setting-label">対象のトグル</div><select id="toggleSetTarget" class="number-input"><option value="">選択してください</option>${toggles.map(n=>`<option value="${escapeHtml(n.id)}">${escapeHtml(n.toggleName||'トグル '+n.id)}</option>`).join('')}</select></div>
+ <div class="setting-group"><div class="setting-label">操作</div><select id="toggleSetAction" class="number-input"><option value="on">ONにする</option><option value="off">OFFにする</option><option value="toggle">反転する（ON ↔ OFF）</option></select></div>
+ <p class="settings-empty">指定したトグルの状態を変更して次のノードへ進みます。対象トグルのON／OFF分岐は実行しません。</p>`;
+ const target=document.getElementById('toggleSetTarget');target.value=node.toggleSetTargetId||'';
+ target.onchange=()=>{node.toggleSetTargetId=target.value;renderNodes();};
+ const action=document.getElementById('toggleSetAction');action.value=['on','off','toggle'].includes(node.toggleSetAction)?node.toggleSetAction:'toggle';
+ action.onchange=()=>{node.toggleSetAction=action.value;renderNodes();};
+}
 function renderConditionSettings(node){
  const items=state.nodes.filter(n=>n.type==='itemAcquire');
  const events=state.nodes.filter(n=>n.type==='eventRecord');
+ const toggles=state.nodes.filter(n=>n.type==='toggle');
  settingsPanel.innerHTML=`<div class="settings-title">条件</div>
- <div class="setting-group"><div class="setting-label">判定方法</div><select id="conditionMode" class="number-input"><option value="acquired">アイテム取得済み</option><option value="event">イベント実行済み</option></select></div>
+ <div class="setting-group"><div class="setting-label">判定方法</div><select id="conditionMode" class="number-input"><option value="acquired">アイテム取得済み</option><option value="event">イベント実行済み</option><option value="toggle">トグルON</option></select></div>
  <div class="setting-group"><div class="setting-label">対象</div><select id="conditionItem" class="number-input"></select></div>
  <div class="settings-empty">成立時は「はい」、不成立時は「いいえ」に進みます。</div>`;
  const mode=document.getElementById('conditionMode');const item=document.getElementById('conditionItem');
  const renderOptions=()=>{
   item.replaceChildren();item.add(new Option('選択してください',''));
-  for(const n of (mode.value==='event'?events:items))item.add(new Option(n.eventName||itemDisplayName(n),n.id));
+  for(const n of (mode.value==='event'?events:mode.value==='toggle'?toggles:items))item.add(new Option(n.toggleName||n.eventName||itemDisplayName(n),n.id));
   item.value=node.conditionItemId||'';
  };
- mode.value=node.conditionMode==='event'?'event':'acquired';renderOptions();
+ mode.value=['event','toggle'].includes(node.conditionMode)?node.conditionMode:'acquired';renderOptions();
  mode.addEventListener('change',()=>{node.conditionMode=mode.value;node.conditionItemId='';renderOptions();renderNodes();});
  item.addEventListener('change',()=>{node.conditionItemId=item.value;renderNodes();});
 }
@@ -470,9 +503,19 @@ optionChoices:[],
 textAnswerQuestion:'',
 textAnswerCorrect:'',
 textAnswerMode:'text',
+uiButtonText:'ボタン',
+uiButtonWidth:180,
+uiButtonHeight:56,
+uiButtonFontSize:20,
+uiButtonPositions:{pc:{x:50,y:88},mobile:{x:50,y:88}},
 conditionMode:'acquired',
 conditionItemId:'',
 conditionOwnerId:null,
+toggleOwnerId:null,
+toggleResult:null,
+toggleName:'',
+toggleSetTargetId:'',
+toggleSetAction:'toggle',
 conditionResult:null,
 textAnswerOwnerId:null,
 textAnswerResult:null,
@@ -520,6 +563,7 @@ state.nodes.push(node);
 
 if(type==='textAnswer')ensureTextAnswerBranches(node);
 if(type==='condition')ensureConditionBranches(node);
+if(type==='toggle')ensureToggleBranches(node);
 commitEditorHistory(editBefore);
 renderNodes();
 selectNode(node.id);
@@ -594,7 +638,7 @@ return null;
 function renderNodes(){
 // 旧仕様の『その他のアイテム』分岐だけを除去する。接続先ノードは残す。
 removeLegacyOtherClickBranches();
-for(const n of state.nodes){if(n.folderId)continue;const owner=getNode(n.clickBranchOwnerId||n.conditionOwnerId||n.textAnswerOwnerId||n.optionOwnerId);if(owner)n.folderId=owner.folderId;}
+for(const n of state.nodes){if(n.folderId)continue;const owner=getNode(n.clickBranchOwnerId||n.conditionOwnerId||n.toggleOwnerId||n.textAnswerOwnerId||n.optionOwnerId);if(owner)n.folderId=owner.folderId;}
 nodesLayer.innerHTML='';
 for(const node of state.nodes){
 if(!state.activeFolderId||node.folderId!==state.activeFolderId||node.type==='world')continue;
@@ -608,15 +652,20 @@ node.type==='folderStart'?'START':
 node.type==='worldDisplay'?'ワールド表示':
 node.type==='worldMove'?'ワールド移動':
 node.type==='eventRecord'?'イベント記録':
+node.type==='gameReset'?'リセット':
 node.type==='start'?'START':
 node.type==='media'||node.type==='world'||node.type==='animation'?'メディア':
 node.type==='time'?'時間':
 node.type==='click'?'クリック':
 node.type==='frameIn'?'フレームイン':
 node.type==='dialogue'?'ダイアローグ':
+node.type==='uiButton'?'ボタン':
 node.type==='option'?'オプション':
 node.type==='textAnswer'?'テキスト入力':
 node.type==='condition'?'条件':
+node.type==='toggle'?'トグル':
+node.type==='toggleSet'?'トグル切り替え':
+node.type==='toggleBranch'?(node.toggleResult==='on'?'ON':'OFF'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'はい':'いいえ'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解':'不正解'):
 node.type==='itemAcquire'?'アイテム取得':
@@ -636,6 +685,7 @@ node.type==='folderStart'?'ワールド開始':
 node.type==='worldDisplay'?'探索を開始する':
 node.type==='worldMove'?(state.worldFolders.find(w=>w.id===node.destinationFolderId)?.name||'移動先未設定'):
 node.type==='eventRecord'?(node.eventName||'イベント未設定'):
+node.type==='gameReset'?'ワールド1からやり直す':
 node.type==='media'?'素材を選択してください':
 node.type==='world'?(node.world.fileName||'素材未設定'):
 node.type==='animation'?(node.animation.fileName||'素材未設定'):
@@ -643,8 +693,12 @@ node.type==='time'?`${node.timeSeconds} 秒`:
 node.type==='click'?'範囲クリック':
 node.type==='frameIn'?'カメラ範囲トリガー':
 node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
+node.type==='uiButton'?(node.uiButtonText||'ボタン'):
 node.type==='option'?'質問文と選択肢':
 node.type==='textAnswer'?'入力した回答を判定':
+node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
+node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：'+(node.toggleSetAction==='on'?'ON':node.toggleSetAction==='off'?'OFF':'反転')):
+node.type==='toggleBranch'?(node.toggleResult==='on'?'ONルート':'OFFルート'):
 node.type==='condition'?(node.conditionItemId?`${node.conditionMode==='event'?'イベント実行済み':'取得済み'}：${getNode(node.conditionItemId)?.eventName||itemDisplayName(getNode(node.conditionItemId))}`:'対象未設定'):
 node.type==='conditionBranch'?(node.conditionResult==='yes'?'条件成立':'条件不成立'):
 node.type==='textAnswerBranch'?(node.textAnswerResult==='correct'?'正解ルート':'不正解ルート'):
@@ -658,7 +712,7 @@ node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
 node.type==='keyframe'?'カメラワーク':
 '開始';
-el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div><div class="port output" data-port="output"></div>`;
+el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div>${node.type==='gameReset'?'':'<div class="port output" data-port="output"></div>'}`;
 
 const bodyEl=el.querySelector('.node-body');
 bodyEl.textContent=node.customBody===undefined?body:node.customBody;
@@ -841,6 +895,27 @@ const node=getNode(state.selectedNodeId);
 if(node){
 queueMicrotask(()=>{
 if(state.selectedNodeId!==node.id)return;
+
+if(isPreviewOnceTarget(node)&&!settingsPanel.querySelector('#nodeExecuteOnceInput')){
+const onceGroup=document.createElement('div');
+onceGroup.className='setting-group';
+
+const onceLabel=document.createElement('label');
+const onceCheckbox=document.createElement('input');
+onceCheckbox.type='checkbox';
+onceCheckbox.id='nodeExecuteOnceInput';
+onceCheckbox.checked=node.executeOnce===true;
+
+onceLabel.append(onceCheckbox,document.createTextNode(' 一回だけ実行'));
+onceGroup.appendChild(onceLabel);
+
+onceCheckbox.addEventListener('change',()=>{
+node.executeOnce=onceCheckbox.checked;
+});
+
+settingsPanel.appendChild(onceGroup);
+}
+
 if(node.type==='dialogue'||node.type==='clickBranch')return;
 if(settingsPanel.querySelector('#nodeMemoInput'))return;
 
@@ -893,6 +968,63 @@ if(node.type==='folderStart'||node.type==='worldDisplay'){
  settingsPanel.innerHTML=`<div class="settings-title">${node.type==='folderStart'?'START':'ワールド表示'}</div><p class="settings-empty">${node.type==='folderStart'?'ここからワールドの開始演出を接続します。':'ワールドの基本メディアとレイヤーを表示して探索を開始します。'}</p>`;
  return;
 }
+if(node.type==='uiButton'){
+ const fields=[['uiButtonWidth','ボタンの幅（px）',40,1000,180],['uiButtonHeight','ボタンの高さ（px）',24,500,56],['uiButtonFontSize','文字サイズ（px）',8,120,20]];
+ node.uiButtonPositions ||= {pc:{x:50,y:88},mobile:{x:50,y:88}};
+ let buttonEditorMode='pc';
+ settingsPanel.innerHTML=`<div class="settings-title">ボタン</div>
+ <div class="setting-group"><div class="setting-label">ボタンのテキスト</div><input id="uiButtonTextInput" class="number-input" type="text" maxlength="100" value="${escapeHtml(node.uiButtonText??'ボタン')}"></div>
+ ${fields.map(([id,label,min,max,fallback])=>`<div class="setting-group"><div class="setting-label">${label}</div><input id="${id}" class="number-input" type="number" min="${min}" max="${max}" step="1" value="${Math.max(min,Math.min(max,Number(node[id])||fallback))}"></div>`).join('')}
+ <div class="setting-group"><div class="setting-label">ボタンの表示位置</div>
+ <div class="ui-button-mode-tabs"><button type="button" data-mode="pc" class="active">PC（16:9）</button><button type="button" data-mode="mobile">スマホ（9:16）</button></div>
+ <div class="ui-button-position-preview" id="uiButtonPositionPreview"><button id="uiButtonPositionTarget" type="button"></button></div>
+ <div class="pan-help">ボタンをドラッグして位置を変更します。PCとスマホの位置は別々に保存されます。</div></div>
+ <p class="settings-empty">ゲーム画面でボタンを押すと、接続先のノードへ進みます。</p>`;
+ const preview=settingsPanel.querySelector('#uiButtonPositionPreview');
+ const target=settingsPanel.querySelector('#uiButtonPositionTarget');
+ const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+ const redraw=()=>{
+  preview.classList.toggle('mobile',buttonEditorMode==='mobile');
+  settingsPanel.querySelectorAll('.ui-button-mode-tabs button').forEach(el=>el.classList.toggle('active',el.dataset.mode===buttonEditorMode));
+  const pos=node.uiButtonPositions[buttonEditorMode]||{x:50,y:88};
+  target.style.left=`${pos.x}%`;target.style.top=`${pos.y}%`;
+  const scale=preview.clientWidth/(buttonEditorMode==='pc'?960:540);
+  target.style.width=`${Math.max(40,Number(node.uiButtonWidth)||180)*scale}px`;
+  target.style.height=`${Math.max(24,Number(node.uiButtonHeight)||56)*scale}px`;
+  target.style.fontSize=`${Math.max(8,Number(node.uiButtonFontSize)||20)*scale}px`;
+  target.textContent=node.uiButtonText??'ボタン';
+ };
+ settingsPanel.querySelectorAll('.ui-button-mode-tabs button').forEach(el=>el.addEventListener('click',()=>{buttonEditorMode=el.dataset.mode;redraw();}));
+ // Drag the button without jumping its center to the initial pointer location.
+ // Positions are stored in percentages so each device preview remains independent.
+ let buttonDrag=null;
+ target.addEventListener('pointerdown',e=>{
+  if(e.button!==0 && e.pointerType==='mouse')return;
+  e.preventDefault();
+  const initial=node.uiButtonPositions[buttonEditorMode]||{x:50,y:88};
+  buttonDrag={pointerId:e.pointerId,mode:buttonEditorMode,startX:e.clientX,startY:e.clientY,x:initial.x,y:initial.y};
+  target.setPointerCapture(e.pointerId);
+ });
+ target.addEventListener('pointermove',e=>{
+  if(!buttonDrag||e.pointerId!==buttonDrag.pointerId)return;
+  e.preventDefault();
+  const r=preview.getBoundingClientRect();
+  if(!r.width||!r.height)return;
+  node.uiButtonPositions[buttonDrag.mode]={
+   x:clamp(buttonDrag.x+(e.clientX-buttonDrag.startX)/r.width*100,0,100),
+   y:clamp(buttonDrag.y+(e.clientY-buttonDrag.startY)/r.height*100,0,100)
+  };
+  redraw();
+ });
+ const endButtonDrag=e=>{if(buttonDrag&&e.pointerId===buttonDrag.pointerId)buttonDrag=null;};
+ target.addEventListener('pointerup',endButtonDrag);
+ target.addEventListener('pointercancel',endButtonDrag);
+ target.addEventListener('lostpointercapture',endButtonDrag);
+ document.getElementById('uiButtonTextInput').addEventListener('input',e=>{node.uiButtonText=e.target.value;renderNodes();redraw();});
+ for(const [id,,min,max,fallback] of fields){document.getElementById(id).addEventListener('input',e=>{node[id]=clamp(Number(e.target.value)||fallback,min,max);redraw();});}
+ requestAnimationFrame(()=>{if(preview.isConnected)redraw();});
+ return;
+}
 if(node.type==='worldMove'){
  settingsPanel.innerHTML='<div class="settings-title">ワールド移動</div><div class="setting-group"><div class="setting-label">移動先ワールド</div><select id="destinationWorld" class="number-input"></select></div>';
  const select=document.getElementById('destinationWorld');
@@ -900,6 +1032,10 @@ if(node.type==='worldMove'){
  for(const w of state.worldFolders)select.add(new Option(w.name,w.id));
  select.value=node.destinationFolderId||'';
  select.addEventListener('change',()=>{node.destinationFolderId=select.value;renderNodes();renderSettings();});
+ return;
+}
+if(node.type==='gameReset'){
+ settingsPanel.innerHTML='<div class="settings-title">リセット</div><p class="settings-empty">ゲームの進行状況、取得したアイテム、トグル、イベントの記録をすべて初期化し、ワールド1のSTARTからやり直します。出力接続はありません。</p>';
  return;
 }
 if(node.type==='eventRecord'){
@@ -996,6 +1132,9 @@ return;
 }
 if(node.type==='option'){renderOptionSettings(node);return;}
 if(node.type==='textAnswer'){renderTextAnswerSettings(node);return;}
+if(node.type==='toggle'){renderToggleSettings(node);return;}
+if(node.type==='toggleSet'){renderToggleSetSettings(node);return;}
+if(node.type==='toggleBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.toggleResult==='on'?'ON':'OFF'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
 if(node.type==='condition'){renderConditionSettings(node);return;}
 if(node.type==='conditionBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.conditionResult==='yes'?'はい':'いいえ'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
 if(node.type==='textAnswerBranch'){settingsPanel.innerHTML=`<div class="settings-title">${node.textAnswerResult==='correct'?'正解':'不正解'}</div><div class="settings-empty">右端から次のノードに接続してください。</div>`;return;}
@@ -1069,6 +1208,37 @@ const inheritControl=isAnimation
 
 settingsPanel.innerHTML=`<div class="settings-title">クリック</div>${frameControls}<div class="setting-group"><div class="setting-section-heading">範囲設定</div><div class="click-inherit-row">${inheritControl}</div><div class="click-preview-wrap"><canvas id="clickPreviewCanvas" class="world-preview" width="320" height="320"></canvas><canvas id="clickLassoCanvas" class="click-lasso-canvas" width="320" height="320"></canvas><div class="click-lasso-mode-buttons"><button id="clickLassoAddBtn" class="click-lasso-mode active" type="button" title="選択範囲に追加" aria-pressed="true">＋</button><button id="clickLassoSubtractBtn" class="click-lasso-mode" type="button" title="選択範囲から削除" aria-pressed="false">－</button></div></div><div class="pan-help">左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す</div></div><div class="setting-group"><button id="clearClickLassoBtn" class="add-world-btn" type="button">範囲を消去</button></div>`;
 
+// クリック範囲の編集プレビュー専用。ゲーム再生時の表示条件には影響しない。
+const clickLayerFolder=sourceNode.type==='world'
+ ?state.worldFolders?.find(folder=>folder.backerId===sourceNode.id)
+ :null;
+if(clickLayerFolder?.layers?.length){
+ const group=document.createElement('div');
+ group.className='setting-group';
+ const heading=document.createElement('div');
+ heading.className='setting-section-heading';
+ heading.textContent='透明レイヤー（編集画面のみ）';
+ group.appendChild(heading);
+ const note=document.createElement('div');note.className='settings-empty';
+ note.textContent='チェックを外すとクリック範囲のプレビューから非表示になります。ゲーム再生には影響しません。';
+ group.appendChild(note);
+ if(!Array.isArray(node.clickHiddenLayerIds))node.clickHiddenLayerIds=[];
+ for(const layer of clickLayerFolder.layers){
+  const label=document.createElement('label');label.className='click-layer-visibility-row';
+  const input=document.createElement('input');input.type='checkbox';
+  input.checked=!node.clickHiddenLayerIds.includes(layer.id);
+  const name=document.createElement('span');name.textContent=layer.name||'新規レイヤー';
+  label.append(input,name);group.append(label);
+  input.addEventListener('change',()=>{
+   const hidden=new Set(node.clickHiddenLayerIds||[]);
+   if(input.checked)hidden.delete(layer.id);else hidden.add(layer.id);
+   node.clickHiddenLayerIds=[...hidden];
+   const canvas=document.getElementById('clickPreviewCanvas');
+   if(canvas){drawPanoramaPreview(canvas,getClickLassoWorld(node,sourceNode));drawClickLassoOverlay(node,sourceNode);}
+  });
+ }
+ settingsPanel.appendChild(group);
+}
 setupClickTriggerPreview(node,sourceNode);
 const normalOnceGroup=document.createElement('div');
 normalOnceGroup.className='setting-group';
@@ -1078,6 +1248,40 @@ document.getElementById('clickNormalOnceInput').addEventListener('change',e=>{
  node.clickNormalOnce=e.target.checked;
 });
 renderClickItemBranchSettings(node);
+// クリック範囲そのものの有効条件。2条件の場合のみ AND / OR を適用する。
+const enableGroup=document.createElement('div');enableGroup.className='setting-group';
+enableGroup.innerHTML='<div class="setting-section-heading">クリックの有効条件</div><div class="settings-empty">この条件はゲーム再生中のクリック可否を制御します。</div><div id="clickEnablePrimary"></div><div id="clickEnableSecondaryControls" style="margin-top:10px"><button type="button" id="clickEnableAddSecond" class="secondary-button">＋ 条件を追加</button><div id="clickEnableSecond" hidden><label class="setting-label" for="clickEnableOperator">条件の組み合わせ</label><select id="clickEnableOperator" class="number-input"><option value="and">かつ（両方を満たす）</option><option value="or">または（どちらかを満たす）</option></select><div id="clickEnableSecondary"></div><button type="button" id="clickEnableRemoveSecond" class="secondary-button">2つ目の条件を削除</button></div></div>';
+settingsPanel.appendChild(enableGroup);
+const makeConditionControls=(container,fields,prefix)=>{
+ container.innerHTML=`<select id="${prefix}Type" class="number-input"><option value="always">常時有効</option><option value="acquire">アイテム取得</option><option value="toggle">トグル</option><option value="event">イベント記録</option></select><select id="${prefix}Target" class="number-input"></select><select id="${prefix}State" class="number-input"></select>`;
+ const type=container.querySelector(`#${prefix}Type`),target=container.querySelector(`#${prefix}Target`),status=container.querySelector(`#${prefix}State`);
+ type.value=node[fields.type]||'always';
+ const refresh=()=>{
+  const kind=type.value;
+  target.replaceChildren(new Option('対象を選択',''));
+  const typeMap={acquire:'itemAcquire',toggle:'toggle',event:'eventRecord'};
+  for(const targetNode of state.nodes.filter(n=>n.type===typeMap[kind]))target.add(new Option(targetNode.toggleName||targetNode.itemName||targetNode.eventName||targetNode.id,targetNode.id));
+  target.value=node[fields.target]||'';
+  status.replaceChildren(new Option(kind==='toggle'?'OFF':'前','before'),new Option(kind==='toggle'?'ON':'後','after'));
+  status.value=node[fields.state]||'after';
+  target.hidden=status.hidden=kind==='always';
+ };
+ refresh();
+ type.onchange=()=>{node[fields.type]=type.value;node[fields.target]='';node[fields.state]='after';refresh();};
+ target.onchange=()=>{node[fields.target]=target.value;};
+ status.onchange=()=>{node[fields.state]=status.value;};
+};
+makeConditionControls(enableGroup.querySelector('#clickEnablePrimary'),{type:'clickEnableType',target:'clickEnableTargetId',state:'clickEnableState'},'clickEnable');
+const secondWrap=enableGroup.querySelector('#clickEnableSecond');
+const addSecond=enableGroup.querySelector('#clickEnableAddSecond');
+const op=enableGroup.querySelector('#clickEnableOperator');
+const syncSecond=()=>{const active=node.clickEnableSecondEnabled===true;secondWrap.hidden=!active;addSecond.hidden=active;};
+makeConditionControls(enableGroup.querySelector('#clickEnableSecondary'),{type:'clickEnableSecondType',target:'clickEnableSecondTargetId',state:'clickEnableSecondState'},'clickEnableSecond');
+op.value=node.clickEnableOperator==='or'?'or':'and';
+op.onchange=()=>{node.clickEnableOperator=op.value;};
+addSecond.onclick=()=>{node.clickEnableSecondEnabled=true;syncSecond();};
+enableGroup.querySelector('#clickEnableRemoveSecond').onclick=()=>{node.clickEnableSecondEnabled=false;syncSecond();};
+syncSecond();
 
 return;
 }
@@ -2195,6 +2399,7 @@ function setupMediaVariantSettings(node){
  }));
 }
 
+let sequenceSelectedIndex=0;
 function renderMediaNodeSettings(node){
 const videoMode=node.type==='animation';
 const media=mediaLibrary.find(m=>m.id===(videoMode?node.animation.mediaId:node.world.mediaId));
@@ -2203,7 +2408,8 @@ mediaVariantConfig(node);
 
 const collapsible=(id,label,contents)=>`<details data-media-section="${id}"><summary>${label}</summary><div class="media-section-body">${contents}</div></details>`;
 const mediaSelect=`<div class="setting-group"><div class="setting-label">素材</div><select id="mediaNodeSelect" class="number-input">${getMediaOptions('media',media?.id)}</select></div>`;
-const sequenceFpsSettings=videoMode&&media?.fileType==='pngseq'?`<div class="setting-group"><div class="setting-label">連番PNGのFPS</div><input id="sequenceFpsSetting" class="number-input" type="number" min="1" max="120" step="1" value="${Number(media.fps)||8}"></div>`:'';
+const sequenceFpsSettings=videoMode&&media?.fileType==='pngseq'?`<div class="setting-group"><div class="setting-label">FPS</div><input id="sequenceFpsSetting" class="number-input" type="number" min="1" max="120" step="1" value="${Number(media.fps)||8}"></div>
+<div class="setting-group"><div class="setting-label">連番PNGの画像</div><div class="sequence-frame-tabs" role="tablist">${media.frameFiles.map((f,i)=>`<button type="button" class="sequence-frame-tab ${i===Math.min(sequenceSelectedIndex,media.frameFiles.length-1)?'is-active':''}" data-frame-index="${i}">${i+1}枚目</button>`).join('')}</div><div class="sequence-frame-editor"><div class="settings-empty" id="sequenceFrameName">${escapeHtml(media.frameFiles[Math.min(sequenceSelectedIndex,media.frameFiles.length-1)]?.name||'')}</div><button type="button" id="sequenceFrameReplace">画像を選択</button><input type="file" id="sequenceFrameFileInput" accept="image/png,.png" hidden></div></div>`:'';
 const durationSettings='';
 const pngSettings=videoMode?'':`
 <div class="setting-group">
@@ -2251,7 +2457,6 @@ settingsPanel.innerHTML=`
 <div class="settings-title">メディア（${videoMode?'360度アニメーション':'360度PNG'}）</div>
 ${mediaSelect}
 ${sequenceFpsSettings}
-${renderMediaVariantSettings(node)}
 ${pngSettings}
 ${inheritControl}
 ${previewControls}
@@ -2261,8 +2466,28 @@ ${videoMode?loops:''}
 ${angleInfo}`;
 
 document.getElementById('mediaNodeSelect').addEventListener('change',e=>assignMediaToNode(node,e.target.value));
-setupMediaVariantSettings(node);
- const sequenceFpsField=document.getElementById('sequenceFpsSetting');
+ if(videoMode&&media?.fileType==='pngseq'){
+  const tabs=Array.from(document.querySelectorAll('.sequence-frame-tab'));
+  const refreshTab=()=>{sequenceSelectedIndex=Math.max(0,Math.min(sequenceSelectedIndex,media.frameFiles.length-1));tabs.forEach((b,i)=>{b.classList.toggle('is-active',i===sequenceSelectedIndex);b.setAttribute('aria-selected',String(i===sequenceSelectedIndex));});document.getElementById('sequenceFrameName').textContent=media.frameFiles[sequenceSelectedIndex]?.name||'';};
+  tabs.forEach(b=>b.addEventListener('click',()=>{sequenceSelectedIndex=Number(b.dataset.frameIndex);refreshTab();}));
+  const frameInput=document.getElementById('sequenceFrameFileInput');
+  document.getElementById('sequenceFrameReplace').addEventListener('click',()=>frameInput.click());
+  frameInput.addEventListener('change',async()=>{
+   const file=frameInput.files?.[0];frameInput.value='';if(!file)return;
+   try{
+    if(!file.name.toLowerCase().endsWith('.png'))throw new Error('PNGを指定してください。');
+    const url=URL.createObjectURL(file);
+    let img;try{img=await new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('画像を読み込めません'));image.src=url;});}finally{URL.revokeObjectURL(url);}
+    if(img.naturalWidth!==img.naturalHeight*2)throw new Error('2:1のPNG画像を選択してください。');
+    if(img.naturalWidth!==media.width||img.naturalHeight!==media.height)throw new Error('既存フレームと同じ解像度のPNGを指定してください。');
+    media.video?.pause();media.frameFiles[sequenceSelectedIndex]=file;media.frameImages[sequenceSelectedIndex]=img;
+    media.video=createSequencePlayback(media);
+    renderMediaList();renderSettings();
+   }catch(error){alert('フレームを変更できませんでした。\n'+error.message);}
+  });
+  refreshTab();
+ }
+const sequenceFpsField=document.getElementById('sequenceFpsSetting');
  sequenceFpsField?.addEventListener('change',()=>{
   if(!media?.frameImages?.length)return;
   const fps=Number(sequenceFpsField.value);
@@ -2702,10 +2927,18 @@ return null;
 // 連番PNGは1つの素材として管理し、フレームを共通の360度キャンバスで再生する。
 function isAnimationAsset(media){return !!media&&(media.fileType==='mp4'||media.fileType==='pngseq');}
 function naturalFrameOrder(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'});}
-function createSequencePlayback(media){
- const canvas=document.createElement('canvas');canvas.width=media.width;canvas.height=media.height;
- const ctx=canvas.getContext('2d');let time=0,playing=false,started=0,frameHandle=0;
- const draw=()=>{const n=media.frameImages.length;const i=Math.min(n-1,Math.max(0,Math.floor(time*media.fps)%n));ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(media.frameImages[i],0,0);};
+function createSequencePlayback(media,backgroundImage=null){
+const canvas=document.createElement('canvas');canvas.width=media.width;canvas.height=media.height;
+const ctx=canvas.getContext('2d');let time=0,playing=false,started=0,frameHandle=0;
+const draw=()=>{
+const n=media.frameImages.length;
+const i=Math.min(n-1,Math.max(0,Math.floor(time*media.fps)%n));
+ctx.clearRect(0,0,canvas.width,canvas.height);
+if(backgroundImage){
+ctx.drawImage(backgroundImage,0,0,canvas.width,canvas.height);
+}
+ctx.drawImage(media.frameImages[i],0,0,canvas.width,canvas.height);
+};
  const advance=now=>{if(!playing)return;time=(now-started)/1000;if(time>=media.duration){if(canvas.loop){time=time%media.duration;started=now-time*1000;}else{time=media.duration;playing=false;canvas.dispatchEvent(new Event('ended'));}}draw();if(playing)frameHandle=requestAnimationFrame(advance);};
  Object.defineProperties(canvas,{
   currentTime:{get:()=>time,set:v=>{time=Math.max(0,Math.min(Number(v)||0,Math.max(0,media.duration-0.0001)));if(playing)started=performance.now()-time*1000;draw();queueMicrotask(()=>canvas.dispatchEvent(new Event('seeked')));}},
@@ -2717,8 +2950,18 @@ function createSequencePlayback(media){
  canvas.load=()=>{};
  draw();return canvas;
 }
-async function importPngSequence(files,fps=8){
- const ordered=[...files].sort(naturalFrameOrder);
+async function validateSequencePng(file,expectedWidth=null,expectedHeight=null){
+ if(!file||!file.name.toLowerCase().endsWith('.png')||file.type&&file.type!=='image/png')throw new Error('PNG画像のみ選択できます。');
+ const url=URL.createObjectURL(file);
+ try{
+  const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('PNG画像を読み込めませんでした。'));img.src=url;});
+  if(image.naturalWidth!==image.naturalHeight*2)throw new Error('2:1のPNG画像を選択してください。');
+  if(expectedWidth!==null&&(image.naturalWidth!==expectedWidth||image.naturalHeight!==expectedHeight))throw new Error('連番PNGはすべて同じ解像度にしてください。');
+  return image;
+ }finally{URL.revokeObjectURL(url);}
+}
+async function importPngSequence(files,fps=8,preserveOrder=false){
+ const ordered=preserveOrder?[...files]:[...files].sort(naturalFrameOrder);
  if(!ordered.length||ordered.some(file=>!file.name.toLowerCase().endsWith('.png')))throw new Error('連番PNGのみを選択してください。');
  const frames=[];const images=[];
  try{
@@ -2822,7 +3065,7 @@ renderSettings();
 return media;
 }
 
-document.getElementById('addSequenceBtn').addEventListener('click',()=>document.getElementById('sequenceFileInput').click());
+
 addMediaBtn.addEventListener('click',()=>{
 worldFileInput.value='';
 worldFileInput.click();
@@ -2860,13 +3103,38 @@ animationFileInput.value='';
 if(files.length>0)setMediaPanelOpen(false);
 });
 let sequenceInsertionNodeId=null;
-const sequenceFileInput=document.getElementById('sequenceFileInput');
-sequenceFileInput.addEventListener('change',async e=>{
- const files=Array.from(e.target.files||[]);sequenceFileInput.value='';if(!files.length){sequenceInsertionNodeId=null;return;}
- const fps=Number(prompt('連番PNGのFPSを入力してください（例：8）','8'));
- if(!Number.isFinite(fps)||fps<=0||fps>120){sequenceInsertionNodeId=null;alert('FPSは0より大きく120以下にしてください。');return;}
- try{const media=await importPngSequence(files,fps);if(sequenceInsertionNodeId){const node=getNode(sequenceInsertionNodeId);if(node?.type==='animation')assignMediaToNode(node,media.id);}setMediaPanelOpen(false);}catch(error){console.error(error);alert('連番PNGを読み込めませんでした。\n'+error.message);}finally{sequenceInsertionNodeId=null;}
-});
+function openSequenceWizard(){
+ const overlay=document.createElement('div');overlay.className='sequence-wizard-overlay';
+ const files=[null];let active=0;
+ overlay.innerHTML=`<div class="sequence-wizard" role="dialog" aria-modal="true" aria-label="連番PNGを追加"><div class="sequence-wizard-head"><strong>アニメーション（連番PNG）</strong><button type="button" data-seq-close>×</button></div><label>FPS <input class="number-input" data-seq-fps type="number" min="1" max="120" step="1" value="8"></label><div class="sequence-frame-tabs" data-seq-tabs></div><div class="sequence-frame-editor"><div data-seq-name>画像未選択</div><button type="button" data-seq-choose>画像を選択</button><input type="file" accept="image/png,.png" data-seq-file hidden></div><div class="sequence-wizard-footer"><button type="button" data-seq-add>＋ フレームを追加</button><button type="button" data-seq-save>登録する</button></div></div>`;
+ document.body.appendChild(overlay);
+ const $=q=>overlay.querySelector(q);
+ const refresh=()=>{$('[data-seq-tabs]').innerHTML=files.map((file,i)=>`<button type="button" class="sequence-frame-tab ${i===active?'is-active':''}" data-seq-tab="${i}">${i+1}枚目</button>`).join('');$('[data-seq-name]').textContent=files[active]?.name||'画像未選択';};
+ const close=()=>{overlay.remove();sequenceInsertionNodeId=null;};
+ $('[data-seq-close]').addEventListener('click',close);
+ $('[data-seq-tabs]').addEventListener('click',e=>{const btn=e.target.closest('[data-seq-tab]');if(!btn)return;active=Number(btn.dataset.seqTab);refresh();});
+ $('[data-seq-add]').addEventListener('click',()=>{files.push(null);active=files.length-1;refresh();});
+ $('[data-seq-choose]').addEventListener('click',()=>$('[data-seq-file]').click());
+ $('[data-seq-file]').addEventListener('change',async e=>{
+  const file=e.target.files?.[0];e.target.value='';if(!file)return;
+  try{
+   const first=files.find((f,i)=>i!==active&&f);
+   const reference=first?await validateSequencePng(first):null;
+   await validateSequencePng(file,reference?.naturalWidth??null,reference?.naturalHeight??null);
+   files[active]=file;refresh();
+  }catch(error){alert('この画像は選択できません。\n'+error.message);}
+ });
+ $('[data-seq-save]').addEventListener('click',async()=>{
+  const fps=Number($('[data-seq-fps]').value);
+  if(!Number.isFinite(fps)||fps<1||fps>120){alert('FPSは1～120で指定してください。');return;}
+  if(files.some(f=>!f)){alert('すべてのフレームにPNG画像を選択してください。');return;}
+  if(files.some(f=>!f.name.toLowerCase().endsWith('.png'))){alert('PNG画像だけを指定してください。');return;}
+  const button=$('[data-seq-save]');button.disabled=true;
+  try{const media=await importPngSequence(files,fps,true);if(sequenceInsertionNodeId){const node=getNode(sequenceInsertionNodeId);if(node?.type==='animation')assignMediaToNode(node,media.id);}setMediaPanelOpen(false);close();}catch(error){console.error(error);alert('連番PNGを登録できませんでした。\n'+error.message);button.disabled=false;}
+ });
+ refresh();
+}
+
 
 
 renderMediaList();
@@ -4464,7 +4732,7 @@ node.clickPolygon=cloneClickPolygon(points);
 // 編集時はワールドの基本画像に、登録済みの透明PNGを全て重ねる。
 // ゲーム内の表示条件は無視し、投げ縄の位置合わせをしやすくする。
 const clickEditorCompositeCanvases=new Map();
-function getClickEditorComposite(sourceNode){
+function getClickEditorComposite(sourceNode,clickNode=null){
  const folder=state.worldFolders?.find(f=>f.backerId===sourceNode?.id);
  if(!folder)return sourceNode?.world?.image||null;
  const media=getFolderMedia(folder);
@@ -4479,6 +4747,7 @@ function getClickEditorComposite(sourceNode){
  ctx.clearRect(0,0,width,height);
  try{ctx.drawImage(base,0,0,width,height);}catch(_e){return base;}
  for(const layer of folder.layers||[]){
+  if(clickNode?.clickHiddenLayerIds?.includes(layer.id))continue;
   const overlay=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png')?.image;
   if(overlay){try{ctx.drawImage(overlay,0,0,width,height);}catch(_e){}}
  }
@@ -4488,7 +4757,7 @@ function getClickLassoWorld(node,sourceNode){
  const image=sourceNode.type==='animation'
  ?getClickAnimationMedia(sourceNode)?.video||null
  :sourceNode.type==='world'
- ?getClickEditorComposite(sourceNode)
+ ?getClickEditorComposite(sourceNode,node)
  :sourceNode.world.image;
  return{
  image,
@@ -5094,11 +5363,25 @@ function resolvePreviewClickAction(node,itemId){
  return normalAlreadyDone?null:{kind:'normal'};
 }
 
+// ワールドのクリック判定だけに適用する有効条件（設定プレビューは常時表示）。
+function isClickConditionActive(node){
+ const check=(mode,target,stateValue)=>{
+  if((mode||'always')==='always')return true;
+  if(!target)return false;
+  const yes=mode==='toggle'?toggleWorldStates.has(target):mode==='acquire'?acquiredItems.has(target):mode==='event'?recordedWorldEvents.has(target):false;
+  return stateValue==='before'?!yes:yes;
+ };
+ const first=check(node.clickEnableType,node.clickEnableTargetId,node.clickEnableState);
+ if(node.clickEnableSecondEnabled!==true)return first;
+ const second=check(node.clickEnableSecondType,node.clickEnableSecondTargetId,node.clickEnableSecondState);
+ return node.clickEnableOperator==='or'?(first||second):(first&&second);
+}
+
 function findBestPreviewClick(clientX,clientY,world,animation,itemId){
  const matches=[];
  for(const id of state.previewClickTriggerIds){
   const node=getNode(id);
-  if(!node||previewRemovedClickIds.has(node.id)||!canFireExplorationTrigger(node))continue;
+  if(!node||previewRemovedClickIds.has(node.id)||!canFireExplorationTrigger(node)||!isClickConditionActive(node))continue;
   let regions=null;
   let frameKey='static';
   if(animation&&node.clickAnimationMode){
@@ -5573,13 +5856,10 @@ openContextMenu(e.clientX-rect.left,e.clientY-rect.top);
 const nodeMenuCategories={
 material:{label:'素材',element:materialMenu},
 trigger:{label:'トリガー',element:triggerMenu},
-condition:{label:'条件',element:document.getElementById('conditionMenu')},
-navigation:{label:'移動',element:document.getElementById('navigationMenu')},
-state:{label:'状態',element:document.getElementById('stateMenu')},
 effect:{label:'効果',element:effectMenu},
-camera:{label:'カメラ',element:cameraMenu},
-panel:{label:'UI',element:panelMenu},
-item:{label:'アイテム',element:document.getElementById('itemMenu')}
+event:{label:'イベント',element:document.getElementById('eventMenu')},
+branch:{label:'分岐',element:document.getElementById('branchMenu')},
+panel:{label:'UI',element:panelMenu}
 };
 
 function updateNodeMenuCategories(openCategory=null){
@@ -5655,14 +5935,14 @@ contextMenu.classList.add('hidden');
 state.insertConnection=null;
 
 let created=null;
-if(insertConnection){
+if(insertConnection&&nodeType!=='gameReset'){
 created=insertNodeIntoConnection(nodeType,insertConnection,menuPoint);
 }else{
 created=addNode(nodeType,menuPoint.x,menuPoint.y);
 }
 if(sequenceNode){
  sequenceInsertionNodeId=created?.id||state.selectedNodeId;
- document.getElementById('sequenceFileInput').click();
+ openSequenceWizard();
 }
 }
 });
@@ -5762,7 +6042,132 @@ stepEditorHistory(key==='y'||(key==='z'&&e.shiftKey));
 },true);
 
 let copiedNodeData=null;
+let copiedNodeGroup=null;
 let pasteOffset=0;
+
+function copySelectedNodeGroup(){
+const selectedIds=state.selectedNodeIds.size>0
+?new Set(state.selectedNodeIds)
+:new Set(state.selectedNodeId?[state.selectedNodeId]:[]);
+
+const excludedTypes=new Set(['start','folderStart','worldDisplay']);
+const nodes=state.nodes.filter(node=>selectedIds.has(node.id)&&!excludedTypes.has(node.type));
+
+if(nodes.length===0)return null;
+
+const nodeIds=new Set(nodes.map(node=>node.id));
+const connections=state.connections.filter(connection=>nodeIds.has(connection.from)&&nodeIds.has(connection.to));
+
+return{
+nodes:cloneEditorValue(nodes),
+connections:cloneEditorValue(connections)
+};
+}
+
+function pasteSelectedNodeGroup(group,offset){
+if(!group?.nodes?.length)return;
+
+const before=editorSnapshot();
+const idMap=new Map();
+const choiceIdMap=new Map();
+
+for(const node of group.nodes){
+idMap.set(node.id,uid(node.type));
+if(Array.isArray(node.optionChoices)){
+for(const choice of node.optionChoices){
+choiceIdMap.set(choice.id,uid('choice'));
+}
+}
+}
+
+const clonedNodes=cloneEditorValue(group.nodes);
+const clonedConnections=cloneEditorValue(group.connections);
+
+const remapReferences=(value)=>{
+if(!value||typeof value!=='object')return;
+
+if(Array.isArray(value)){
+for(const item of value)remapReferences(item);
+return;
+}
+
+if(value instanceof Set||value instanceof Map||value instanceof Blob||value instanceof Element)return;
+if(Object.getPrototypeOf(value)!==Object.prototype)return;
+
+for(const [key,item] of Object.entries(value)){
+if(key==='folderId'||key==='destinationFolderId'||key==='optionOwnerId'&&item===null)continue;
+
+if(typeof item==='string'){
+if(idMap.has(item)){
+value[key]=idMap.get(item);
+}else if(choiceIdMap.has(item)){
+value[key]=choiceIdMap.get(item);
+}
+}else if(item&&typeof item==='object'){
+remapReferences(item);
+}
+}
+};
+
+for(const node of clonedNodes){
+const originalId=node.id;
+node.id=idMap.get(originalId);
+node.x=(Number(node.x)||0)+offset;
+node.y=(Number(node.y)||0)+offset;
+
+if(node.folderId!==undefined)node.folderId=state.activeFolderId;
+
+remapReferences(node);
+
+if(Array.isArray(node.optionChoices)){
+for(const choice of node.optionChoices){
+const original=group.nodes.find(n=>n.id===originalId)?.optionChoices?.find(c=>c.text===choice.text);
+if(original&&choiceIdMap.has(original.id))choice.id=choiceIdMap.get(original.id);
+}
+}
+
+if('clickUndoStack'in node)node.clickUndoStack=[];
+if('clickRedoStack'in node)node.clickRedoStack=[];
+if('panUndoStack'in node)node.panUndoStack=[];
+if('panRedoStack'in node)node.panRedoStack=[];
+if('frameInUndo'in node)node.frameInUndo=[];
+if('frameInRedo'in node)node.frameInRedo=[];
+}
+
+for(const connection of clonedConnections){
+connection.id=uid('conn');
+connection.from=idMap.get(connection.from);
+connection.to=idMap.get(connection.to);
+
+if(Array.isArray(connection.anchors)){
+connection.anchors=connection.anchors.map(anchor=>({
+...anchor,
+x:anchor.x+offset,
+y:anchor.y+offset
+}));
+}
+}
+
+state.nodes.push(...clonedNodes);
+state.connections.push(...clonedConnections);
+
+const copiedIds=new Set(clonedNodes.map(node=>node.id));
+
+for(const node of clonedNodes){
+if(node.type==='condition'&&!clonedNodes.some(n=>n.conditionOwnerId===node.id))ensureConditionBranches(node);
+if(node.type==='toggle'&&!clonedNodes.some(n=>n.toggleOwnerId===node.id))ensureToggleBranches(node);
+if(node.type==='textAnswer'&&!clonedNodes.some(n=>n.textAnswerOwnerId===node.id))ensureTextAnswerBranches(node);
+}
+
+state.selectedNodeIds=new Set([...copiedIds]);
+state.selectedNodeId=null;
+state.selectedConnectionId=null;
+
+commitEditorHistory(before);
+renderNodes();
+renderSettings();
+renderConnections();
+}
 
 function copyNodeData(node){
 const copied={
@@ -5908,37 +6313,22 @@ return;
 }
 
 if((e.ctrlKey||e.metaKey)&&!e.altKey&&key==='c'){
-if(!selectedNode||['start','folderStart','worldDisplay'].includes(selectedNode.type))return;
+const group=copySelectedNodeGroup();
+if(!group)return;
 
 e.preventDefault();
-copiedNodeData=copyNodeData(selectedNode);
+copiedNodeGroup=group;
+copiedNodeData=null;
 pasteOffset=0;
 return;
 }
 
 if((e.ctrlKey||e.metaKey)&&!e.altKey&&key==='v'){
-if(!copiedNodeData)return;
+if(!copiedNodeGroup)return;
 
 e.preventDefault();
-
 pasteOffset+=40;
-
-const editBefore=editorSnapshot();
-const newNode=copyNodeData(copiedNodeData);
-newNode.id=uid(newNode.type);
-if(['folderStart','worldDisplay'].includes(newNode.type))return;
-if(newNode.type==='option'){newNode.optionChoices=[];}
-if(newNode.type==='optionChoice'||newNode.type==='textAnswerBranch'||newNode.type==='conditionBranch')return;
-if(newNode.type==='textAnswer'){newNode.textAnswerOwnerId=null;newNode.textAnswerResult=null;}
-newNode.x=copiedNodeData.x+pasteOffset;
-newNode.y=copiedNodeData.y+pasteOffset;
-
-state.nodes.push(newNode);
-if(newNode.type==='textAnswer')ensureTextAnswerBranches(newNode);
-if(newNode.type==='condition')ensureConditionBranches(newNode);
-commitEditorHistory(editBefore);
-renderNodes();
-selectNode(newNode.id);
+pasteSelectedNodeGroup(copiedNodeGroup,pasteOffset);
 return;
 }
 
@@ -6011,12 +6401,12 @@ state.selectedNodeId;
 if(!id||id==='start')return;
 if(['folderStart','worldDisplay'].includes(getNode(id)?.type))return;
 const removedNode=getNode(id);
-if(removedNode?.type==='textAnswerBranch'||removedNode?.type==='conditionBranch')return;
+if(removedNode?.type==='textAnswerBranch'||removedNode?.type==='conditionBranch'||removedNode?.type==='toggleBranch')return;
 if(removedNode?.type==='optionChoice'){
 const owner=getNode(removedNode.optionOwnerId);
 if(owner){removeOptionChoice(owner,removedNode.optionChoiceId);state.selectedNodeId=null;return;}
 }
-const attached=new Set(removedNode?.type==='option'?optionChoiceNodes(removedNode).map(n=>n.id):removedNode?.type==='textAnswer'?textAnswerBranches(removedNode).map(n=>n.id):removedNode?.type==='condition'?conditionBranches(removedNode).map(n=>n.id):[]);
+const attached=new Set(removedNode?.type==='option'?optionChoiceNodes(removedNode).map(n=>n.id):removedNode?.type==='textAnswer'?textAnswerBranches(removedNode).map(n=>n.id):removedNode?.type==='condition'?conditionBranches(removedNode).map(n=>n.id):removedNode?.type==='toggle'?toggleBranches(removedNode).map(n=>n.id):[]);
 attached.add(id);
 
 state.nodes=
@@ -6569,6 +6959,24 @@ let previewKeyframeBusy=false;
 const previewBranchTimers=new Set();
 const previewVisited=new Set();
 
+// 一回だけ実行するノードの実行履歴
+const previewExecutedOnceNodes=new Set();
+
+function isPreviewOnceTarget(node){
+return Boolean(node&&!['start','folderStart','worldDisplay','gameReset','world'].includes(node.type));
+}
+
+function isPreviewOnceCompleted(node){
+return Boolean(isPreviewOnceTarget(node)&&node.executeOnce===true&&previewExecutedOnceNodes.has(node.id));
+}
+
+function markPreviewOnceExecuted(node){
+if(isPreviewOnceTarget(node)&&node.executeOnce===true){
+previewExecutedOnceNodes.add(node.id);
+recordPreviewDiagnostic('node-execute-once',{nodeId:node.id,nodeType:node.type});
+}
+}
+
 // ゲーム中に一度でも取得したアイテム
 const acquiredItems=new Set();
 const previewCompletedTriggers=new Set();
@@ -6616,14 +7024,17 @@ function prepareExplorationBranch(nodeId){
 }
 
 function fireExplorationTrigger(node){
- if(!canFireExplorationTrigger(node))return;
+if(!canFireExplorationTrigger(node))return;
+if(isPreviewOnceCompleted(node))return;
 
- if(node.triggerOnce){
-  previewCompletedTriggers.add(node.id);
- }
+markPreviewOnceExecuted(node);
 
- prepareExplorationBranch(node.id);
- previewOutgoing(node.id);
+if(node.triggerOnce){
+previewCompletedTriggers.add(node.id);
+}
+
+prepareExplorationBranch(node.id);
+previewOutgoing(node.id);
 }
 
 function clearPreviewBranchTimers(){
@@ -6643,6 +7054,7 @@ state.previewFrameInIds=[];
 state.previewDialogueNodeId=null;
 optionChoicesOverlay.classList.add('hidden');
 optionChoicesOverlay.replaceChildren();
+clearUiButtonPreview();
 closeTextAnswerPanel();
 inventoryOverlay.classList.add('hidden');
 clearMedia2DLayer();
@@ -6667,7 +7079,7 @@ const targets=state.connections
 .map(c=>getNode(c.to))
 .filter(Boolean)
 .filter(target=>{
-if(!sourceIsMedia)return !(source?.type==='click'&&target.type==='clickBranch')&&!(source?.type==='condition'&&target.type==='conditionBranch');
+if(!sourceIsMedia)return !(source?.type==='click'&&target.type==='clickBranch')&&!(source?.type==='condition'&&target.type==='conditionBranch')&&!(source?.type==='toggle'&&target.type==='toggleBranch');
 
 const targetEndsScene=target.type==='world'||target.type==='animation'||target.type==='start';
 
@@ -6698,9 +7110,11 @@ checkingFrameIn=true;
 try{
 for(const id of [...state.previewFrameInIds]){
 const node=getNode(id);if(!node)continue;
+if(isPreviewOnceCompleted(node))continue;
 if(!isFrameInTriggered(node,gameCanvas,view))continue;
 state.previewFrameInIds=[];
 clearPreviewBranchTimers();
+markPreviewOnceExecuted(node);
 previewOutgoing(id);
 if(!state.connections.some(c=>c.from===id))previewMessage.textContent='フレームイン発火・接続先なし';
 break;
@@ -6711,7 +7125,7 @@ function canUsePreviewClick(node){
 return Boolean(node.clickTarget?.initialized||Object.values(node.clickFrameRegions||{}).some(regions=>Array.isArray(regions)&&regions.some(r=>r.mode==='add'&&r.points?.length>=3)));
 }
 
-function startPreview(preserveInventory=false){
+function startPreview(preserveInventory=false,resetToInitial=false){
 recordPreviewDiagnostic('preview-start',{preserveInventory});
 previewClickAreaCache.clear();
 if(!preserveInventory){
@@ -6720,8 +7134,9 @@ state.inventory=new Set();
 state.selectedInventoryItemId=null;
 state.inventoryEnabled=false;
 previewCompletedTriggers.clear();
+previewExecutedOnceNodes.clear();
 acquiredItems.clear();
-recordedWorldEvents.clear();usedWorldBranches.clear();
+recordedWorldEvents.clear();usedWorldBranches.clear();toggleWorldStates.clear();
 }
 cancelPreviewScene();
 previewAcquisitionSourceClickId=null;
@@ -6741,7 +7156,7 @@ refreshInventory();
 inventoryButton.classList.remove('hidden');
 
 drawPanoramaPreview(gameCanvas,{image:null,yaw:0,pitch:0,zoom:1});
-enterWorldFolder(state.worldFolders[0]?.id||state.startFolderId);
+enterWorldFolder(state.worldFolders[0]?.id||state.startFolderId,resetToInitial);
 }
 
 
@@ -6808,7 +7223,9 @@ previewMessage.textContent='MP4素材を選択してください';
 return;
 }
 
-const video=media.fileType==='pngseq'?createSequencePlayback(media):document.createElement('video');
+const backgroundWorldNode=getNode(state.previewWorldNodeId||currentWorldBackerId);
+const backgroundImage=backgroundWorldNode?.world?.image||null;
+const video=media.fileType==='pngseq'?createSequencePlayback(media,backgroundImage):document.createElement('video');
 
 video.muted=true;
 video.playsInline=true;
@@ -7464,9 +7881,41 @@ function showPreviewNode(nodeId){
 recordPreviewDiagnostic('node-enter',{nodeId,nodeType:getNode(nodeId)?.type||'missing',alreadyVisited:previewVisited.has(nodeId)});
 const node=getNode(nodeId);
 if(!node||gamePreview.classList.contains('hidden'))return;
+
+// 一回だけ実行したノードへの再到達を処理する
+if(isPreviewOnceCompleted(node)){
+recordPreviewDiagnostic('node-once-skipped',{nodeId:node.id,nodeType:node.type});
+
+const blockingTypes=new Set([
+'click',
+'frameIn',
+'itemUse',
+'condition',
+'toggle',
+'textAnswer',
+'option',
+'optionChoice',
+'conditionBranch',
+'toggleBranch',
+'textAnswerBranch',
+'clickBranch'
+]);
+
+if(!blockingTypes.has(node.type)){
+previewOutgoing(node.id);
+}
+return;
+}
+
 // A branch converging on an already-active node is executed only once per scene.
 if(previewVisited.has(node.id))return;
 previewVisited.add(node.id);
+
+// 待機型トリガーは発火時に実行済みとする
+if(!['click','frameIn','itemUse'].includes(node.type)){
+markPreviewOnceExecuted(node);
+}
+
 if(node.type==='folderStart'){previewOutgoing(node.id);return;}
 if(node.type==='worldDisplay'){
   const folder=state.worldFolders.find(w=>w.id===node.folderId);
@@ -7526,7 +7975,9 @@ previewOutgoing(node.id,'end');
 });
 }
 
+if(node.type==='world'){
 previewOutgoing(node.id,'start');
+}
 return;
 }
 if(node.type==='keyframe'){
@@ -7567,6 +8018,28 @@ showMedia2D(node);
 previewOutgoing(node.id);
 return;
 }
+if(node.type==='uiButton'){
+ clearUiButtonPreview();
+ const button=document.createElement('button');
+ button.type='button';button.className='game-ui-button';
+ button.textContent=node.uiButtonText??'ボタン';
+ button.style.width=`min(${Math.max(40,Number(node.uiButtonWidth)||180)}px, 90%)`;
+ button.style.height=`${Math.max(24,Number(node.uiButtonHeight)||56)}px`;
+ button.style.fontSize=`${Math.max(8,Number(node.uiButtonFontSize)||20)}px`;
+ const pos=(node.uiButtonPositions||{})[state.displayMode]||{x:50,y:88};
+ button.style.position='absolute';
+ button.style.left=`${Math.max(0,Math.min(100,Number(pos.x)??50))}%`;
+ button.style.top=`${Math.max(0,Math.min(100,Number(pos.y)??88))}%`;
+ button.style.transform='translate(-50%, -50%)';
+ button.addEventListener('click',event=>{
+  event.preventDefault();event.stopPropagation();
+  if(gamePreview.classList.contains('hidden')||!button.isConnected)return;
+  clearUiButtonPreview();
+  previewOutgoing(node.id);
+ });
+ uiButtonPreviewLayer.appendChild(button);
+ return;
+}
 if(node.type==='frameIn'){
 if(!state.previewFrameInIds.includes(node.id))state.previewFrameInIds.push(node.id);
 checkActiveFrameInTriggers();
@@ -7583,9 +8056,39 @@ schedulePreviewBranch(Number(node.timeSeconds)||0,()=>previewOutgoing(node.id));
 return;
 }
 if(node.type==='worldMove'){if(node.destinationFolderId)enterWorldFolder(node.destinationFolderId);return;}
+if(node.type==='gameReset'){
+ recordPreviewDiagnostic('game-reset',{nodeId:node.id});
+ startPreview(false,true);
+ return;
+}
+if(node.type==='toggle'){
+ const nextOn=!toggleWorldStates.has(node.id);
+ if(nextOn)toggleWorldStates.add(node.id);else toggleWorldStates.delete(node.id);
+ recordPreviewDiagnostic('toggle-switched',{nodeId:node.id,state:nextOn?'on':'off'});
+ refreshWorldComposite();
+ const branch=toggleBranches(node).find(n=>n.toggleResult===(nextOn?'on':'off'));
+ if(branch)previewOutgoing(branch.id);
+ return;
+}
+if(node.type==='toggleSet'){
+ const target=getNode(node.toggleSetTargetId);
+ if(target?.type==='toggle'){
+  const wasOn=toggleWorldStates.has(target.id);
+  const action=['on','off','toggle'].includes(node.toggleSetAction)?node.toggleSetAction:'toggle';
+  const nextOn=action==='on'?true:action==='off'?false:!wasOn;
+  if(nextOn)toggleWorldStates.add(target.id);else toggleWorldStates.delete(target.id);
+  recordPreviewDiagnostic('toggle-set',{nodeId:node.id,targetId:target.id,state:nextOn?'on':'off'});
+  refreshWorldComposite();
+ }else{
+  recordPreviewDiagnostic('toggle-set-no-target',{nodeId:node.id,targetId:node.toggleSetTargetId});
+ }
+ previewOutgoing(node.id);
+ return;
+}
+if(node.type==='toggleBranch'){previewOutgoing(node.id);return;}
 if(node.type==='eventRecord'){recordedWorldEvents.add(node.id);refreshWorldComposite();previewOutgoing(node.id);return;}
 if(node.type==='itemAcquire'){
- if(acquiredItems.has(node.id)){previewOutgoing(node.id);return;}
+ if(state.inventory.has(node.id)){previewOutgoing(node.id);return;}
  acquiredItems.add(node.id);
  refreshWorldComposite();
  if(node.itemRemoveOriginClick&&previewAcquisitionSourceClickId){
@@ -7616,7 +8119,7 @@ if(node.type==='clickBranch'){previewOutgoing(node.id);return;}
 if(node.type==='textAnswerBranch'){previewOutgoing(node.id);return;}
 if(node.type==='conditionBranch'){previewOutgoing(node.id);return;}
 if(node.type==='condition'){
- const meets=!!node.conditionItemId&&(node.conditionMode==='event'?recordedWorldEvents.has(node.conditionItemId):acquiredItems.has(node.conditionItemId));
+ const meets=!!node.conditionItemId&&(node.conditionMode==='event'?recordedWorldEvents.has(node.conditionItemId):node.conditionMode==='toggle'?toggleWorldStates.has(node.conditionItemId):acquiredItems.has(node.conditionItemId));
  recordPreviewDiagnostic('condition-evaluated',{nodeId:node.id,mode:node.conditionMode,itemId:node.conditionItemId,result:meets?'yes':'no'});
  const branch=conditionBranches(node).find(n=>n.conditionResult===(meets?'yes':'no'));
  if(branch)showPreviewNode(branch.id);
@@ -7948,7 +8451,7 @@ state.startFolderId=data.startFolderId||state.worldFolders[0]?.id||null;
 state.startFolderId=state.worldFolders[0]?.id||null;
 state.activeFolderId=state.startFolderId;
 worldComposites.clear();
-for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);
+for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);else if(n.type==='toggle')ensureToggleBranches(n);
 resetEditorHistory();
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
@@ -8120,7 +8623,7 @@ if(node.animation)node.animation.raw=null;
 mediaLibrary.splice(0,mediaLibrary.length,...loaded);
 state.nodes=data.nodes;
 state.connections=data.connections;
-for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);
+for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);else if(n.type==='toggle')ensureToggleBranches(n);
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
 state.displayMode=['pc','mobile'].includes(data.displayMode)?data.displayMode:'pc';
@@ -8247,6 +8750,7 @@ const worldFolderPanel=document.createElement('section');
 worldFolderPanel.id='worldFolderPanel';worldFolderPanel.className='world-folder-panel hidden';
 workspace.appendChild(worldFolderPanel);
 const recordedWorldEvents=new Set();
+const toggleWorldStates=new Set();
 let currentWorldBackerId=null;
 let pendingWorldEntryFade=null;
 let worldEntryFadeActive=false;
@@ -8315,9 +8819,16 @@ function updateWorldTabs(){
  const plus=document.createElement('button');plus.textContent='＋';plus.title='ワールドを追加';plus.addEventListener('click',()=>{const folder=makeWorldFolder('ワールド'+(state.worldFolders.length+1));updateWorldTabs();assignFolderTab(folder.id);});worldTabs.appendChild(plus);
 }
 function layerConditionMatches(layer){
- if(layer.mode==='always'||!layer.mode)return true;
- const has=layer.eventType==='acquire'?acquiredItems.has(layer.targetId):layer.eventType==='use'?usedWorldBranches.has(layer.targetId):recordedWorldEvents.has(layer.targetId);
- return layer.mode==='after'?has:!has;
+ const matches=(eventType,targetId,mode)=>{
+  if(mode==='always'||!mode)return true;
+  if(!targetId)return false;
+  const has=eventType==='toggle'?toggleWorldStates.has(targetId):eventType==='acquire'?acquiredItems.has(targetId):eventType==='use'?usedWorldBranches.has(targetId):recordedWorldEvents.has(targetId);
+  return mode==='after'?has:!has;
+ };
+ const first=matches(layer.eventType,layer.targetId,layer.mode);
+ if(layer.secondConditionEnabled!==true)return first;
+ const second=matches(layer.secondEventType,layer.secondTargetId,layer.secondMode);
+ return layer.conditionOperator==='or'?(first||second):(first&&second);
 }
 function getFolderMedia(folder){return mediaLibrary.find(m=>m.id===folderBacker(folder)?.world?.mediaId)||null;}
 function recompositeFolder(folder){
@@ -8349,9 +8860,9 @@ function addFolderRow(parent,label,element){const group=document.createElement('
 function folderMediaSelect(value,types,onchange){const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('素材未設定',''));for(const m of mediaLibrary.filter(m=>types.includes(m.fileType)))sel.add(new Option(m.fileName,m.id));sel.value=value||'';sel.onchange=()=>onchange(sel.value);return sel;}
 function folderEventSelect(layer,render){
  const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('対象を選択',''));
- const types={acquire:'itemAcquire',use:'clickBranch',event:'eventRecord'};
+ const types={acquire:'itemAcquire',use:'clickBranch',event:'eventRecord',toggle:'toggle'};
  for(const n of state.nodes.filter(n=>n.type===types[layer.eventType]&&(n.type!=='clickBranch'||n.clickBranchItemId!=='__other__'))){
-  const label=n.itemName||n.eventName||n.customBody||n.clickBranchItemId||n.id;
+  const label=n.toggleName||n.itemName||n.eventName||n.customBody||n.clickBranchItemId||n.id;
   sel.add(new Option(label+' ('+(state.worldFolders.find(w=>w.id===n.folderId)?.name||'')+')',n.id));
  }
  sel.value=layer.targetId||'';sel.onchange=()=>{layer.targetId=sel.value;render();};return sel;
@@ -8379,6 +8890,11 @@ function renderWorldFolderEditor(){
  const section=document.createElement('div');section.className='world-folder-settings';title.after(section);
  
  const media=folderMediaSelect(folderBacker(folder)?.world?.mediaId,['png','jpg','mp4'],id=>{const b=folderBacker(folder);const m=mediaLibrary.find(m=>m.id===id);b.world.mediaId=id;b.world.fileName=m?.fileName||'';b.world.fileType=m?.fileType||'';b.world.image=m?.image||m?.video||null;worldComposites.delete(folder.id);});addFolderRow(section,'基本360度PNG / MP4',media);
+ const inheritGroup=document.createElement('div');inheritGroup.className='setting-group';
+ const inheritLabel=document.createElement('label');inheritLabel.className='media-camera-inherit';
+ const inheritCheckbox=document.createElement('input');inheritCheckbox.type='checkbox';inheritCheckbox.checked=Boolean(folderBacker(folder)?.inheritCamera);
+ inheritCheckbox.addEventListener('change',()=>{const backer=folderBacker(folder);if(backer)backer.inheritCamera=inheritCheckbox.checked;});
+ inheritLabel.append(inheritCheckbox,document.createTextNode(' 直前の画角を継承する'));inheritGroup.append(inheritLabel);section.append(inheritGroup);
  const previewGroup=document.createElement('div');previewGroup.className='setting-group';
  const previewHeading=document.createElement('div');previewHeading.className='setting-label';previewHeading.textContent='ワールドプレビュー（全レイヤー表示）';
  const previewCanvas=document.createElement('canvas');previewCanvas.className='world-settings-preview world-preview';previewCanvas.width=320;previewCanvas.height=Math.round(320*getActiveLayout().height/getActiveLayout().width);
@@ -8427,24 +8943,60 @@ function renderWorldFolderEditor(){
   label.oninput=()=>{layer.name=label.value;layerName.textContent=label.value||'名称未設定レイヤー';};addFolderRow(panel,'レイヤー名',label);
   addFolderRow(panel,'画像',folderMediaSelect(layer.mediaId,['png'],id=>layer.mediaId=id));
   const heading=document.createElement('div');heading.className='setting-label';heading.textContent='このレイヤーをいつ表示しますか？';panel.append(heading);
-  const eventType=document.createElement('select');eventType.className='number-input';
-  for(const [value,text] of [['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了']])eventType.add(new Option(text,value));
-  eventType.value=layer.eventType||'acquire';addFolderRow(panel,'表示条件',eventType);
-  const timing=document.createElement('select');timing.className='number-input';timing.add(new Option('前','before'));timing.add(new Option('後','after'));
-  timing.value=layer.mode==='after'?'after':'before';addFolderRow(panel,'前後',timing);
-  const targetContainer=document.createElement('div');panel.append(targetContainer);
-  const explanation=document.createElement('p');explanation.className='world-layer-explanation';panel.append(explanation);
-  const updateExplanation=()=>{
-    const target=getNode(layer.targetId);
-    const name=target?.itemName||target?.eventName||target?.customBody||(target?.clickBranchItemId?itemDisplayName(getNode(target.clickBranchItemId)):null);
-    const action=layer.eventType==='acquire'?'を取得':layer.eventType==='use'?'を使用':'が終了';
-    explanation.textContent=name?`このレイヤーは「${name}」${action}${layer.mode==='after'?'した後に表示します':'するまで表示します'}`:'対象を選ぶと表示条件がここに表示されます。';
+  const eventOptions=[['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']];
+  const renderLayerCondition=(container,keys,label)=>{
+   const cap=document.createElement('div');cap.className='setting-label';cap.textContent=label;container.append(cap);
+   const eventType=document.createElement('select');eventType.className='number-input';
+   for(const [value,text] of eventOptions)eventType.add(new Option(text,value));
+   eventType.value=layer[keys.eventType]||'acquire';addFolderRow(container,'表示条件',eventType);
+   const timing=document.createElement('select');timing.className='number-input';addFolderRow(container,'前/後',timing);
+   const timingLabel=timing.parentElement.querySelector('.setting-label');
+   const targetContainer=document.createElement('div');container.append(targetContainer);
+   const explanation=document.createElement('p');explanation.className='world-layer-explanation';container.append(explanation);
+   const updateExplanation=()=>{
+    const target=getNode(layer[keys.targetId]);
+    const name=(target?.type==='toggle'?(target.toggleName||'トグル '+target.id):null)||target?.itemName||target?.eventName||target?.customBody||(target?.clickBranchItemId?itemDisplayName(getNode(target.clickBranchItemId)):null);
+    const type=layer[keys.eventType];const after=layer[keys.mode]==='after';
+    if(type==='toggle'){explanation.textContent=name?`「${name}」が${after?'ON':'OFF'}の間に表示`:'対象のトグルを選択してください。';return;}
+    const action=type==='acquire'?'取得':type==='use'?'使用':'終了';
+    explanation.textContent=name?`「${name}」の${action}${after?'後':'前'}に表示`:'対象を選ぶと表示条件がここに表示されます。';
+   };
+   const drawTarget=()=>{
+    targetContainer.replaceChildren();
+    const adapter={eventType:layer[keys.eventType],targetId:layer[keys.targetId]};
+    addFolderRow(targetContainer,'対象',folderEventSelect(adapter,()=>{layer[keys.targetId]=adapter.targetId;updateExplanation();}));
+    updateExplanation();
+   };
+   const updateTimingLabels=()=>{
+    const toggle=layer[keys.eventType]==='toggle';
+    timingLabel.textContent=toggle?'ON/OFF':'前/後';
+    timing.replaceChildren(new Option(toggle?'OFF':'前','before'),new Option(toggle?'ON':'後','after'));
+    timing.value=layer[keys.mode]==='after'?'after':'before';
+   };
+   if(layer[keys.mode]==='always')layer[keys.mode]='before';
+   updateTimingLabels();drawTarget();
+   eventType.onchange=()=>{layer[keys.eventType]=eventType.value;layer[keys.targetId]='';updateTimingLabels();drawTarget();};
+   timing.onchange=()=>{layer[keys.mode]=timing.value;updateExplanation();};
   };
-  const drawTarget=()=>{targetContainer.replaceChildren();addFolderRow(targetContainer,'対象',folderEventSelect(layer,updateExplanation));updateExplanation();};
-  eventType.onchange=()=>{layer.eventType=eventType.value;layer.targetId='';drawTarget();};
-  timing.onchange=()=>{layer.mode=timing.value;updateExplanation();};
-  if(layer.mode==='always')layer.mode='before';
-  drawTarget();
+  renderLayerCondition(panel,{eventType:'eventType',targetId:'targetId',mode:'mode'},'条件1');
+  const additional=document.createElement('div');additional.className='world-layer-extra-condition';panel.append(additional);
+  const renderAdditional=()=>{
+   additional.replaceChildren();
+   if(layer.secondConditionEnabled!==true){
+    const addSecond=document.createElement('button');addSecond.type='button';addSecond.className='secondary-button';addSecond.textContent='＋ 条件を追加';
+    addSecond.onclick=()=>{layer.secondConditionEnabled=true;layer.secondEventType=layer.secondEventType||'acquire';layer.secondMode=layer.secondMode||'before';renderAdditional();};
+    additional.append(addSecond);return;
+   }
+   const operator=document.createElement('select');operator.className='number-input';
+   operator.add(new Option('かつ（両方を満たす）','and'));operator.add(new Option('または（どちらかを満たす）','or'));
+   operator.value=layer.conditionOperator==='or'?'or':'and';
+   operator.onchange=()=>{layer.conditionOperator=operator.value;};
+   addFolderRow(additional,'条件の組み合わせ',operator);
+   renderLayerCondition(additional,{eventType:'secondEventType',targetId:'secondTargetId',mode:'secondMode'},'条件2');
+   const removeSecond=document.createElement('button');removeSecond.type='button';removeSecond.className='secondary-button';removeSecond.textContent='2つ目の条件を削除';
+   removeSecond.onclick=()=>{layer.secondConditionEnabled=false;renderAdditional();};additional.append(removeSecond);
+  };
+  renderAdditional();
   
  }
  const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);if(section._cameraSection)section.append(section._cameraSection);
@@ -8530,13 +9082,17 @@ function refreshWorldSettingsPreview(){
  const controller=worldSettingsCameraPreviews.get(canvas);
  if(controller&&controller.folder===activeFolder())controller.draw();
 }
-function enterWorldFolder(folderId){
+function enterWorldFolder(folderId,resetToInitial=false){
  const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;
+ const previousWorld=getNode(currentWorldBackerId)?.world;
+ const inheritedView=resetToInitial?null:(previousWorld?{yaw:previousWorld.yaw,pitch:previousWorld.pitch,zoom:previousWorld.zoom}:(state.lastCameraView?{...state.lastCameraView}:null));
  currentWorldBackerId=folder.backerId;
  const media=getFolderMedia(folder);
  if(media?.video){try{media.video.loop=true;media.video.currentTime=0;media.video.play().catch(()=>{});}catch(_e){}}
  const backer=folderBacker(folder);if(!backer)return;
  cancelPreviewScene();pendingWorldEntryFade=null;worldEntryFadeActive=false;
+ if(resetToInitial){state.lastCameraView=null;applyWorldInitialView(backer);}
+ else if(inheritedView)state.lastCameraView=inheritedView;
  const start=state.nodes.find(n=>n.type==='folderStart'&&n.folderId===folder.id);
  if(start)showPreviewNode(start.id);else showPreviewNode(backer.id);
 }
