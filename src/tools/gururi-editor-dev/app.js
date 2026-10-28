@@ -6781,7 +6781,8 @@ playBtn.addEventListener('click',()=>startPreview());
 closePreviewBtn.addEventListener('click',stopPreview);
 
 gameViewport.addEventListener('click',e=>{
-if(e.target.closest('#equippedItemLabel, #inventoryButton, #inventoryOverlay'))return;
+if(!window.matchMedia('(pointer: coarse)').matches)return;
+if(!e.target.closest('#dialogueOverlay'))return;
 if(gamePreview.classList.contains('hidden'))return;
 if(!state.previewDialogueNodeId)return;
 if(getNode(state.previewDialogueNodeId)?.type==='option')return;
@@ -6792,6 +6793,7 @@ advanceDialogue();
 });
 
 document.addEventListener('keydown',e=>{
+if(window.matchMedia('(pointer: coarse)').matches)return;
 if(gamePreview.classList.contains('hidden'))return;
 if(!state.previewDialogueNodeId)return;
 if(getNode(state.previewDialogueNodeId)?.type==='option')return;
@@ -6807,7 +6809,7 @@ target.isContentEditable||
 return;
 }
 
-if(!['Enter','Space','KeyZ'].includes(e.code))return;
+if(e.code!=='Space')return;
 
 e.preventDefault();
 e.stopImmediatePropagation();
