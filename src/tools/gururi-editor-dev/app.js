@@ -1,3 +1,4 @@
+
 // Preview diagnostic recorder: bounded in-memory events, exported only on user click.
 const previewDiagnosticEvents=[];
 const previewDiagnosticErrors=[];
@@ -7088,6 +7089,55 @@ advanceDialogue();
 
 let gamePreviewDrag=null;
 
+let temporaryWorldOverlay=null;
+
+function isTemporaryWorldNode(node){
+return node?.type==='world'&&!state.worldFolders.some(folder=>folder.backerId===node.id);
+}
+
+// A temporary 360 PNG is visually layered over the active world, never used as its replacement.
+function renderTemporaryWorldOverlay(backgroundWorld,backgroundImage){
+const overlay=temporaryWorldOverlay;
+if(!overlay||!overlay.image)return false;
+const source=backgroundImage||backgroundWorld?.image||null;
+const width=source?.videoWidth||source?.naturalWidth||source?.width||overlay.image.naturalWidth||overlay.image.width||2048;
+const height=source?.videoHeight||source?.naturalHeight||source?.height||overlay.image.naturalHeight||overlay.image.height||1024;
+if(!overlay.canvas){overlay.canvas=document.createElement('canvas');overlay.ctx=overlay.canvas.getContext('2d');}
+if(!overlay.ctx)return false;
+if(overlay.canvas.width!==width||overlay.canvas.height!==height){overlay.canvas.width=width;overlay.canvas.height=height;}
+const ctx=overlay.ctx;
+ctx.clearRect(0,0,width,height);
+try{if(source)ctx.drawImage(source,0,0,width,height);ctx.drawImage(overlay.image,0,0,width,height);}catch(error){console.warn('360度素材の合成に失敗しました',error);return false;}
+// The camera always belongs to the base world.
+const view=backgroundWorld||{yaw:0,pitch:0,zoom:1};
+drawPanoramaPreview(gameCanvas,{image:overlay.canvas,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});
+return true;
+}
+
+function showTemporaryWorldOverlay(node){
+const media=chosenSceneMedia(node);
+const image=media?.image||node.world?.image;
+if(!image){previewMessage.textContent='PNG素材を選択してください';previewOutgoing(node.id,'end');return;}
+if(temporaryWorldOverlay){temporaryWorldOverlay=null;}
+const base=getNode(state.previewWorldNodeId||currentWorldBackerId);
+const underlying=base?.type==='world'?base.world:null;
+temporaryWorldOverlay={nodeId:node.id,image,canvas:null,ctx:null};
+previewMessage.textContent=media?.fileName||node.world.fileName||'360度PNG';
+if(!underlying||!state.worldFolders.some(folder=>folder.backerId===base.id))renderTemporaryWorldOverlay(underlying,underlying?.image);
+else refreshWorldComposite();
+if(node.worldInfiniteLoop)return;
+const duration=getMediaPlaybackDuration(node,null);
+schedulePreviewBranch(duration,()=>{
+if(temporaryWorldOverlay?.nodeId!==node.id)return;
+temporaryWorldOverlay=null;
+if(underlying){
+const folder=state.worldFolders.find(f=>f.backerId===base.id);
+if(folder)refreshWorldComposite();else drawPanoramaPreview(gameCanvas,underlying);
+}
+previewOutgoing(node.id,'end');
+});
+}
+
 function getActivePreviewWorld(){
 const animation=state.previewAnimation;
 
@@ -7155,7 +7205,7 @@ gamePreviewDrag.pitch+dy*0.008,
 Math.PI/2-0.02
 );
 
-drawPanoramaPreview(gameCanvas,world);
+if(!temporaryWorldOverlay||!renderTemporaryWorldOverlay(world))drawPanoramaPreview(gameCanvas,world);
 });
 
 gameCanvas.addEventListener('pointerup',e=>{
@@ -7316,6 +7366,7 @@ previewBranchTimers.clear();
 if(state.previewTimer){clearTimeout(state.previewTimer);state.previewTimer=null;}
 }
 function cancelPreviewScene(){
+temporaryWorldOverlay=null;
 activeIndependentKeyframe=null;
 previewKeyframeBusy=false;
 previewSceneEpoch++;
@@ -7340,7 +7391,8 @@ state.previewWorldNodeId=null;
 function previewOutgoing(nodeId,phase='start'){
 recordPreviewDiagnostic('node-outgoing',{nodeId,phase,targets:state.connections.filter(c=>c.from===nodeId).map(c=>c.to)});
 const source=getNode(nodeId);
-const sourceIsMedia=source?.type==='world';
+if(source?.type==='world'&&!state.worldFolders.some(w=>w.backerId===source.id)&&phase!=='end')return;
+const sourceIsMedia=source?.type==='world'&&state.worldFolders.some(w=>w.backerId===source.id);
 if(source?.type==='world'&&state.worldFolders.some(w=>w.backerId===source.id)){
  if(phase==='end'||worldEntryFadeActive)return;
  for(const target of state.nodes.filter(n=>n.folderId===source.folderId&&['click','frameIn','time'].includes(n.type)))showPreviewNode(target.id);
@@ -8204,6 +8256,10 @@ if(node.type==='worldDisplay'){
   return;
 }
 if(node.type==='start'){previewOutgoing(node.id);return;}
+if(isTemporaryWorldNode(node)){
+showTemporaryWorldOverlay(node);
+return;
+}
 if(node.type==='world'||node.type==='animation'){
 // An animation is a temporary overlay; world triggers stay active.
 if(node.type==='world')cancelPreviewScene();
@@ -9243,7 +9299,10 @@ function recompositeFolder(folder){
 function refreshWorldComposite(){
  const folder=state.worldFolders.find(w=>w.backerId===state.previewWorldNodeId);if(!folder)return;
  const backer=folderBacker(folder);const image=recompositeFolder(folder);
- if(image){backer.world.image=image;drawPanoramaPreview(gameCanvas,backer.world);}
+ if(image){
+backer.world.image=image;
+if(!temporaryWorldOverlay||!renderTemporaryWorldOverlay(backer.world,image))drawPanoramaPreview(gameCanvas,backer.world);
+}
 }
 function worldCompositeTick(){
  refreshWorldSettingsPreview();
@@ -9754,3 +9813,5 @@ if(source)drawClickLassoOverlay(clickNode,source);
 });
 });
 editorSettingsResizeObserver.observe(settingsPanel);
+
+

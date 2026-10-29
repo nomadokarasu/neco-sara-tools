@@ -450,7 +450,7 @@ function showTextAnswerPanel(node){
  input.focus({preventScroll:true});
 }
 function renderTextAnswerSettings(node){
- settingsPanel.innerHTML=`<div class="settings-title">テキスト入力</div>
+ settingsPanel.innerHTML=`<div class="settings-title">クイズ</div>
  <div class="setting-group"><div class="setting-label">質問文</div><textarea id="textAnswerQuestion" class="dialogue-textarea" maxlength="160"></textarea></div>
  <div class="setting-group"><div class="setting-label">正解（空欄も正解として設定できます）</div><input id="textAnswerCorrect" class="number-input" type="text" autocomplete="off"></div>
  <div class="setting-group"><div class="setting-label">入力形式</div><select id="textAnswerMode" class="number-input"><option value="text">文字・数字</option><option value="number">数字のみ</option></select></div>
@@ -502,6 +502,7 @@ optionChoices:[],
 textAnswerQuestion:'',
 textAnswerCorrect:'',
 textAnswerMode:'text',
+textBoxes:[],
 uiButtonText:'ボタン',
 uiButtonWidth:180,
 uiButtonHeight:56,
@@ -640,7 +641,7 @@ removeLegacyOtherClickBranches();
 for(const n of state.nodes){if(n.folderId)continue;const owner=getNode(n.clickBranchOwnerId||n.conditionOwnerId||n.toggleOwnerId||n.textAnswerOwnerId||n.optionOwnerId);if(owner)n.folderId=owner.folderId;}
 nodesLayer.innerHTML='';
 for(const node of state.nodes){
-if(!state.activeFolderId||node.folderId!==state.activeFolderId||node.type==='world')continue;
+if(!state.activeFolderId||node.folderId!==state.activeFolderId||(node.type==='world'&&state.worldFolders.some(folder=>folder.backerId===node.id)))continue;
 const el=document.createElement('div');
 el.className=`node ${node.type==='start'?'start-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''}`;
 el.dataset.id=node.id;
@@ -660,7 +661,8 @@ node.type==='frameIn'?'フレームイン':
 node.type==='dialogue'?'ダイアローグ':
 node.type==='uiButton'?'ボタン':
 node.type==='option'?'オプション':
-node.type==='textAnswer'?'テキスト入力':
+node.type==='textAnswer'?'クイズ':
+node.type==='textOverlay'?'テキスト':
 node.type==='condition'?'条件':
 node.type==='random'?'ランダム':
 node.type==='toggle'?'トグル':
@@ -696,6 +698,7 @@ node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='uiButton'?(node.uiButtonText||'ボタン'):
 node.type==='option'?'質問文と選択肢':
 node.type==='textAnswer'?'入力した回答を判定':
+node.type==='textOverlay'?`${(node.textBoxes||[]).length} テキスト`:
 node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
 node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：'+(node.toggleSetAction==='on'?'ON':node.toggleSetAction==='off'?'OFF':'反転')):
 node.type==='toggleBranch'?(node.toggleResult==='on'?'ONルート':'OFFルート'):
@@ -1150,6 +1153,7 @@ return;
 }
 if(node.type==='option'){renderOptionSettings(node);return;}
 if(node.type==='textAnswer'){renderTextAnswerSettings(node);return;}
+if(node.type==='textOverlay'){renderTextOverlaySettings(node);return;}
 if(node.type==='random'){
 const count=state.connections.filter(c=>c.from===node.id).length;
 settingsPanel.innerHTML=`<div class="settings-title">ランダム</div><p class="settings-empty">接続先のノードから1つをランダムに選んで実行します。</p><div class="setting-group"><div class="setting-label">接続先：${count}個</div><p class="settings-empty">${count>0?`各接続先の選択確率：約${(100/count).toFixed(1)}%`:'接続先がありません。ノードの右側から接続してください。'}</p></div>`;
@@ -1835,6 +1839,113 @@ draw();
 });
 const end=e=>{if(drag?.id!==e.pointerId)return;drag=null;if(selection.hasPointerCapture(e.pointerId))selection.releasePointerCapture(e.pointerId);};
 selection.addEventListener('pointerup',end);selection.addEventListener('pointercancel',end);
+}
+// Text overlays are stored as plain project data; PC and mobile positions are independent.
+function makeTextOverlayBox(){
+return {id:uid('textBox'),text:'テキスト',fontSize:32,positions:{pc:{x:20,y:35,w:60,h:20},mobile:{x:10,y:40,w:80,h:16}}};
+}
+function getTextOverlayPosition(item,mode=state.displayMode){
+item.positions ||= {};
+item.positions[mode] ||= mode==='mobile'?{x:10,y:40,w:80,h:16}:{x:20,y:35,w:60,h:20};
+return item.positions[mode];
+}
+function renderTextOverlaySettings(node){
+if(!Array.isArray(node.textBoxes))node.textBoxes=[];
+let selectedId=node.textBoxes[0]?.id||null;
+const layout=getActiveLayout();
+settingsPanel.innerHTML=`<div class="settings-title">テキスト</div>
+<div class="setting-group"><div class="setting-label">配置（${state.displayMode==='pc'?'PC':'スマホ'}）</div>
+<div id="textOverlayEditor" class="media2d-editor text-overlay-editor" style="aspect-ratio:${layout.width}/${layout.height}"><canvas id="textOverlayBackground"></canvas><div id="textOverlayItems"></div></div>
+<div class="pan-help">文字をドラッグ：移動 / 四隅をドラッグ：幅・高さを変更。PC・スマホの配置は別々に保存されます。</div></div>
+<div class="setting-group"><div class="setting-label">テキスト一覧</div><div id="textOverlayList"></div><button type="button" id="textOverlayAdd" class="add-world-btn">＋ テキストを追加</button></div>`;
+const editor=document.getElementById('textOverlayEditor');
+const items=document.getElementById('textOverlayItems');
+const list=document.getElementById('textOverlayList');
+const background=document.getElementById('textOverlayBackground');
+const previous=findPreviousClickMediaNode(node.id);
+const source=previous?.type==='world'?previous.world.image:previous?.type==='animation'?mediaLibrary.find(m=>m.id===previous.animation.mediaId)?.video:null;
+if(source){
+const base=getMediaCameraBase(previous);
+const drawBackground=()=>{if(background.isConnected)drawPanoramaPreview(background,{image:source,yaw:base.yaw,pitch:base.pitch,zoom:base.zoom});};
+requestAnimationFrame(drawBackground);
+if(source.tagName==='VIDEO')source.addEventListener('loadeddata',drawBackground,{once:true});
+}
+function drawPreview(){
+items.replaceChildren();
+for(const item of node.textBoxes){
+const position=getTextOverlayPosition(item);
+const selected=item.id===selectedId;
+const box=document.createElement('div');box.className='text-overlay-edit-box'+(selected?' selected':'');
+Object.assign(box.style,{left:position.x+'%',top:position.y+'%',width:position.w+'%',height:position.h+'%'});
+const label=document.createElement('div');label.className='text-overlay-edit-text';label.textContent=item.text||'';
+label.style.fontSize=`${(Number(item.fontSize)||32)*editor.clientWidth/(state.displayMode==='mobile'?540:960)}px`;
+box.append(label);
+for(const corner of ['nw','ne','sw','se']){const h=document.createElement('span');h.className=`media2d-handle media2d-handle-${corner}`;h.dataset.corner=corner;box.append(h);}
+items.append(box);
+let drag=null;
+box.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+if(selectedId!==item.id){selectedId=item.id;drawList();}
+box.classList.add('selected');
+const corner=e.target.dataset.corner||null;
+drag={id:e.pointerId,x:e.clientX,y:e.clientY,corner,start:{...position}};
+box.setPointerCapture(e.pointerId);e.preventDefault();
+});
+box.addEventListener('pointermove',e=>{
+if(!drag||drag.id!==e.pointerId)return;
+const r=editor.getBoundingClientRect();if(!r.width||!r.height)return;
+const dx=(e.clientX-drag.x)/r.width*100,dy=(e.clientY-drag.y)/r.height*100,a=drag.start;
+if(!drag.corner){position.x=a.x+dx;position.y=a.y+dy;}
+else{
+const fromWest=drag.corner.includes('w'),fromNorth=drag.corner.includes('n');
+const right=a.x+a.w,bottom=a.y+a.h;
+if(fromWest){position.x=Math.min(right-1,a.x+dx);position.w=right-position.x;}
+else position.w=Math.max(1,a.w+dx);
+if(fromNorth){position.y=Math.min(bottom-1,a.y+dy);position.h=bottom-position.y;}
+else position.h=Math.max(1,a.h+dy);
+}
+Object.assign(box.style,{left:position.x+'%',top:position.y+'%',width:position.w+'%',height:position.h+'%'});
+});
+const end=e=>{if(drag?.id!==e.pointerId)return;drag=null;drawPreview();};
+box.addEventListener('pointerup',end);box.addEventListener('pointercancel',end);
+}
+}
+function drawList(){
+list.replaceChildren();
+node.textBoxes.forEach((item,index)=>{
+const expanded=item.id===selectedId;
+const wrapper=document.createElement('div');wrapper.className='text-overlay-list-entry';
+const row=document.createElement('div');row.className='text-overlay-list-row';
+const pick=document.createElement('button');pick.type='button';pick.textContent=`${expanded?'▼':'▶'} テキスト${index+1}`;pick.className=expanded?'selected':'';
+pick.setAttribute('aria-expanded',String(expanded));
+pick.addEventListener('click',()=>{selectedId=expanded?null:item.id;drawList();drawPreview();});
+const remove=document.createElement('button');remove.type='button';remove.textContent='削除';
+remove.addEventListener('click',()=>{node.textBoxes=node.textBoxes.filter(i=>i.id!==item.id);if(selectedId===item.id)selectedId=node.textBoxes[0]?.id||null;drawList();drawPreview();});
+row.append(pick,remove);wrapper.append(row);
+if(expanded){
+const props=document.createElement('div');props.className='text-overlay-inline-properties';
+const contentLabel=document.createElement('div');contentLabel.className='setting-label';contentLabel.textContent='テキスト内容';
+const content=document.createElement('textarea');content.className='dialogue-textarea';content.rows=3;content.value=item.text||'';
+content.addEventListener('input',()=>{item.text=content.value;drawPreview();});
+const fontLabel=document.createElement('div');fontLabel.className='setting-label';fontLabel.textContent='フォントサイズ（px）';
+const fontSize=document.createElement('input');fontSize.className='number-input';fontSize.type='number';fontSize.min='8';fontSize.max='200';fontSize.step='1';fontSize.value=item.fontSize||32;
+fontSize.addEventListener('input',()=>{item.fontSize=Math.max(8,Math.min(200,Number(fontSize.value)||32));drawPreview();});
+props.append(contentLabel,content,fontLabel,fontSize);wrapper.append(props);
+}
+list.append(wrapper);
+});
+}
+document.getElementById('textOverlayAdd').addEventListener('click',()=>{const item=makeTextOverlayBox();node.textBoxes.push(item);selectedId=item.id;drawList();drawPreview();});
+requestAnimationFrame(()=>{if(editor.isConnected){drawList();drawPreview();}});
+}
+function showTextOverlay(node){
+for(const item of node.textBoxes||[]){
+const p=getTextOverlayPosition(item),wrap=document.createElement('div');
+wrap.className='game-text-overlay';
+Object.assign(wrap.style,{position:'absolute',left:p.x+'%',top:p.y+'%',width:p.w+'%',height:p.h+'%',fontSize:Math.max(8,Number(item.fontSize)||32)+'px'});
+wrap.textContent=item.text||'';
+media2DLayer.appendChild(wrap);
+}
 }
 function clearMedia2DLayer(){
 for(const video of media2DLayer.querySelectorAll('video')){video.pause();video.removeAttribute('src');video.load();}
@@ -8174,6 +8285,11 @@ previewKeyframeBusy=false;
 recordPreviewDiagnostic('keyframe-end',{nodeId:node.id,duration});
 previewOutgoing(node.id);
 });
+return;
+}
+if(node.type==='textOverlay'){
+showTextOverlay(node);
+previewOutgoing(node.id);
 return;
 }
 if(node.type==='media2d'){
