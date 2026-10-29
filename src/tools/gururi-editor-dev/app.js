@@ -8389,6 +8389,13 @@ return result;
 const saveProgressUI=()=>({root:document.getElementById('saveProgressOverlay'),bar:document.getElementById('saveProgressBar'),message:document.getElementById('saveProgressMessage')});
 function setSaveProgress(percent,message){const ui=saveProgressUI();if(!ui.root)return;ui.root.hidden=false;ui.bar.value=percent;ui.message.textContent=message;}
 function endSaveProgress(){const ui=saveProgressUI();if(ui.root)ui.root.hidden=true;}
+
+async function setOpenProgress(percent,message){
+setSaveProgress(percent,message);
+const title=saveProgressUI().root?.querySelector('.save-progress-dialog strong');
+if(title)title.textContent='作品データを開いています';
+await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
+}
 let currentGartSaveHandle=null;
 async function writeProjectFile(blob,saveAs=false){
  if(currentGartSaveHandle){const stream=await currentGartSaveHandle.createWritable();setSaveProgress(92,'上書き保存しています…');await stream.write(blob);await stream.close();return true;}
@@ -8452,7 +8459,9 @@ const button=document.getElementById('openGartBtn');
 button.disabled=true;
 const previousMedia=[...mediaLibrary];
 try{
+await setOpenProgress(5,'ファイルを確認しています…');
 const entries=await gartReadZip(file);
+await setOpenProgress(15,'プロジェクト情報を確認しています…');
 const json=entries.get('project.json');
 if(!json)throw new Error('project.jsonがありません。');
 const data=JSON.parse(await json.text());
@@ -8467,17 +8476,32 @@ if(!item||!['png','jpg','mp4','pngseq'].includes(item.fileType))throw new Error(
   if(!Array.isArray(item.frameNames)||!item.frameNames.length||item.frameNames.some((_,i)=>!entries.has(item.path+String(i).padStart(5,'0')+'.png')))throw new Error('連番PNGが不足しています。');
  }else if(!entries.has(item.path))throw new Error('素材が不足しています。');
 }
+let loadedMediaCount=0;
+const totalMediaCount=data.media.length;
+
 for(const item of data.media){
+await setOpenProgress(
+20+Math.round(65*loadedMediaCount/Math.max(1,totalMediaCount)),
+`素材を読み込んでいます…（${loadedMediaCount+1} / ${totalMediaCount}）`
+);
+
 if(item.fileType==='pngseq'){
- const files=item.frameNames.map((name,i)=>new File([entries.get(item.path+String(i).padStart(5,'0')+'.png')],name,{type:'image/png'}));
- const imported=await importPngSequence(files,Number(item.fps)||8);imported.id=item.id;imported.fileName=item.fileName;continue;
-}
+const files=item.frameNames.map((name,i)=>new File([entries.get(item.path+String(i).padStart(5,'0')+'.png')],name,{type:'image/png'}));
+const imported=await importPngSequence(files,Number(item.fps)||8);
+imported.id=item.id;
+imported.fileName=item.fileName;
+}else{
 const blob=entries.get(item.path);
 const mimeType=item.fileType==='png'?'image/png':item.fileType==='jpg'?'image/jpeg':'video/mp4';
 const assetFile=new File([blob],item.fileName,{type:mimeType});
 const imported=await importMediaFile(assetFile);
 imported.id=item.id;
 }
+
+loadedMediaCount++;
+}
+
+await setOpenProgress(85,'編集画面を復元しています…');
 const restoredMedia=mediaLibrary.slice(previousMedia.length);
 for(const node of data.nodes){
 if(node.world){
@@ -8509,6 +8533,7 @@ updateLayoutControls();
 renderMediaList();
 updateWorldTabs();renderNodes();
 renderSettings();renderFolderSettings();
+await setOpenProgress(100,'読み込みが完了しました');
 }catch(error){
 console.error(error);
 for(const media of mediaLibrary.slice(previousMedia.length)){
@@ -8519,6 +8544,7 @@ renderMediaList();
 renderSettings();
 alert(`プロジェクトを開けませんでした。現在の編集内容は維持されています。\n${error.message}`);
 }finally{
+endSaveProgress();
 button.disabled=false;
 }
 }
