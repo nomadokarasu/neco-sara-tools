@@ -3128,34 +3128,134 @@ animationFileInput.value='';
 if(files.length>0)setMediaPanelOpen(false);
 });
 let sequenceInsertionNodeId=null;
+// Read ordinary ZIP files (stored or deflated) without any external library.
+async function readSequenceZip(file){
+ const bytes=new Uint8Array(await file.arrayBuffer());
+ const view=new DataView(bytes.buffer);
+ const decoder=new TextDecoder('utf-8');
+ let end=-1;
+ for(let i=bytes.length-22;i>=Math.max(0,bytes.length-65557);i--){
+  if(view.getUint32(i,true)===0x06054b50&&i+22+view.getUint16(i+20,true)===bytes.length){end=i;break;}
+ }
+ if(end<0)throw new Error('ZIPファイルを読み込めません。');
+ const count=view.getUint16(end+10,true);
+ let pos=view.getUint32(end+16,true);
+ if(count===0||count>2000)throw new Error('ZIPのファイル数が正しくありません。');
+ const result=[];
+ let total=0;
+ for(let i=0;i<count;i++){
+  if(pos+46>bytes.length||view.getUint32(pos,true)!==0x02014b50)throw new Error('ZIPの内部情報が破損しています。');
+  const flags=view.getUint16(pos+8,true),method=view.getUint16(pos+10,true);
+  const crc=view.getUint32(pos+16,true),compressedSize=view.getUint32(pos+20,true),size=view.getUint32(pos+24,true);
+  const nameLength=view.getUint16(pos+28,true),extraLength=view.getUint16(pos+30,true),commentLength=view.getUint16(pos+32,true),localPos=view.getUint32(pos+42,true);
+  if(pos+46+nameLength+extraLength+commentLength>bytes.length)throw new Error('ZIPのファイル名が不正です。');
+  const name=decoder.decode(bytes.subarray(pos+46,pos+46+nameLength));
+  pos+=46+nameLength+extraLength+commentLength;
+  if(name.endsWith('/'))continue;
+  if((flags&1)||![0,8].includes(method)||size===0xffffffff||compressedSize===0xffffffff)throw new Error('対応していないZIP形式です。');
+  if(!name.toLowerCase().endsWith('.png'))throw new Error('ZIPには2:1のPNG画像だけを入れてください。\n対象外のファイル: '+name);
+  total+=size;
+  if(total>500*1024*1024)throw new Error('ZIP内の画像の合計サイズが大きすぎます（上限500MB）。');
+  if(localPos+30>bytes.length||view.getUint32(localPos,true)!==0x04034b50)throw new Error('ZIPの画像データが破損しています。');
+  const dataStart=localPos+30+view.getUint16(localPos+26,true)+view.getUint16(localPos+28,true);
+  if(dataStart+compressedSize>bytes.length)throw new Error('ZIPの画像データが途中で切れています。');
+  const compressed=bytes.subarray(dataStart,dataStart+compressedSize);
+  let raw;
+  if(method===0)raw=compressed.slice();
+  else{
+   if(typeof DecompressionStream==='undefined')throw new Error('このブラウザはZIPの展開に対応していません。');
+   try{raw=new Uint8Array(await new Response(new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());}
+   catch{throw new Error('ZIPの画像を展開できませんでした。');}
+  }
+  if(raw.length!==size||gartCrc32(raw)!==crc)throw new Error('ZIPの画像データが破損しています。');
+  result.push(new File([raw],name.split('/').pop(),{type:'image/png'}));
+ }
+ if(!result.length)throw new Error('ZIP内にPNG画像がありません。');
+ result.sort(naturalFrameOrder);
+ let width=null,height=null;
+ for(const frame of result){
+  const image=await validateSequencePng(frame,width,height);
+  width=image.naturalWidth;height=image.naturalHeight;
+ }
+ return result;
+}
 function openSequenceWizard(){
  const overlay=document.createElement('div');overlay.className='sequence-wizard-overlay';
  const files=[null];let active=0;
- overlay.innerHTML=`<div class="sequence-wizard" role="dialog" aria-modal="true" aria-label="連番PNGを追加"><div class="sequence-wizard-head"><strong>アニメーション（連番PNG）</strong><button type="button" data-seq-close>×</button></div><label>FPS <input class="number-input" data-seq-fps type="number" min="1" max="120" step="1" value="8"></label><div class="sequence-frame-tabs" data-seq-tabs></div><div class="sequence-frame-editor"><div data-seq-name>画像未選択</div><button type="button" data-seq-choose>画像を選択</button><input type="file" accept="image/png,.png" data-seq-file hidden></div><div class="sequence-wizard-footer"><button type="button" data-seq-add>＋ フレームを追加</button><button type="button" data-seq-save>登録する</button></div></div>`;
+ const previews=new WeakMap();
+ let frame=0,playing=false,raf=0,lastTime=0,view={yaw:0,pitch:0,zoom:1};
+ overlay.innerHTML=`<div class="sequence-wizard" role="dialog" aria-modal="true" aria-label="連番PNGを追加"><div class="sequence-wizard-head"><strong>アニメーション（連番PNG）</strong><button type="button" data-seq-close>×</button></div><label>FPS <input class="number-input" data-seq-fps type="number" min="1" max="120" step="1" value="8"></label><div class="sequence-frame-tabs" data-seq-tabs></div><div class="sequence-frame-editor"><div data-seq-name>画像未選択</div><button type="button" data-seq-choose>画像を選択</button><input type="file" accept="image/png,.png" data-seq-file hidden></div><div class="sequence-preview"><canvas class="world-preview" data-seq-preview width="320" height="320"></canvas><div class="sequence-preview-controls"><button type="button" data-seq-play>▶ 再生</button><span data-seq-count>0 / 0</span></div><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div><div class="sequence-wizard-footer"><div class="sequence-wizard-actions"><button type="button" data-seq-add>＋ フレームを追加</button><button type="button" data-seq-zip>＋ZIPを追加</button><input type="file" data-seq-zip-file accept=".zip,application/zip" hidden></div><button type="button" data-seq-save>登録する</button></div></div>`;
  document.body.appendChild(overlay);
- const $=q=>overlay.querySelector(q);
- const refresh=()=>{$('[data-seq-tabs]').innerHTML=files.map((file,i)=>`<button type="button" class="sequence-frame-tab ${i===active?'is-active':''}" data-seq-tab="${i}">${i+1}枚目</button>`).join('');$('[data-seq-name]').textContent=files[active]?.name||'画像未選択';};
- const close=()=>{overlay.remove();sequenceInsertionNodeId=null;};
+ const $=q=>overlay.querySelector(q),canvas=$('[data-seq-preview]');
+ const getImage=async file=>{
+  if(!file)return null;
+  if(previews.has(file))return previews.get(file);
+  const url=URL.createObjectURL(file);
+  try{const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('画像を読み込めません'));img.src=url;});previews.set(file,image);return image;}
+  finally{URL.revokeObjectURL(url);}
+ };
+ let drawVersion=0;
+ const draw=async()=>{
+  const version=++drawVersion;
+  const file=files[frame];
+  if(!file)return;
+  const image=await getImage(file);
+  if(version!==drawVersion||!canvas.isConnected)return;
+  drawPanoramaPreview(canvas,{image,...view});
+ };
+ const refresh=()=>{
+  $('[data-seq-tabs]').innerHTML=files.map((file,i)=>`<button type="button" class="sequence-frame-tab ${i===active?'is-active':''}" data-seq-tab="${i}">${i+1}枚目</button>`).join('');
+  $('[data-seq-name]').textContent=files[active]?.name||'画像未選択';
+  $('[data-seq-count]').textContent=`${frame+1} / ${files.length}`;
+  void draw();
+ };
+ const stop=()=>{playing=false;cancelAnimationFrame(raf);$('[data-seq-play]').textContent='▶ 再生';};
+ const close=()=>{stop();overlay.remove();sequenceInsertionNodeId=null;};
  $('[data-seq-close]').addEventListener('click',close);
- $('[data-seq-tabs]').addEventListener('click',e=>{const btn=e.target.closest('[data-seq-tab]');if(!btn)return;active=Number(btn.dataset.seqTab);refresh();});
- $('[data-seq-add]').addEventListener('click',()=>{files.push(null);active=files.length-1;refresh();});
+ $('[data-seq-tabs]').addEventListener('click',e=>{const btn=e.target.closest('[data-seq-tab]');if(!btn)return;stop();active=frame=Number(btn.dataset.seqTab);refresh();});
+ $('[data-seq-add]').addEventListener('click',()=>{stop();files.push(null);active=frame=files.length-1;refresh();});
  $('[data-seq-choose]').addEventListener('click',()=>$('[data-seq-file]').click());
  $('[data-seq-file]').addEventListener('change',async e=>{
   const file=e.target.files?.[0];e.target.value='';if(!file)return;
-  try{
-   const first=files.find((f,i)=>i!==active&&f);
-   const reference=first?await validateSequencePng(first):null;
-   await validateSequencePng(file,reference?.naturalWidth??null,reference?.naturalHeight??null);
-   files[active]=file;refresh();
-  }catch(error){alert('この画像は選択できません。\n'+error.message);}
+  try{const first=files.find((f,i)=>i!==active&&f);const reference=first?await validateSequencePng(first):null;await validateSequencePng(file,reference?.naturalWidth??null,reference?.naturalHeight??null);files[active]=file;frame=active;refresh();}
+  catch(error){alert('この画像は追加できません。\n'+error.message);}
  });
+ $('[data-seq-zip]').addEventListener('click',()=>$('[data-seq-zip-file]').click());
+ $('[data-seq-zip-file]').addEventListener('change',async e=>{
+  const file=e.target.files?.[0];e.target.value='';if(!file)return;
+  const button=$('[data-seq-zip]');button.disabled=true;
+  try{
+   if(!file.name.toLowerCase().endsWith('.zip'))throw new Error('ZIPファイルを指定してください。');
+   const imported=await readSequenceZip(file);
+   const existing=files.filter(Boolean);
+   if(existing.length){const ref=await validateSequencePng(existing[0]);for(const f of imported)await validateSequencePng(f,ref.naturalWidth,ref.naturalHeight);}
+   stop();files.splice(0,files.length,...existing,...imported);active=frame=0;refresh();
+  }catch(error){alert('このZIPはアップロードできません。\n'+error.message);}
+  finally{button.disabled=false;}
+ });
+ const tick=now=>{
+  if(!playing)return;
+  const fps=Number($('[data-seq-fps]').value)||8;
+  if(now-lastTime>=1000/fps){frame=(frame+1)%files.length;lastTime=now;$('[data-seq-count]').textContent=`${frame+1} / ${files.length}`;void draw();}
+  raf=requestAnimationFrame(tick);
+ };
+ $('[data-seq-play]').addEventListener('click',()=>{
+  if(playing){stop();return;}
+  if(files.some(f=>!f)){alert('先にすべてのフレームに画像を設定してください。');return;}
+  playing=true;lastTime=performance.now();$('[data-seq-play]').textContent='■ 停止';raf=requestAnimationFrame(tick);
+ });
+ let drag=null;
+ canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch};canvas.setPointerCapture(e.pointerId);});
+ canvas.addEventListener('pointermove',e=>{if(!drag)return;view.yaw=drag.yaw-(e.clientX-drag.x)*.008;view.pitch=Math.max(-1.55,Math.min(1.55,drag.pitch+(e.clientY-drag.y)*.008));void draw();});
+ canvas.addEventListener('pointerup',()=>drag=null);canvas.addEventListener('pointercancel',()=>drag=null);
+ canvas.addEventListener('wheel',e=>{e.preventDefault();view.zoom=Math.max(.6,Math.min(2.2,view.zoom+(e.deltaY>0?-.1:.1)));void draw();},{passive:false});
  $('[data-seq-save]').addEventListener('click',async()=>{
   const fps=Number($('[data-seq-fps]').value);
   if(!Number.isFinite(fps)||fps<1||fps>120){alert('FPSは1～120で指定してください。');return;}
   if(files.some(f=>!f)){alert('すべてのフレームにPNG画像を選択してください。');return;}
-  if(files.some(f=>!f.name.toLowerCase().endsWith('.png'))){alert('PNG画像だけを指定してください。');return;}
-  const button=$('[data-seq-save]');button.disabled=true;
-  try{const media=await importPngSequence(files,fps,true);if(sequenceInsertionNodeId){const node=getNode(sequenceInsertionNodeId);if(node?.type==='animation')assignMediaToNode(node,media.id);}setMediaPanelOpen(false);close();}catch(error){console.error(error);alert('連番PNGを登録できませんでした。\n'+error.message);button.disabled=false;}
+  const button=$('[data-seq-save]');button.disabled=true;stop();
+  try{const media=await importPngSequence(files,fps,true);if(sequenceInsertionNodeId){const node=getNode(sequenceInsertionNodeId);if(node?.type==='animation')assignMediaToNode(node,media.id);}setMediaPanelOpen(false);close();}
+  catch(error){console.error(error);alert('連番PNGを登録できませんでした。\n'+error.message);button.disabled=false;}
  });
  refresh();
 }
@@ -5914,7 +6014,7 @@ openContextMenu(e.clientX-rect.left,e.clientY-rect.top);
 });
 
 const nodeMenuCategories={
-material:{label:'素材',element:materialMenu},
+material:{label:'360度素材',element:materialMenu},
 trigger:{label:'トリガー',element:triggerMenu},
 effect:{label:'効果',element:effectMenu},
 event:{label:'イベント',element:document.getElementById('eventMenu')},

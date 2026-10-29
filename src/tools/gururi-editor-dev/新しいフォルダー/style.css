@@ -964,3 +964,15 @@ flex-shrink:0;
 
 /* Exported work cover-camera controls */
 .export-cover-setting{display:flex;flex-direction:column;gap:8px;margin:12px 0}.export-cover-label{font-weight:600}.export-cover-camera{position:relative;width:100%;max-width:640px;aspect-ratio:16/9;background:#111;border-radius:8px;overflow:hidden}.export-cover-camera canvas,.export-cover-camera img{width:100%;height:100%;display:block;object-fit:cover;touch-action:none}.export-cover-camera [hidden]{display:none!important}#exportCoverEmpty{position:absolute;inset:0;display:grid;place-items:center;color:#ccc;pointer-events:none}.export-cover-actions{display:flex;gap:8px;flex-wrap:wrap}.export-cover-actions button{padding:8px 14px;border-radius:6px;cursor:pointer}.export-cover-help{font-size:12px;opacity:.8;margin:0}
+
+/* Draggable settings / graph boundary */
+.main-layout{grid-template-columns:minmax(0,1fr) 8px minmax(240px,var(--editor-sidebar-width,320px));}
+.editor-panel-resizer{background:#d8dde4;cursor:col-resize;touch-action:none;position:relative;z-index:8;outline:none;}
+.editor-panel-resizer:hover,.editor-panel-resizer:focus-visible,.is-resizing-editor .editor-panel-resizer{background:#7d9bb6;}
+.is-resizing-editor,.is-resizing-editor *{cursor:col-resize!important;user-select:none!important;}
+.editor-sidebar{min-width:0;border-left:0;}
+@media(max-width:800px){.main-layout{grid-template-columns:minmax(0,1fr) 8px minmax(240px,var(--editor-sidebar-width,260px));}}
+/* Keep each world tab's delete control in its upper-right corner. */
+#worldTabs .world-tab-wrap{position:relative;flex:0 0 auto;display:flex;align-items:stretch;min-width:0;}
+#worldTabs .world-tab-wrap>button[data-folder-tab]{padding-right:28px;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#worldTabs .world-tab-wrap>.world-tab-remove{position:absolute;right:2px;top:1px;margin:0;padding:0;width:20px;min-width:20px;height:19px;line-height:17px;text-align:center;border-radius:4px;z-index:1;}

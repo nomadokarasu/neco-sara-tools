@@ -976,3 +976,11 @@ flex-shrink:0;
 #worldTabs .world-tab-wrap{position:relative;flex:0 0 auto;display:flex;align-items:stretch;min-width:0;}
 #worldTabs .world-tab-wrap>button[data-folder-tab]{padding-right:28px;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #worldTabs .world-tab-wrap>.world-tab-remove{position:absolute;right:2px;top:1px;margin:0;padding:0;width:20px;min-width:20px;height:19px;line-height:17px;text-align:center;border-radius:4px;z-index:1;}
+
+/* Sequence import and playback */
+.sequence-preview{display:flex;flex-direction:column;align-items:center;gap:8px}
+.sequence-preview canvas{width:100%;max-width:440px;aspect-ratio:1/1;touch-action:none}
+.sequence-preview-controls{display:flex;align-items:center;gap:14px}
+.sequence-preview-controls button,.sequence-wizard-actions button{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}
+.sequence-wizard-actions{display:flex;flex-wrap:wrap;gap:8px}
+.sequence-wizard{width:min(570px,100%)}
