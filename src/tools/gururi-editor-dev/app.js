@@ -8590,13 +8590,6 @@ button.disabled=false;
 }
 
 document.getElementById('saveGartBtn').addEventListener('click',()=>saveGartProject(false));
-
-window.addEventListener('keydown',e=>{
-if(!(e.ctrlKey||e.metaKey)||e.altKey||e.key.toLowerCase()!=='s')return;
-e.preventDefault();
-e.stopImmediatePropagation();
-if(!e.repeat)saveGartProject(false);
-},true);
 document.getElementById('openGartBtn').addEventListener('click',()=>document.getElementById('gartFileInput').click());
 document.getElementById('gartFileInput').addEventListener('change',async e=>{
 const file=e.target.files?.[0];
@@ -8613,14 +8606,13 @@ button.disabled=true;
 try{
 const title=document.getElementById('exportTitle').value.trim();
 const author=document.getElementById('exportAuthor').value.trim();
-const authorUrl=document.getElementById('exportAuthorUrl').value.trim();
+const coverImage=exportCoverDataUrl;
 if(!title||!author)throw new Error('作品タイトルと作者名を入力してください。');
-if(authorUrl){try{const u=new URL(authorUrl);if(!['http:','https:'].includes(u.protocol))throw new Error();}catch{throw new Error('作者URLは http:// または https:// で入力してください。');}}
 if(!state.worldFolders.length||!state.worldFolders[0]?.id)throw new Error('開始ワールドがありません。');
 setSaveProgress(5,'作品データを準備しています…');
 const metadata={
 format:'gururi-exported-work',version:2,
-title,author,authorUrl,
+title,author,coverImage,
 startFolderId:state.worldFolders[0].id,
 worldFolders:structuredClone(state.worldFolders),
 displayMode:state.displayMode,
@@ -8668,7 +8660,11 @@ html,body{margin:0!important;background:#000!important}
 body.gururi-player .topbar,body.gururi-player .main-layout,body.gururi-player .media-popup,body.gururi-player #exportPreviewDiagnosticBtn{display:none!important}
 body.gururi-player #gamePreview{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:20!important;background:#000!important}
 body.gururi-player #closePreviewBtn{display:none!important}
-#gururiLaunch{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;gap:15px;align-items:center;justify-content:center;background:#080808;color:#fff;font-family:sans-serif;text-align:center;padding:20px;box-sizing:border-box}
+#gururiLaunch{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;gap:15px;align-items:center;justify-content:center;background-color:#080808;background-size:cover;background-position:center;color:#fff;font-family:sans-serif;text-align:center;padding:20px;box-sizing:border-box}
+#gururiLaunch::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.48),rgba(0,0,0,.68));pointer-events:none}
+#gururiLaunch>*{position:relative;z-index:1;text-shadow:0 2px 10px #000,0 1px 3px #000}
+#gururiLaunch h1{font-size:clamp(24px,4vw,44px);max-width:94vw;overflow-wrap:anywhere}
+#gururiLaunch button{background:rgba(28,28,28,.78)!important;backdrop-filter:blur(7px);border:1px solid rgba(255,255,255,.7)!important;text-shadow:none;min-width:180px}
 #gururiLaunch button{padding:17px 40px;border:1px solid #888;border-radius:9px;background:#242424;color:#fff;font-size:20px;cursor:pointer}
 #gururiRestart{position:fixed;top:12px;right:12px;z-index:80;border:0;border-radius:7px;padding:9px 12px;background:#111b;color:#fff;cursor:pointer}
 `;
@@ -8678,6 +8674,13 @@ const launch=document.getElementById('gururiLaunch');
 try{
 const data=window.GURURI_EXPORTED_WORK;
 const encoded=window.GURURI_EMBEDDED_MEDIA;
+launch.replaceChildren();
+if(data?.coverImage){launch.style.backgroundImage='url("'+data.coverImage+'")';}
+const launchTitle=document.createElement('h1');launchTitle.textContent=data?.title||'ぐるり作品';launchTitle.style.margin='0';
+const launchAuthor=document.createElement('div');launchAuthor.textContent='作者：'+(data?.author||'');
+const launchButton=document.createElement('button');launchButton.type='button';launchButton.textContent='スタート';launchButton.disabled=true;
+launchButton.style.opacity='.6';
+launch.append(launchTitle,launchAuthor,launchButton);
 if(!data||data.format!=='gururi-exported-work'||data.version!==2)throw new Error('作品データが不正です。');
 if(!Array.isArray(data.nodes)||!Array.isArray(data.connections)||!Array.isArray(data.worldFolders)||!Array.isArray(data.media))throw new Error('作品の構造が不正です。');
 const nodeIds=new Set(data.nodes.map(n=>n.id));
@@ -8719,12 +8722,7 @@ if(data.layouts?.pc&&data.layouts?.mobile)state.layouts=data.layouts;
 updateLayoutControls();
 renderNodes();renderSettings();
 const begin=()=>{launch.style.display='none';startPreview(false,true);};
-launch.replaceChildren();
-const title=document.createElement('h1');title.textContent=data.title||'ぐるり作品';title.style.margin='0';
-const author=document.createElement('div');author.textContent='作者：'+(data.author||'');
-launch.append(title,author);
-if(data.authorUrl){const a=document.createElement('a');a.href=data.authorUrl;a.target='_blank';a.rel='noopener noreferrer';a.textContent='作者のページ';a.style.color='#ddd';launch.append(a);}
-const startButton=document.createElement('button');startButton.type='button';startButton.textContent='▶ 作品を開始';startButton.addEventListener('click',begin);launch.append(startButton);
+launchButton.disabled=false;launchButton.style.opacity='1';launchButton.addEventListener('click',begin);
 document.getElementById('gururiRestart').addEventListener('click',begin);
 }catch(error){console.error(error);launch.textContent='作品を開けませんでした：'+error.message;}
 })();
@@ -8764,10 +8762,82 @@ const exportFileNameInput=document.getElementById('exportFileName');
 const exportSettingsForm=document.getElementById('exportSettingsForm');
 const exportConfirmBtn=document.getElementById('exportConfirmBtn');
 
+// Export-cover camera: capture the starting world at an arbitrary view.
+let exportCoverDataUrl=null;
+let exportCoverView={yaw:0,pitch:0,zoom:1};
+let exportCoverImage=null;
+let exportCoverDrag=null;
+const exportCoverCanvas=document.getElementById('exportCoverCamera');
+const exportCoverPhoto=document.getElementById('exportCoverPhoto');
+const exportCoverEmpty=document.getElementById('exportCoverEmpty');
+const exportCoverShoot=document.getElementById('exportCoverShoot');
+const exportCoverClear=document.getElementById('exportCoverClear');
+function drawExportCoverCamera(){
+if(!exportCoverImage||!exportCoverCanvas.isConnected)return;
+drawPanoramaPreview(exportCoverCanvas,{image:exportCoverImage,...exportCoverView});
+}
+function openExportCoverCamera(){
+const folder=state.worldFolders[0];
+const backer=folder&&folderBacker(folder);
+const view=backer?getWorldInitialView(backer):null;
+exportCoverView={yaw:Number(view?.yaw)||0,pitch:Number(view?.pitch)||0,zoom:Number(view?.zoom)||1};
+exportCoverImage=null;
+if(folder){
+const composite=document.createElement('canvas');
+if(composeAllWorldLayers(folder,composite))exportCoverImage=composite;
+else exportCoverImage=getFolderMedia(folder)?.image||null;
+}
+exportCoverPhoto.hidden=!exportCoverDataUrl;
+exportCoverPhoto.src=exportCoverDataUrl||'';
+exportCoverCanvas.hidden=!!exportCoverDataUrl;
+exportCoverEmpty.hidden=!!exportCoverDataUrl||!!exportCoverImage;
+requestAnimationFrame(drawExportCoverCamera);
+}
+exportCoverCanvas.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+exportCoverDrag={id:e.pointerId,x:e.clientX,y:e.clientY,yaw:exportCoverView.yaw,pitch:exportCoverView.pitch};
+exportCoverCanvas.setPointerCapture(e.pointerId);
+});
+exportCoverCanvas.addEventListener('pointermove',e=>{
+if(!exportCoverDrag||exportCoverDrag.id!==e.pointerId)return;
+exportCoverView.yaw=exportCoverDrag.yaw-(e.clientX-exportCoverDrag.x)*.008;
+exportCoverView.pitch=clamp(exportCoverDrag.pitch+(e.clientY-exportCoverDrag.y)*.008,-Math.PI/2+.02,Math.PI/2-.02);
+drawExportCoverCamera();
+});
+const endExportCoverDrag=e=>{if(exportCoverDrag?.id===e.pointerId)exportCoverDrag=null;};
+exportCoverCanvas.addEventListener('pointerup',endExportCoverDrag);
+exportCoverCanvas.addEventListener('pointercancel',endExportCoverDrag);
+exportCoverCanvas.addEventListener('wheel',e=>{
+e.preventDefault();exportCoverView.zoom=clamp(exportCoverView.zoom+(e.deltaY>0?-.1:.1),.6,2.2);drawExportCoverCamera();
+},{passive:false});
+exportCoverShoot.addEventListener('click',()=>{
+if(!exportCoverImage){alert('開始ワールドの画像がありません。');return;}
+// Capture WebGL pixels directly in the same call as the draw (no preserveDrawingBuffer required).
+const w=1280,h=720;
+const capture=document.createElement('canvas');capture.width=w;capture.height=h;
+Object.defineProperties(capture,{clientWidth:{get:()=>w/(window.devicePixelRatio||1)},clientHeight:{get:()=>h/(window.devicePixelRatio||1)}});
+drawPanoramaPreview(capture,{image:exportCoverImage,...exportCoverView});
+const gl=capture.getContext('webgl');
+if(!gl){alert('撮影できませんでした。WebGLを確認してください。');return;}
+const pixels=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+const flip=document.createElement('canvas');flip.width=w;flip.height=h;
+const ctx=flip.getContext('2d');const image=ctx.createImageData(w,h);
+for(let y=0;y<h;y++)image.data.set(pixels.subarray((h-y-1)*w*4,(h-y)*w*4),y*w*4);
+ctx.putImageData(image,0,0);
+exportCoverDataUrl=flip.toDataURL('image/jpeg',.88);
+exportCoverPhoto.src=exportCoverDataUrl;exportCoverPhoto.hidden=false;exportCoverCanvas.hidden=true;exportCoverEmpty.hidden=true;
+});
+exportCoverClear.addEventListener('click',()=>{
+exportCoverDataUrl=null;exportCoverPhoto.hidden=true;exportCoverPhoto.removeAttribute('src');exportCoverCanvas.hidden=false;
+exportCoverEmpty.hidden=!!exportCoverImage;requestAnimationFrame(drawExportCoverCamera);
+});
+
+
 document.getElementById('exportWorkBtn').addEventListener('click',()=>{
 exportSettingsModal.classList.remove('hidden');
 exportFileNameInput.focus();
 exportFileNameInput.select();
+openExportCoverCamera();
 });
 document.getElementById('exportCancelBtn').addEventListener('click',()=>{
 exportSettingsModal.classList.add('hidden');

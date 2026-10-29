@@ -8590,6 +8590,13 @@ button.disabled=false;
 }
 
 document.getElementById('saveGartBtn').addEventListener('click',()=>saveGartProject(false));
+
+window.addEventListener('keydown',e=>{
+if(!(e.ctrlKey||e.metaKey)||e.altKey||e.key.toLowerCase()!=='s')return;
+e.preventDefault();
+e.stopImmediatePropagation();
+if(!e.repeat)saveGartProject(false);
+},true);
 document.getElementById('openGartBtn').addEventListener('click',()=>document.getElementById('gartFileInput').click());
 document.getElementById('gartFileInput').addEventListener('change',async e=>{
 const file=e.target.files?.[0];
@@ -9066,6 +9073,8 @@ renderSettings=function(){
 // A panoramic editor preview with all layers, irrespective of runtime visibility rules.
 // Use the exact same panorama renderer and camera model as the legacy media-node preview.
 const worldSettingsCameraPreviews=new WeakMap();
+// Keep completed world preview composites when the settings panel is recreated.
+const worldSettingsCompositeCache=new WeakMap();
 function composeAllWorldLayers(folder,canvas){
  const base=getFolderMedia(folder);
  const source=base?.image||base?.video;
@@ -9088,11 +9097,13 @@ if(!backer)return;
 
 const saved=getWorldInitialView(backer);
 const view={yaw:Number(saved.yaw)||0,pitch:Number(saved.pitch)||0,zoom:Number(saved.zoom)||1};
-const composite=document.createElement('canvas');
-
-let cachedSignature=null;
-let cachedSources=[];
-let cachedValid=false;
+// Reuse the panorama composite across repeated openings of the same world.
+let compositeCache=worldSettingsCompositeCache.get(folder);
+if(!compositeCache){
+compositeCache={canvas:document.createElement('canvas'),signature:null,sources:[],valid:false};
+worldSettingsCompositeCache.set(folder,compositeCache);
+}
+const composite=compositeCache.canvas;
 let syncInputs=()=>{};
 
 const getCompositionState=()=>{
@@ -9127,11 +9138,11 @@ dynamic:source instanceof HTMLVideoElement
 };
 
 const compositionChanged=status=>{
-if(status.signature!==cachedSignature)return true;
-if(status.sources.length!==cachedSources.length)return true;
+if(status.signature!==compositeCache.signature)return true;
+if(status.sources.length!==compositeCache.sources.length)return true;
 
 for(let i=0;i<status.sources.length;i++){
-if(status.sources[i]!==cachedSources[i])return true;
+if(status.sources[i]!==compositeCache.sources[i])return true;
 }
 
 return false;
@@ -9140,9 +9151,9 @@ return false;
 const updateComposite=(status,force=false)=>{
 if(!force&&!status.dynamic&&!compositionChanged(status))return false;
 
-cachedValid=composeAllWorldLayers(folder,composite);
-cachedSignature=status.signature;
-cachedSources=status.sources.slice();
+compositeCache.valid=composeAllWorldLayers(folder,composite);
+compositeCache.signature=status.signature;
+compositeCache.sources=status.sources.slice();
 
 return true;
 };
@@ -9162,7 +9173,7 @@ const status=getCompositionState();
 updateComposite(status);
 
 drawPanoramaPreview(canvas,{
-image:cachedValid?composite:null,
+image:compositeCache.valid?composite:null,
 ...view
 });
 
@@ -9179,7 +9190,7 @@ if(!status.dynamic&&!compositionChanged(status))return;
 updateComposite(status);
 
 drawPanoramaPreview(canvas,{
-image:cachedValid?composite:null,
+image:compositeCache.valid?composite:null,
 ...view
 });
 };
