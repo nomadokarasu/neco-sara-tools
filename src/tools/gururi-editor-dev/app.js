@@ -5987,7 +5987,10 @@ return value;
 }
 function commitEditorHistory(before){
 if(!before||editorHistory.restoring)return;
-if(editorHistorySignature(before)===editorHistorySignature(editorSnapshot()))return;
+if(editorHistorySignature(before)===editorHistorySignature({
+nodes:state.nodes,
+connections:state.connections
+}))return;
 editorHistory.undo.push(before);
 if(editorHistory.undo.length>editorHistory.limit)editorHistory.undo.shift();
 editorHistory.redo=[];
