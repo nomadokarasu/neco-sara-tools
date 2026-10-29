@@ -641,7 +641,7 @@ removeLegacyOtherClickBranches();
 for(const n of state.nodes){if(n.folderId)continue;const owner=getNode(n.clickBranchOwnerId||n.conditionOwnerId||n.toggleOwnerId||n.textAnswerOwnerId||n.optionOwnerId);if(owner)n.folderId=owner.folderId;}
 nodesLayer.innerHTML='';
 for(const node of state.nodes){
-if(!state.activeFolderId||node.folderId!==state.activeFolderId||node.type==='world')continue;
+if(!state.activeFolderId||node.folderId!==state.activeFolderId||(node.type==='world'&&state.worldFolders.some(folder=>folder.backerId===node.id)))continue;
 const el=document.createElement('div');
 el.className=`node ${node.type==='start'?'start-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''}`;
 el.dataset.id=node.id;
