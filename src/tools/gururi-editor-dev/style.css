@@ -989,3 +989,14 @@ flex-shrink:0;
 .sequence-frame-list{display:contents}
 .sequence-frame-tabs [data-seq-add],.sequence-zip-row [data-seq-zip]{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}
 .sequence-wizard-footer{justify-content:flex-end}
+
+/* Text overlay node editor and playback */
+.text-overlay-editor #textOverlayBackground{position:absolute;inset:0;width:100%;height:100%;display:block}
+#textOverlayItems{position:absolute;inset:0}
+.text-overlay-edit-box{position:absolute;border:1px dashed #eee;box-sizing:border-box;cursor:move;touch-action:none;min-width:1px;min-height:1px}
+.text-overlay-edit-box.selected{border:2px solid #ff9900;z-index:2}
+.text-overlay-edit-text{width:100%;height:100%;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;white-space:pre-wrap;overflow:hidden;overflow-wrap:anywhere;pointer-events:none;box-sizing:border-box}
+.text-overlay-list-row{display:flex;gap:8px;margin-bottom:6px}
+.text-overlay-list-row button:first-child{flex:1;text-align:left}
+.text-overlay-list-row button.selected{outline:2px solid #ff9900}
+.game-text-overlay{color:white;white-space:pre-wrap;overflow-wrap:anywhere;overflow:hidden;text-shadow:0 1px 3px #000,0 0 6px #000;box-sizing:border-box;pointer-events:none;line-height:1.35}
