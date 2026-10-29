@@ -4775,7 +4775,7 @@ const base=media?.image||media?.video||sourceNode.world?.image;
 if(!base)return null;
 const rawWidth=media?.width||base.videoWidth||base.naturalWidth||base.width||2048;
 const rawHeight=media?.height||base.videoHeight||base.naturalHeight||base.height||1024;
-const scale=Math.min(1,1024/Math.max(1,rawWidth));
+const scale=Math.min(1,2048/Math.max(1,rawWidth));
 const width=Math.max(1,Math.round(rawWidth*scale));
 const height=Math.max(1,Math.round(rawHeight*scale));
 const hidden=new Set(clickNode?.clickHiddenLayerIds||[]);
