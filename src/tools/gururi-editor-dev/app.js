@@ -4741,26 +4741,84 @@ node.clickPolygon=cloneClickPolygon(points);
 // 編集時はワールドの基本画像に、登録済みの透明PNGを全て重ねる。
 // ゲーム内の表示条件は無視し、投げ縄の位置合わせをしやすくする。
 const clickEditorCompositeCanvases=new Map();
+const clickEditorCompositeCache=new Map();
+
 function getClickEditorComposite(sourceNode,clickNode=null){
- const folder=state.worldFolders?.find(f=>f.backerId===sourceNode?.id);
- if(!folder)return sourceNode?.world?.image||null;
- const media=getFolderMedia(folder);
- const base=media?.image||media?.video||sourceNode.world?.image;
- if(!base)return null;
- const width=media?.width||base.videoWidth||base.naturalWidth||base.width||2048;
- const height=media?.height||base.videoHeight||base.naturalHeight||base.height||1024;
- let canvas=clickEditorCompositeCanvases.get(folder.id);
- if(!canvas){canvas=document.createElement('canvas');clickEditorCompositeCanvases.set(folder.id,canvas);}
- if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
- const ctx=canvas.getContext('2d');
- ctx.clearRect(0,0,width,height);
- try{ctx.drawImage(base,0,0,width,height);}catch(_e){return base;}
- for(const layer of folder.layers||[]){
-  if(clickNode?.clickHiddenLayerIds?.includes(layer.id))continue;
-  const overlay=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png')?.image;
-  if(overlay){try{ctx.drawImage(overlay,0,0,width,height);}catch(_e){}}
- }
- return canvas;
+const folder=state.worldFolders?.find(f=>f.backerId===sourceNode?.id);
+if(!folder)return sourceNode?.world?.image||null;
+
+const media=getFolderMedia(folder);
+const base=media?.image||media?.video||sourceNode.world?.image;
+if(!base)return null;
+
+const originalWidth=media?.width||base.videoWidth||base.naturalWidth||base.width||2048;
+const originalHeight=media?.height||base.videoHeight||base.naturalHeight||base.height||1024;
+
+const previewScale=Math.min(1,1024/originalWidth);
+
+const width=Math.max(1,Math.round(originalWidth*previewScale));
+const height=Math.max(1,Math.round(originalHeight*previewScale));
+
+let canvas=clickEditorCompositeCanvases.get(folder.id);
+if(!canvas){
+canvas=document.createElement('canvas');
+clickEditorCompositeCanvases.set(folder.id,canvas);
+}
+
+const layers=(folder.layers||[])
+.filter(layer=>!clickNode?.clickHiddenLayerIds?.includes(layer.id))
+.map(layer=>({
+id:layer.id,
+mediaId:layer.mediaId,
+image:mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png')?.image||null
+}));
+
+const signature=[
+base,width,height,
+...layers.flatMap(layer=>[layer.id,layer.mediaId,layer.image])
+];
+
+const cached=clickEditorCompositeCache.get(folder.id);
+
+const canReuse=
+!clickNode&&
+!(base instanceof HTMLVideoElement)&&
+cached&&
+cached.signature.length===signature.length&&
+cached.signature.every((value,index)=>value===signature[index])&&
+canvas.width===width&&
+canvas.height===height;
+
+if(canReuse)return canvas;
+
+clickEditorCompositeCache.delete(folder.id);
+
+if(canvas.width!==width||canvas.height!==height){
+canvas.width=width;
+canvas.height=height;
+}
+
+const ctx=canvas.getContext('2d');
+ctx.clearRect(0,0,width,height);
+
+try{
+ctx.drawImage(base,0,0,width,height);
+}catch(_e){
+return base;
+}
+
+for(const layer of layers){
+if(!layer.image)continue;
+try{
+ctx.drawImage(layer.image,0,0,width,height);
+}catch(_e){}
+}
+
+if(!clickNode&&!(base instanceof HTMLVideoElement)){
+clickEditorCompositeCache.set(folder.id,{signature});
+}
+
+return canvas;
 }
 function getClickLassoWorld(node,sourceNode){
  const image=sourceNode.type==='animation'
