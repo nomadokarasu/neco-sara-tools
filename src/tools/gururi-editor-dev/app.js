@@ -7130,6 +7130,7 @@ const duration=getMediaPlaybackDuration(node,null);
 schedulePreviewBranch(duration,()=>{
 if(temporaryWorldOverlay?.nodeId!==node.id)return;
 temporaryWorldOverlay=null;
+previewVisited.delete(node.id);
 if(underlying){
 const folder=state.worldFolders.find(f=>f.backerId===base.id);
 if(folder)refreshWorldComposite();else drawPanoramaPreview(gameCanvas,underlying);
