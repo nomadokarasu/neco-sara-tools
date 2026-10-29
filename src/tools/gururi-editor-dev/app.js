@@ -6512,9 +6512,18 @@ return d;
 function renderConnections(){
 connectionsSvg.innerHTML='';
 
+const portMap=new Map();
+
+for(const nodeEl of nodesLayer.querySelectorAll('.node')){
+portMap.set(nodeEl.dataset.id,{
+input:nodeEl.querySelector('.port.input'),
+output:nodeEl.querySelector('.port.output')
+});
+}
+
 for(const c of state.connections){
-const fromEl=nodesLayer.querySelector(`.node[data-id="${c.from}"] .port.output`);
-const toEl=nodesLayer.querySelector(`.node[data-id="${c.to}"] .port.input`);
+const fromEl=portMap.get(c.from)?.output;
+const toEl=portMap.get(c.to)?.input;
 
 if(!fromEl||!toEl)continue;
 
