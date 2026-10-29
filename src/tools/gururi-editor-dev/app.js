@@ -4854,7 +4854,11 @@ if(!ctx)return;
 ctx.setTransform(dpr,0,0,dpr,0,0);
 ctx.clearRect(0,0,rect.width,rect.height);
 
-const world=getClickLassoWorld(node,worldNode);
+const world={
+yaw:node.clickView.yaw,
+pitch:node.clickView.pitch,
+zoom:node.clickView.zoom
+};
 const regions=node.clickRegions||[];
 
 const projectPoints=points=>{
@@ -5177,7 +5181,7 @@ drawClickLassoOverlay(node,worldNode);
 };
 
 const addPoint=e=>{
-const world=getClickLassoWorld(node,worldNode);
+const world=node.clickView;
 
 const point=screenPointToWorldAngles(
 lassoCanvas,
