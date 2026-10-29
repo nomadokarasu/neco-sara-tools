@@ -4360,7 +4360,9 @@ panoramaRenderers.set(canvas,renderer);
 return renderer;
 }
 
+const lastPanoramaPreviewWorld=new WeakMap();
 function drawPanoramaPreview(canvas,world){
+lastPanoramaPreviewWorld.set(canvas,world);
 const renderer=getPanoramaRenderer(canvas);
 if(!renderer){
 const ctx=canvas.getContext('2d');
@@ -8890,9 +8892,6 @@ openExportCoverCamera();
 document.getElementById('exportCancelBtn').addEventListener('click',()=>{
 exportSettingsModal.classList.add('hidden');
 });
-exportSettingsModal.addEventListener('click',event=>{
-if(event.target===exportSettingsModal)exportSettingsModal.classList.add('hidden');
-});
 exportSettingsForm.addEventListener('submit',async event=>{
 event.preventDefault();
 let name=exportFileNameInput.value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/[. ]+$/g,'');
@@ -8948,6 +8947,7 @@ function makeWorldFolder(name){
 }
 function folderBacker(folder){return getNode(folder?.backerId);}
 function assignFolderTab(folderId){
+ folderId=folderId||state.worldFolders[0]?.id||null;
  state.activeFolderId=folderId;
  state.selectedNodeId=null;state.selectedNodeIds.clear();state.selectedConnectionId=null;
  worldTabs.querySelectorAll('button[data-folder-tab]').forEach(button=>button.classList.toggle('active',button.dataset.folderTab===(folderId||'__all__')));
@@ -8974,7 +8974,6 @@ function deleteWorldFolder(folder){
 function updateWorldTabs(){
  worldTabs.replaceChildren();
  const add=(label,id,fn)=>{const b=document.createElement('button');b.type='button';b.dataset.folderTab=id||'__all__';b.textContent=label;b.className=id===state.activeFolderId?'active':'';b.addEventListener('click',fn);worldTabs.appendChild(b);};
- add('ワールド一覧',null,()=>assignFolderTab(null));
  for(const folder of state.worldFolders){
   const b=document.createElement('button');b.type='button';b.dataset.folderTab=folder.id;b.textContent=folder.name;b.className=folder.id===state.activeFolderId?'active':'';
   b.onclick=()=>assignFolderTab(folder.id);
@@ -8985,12 +8984,15 @@ function updateWorldTabs(){
     input.onkeydown=ev=>{if(ev.key==='Enter')save();if(ev.key==='Escape')updateWorldTabs();};
     input.onblur=save;
   };
-  worldTabs.appendChild(b);
+  const tabWrap=document.createElement('div');
+  tabWrap.className='world-tab-wrap';
+  tabWrap.appendChild(b);
   if(folder!==state.worldFolders[0]){
    const remove=document.createElement('button');remove.type='button';remove.className='world-tab-remove';remove.textContent='×';remove.title=folder.name+'を削除';remove.setAttribute('aria-label',folder.name+'を削除');
    remove.onclick=e=>{e.preventDefault();e.stopPropagation();deleteWorldFolder(folder);};
-   worldTabs.appendChild(remove);
+   tabWrap.appendChild(remove);
   }
+  worldTabs.appendChild(tabWrap);
  }
  const plus=document.createElement('button');plus.textContent='＋';plus.title='ワールドを追加';plus.addEventListener('click',()=>{const folder=makeWorldFolder('ワールド'+(state.worldFolders.length+1));updateWorldTabs();assignFolderTab(folder.id);});worldTabs.appendChild(plus);
 }
@@ -9476,3 +9478,63 @@ return originalWorldCompositeTick.apply(this,args);
 
 const saveAsGartButton=document.getElementById('saveAsGartBtn');
 if(saveAsGartButton)saveAsGartButton.addEventListener('click',()=>saveGartProject(true));
+
+// Resizable editor boundary; project camera coordinates remain unchanged.
+const editorPanelResizer=document.getElementById('editorPanelResizer');
+const editorMainLayout=document.querySelector('.main-layout');
+let editorResizePointer=null;
+function setEditorSidebarWidth(width){
+const total=editorMainLayout.clientWidth;
+const max=Math.max(240,total-240);
+const next=Math.max(240,Math.min(max,width));
+editorMainLayout.style.setProperty('--editor-sidebar-width',next+'px');
+}
+editorPanelResizer.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+editorResizePointer=e.pointerId;
+editorPanelResizer.setPointerCapture(e.pointerId);
+document.body.classList.add('is-resizing-editor');
+e.preventDefault();
+});
+editorPanelResizer.addEventListener('pointermove',e=>{
+if(editorResizePointer!==e.pointerId)return;
+const rect=editorMainLayout.getBoundingClientRect();
+setEditorSidebarWidth(rect.right-e.clientX);
+});
+const finishEditorResize=e=>{
+if(editorResizePointer!==e.pointerId)return;
+editorResizePointer=null;
+document.body.classList.remove('is-resizing-editor');
+};
+editorPanelResizer.addEventListener('pointerup',finishEditorResize);
+editorPanelResizer.addEventListener('pointercancel',finishEditorResize);
+editorPanelResizer.addEventListener('lostpointercapture',finishEditorResize);
+editorPanelResizer.addEventListener('keydown',e=>{
+if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+e.preventDefault();
+const current=settingsPanel.closest('.editor-sidebar').getBoundingClientRect().width;
+setEditorSidebarWidth(current+(e.key==='ArrowLeft'?24:-24));
+});
+// All existing setting previews expand with their containing panel.
+// Redraw the camera at the new pixel dimensions, keeping its view angles.
+let editorResizeFrame=0;
+const editorSettingsResizeObserver=new ResizeObserver(()=>{
+cancelAnimationFrame(editorResizeFrame);
+editorResizeFrame=requestAnimationFrame(()=>{
+const worldCanvas=settingsPanel.querySelector('canvas.world-settings-preview');
+if(worldCanvas){
+const controller=worldSettingsCameraPreviews.get(worldCanvas);
+if(controller)controller.draw();
+}
+for(const canvas of settingsPanel.querySelectorAll('canvas.world-preview:not(.world-settings-preview)')){
+const world=lastPanoramaPreviewWorld.get(canvas);
+if(world)drawPanoramaPreview(canvas,world);
+}
+const clickNode=getNode(state.selectedNodeId);
+if(clickNode?.type==='click'){
+const source=findPreviousClickMediaNode(clickNode.id);
+if(source)drawClickLassoOverlay(clickNode,source);
+}
+});
+});
+editorSettingsResizeObserver.observe(settingsPanel);
