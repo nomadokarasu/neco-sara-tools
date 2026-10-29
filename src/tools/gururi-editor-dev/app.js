@@ -8667,7 +8667,11 @@ body.gururi-player #closePreviewBtn{display:none!important}
 #gururiLaunch h1{font-size:clamp(24px,4vw,44px);max-width:94vw;overflow-wrap:anywhere}
 #gururiLaunch button{background:rgba(28,28,28,.78)!important;backdrop-filter:blur(7px);border:1px solid rgba(255,255,255,.7)!important;text-shadow:none;min-width:180px}
 #gururiLaunch button{padding:17px 40px;border:1px solid #888;border-radius:9px;background:#242424;color:#fff;font-size:20px;cursor:pointer}
-#gururiRestart{position:fixed;top:12px;right:12px;z-index:80;border:0;border-radius:7px;padding:9px 12px;background:#111b;color:#fff;cursor:pointer}
+#gururiLoading{width:min(340px,80vw);display:flex;flex-direction:column;gap:8px;align-items:stretch}
+#gururiLoadingTrack{height:8px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
+#gururiLoadingFill{height:100%;width:0;background:#fff;border-radius:99px;transition:width .15s ease}
+#gururiLoadingLabel{font-size:13px;color:#fff;text-align:center}
+#gururiLaunch button:disabled{cursor:default;opacity:.6}
 `;
 const playerBootstrap=String.raw`
 (async()=>{
@@ -8684,17 +8688,33 @@ const launchTitle=document.createElement('h1');launchTitle.textContent=data?.tit
 const launchAuthor=document.createElement('div');launchAuthor.textContent='作者：'+(data?.author||'');
 const launchButton=document.createElement('button');launchButton.type='button';launchButton.textContent='スタート';launchButton.disabled=true;
 launchButton.style.opacity='.6';
-launch.append(launchTitle,launchAuthor,launchButton);
+const loading=document.createElement('div');loading.id='gururiLoading';
+const loadingTrack=document.createElement('div');loadingTrack.id='gururiLoadingTrack';
+const loadingFill=document.createElement('div');loadingFill.id='gururiLoadingFill';
+const loadingLabel=document.createElement('div');loadingLabel.id='gururiLoadingLabel';loadingLabel.textContent='作品を準備しています… 0%';
+loadingTrack.appendChild(loadingFill);loading.append(loadingTrack,loadingLabel);
+launch.append(launchTitle,launchAuthor,launchButton,loading);
+const updateLoading=(percent,label)=>{
+const amount=Math.max(0,Math.min(100,Math.round(percent)));
+loadingFill.style.width=amount+'%';
+loadingLabel.textContent=label+' '+amount+'%';
+};
+const yieldToBrowser=()=>new Promise(resolve=>setTimeout(resolve,0));
+await yieldToBrowser();
 if(!data||data.format!=='gururi-exported-work'||data.version!==2)throw new Error('作品データが不正です。');
 if(!Array.isArray(data.nodes)||!Array.isArray(data.connections)||!Array.isArray(data.worldFolders)||!Array.isArray(data.media))throw new Error('作品の構造が不正です。');
 const nodeIds=new Set(data.nodes.map(n=>n.id));
 if(data.connections.some(c=>!nodeIds.has(c.from)||!nodeIds.has(c.to)))throw new Error('ノードの接続情報が不正です。');
+updateLoading(5,'作品データを確認しました');
 function fromBase64(text,type,name){
 const parts=[];
 for(let i=0;i<text.length;i+=32768){const binary=atob(text.slice(i,i+32768));const bytes=new Uint8Array(binary.length);for(let j=0;j<bytes.length;j++)bytes[j]=binary.charCodeAt(j);parts.push(bytes);}
 return new File(parts,name,{type});
 }
-for(const item of data.media){
+for(let mediaIndex=0;mediaIndex<data.media.length;mediaIndex++){
+const item=data.media[mediaIndex];
+updateLoading(10+80*mediaIndex/Math.max(1,data.media.length),'素材を読み込んでいます…');
+await yieldToBrowser();
 const entry=encoded.find(e=>e.id===item.id);
 if(!entry)throw new Error(item.fileName+' が見つかりません。');
 if(item.fileType==='pngseq'){
@@ -8708,7 +8728,11 @@ const file=fromBase64(entry.base64,mime,item.fileName);
 const imported=await importMediaFile(file);
 imported.id=item.id;
 }
+updateLoading(10+80*(mediaIndex+1)/Math.max(1,data.media.length),'素材を読み込んでいます…');
+await yieldToBrowser();
 }
+updateLoading(92,'作品を初期化しています…');
+await yieldToBrowser();
 for(const node of data.nodes){
 if(node.world){node.world.image=mediaLibrary.find(m=>m.id===node.world.mediaId&&m.fileType==='png')?.image||null;node.world.raw=null;}
 if(node.animation)node.animation.raw=null;
@@ -8734,9 +8758,11 @@ updateLayoutControls();
 if(!gamePreview.classList.contains('hidden'))resizeGameCanvas();
 });
 renderNodes();renderSettings();
+updateLoading(100,'準備が完了しました');
+await yieldToBrowser();
 const begin=()=>{launch.style.display='none';startPreview(false,true);};
 launchButton.disabled=false;launchButton.style.opacity='1';launchButton.addEventListener('click',begin);
-document.getElementById('gururiRestart').addEventListener('click',begin);
+loading.remove();
 }catch(error){console.error(error);launch.textContent='作品を開けませんでした：'+error.message;}
 })();
 `;
@@ -8745,7 +8771,7 @@ const baseHtml=sourceFiles['index.html'];
 if(!baseHtml.includes('<script src="app.js"></script>')||!baseHtml.includes('<link rel="stylesheet" href="style.css">'))throw new Error('HTML構造が想定と異なります。');
 const json=JSON.stringify(metadata).replace(/</g,'\\u003c');
 const embedded=JSON.stringify(embeddedMedia).replace(/</g,'\\u003c');
-const launchHtml='<div id="gururiLaunch">作品を準備しています…</div><button id="gururiRestart" type="button">↻ 最初から</button>';
+const launchHtml='<div id="gururiLaunch">作品を準備しています…</div>';
 const viewerHtml=baseHtml
 .replace('<title>ぐるりエディタ</title>','<title>'+title.replace(/[&<>"']/g,'')+'</title>')
 .replace('<link rel="stylesheet" href="style.css">','<style>'+sourceFiles['style.css']+'\n'+playerStyle+'</style>')

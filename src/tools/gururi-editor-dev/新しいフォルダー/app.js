@@ -8608,6 +8608,7 @@ const title=document.getElementById('exportTitle').value.trim();
 const author=document.getElementById('exportAuthor').value.trim();
 const coverImage=exportCoverDataUrl;
 if(!title||!author)throw new Error('作品タイトルと作者名を入力してください。');
+if(!coverImage)throw new Error('トップページの背景画像を撮影して「決定」を押してください。');
 if(!state.worldFolders.length||!state.worldFolders[0]?.id)throw new Error('開始ワールドがありません。');
 setSaveProgress(5,'作品データを準備しています…');
 const metadata={
@@ -8657,7 +8658,7 @@ setSaveProgress(20+Math.round((i+1)/Math.max(1,metadata.media.length)*45),'素�
 }
 const playerStyle=`
 html,body{margin:0!important;background:#000!important}
-body.gururi-player .topbar,body.gururi-player .main-layout,body.gururi-player .media-popup,body.gururi-player #exportPreviewDiagnosticBtn{display:none!important}
+body.gururi-player #editorHomePage,body.gururi-player .editor-home,body.gururi-player .topbar,body.gururi-player .main-layout,body.gururi-player .media-popup,body.gururi-player #exportPreviewDiagnosticBtn{display:none!important}
 body.gururi-player #gamePreview{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:20!important;background:#000!important}
 body.gururi-player #closePreviewBtn{display:none!important}
 #gururiLaunch{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;gap:15px;align-items:center;justify-content:center;background-color:#080808;background-size:cover;background-position:center;color:#fff;font-family:sans-serif;text-align:center;padding:20px;box-sizing:border-box}
@@ -8671,6 +8672,9 @@ body.gururi-player #closePreviewBtn{display:none!important}
 const playerBootstrap=String.raw`
 (async()=>{
 const launch=document.getElementById('gururiLaunch');
+// The player has its own landing screen, independent of the editor home.
+const editorHome=document.getElementById('editorHomePage');
+if(editorHome)editorHome.style.display='none';
 try{
 const data=window.GURURI_EXPORTED_WORK;
 const encoded=window.GURURI_EMBEDDED_MEDIA;
@@ -8717,9 +8721,18 @@ state.activeFolderId=state.startFolderId;
 for(const n of [...state.nodes])if(n.type==='textAnswer')ensureTextAnswerBranches(n);else if(n.type==='condition')ensureConditionBranches(n);else if(n.type==='toggle')ensureToggleBranches(n);
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
-state.displayMode=['pc','mobile'].includes(data.displayMode)?data.displayMode:'pc';
+// Choose the layout on the viewing device rather than on the exporting device.
 if(data.layouts?.pc&&data.layouts?.mobile)state.layouts=data.layouts;
+const selectPlayerDevice=()=>window.matchMedia('(max-width: 767px)').matches?'mobile':'pc';
+state.displayMode=selectPlayerDevice();
 updateLayoutControls();
+window.addEventListener('resize',()=>{
+const next=selectPlayerDevice();
+if(state.displayMode===next)return;
+state.displayMode=next;
+updateLayoutControls();
+if(!gamePreview.classList.contains('hidden'))resizeGameCanvas();
+});
 renderNodes();renderSettings();
 const begin=()=>{launch.style.display='none';startPreview(false,true);};
 launchButton.disabled=false;launchButton.style.opacity='1';launchButton.addEventListener('click',begin);
@@ -8736,15 +8749,24 @@ const launchHtml='<div id="gururiLaunch">作品を準備しています…</div>
 const viewerHtml=baseHtml
 .replace('<title>ぐるりエディタ</title>','<title>'+title.replace(/[&<>"']/g,'')+'</title>')
 .replace('<link rel="stylesheet" href="style.css">','<style>'+sourceFiles['style.css']+'\n'+playerStyle+'</style>')
-.replace('<body>','<body class="gururi-player">')
+.replace('<body>','<body class="gururi-player">'+launchHtml)
 .replace('<script src="app.js"></script>','<script>'+escapeInline(sourceFiles['app.js'])+'</script>')
-.replace(/<\/body>(?=\s*<\/html>\s*$)/i,launchHtml+'<script>window.GURURI_EXPORTED_WORK='+json+';window.GURURI_EMBEDDED_MEDIA='+embedded+';</script><script>'+escapeInline(playerBootstrap)+'</script></body>');
+.replace(/<\/body>(?=\s*<\/html>\s*$)/i,'<script>window.GURURI_EXPORTED_WORK='+json+';window.GURURI_EMBEDDED_MEDIA='+embedded+';</script><script>'+escapeInline(playerBootstrap)+'</script></body>');
 if(!viewerHtml.includes('GURURI_EMBEDDED_MEDIA'))throw new Error('作品HTMLを生成できませんでした。');
-entries.unshift({name:'ぐるり作品.html',data:gartEncoder.encode(viewerHtml)});
+const htmlName=title.replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/[. ]+$/g,'').slice(0,120)||'作品';
+entries.unshift({name:htmlName+'.html',data:gartEncoder.encode(viewerHtml)});
 entries.push({name:'manifest.json',data:gartEncoder.encode(JSON.stringify({...metadata,format:'gururi-editor-art'},null,2))});
-const world=state.worldFolders[0];const backer=getNode(world?.backerId);
-const thumbnailMedia=mediaLibrary.find(m=>m.id===backer?.world?.mediaId&&m.image)||mediaLibrary.find(m=>m.fileType==='png'&&m.image);
-if(thumbnailMedia){const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;const ctx=canvas.getContext('2d');ctx.drawImage(thumbnailMedia.image,0,0,512,512);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(blob)entries.push({name:'thumbnail.png',data:blob});}
+// The thumbnail must match the photographed landing-screen background.
+const coverResponse=await fetch(coverImage);
+const coverBlob=await coverResponse.blob();
+const coverBitmap=await createImageBitmap(coverBlob);
+const coverCanvas=document.createElement('canvas');
+coverCanvas.width=coverBitmap.width;coverCanvas.height=coverBitmap.height;
+coverCanvas.getContext('2d').drawImage(coverBitmap,0,0);
+if(typeof coverBitmap.close==='function')coverBitmap.close();
+const thumbnailBlob=await new Promise(resolve=>coverCanvas.toBlob(resolve,'image/png'));
+if(!thumbnailBlob)throw new Error('サムネイル画像を生成できませんでした。');
+entries.push({name:'thumbnail.png',data:thumbnailBlob});
 setSaveProgress(85,'ZIPを作成しています…');
 await new Promise(requestAnimationFrame);
 const archive=await gartCreateZip(entries);
@@ -8850,6 +8872,7 @@ event.preventDefault();
 let name=exportFileNameInput.value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/[. ]+$/g,'');
 if(name.toLowerCase().endsWith('.zip'))name=name.slice(0,-4);
 if(!name){alert('ファイル名を入力してください。');return;}
+if(!exportCoverDataUrl){alert('トップページの背景画像を撮影して「決定」を押してください。');return;}
 const fileName=name+'.zip';
 let handle=null;
 if(typeof window.showSaveFilePicker==='function'&&window.isSecureContext){
