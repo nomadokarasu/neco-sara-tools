@@ -1265,7 +1265,8 @@ if(clickLayerFolder?.layers?.length){
  }
  settingsPanel.appendChild(group);
 }
-deferSelectedNodePreview(node,'clickPreviewCanvas',()=>setupClickTriggerPreview(node,sourceNode));
+// 一時テスト：クリックノードの360°プレビュー初期化を停止
+// deferSelectedNodePreview(node,'clickPreviewCanvas',()=>setupClickTriggerPreview(node,sourceNode));
 const normalOnceGroup=document.createElement('div');
 normalOnceGroup.className='setting-group';
 normalOnceGroup.innerHTML=`<label><input id="clickNormalOnceInput" type="checkbox" ${node.clickNormalOnce===true?'checked':''}> 通常のクリックを一度だけ実行する</label>`;
