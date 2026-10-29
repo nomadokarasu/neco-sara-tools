@@ -958,7 +958,7 @@ flex-shrink:0;
 .export-work-content label{display:flex;flex-direction:column;gap:8px;font-size:14px}
 .export-work-content input{box-sizing:border-box;width:100%;padding:11px;border:1px solid #666;border-radius:6px;background:#181818;color:#fff;font-size:15px}
 .export-work-note{font-size:12px;line-height:1.7;color:#bbb}
-.export-work-footer{padding:14px 20px;border-top:1px solid #484848;display:flex;justify-content:flex-end}
+.export-work-footer{padding:14px 20px;border-top:1px solid #484848;display:flex;justify-content:center}
 .export-work-footer button{background:#454545;color:#fff;border:1px solid #777;border-radius:5px;padding:10px 20px;cursor:pointer}
 .export-work-footer button:hover{background:#5b5b5b}
 

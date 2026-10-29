@@ -17,7 +17,7 @@
 <div id="editorHomeHero" class="editor-home__hero">
 <img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
-<p class="editor-home__version">ver.0.1.75</p>
+<p class="editor-home__version">ver.0.1.76</p>
 <h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
 <img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
 <img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
@@ -52,7 +52,7 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
-<span class="editor-version">ver.0.1.75</span>
+<span class="editor-version">ver.0.1.76</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
 </div>
 <div class="top-actions">
@@ -67,13 +67,12 @@
 <label>作品タイトル <input id="exportTitle" type="text" maxlength="120" required placeholder="作品タイトル"></label>
 <label>作者名 <input id="exportAuthor" type="text" maxlength="120" required placeholder="作者名"></label>
 <div class="export-cover-setting">
-<div class="export-cover-label">トップページの背景画像（任意）</div>
+<div class="export-cover-label">トップページの背景画像（必須）</div>
 <div class="export-cover-camera"><canvas id="exportCoverCamera" width="640" height="360"></canvas><img id="exportCoverPhoto" alt="撮影した背景" hidden><span id="exportCoverEmpty">開始ワールドの画像をここに表示します</span></div>
-<div class="export-cover-actions"><button id="exportCoverShoot" type="button">カメラで撮影</button><button id="exportCoverClear" type="button">撮り直す・画像を削除</button></div>
-<p class="export-cover-help">ドラッグ：カメラ回転 ／ ホイール：ズーム。「カメラで撮影」で現在の画角を保存します。未撮影の場合は黒背景です。</p>
+<div class="export-cover-actions"><button id="exportCoverShoot" type="button">決定</button><button id="exportCoverClear" type="button">やり直す</button></div>
+<p class="export-cover-help">ドラッグ：カメラ回転 ／ ホイール：ズーム。画角を決めて「決定」を押してください。</p>
 </div>
 <label>ZIPファイル名 <input id="exportFileName" type="text" value="gururi-work" required maxlength="120"></label>
-<div class="export-work-note">開始画角は各ワールドの設定を使用します。背景は上のカメラで撮影できます（省略可）。書き出し完了後、ZIPを展開して「ぐるり作品.html」を開いてください。</div>
 </div>
 <div class="export-work-footer"><button id="exportConfirmBtn" type="submit">書き出す</button></div>
 </form>

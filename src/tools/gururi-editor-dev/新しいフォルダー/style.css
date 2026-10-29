@@ -961,3 +961,6 @@ flex-shrink:0;
 .export-work-footer{padding:14px 20px;border-top:1px solid #484848;display:flex;justify-content:flex-end}
 .export-work-footer button{background:#454545;color:#fff;border:1px solid #777;border-radius:5px;padding:10px 20px;cursor:pointer}
 .export-work-footer button:hover{background:#5b5b5b}
+
+/* Exported work cover-camera controls */
+.export-cover-setting{display:flex;flex-direction:column;gap:8px;margin:12px 0}.export-cover-label{font-weight:600}.export-cover-camera{position:relative;width:100%;max-width:640px;aspect-ratio:16/9;background:#111;border-radius:8px;overflow:hidden}.export-cover-camera canvas,.export-cover-camera img{width:100%;height:100%;display:block;object-fit:cover;touch-action:none}.export-cover-camera [hidden]{display:none!important}#exportCoverEmpty{position:absolute;inset:0;display:grid;place-items:center;color:#ccc;pointer-events:none}.export-cover-actions{display:flex;gap:8px;flex-wrap:wrap}.export-cover-actions button{padding:8px 14px;border-radius:6px;cursor:pointer}.export-cover-help{font-size:12px;opacity:.8;margin:0}

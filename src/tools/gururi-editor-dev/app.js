@@ -8608,6 +8608,7 @@ const title=document.getElementById('exportTitle').value.trim();
 const author=document.getElementById('exportAuthor').value.trim();
 const coverImage=exportCoverDataUrl;
 if(!title||!author)throw new Error('作品タイトルと作者名を入力してください。');
+if(!coverImage)throw new Error('トップページの背景画像を撮影して「決定」を押してください。');
 if(!state.worldFolders.length||!state.worldFolders[0]?.id)throw new Error('開始ワールドがありません。');
 setSaveProgress(5,'作品データを準備しています…');
 const metadata={
@@ -8850,6 +8851,7 @@ event.preventDefault();
 let name=exportFileNameInput.value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/[. ]+$/g,'');
 if(name.toLowerCase().endsWith('.zip'))name=name.slice(0,-4);
 if(!name){alert('ファイル名を入力してください。');return;}
+if(!exportCoverDataUrl){alert('トップページの背景画像を撮影して「決定」を押してください。');return;}
 const fileName=name+'.zip';
 let handle=null;
 if(typeof window.showSaveFilePicker==='function'&&window.isSecureContext){
