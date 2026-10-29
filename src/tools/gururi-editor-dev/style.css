@@ -1000,3 +1000,11 @@ flex-shrink:0;
 .text-overlay-list-row button:first-child{flex:1;text-align:left}
 .text-overlay-list-row button.selected{outline:2px solid #ff9900}
 .game-text-overlay{color:white;white-space:pre-wrap;overflow-wrap:anywhere;overflow:hidden;text-shadow:0 1px 3px #000,0 0 6px #000;box-sizing:border-box;pointer-events:none;line-height:1.35}
+
+/* Collapsible per-text settings */
+.text-overlay-list-entry{margin-bottom:8px}
+.text-overlay-list-row{display:flex;gap:8px;margin-bottom:0}
+.text-overlay-list-row button:first-child{flex:1;text-align:left}
+.text-overlay-inline-properties{padding:10px 10px 12px;border:1px solid var(--border-color,#444);border-top:0;border-radius:0 0 6px 6px}
+.text-overlay-inline-properties .setting-label:not(:first-child){margin-top:10px}
+.text-overlay-inline-properties textarea,.text-overlay-inline-properties input{width:100%;box-sizing:border-box}

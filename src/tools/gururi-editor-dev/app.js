@@ -1857,14 +1857,10 @@ settingsPanel.innerHTML=`<div class="settings-title">テキスト</div>
 <div class="setting-group"><div class="setting-label">配置（${state.displayMode==='pc'?'PC':'スマホ'}）</div>
 <div id="textOverlayEditor" class="media2d-editor text-overlay-editor" style="aspect-ratio:${layout.width}/${layout.height}"><canvas id="textOverlayBackground"></canvas><div id="textOverlayItems"></div></div>
 <div class="pan-help">文字をドラッグ：移動 / 四隅をドラッグ：幅・高さを変更。PC・スマホの配置は別々に保存されます。</div></div>
-<div class="setting-group"><div class="setting-label">テキスト一覧</div><div id="textOverlayList"></div><button type="button" id="textOverlayAdd" class="add-world-btn">＋</button></div>
-<div class="setting-group" id="textOverlayProperties"><div class="setting-label">テキスト内容</div><textarea id="textOverlayContent" class="dialogue-textarea" rows="3"></textarea><div class="setting-label">フォントサイズ（px）</div><input id="textOverlayFontSize" class="number-input" type="number" min="8" max="200" step="1"></div>`;
+<div class="setting-group"><div class="setting-label">テキスト一覧</div><div id="textOverlayList"></div><button type="button" id="textOverlayAdd" class="add-world-btn">＋ テキストを追加</button></div>`;
 const editor=document.getElementById('textOverlayEditor');
 const items=document.getElementById('textOverlayItems');
 const list=document.getElementById('textOverlayList');
-const props=document.getElementById('textOverlayProperties');
-const content=document.getElementById('textOverlayContent');
-const fontSize=document.getElementById('textOverlayFontSize');
 const background=document.getElementById('textOverlayBackground');
 const previous=findPreviousClickMediaNode(node.id);
 const source=previous?.type==='world'?previous.world.image:previous?.type==='animation'?mediaLibrary.find(m=>m.id===previous.animation.mediaId)?.video:null;
@@ -1874,8 +1870,8 @@ const drawBackground=()=>{if(background.isConnected)drawPanoramaPreview(backgrou
 requestAnimationFrame(drawBackground);
 if(source.tagName==='VIDEO')source.addEventListener('loadeddata',drawBackground,{once:true});
 }
-function draw(){
-items.replaceChildren();list.replaceChildren();
+function drawPreview(){
+items.replaceChildren();
 for(const item of node.textBoxes){
 const position=getTextOverlayPosition(item);
 const selected=item.id===selectedId;
@@ -1886,15 +1882,10 @@ label.style.fontSize=`${(Number(item.fontSize)||32)*editor.clientWidth/(state.di
 box.append(label);
 for(const corner of ['nw','ne','sw','se']){const h=document.createElement('span');h.className=`media2d-handle media2d-handle-${corner}`;h.dataset.corner=corner;box.append(h);}
 items.append(box);
-const row=document.createElement('div');row.className='text-overlay-list-row';
-const pick=document.createElement('button');pick.type='button';pick.textContent=item.text?.slice(0,24)||'（空のテキスト）';pick.className=selected?'selected':'';
-pick.addEventListener('click',()=>{selectedId=item.id;draw();});
-const remove=document.createElement('button');remove.type='button';remove.textContent='削除';remove.addEventListener('click',()=>{node.textBoxes=node.textBoxes.filter(i=>i.id!==item.id);if(selectedId===item.id)selectedId=node.textBoxes[0]?.id||null;draw();});
-row.append(pick,remove);list.append(row);
 let drag=null;
 box.addEventListener('pointerdown',e=>{
 if(e.button!==0)return;
-if(selectedId!==item.id){selectedId=item.id;updateProperties();}
+if(selectedId!==item.id){selectedId=item.id;drawList();}
 box.classList.add('selected');
 const corner=e.target.dataset.corner||null;
 drag={id:e.pointerId,x:e.clientX,y:e.clientY,corner,start:{...position}};
@@ -1915,20 +1906,37 @@ else position.h=Math.max(1,a.h+dy);
 }
 Object.assign(box.style,{left:position.x+'%',top:position.y+'%',width:position.w+'%',height:position.h+'%'});
 });
-const end=e=>{if(drag?.id!==e.pointerId)return;drag=null;draw();};
+const end=e=>{if(drag?.id!==e.pointerId)return;drag=null;drawPreview();};
 box.addEventListener('pointerup',end);box.addEventListener('pointercancel',end);
 }
-updateProperties();
 }
-function updateProperties(){
-const item=node.textBoxes.find(i=>i.id===selectedId);
-props.style.display=item?'':'none';
-if(item){content.value=item.text||'';fontSize.value=item.fontSize||32;}
+function drawList(){
+list.replaceChildren();
+node.textBoxes.forEach((item,index)=>{
+const expanded=item.id===selectedId;
+const wrapper=document.createElement('div');wrapper.className='text-overlay-list-entry';
+const row=document.createElement('div');row.className='text-overlay-list-row';
+const pick=document.createElement('button');pick.type='button';pick.textContent=`${expanded?'▼':'▶'} テキスト${index+1}`;pick.className=expanded?'selected':'';
+pick.setAttribute('aria-expanded',String(expanded));
+pick.addEventListener('click',()=>{selectedId=expanded?null:item.id;drawList();drawPreview();});
+const remove=document.createElement('button');remove.type='button';remove.textContent='削除';
+remove.addEventListener('click',()=>{node.textBoxes=node.textBoxes.filter(i=>i.id!==item.id);if(selectedId===item.id)selectedId=node.textBoxes[0]?.id||null;drawList();drawPreview();});
+row.append(pick,remove);wrapper.append(row);
+if(expanded){
+const props=document.createElement('div');props.className='text-overlay-inline-properties';
+const contentLabel=document.createElement('div');contentLabel.className='setting-label';contentLabel.textContent='テキスト内容';
+const content=document.createElement('textarea');content.className='dialogue-textarea';content.rows=3;content.value=item.text||'';
+content.addEventListener('input',()=>{item.text=content.value;drawPreview();});
+const fontLabel=document.createElement('div');fontLabel.className='setting-label';fontLabel.textContent='フォントサイズ（px）';
+const fontSize=document.createElement('input');fontSize.className='number-input';fontSize.type='number';fontSize.min='8';fontSize.max='200';fontSize.step='1';fontSize.value=item.fontSize||32;
+fontSize.addEventListener('input',()=>{item.fontSize=Math.max(8,Math.min(200,Number(fontSize.value)||32));drawPreview();});
+props.append(contentLabel,content,fontLabel,fontSize);wrapper.append(props);
 }
-content.addEventListener('input',()=>{const item=node.textBoxes.find(i=>i.id===selectedId);if(item){item.text=content.value;draw();}});
-fontSize.addEventListener('input',()=>{const item=node.textBoxes.find(i=>i.id===selectedId);if(item){item.fontSize=Math.max(8,Math.min(200,Number(fontSize.value)||32));draw();}});
-document.getElementById('textOverlayAdd').addEventListener('click',()=>{const item=makeTextOverlayBox();node.textBoxes.push(item);selectedId=item.id;draw();});
-requestAnimationFrame(()=>{if(editor.isConnected)draw();});
+list.append(wrapper);
+});
+}
+document.getElementById('textOverlayAdd').addEventListener('click',()=>{const item=makeTextOverlayBox();node.textBoxes.push(item);selectedId=item.id;drawList();drawPreview();});
+requestAnimationFrame(()=>{if(editor.isConnected){drawList();drawPreview();}});
 }
 function showTextOverlay(node){
 for(const item of node.textBoxes||[]){
