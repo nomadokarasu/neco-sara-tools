@@ -8590,6 +8590,13 @@ button.disabled=false;
 }
 
 document.getElementById('saveGartBtn').addEventListener('click',()=>saveGartProject(false));
+
+window.addEventListener('keydown',e=>{
+if(!(e.ctrlKey||e.metaKey)||e.altKey||e.key.toLowerCase()!=='s')return;
+e.preventDefault();
+e.stopImmediatePropagation();
+if(!e.repeat)saveGartProject(false);
+},true);
 document.getElementById('openGartBtn').addEventListener('click',()=>document.getElementById('gartFileInput').click());
 document.getElementById('gartFileInput').addEventListener('change',async e=>{
 const file=e.target.files?.[0];
