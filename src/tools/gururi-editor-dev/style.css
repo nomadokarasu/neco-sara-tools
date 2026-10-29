@@ -984,3 +984,8 @@ flex-shrink:0;
 .sequence-preview-controls button,.sequence-wizard-actions button{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}
 .sequence-wizard-actions{display:flex;flex-wrap:wrap;gap:8px}
 .sequence-wizard{width:min(570px,100%)}
+
+/* 連番PNG：ZIP操作は見出しの下、フレーム追加は一覧の末尾 */
+.sequence-frame-list{display:contents}
+.sequence-frame-tabs [data-seq-add],.sequence-zip-row [data-seq-zip]{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}
+.sequence-wizard-footer{justify-content:flex-end}
