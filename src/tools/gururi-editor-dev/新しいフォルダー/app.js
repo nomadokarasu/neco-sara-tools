@@ -1,6 +1,3 @@
-
-
-
 // Preview diagnostic recorder: bounded in-memory events, exported only on user click.
 const previewDiagnosticEvents=[];
 const previewDiagnosticErrors=[];
@@ -1265,8 +1262,7 @@ if(clickLayerFolder?.layers?.length){
  }
  settingsPanel.appendChild(group);
 }
-// 一時テスト：クリックノードの360°プレビュー初期化を停止
-// deferSelectedNodePreview(node,'clickPreviewCanvas',()=>setupClickTriggerPreview(node,sourceNode));
+deferSelectedNodePreview(node,'clickPreviewCanvas',()=>setupClickTriggerPreview(node,sourceNode));
 const normalOnceGroup=document.createElement('div');
 normalOnceGroup.className='setting-group';
 normalOnceGroup.innerHTML=`<label><input id="clickNormalOnceInput" type="checkbox" ${node.clickNormalOnce===true?'checked':''}> 通常のクリックを一度だけ実行する</label>`;
@@ -4404,10 +4400,16 @@ const isVideo=world.image instanceof HTMLVideoElement;
 
 if(isVideo&&world.image.readyState<2)return;
 
-if(isVideo||world.image instanceof HTMLCanvasElement||renderer.image!==world.image){
+const compositeVersion=world.image instanceof HTMLCanvasElement
+?clickEditorCompositeVersions.get(world.image)
+:undefined;
+if(isVideo||renderer.image!==world.image||
+(compositeVersion===undefined&&world.image instanceof HTMLCanvasElement)||
+(compositeVersion!==undefined&&renderer.compositeVersion!==compositeVersion)){
 gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
 gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,world.image);
 renderer.image=world.image;
+renderer.compositeVersion=compositeVersion;
 }
 const fov=Math.max(35,Math.min(100,75/world.zoom))*Math.PI/180;
 gl.uniform1i(renderer.textureUniform,0);
@@ -4760,27 +4762,54 @@ node.clickPolygon=cloneClickPolygon(points);
 
 // 編集時はワールドの基本画像に、登録済みの透明PNGを全て重ねる。
 // ゲーム内の表示条件は無視し、投げ縄の位置合わせをしやすくする。
+// Static click-editor panoramas are composited once per visible layer combination.
+// Dynamic video is deliberately not cached.
 const clickEditorCompositeCanvases=new Map();
+const clickEditorCompositeVersions=new WeakMap();
+let clickEditorCompositeVersion=0;
 function getClickEditorComposite(sourceNode,clickNode=null){
- const folder=state.worldFolders?.find(f=>f.backerId===sourceNode?.id);
- if(!folder)return sourceNode?.world?.image||null;
- const media=getFolderMedia(folder);
- const base=media?.image||media?.video||sourceNode.world?.image;
- if(!base)return null;
- const width=media?.width||base.videoWidth||base.naturalWidth||base.width||2048;
- const height=media?.height||base.videoHeight||base.naturalHeight||base.height||1024;
- let canvas=clickEditorCompositeCanvases.get(folder.id);
- if(!canvas){canvas=document.createElement('canvas');clickEditorCompositeCanvases.set(folder.id,canvas);}
- if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
- const ctx=canvas.getContext('2d');
- ctx.clearRect(0,0,width,height);
- try{ctx.drawImage(base,0,0,width,height);}catch(_e){return base;}
- for(const layer of folder.layers||[]){
-  if(clickNode?.clickHiddenLayerIds?.includes(layer.id))continue;
-  const overlay=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png')?.image;
-  if(overlay){try{ctx.drawImage(overlay,0,0,width,height);}catch(_e){}}
- }
- return canvas;
+const folder=state.worldFolders?.find(f=>f.backerId===sourceNode?.id);
+if(!folder)return sourceNode?.world?.image||null;
+const media=getFolderMedia(folder);
+const base=media?.image||media?.video||sourceNode.world?.image;
+if(!base)return null;
+const rawWidth=media?.width||base.videoWidth||base.naturalWidth||base.width||2048;
+const rawHeight=media?.height||base.videoHeight||base.naturalHeight||base.height||1024;
+const scale=Math.min(1,2048/Math.max(1,rawWidth));
+const width=Math.max(1,Math.round(rawWidth*scale));
+const height=Math.max(1,Math.round(rawHeight*scale));
+const hidden=new Set(clickNode?.clickHiddenLayerIds||[]);
+const layers=(folder.layers||[]).filter(layer=>!hidden.has(layer.id)).map(layer=>({
+id:layer.id,
+mediaId:layer.mediaId,
+image:mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png')?.image||null
+}));
+const key=folder.id+'|'+[...hidden].sort().join(',');
+let entry=clickEditorCompositeCanvases.get(key);
+if(!entry){entry={canvas:document.createElement('canvas'),signature:[]};clickEditorCompositeCanvases.set(key,entry);}
+const signature=[base,width,height,base.complete,base.naturalWidth,base.naturalHeight,
+...layers.flatMap(l=>[l.id,l.mediaId,l.image,l.image?.complete,l.image?.naturalWidth,l.image?.naturalHeight])];
+const dynamic=base instanceof HTMLVideoElement;
+const changed=dynamic||entry.signature.length!==signature.length||signature.some((value,i)=>value!==entry.signature[i]);
+if(!changed)return entry.canvas;
+const canvas=entry.canvas;
+if(canvas.width!==width)canvas.width=width;
+if(canvas.height!==height)canvas.height=height;
+const ctx=canvas.getContext('2d');
+if(!ctx)return base;
+ctx.clearRect(0,0,width,height);
+try{ctx.drawImage(base,0,0,width,height);}catch(_e){return base;}
+for(const layer of layers){
+if(layer.image){try{ctx.drawImage(layer.image,0,0,width,height);}catch(_e){}}
+}
+entry.signature=signature;
+clickEditorCompositeVersions.set(canvas,++clickEditorCompositeVersion);
+// Bound retained composites when many layer visibility combinations are used.
+if(clickEditorCompositeCanvases.size>12){
+const oldest=clickEditorCompositeCanvases.keys().next().value;
+if(oldest!==key)clickEditorCompositeCanvases.delete(oldest);
+}
+return canvas;
 }
 function getClickLassoWorld(node,sourceNode){
  const image=sourceNode.type==='animation'
@@ -4816,7 +4845,7 @@ if(!ctx)return;
 ctx.setTransform(dpr,0,0,dpr,0,0);
 ctx.clearRect(0,0,rect.width,rect.height);
 
-const world=getClickLassoWorld(node,worldNode);
+const world=node.clickView;
 const regions=node.clickRegions||[];
 
 const projectPoints=points=>{
@@ -5139,7 +5168,7 @@ drawClickLassoOverlay(node,worldNode);
 };
 
 const addPoint=e=>{
-const world=getClickLassoWorld(node,worldNode);
+const world=node.clickView;
 
 const point=screenPointToWorldAngles(
 lassoCanvas,
@@ -9317,4 +9346,3 @@ return originalWorldCompositeTick.apply(this,args);
 
 const saveAsGartButton=document.getElementById('saveAsGartBtn');
 if(saveAsGartButton)saveAsGartButton.addEventListener('click',()=>saveGartProject(true));
-
