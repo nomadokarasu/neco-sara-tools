@@ -843,7 +843,6 @@ originY:node.y
 el.setPointerCapture(e.pointerId);
 e.preventDefault();
 
-renderConnections();
 renderSettings();
 });
 
@@ -884,11 +883,29 @@ function selectNode(id){
 state.selectedNodeId=id;
 state.selectedNodeIds.clear();
 state.selectedConnectionId=null;
-renderNodes();
+for(const el of nodesLayer.querySelectorAll('.node')){
+el.classList.toggle('selected',el.dataset.id===id);
+}
 renderSettings();
 }
 
+// Show the settings controls before starting expensive panorama previews.
+// An old preview must not initialize after another node was selected.
+let settingsPreviewGeneration=0;
+function deferSelectedNodePreview(node,canvasId,setup){
+const generation=++settingsPreviewGeneration;
+const canvas=document.getElementById(canvasId);
+requestAnimationFrame(()=>requestAnimationFrame(()=>{
+if(generation!==settingsPreviewGeneration)return;
+if(state.selectedNodeId!==node.id)return;
+if(!canvas||!canvas.isConnected)return;
+if(document.getElementById(canvasId)!==canvas)return;
+setup();
+}));
+}
+
 function renderSettings(){
+settingsPreviewGeneration++;
 if(cleanupAnimationSettingsPreview){
 cleanupAnimationSettingsPreview();
 cleanupAnimationSettingsPreview=null;
@@ -1248,7 +1265,7 @@ if(clickLayerFolder?.layers?.length){
  }
  settingsPanel.appendChild(group);
 }
-setupClickTriggerPreview(node,sourceNode);
+deferSelectedNodePreview(node,'clickPreviewCanvas',()=>setupClickTriggerPreview(node,sourceNode));
 const normalOnceGroup=document.createElement('div');
 normalOnceGroup.className='setting-group';
 normalOnceGroup.innerHTML=`<label><input id="clickNormalOnceInput" type="checkbox" ${node.clickNormalOnce===true?'checked':''}> 通常のクリックを一度だけ実行する</label>`;
@@ -1370,8 +1387,8 @@ settingsPanel.innerHTML=`
 <button id="addDialogueBtn" class="add-world-btn dialogue-add-full" type="button">ダイアローグを追加</button>
 </div>`;
 
-setupDialogueTriggerPreview(node,previousMedia);
 setupDialogueAppearance(node);
+deferSelectedNodePreview(node,'dialoguePreviewCanvas',()=>setupDialogueTriggerPreview(node,previousMedia));
 return;
 }
 renderMediaNodeSettings(node);
@@ -1399,8 +1416,10 @@ settingsPanel.innerHTML=`<div class="settings-title">オプション</div>
 setupDialogueAppearance(node);
 const originalPages=node.dialoguePages;
 const addButton=document.createElement('button');addButton.id='addDialogueBtn';addButton.hidden=true;settingsPanel.appendChild(addButton);
+deferSelectedNodePreview(node,'dialoguePreviewCanvas',()=>{
 setupDialogueTriggerPreview(node,source);
 addButton.remove();
+});
 const question=document.getElementById('optionQuestion');
 question.addEventListener('input',()=>{
 node.dialoguePages=[question.value.slice(0,60)];
@@ -4741,84 +4760,26 @@ node.clickPolygon=cloneClickPolygon(points);
 // 編集時はワールドの基本画像に、登録済みの透明PNGを全て重ねる。
 // ゲーム内の表示条件は無視し、投げ縄の位置合わせをしやすくする。
 const clickEditorCompositeCanvases=new Map();
-const clickEditorCompositeCache=new Map();
-
 function getClickEditorComposite(sourceNode,clickNode=null){
-const folder=state.worldFolders?.find(f=>f.backerId===sourceNode?.id);
-if(!folder)return sourceNode?.world?.image||null;
-
-const media=getFolderMedia(folder);
-const base=media?.image||media?.video||sourceNode.world?.image;
-if(!base)return null;
-
-const originalWidth=media?.width||base.videoWidth||base.naturalWidth||base.width||2048;
-const originalHeight=media?.height||base.videoHeight||base.naturalHeight||base.height||1024;
-
-const previewScale=Math.min(1,1024/originalWidth);
-
-const width=Math.max(1,Math.round(originalWidth*previewScale));
-const height=Math.max(1,Math.round(originalHeight*previewScale));
-
-let canvas=clickEditorCompositeCanvases.get(folder.id);
-if(!canvas){
-canvas=document.createElement('canvas');
-clickEditorCompositeCanvases.set(folder.id,canvas);
-}
-
-const layers=(folder.layers||[])
-.filter(layer=>!clickNode?.clickHiddenLayerIds?.includes(layer.id))
-.map(layer=>({
-id:layer.id,
-mediaId:layer.mediaId,
-image:mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png')?.image||null
-}));
-
-const signature=[
-base,width,height,
-...layers.flatMap(layer=>[layer.id,layer.mediaId,layer.image])
-];
-
-const cached=clickEditorCompositeCache.get(folder.id);
-
-const canReuse=
-!clickNode&&
-!(base instanceof HTMLVideoElement)&&
-cached&&
-cached.signature.length===signature.length&&
-cached.signature.every((value,index)=>value===signature[index])&&
-canvas.width===width&&
-canvas.height===height;
-
-if(canReuse)return canvas;
-
-clickEditorCompositeCache.delete(folder.id);
-
-if(canvas.width!==width||canvas.height!==height){
-canvas.width=width;
-canvas.height=height;
-}
-
-const ctx=canvas.getContext('2d');
-ctx.clearRect(0,0,width,height);
-
-try{
-ctx.drawImage(base,0,0,width,height);
-}catch(_e){
-return base;
-}
-
-for(const layer of layers){
-if(!layer.image)continue;
-try{
-ctx.drawImage(layer.image,0,0,width,height);
-}catch(_e){}
-}
-
-if(!clickNode&&!(base instanceof HTMLVideoElement)){
-clickEditorCompositeCache.set(folder.id,{signature});
-}
-
-return canvas;
+ const folder=state.worldFolders?.find(f=>f.backerId===sourceNode?.id);
+ if(!folder)return sourceNode?.world?.image||null;
+ const media=getFolderMedia(folder);
+ const base=media?.image||media?.video||sourceNode.world?.image;
+ if(!base)return null;
+ const width=media?.width||base.videoWidth||base.naturalWidth||base.width||2048;
+ const height=media?.height||base.videoHeight||base.naturalHeight||base.height||1024;
+ let canvas=clickEditorCompositeCanvases.get(folder.id);
+ if(!canvas){canvas=document.createElement('canvas');clickEditorCompositeCanvases.set(folder.id,canvas);}
+ if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+ const ctx=canvas.getContext('2d');
+ ctx.clearRect(0,0,width,height);
+ try{ctx.drawImage(base,0,0,width,height);}catch(_e){return base;}
+ for(const layer of folder.layers||[]){
+  if(clickNode?.clickHiddenLayerIds?.includes(layer.id))continue;
+  const overlay=mediaLibrary.find(m=>m.id===layer.mediaId&&m.fileType==='png')?.image;
+  if(overlay){try{ctx.drawImage(overlay,0,0,width,height);}catch(_e){}}
+ }
+ return canvas;
 }
 function getClickLassoWorld(node,sourceNode){
  const image=sourceNode.type==='animation'
@@ -4854,11 +4815,7 @@ if(!ctx)return;
 ctx.setTransform(dpr,0,0,dpr,0,0);
 ctx.clearRect(0,0,rect.width,rect.height);
 
-const world={
-yaw:node.clickView.yaw,
-pitch:node.clickView.pitch,
-zoom:node.clickView.zoom
-};
+const world=getClickLassoWorld(node,worldNode);
 const regions=node.clickRegions||[];
 
 const projectPoints=points=>{
@@ -5181,7 +5138,7 @@ drawClickLassoOverlay(node,worldNode);
 };
 
 const addPoint=e=>{
-const world=node.clickView;
+const world=getClickLassoWorld(node,worldNode);
 
 const point=screenPointToWorldAngles(
 lassoCanvas,
@@ -6049,10 +6006,7 @@ return value;
 }
 function commitEditorHistory(before){
 if(!before||editorHistory.restoring)return;
-if(editorHistorySignature(before)===editorHistorySignature({
-nodes:state.nodes,
-connections:state.connections
-}))return;
+if(editorHistorySignature(before)===editorHistorySignature(editorSnapshot()))return;
 editorHistory.undo.push(before);
 if(editorHistory.undo.length>editorHistory.limit)editorHistory.undo.shift();
 editorHistory.redo=[];
@@ -6577,18 +6531,9 @@ return d;
 function renderConnections(){
 connectionsSvg.innerHTML='';
 
-const portMap=new Map();
-
-for(const nodeEl of nodesLayer.querySelectorAll('.node')){
-portMap.set(nodeEl.dataset.id,{
-input:nodeEl.querySelector('.port.input'),
-output:nodeEl.querySelector('.port.output')
-});
-}
-
 for(const c of state.connections){
-const fromEl=portMap.get(c.from)?.output;
-const toEl=portMap.get(c.to)?.input;
+const fromEl=nodesLayer.querySelector(`.node[data-id="${c.from}"] .port.output`);
+const toEl=nodesLayer.querySelector(`.node[data-id="${c.to}"] .port.input`);
 
 if(!fromEl||!toEl)continue;
 
@@ -8454,13 +8399,6 @@ return result;
 const saveProgressUI=()=>({root:document.getElementById('saveProgressOverlay'),bar:document.getElementById('saveProgressBar'),message:document.getElementById('saveProgressMessage')});
 function setSaveProgress(percent,message){const ui=saveProgressUI();if(!ui.root)return;ui.root.hidden=false;ui.bar.value=percent;ui.message.textContent=message;}
 function endSaveProgress(){const ui=saveProgressUI();if(ui.root)ui.root.hidden=true;}
-
-async function setOpenProgress(percent,message){
-setSaveProgress(percent,message);
-const title=saveProgressUI().root?.querySelector('.save-progress-dialog strong');
-if(title)title.textContent='作品データを開いています';
-await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
-}
 let currentGartSaveHandle=null;
 async function writeProjectFile(blob,saveAs=false){
  if(currentGartSaveHandle){const stream=await currentGartSaveHandle.createWritable();setSaveProgress(92,'上書き保存しています…');await stream.write(blob);await stream.close();return true;}
@@ -8524,9 +8462,7 @@ const button=document.getElementById('openGartBtn');
 button.disabled=true;
 const previousMedia=[...mediaLibrary];
 try{
-await setOpenProgress(5,'ファイルを確認しています…');
 const entries=await gartReadZip(file);
-await setOpenProgress(15,'プロジェクト情報を確認しています…');
 const json=entries.get('project.json');
 if(!json)throw new Error('project.jsonがありません。');
 const data=JSON.parse(await json.text());
@@ -8541,32 +8477,17 @@ if(!item||!['png','jpg','mp4','pngseq'].includes(item.fileType))throw new Error(
   if(!Array.isArray(item.frameNames)||!item.frameNames.length||item.frameNames.some((_,i)=>!entries.has(item.path+String(i).padStart(5,'0')+'.png')))throw new Error('連番PNGが不足しています。');
  }else if(!entries.has(item.path))throw new Error('素材が不足しています。');
 }
-let loadedMediaCount=0;
-const totalMediaCount=data.media.length;
-
 for(const item of data.media){
-await setOpenProgress(
-20+Math.round(65*loadedMediaCount/Math.max(1,totalMediaCount)),
-`素材を読み込んでいます…（${loadedMediaCount+1} / ${totalMediaCount}）`
-);
-
 if(item.fileType==='pngseq'){
-const files=item.frameNames.map((name,i)=>new File([entries.get(item.path+String(i).padStart(5,'0')+'.png')],name,{type:'image/png'}));
-const imported=await importPngSequence(files,Number(item.fps)||8);
-imported.id=item.id;
-imported.fileName=item.fileName;
-}else{
+ const files=item.frameNames.map((name,i)=>new File([entries.get(item.path+String(i).padStart(5,'0')+'.png')],name,{type:'image/png'}));
+ const imported=await importPngSequence(files,Number(item.fps)||8);imported.id=item.id;imported.fileName=item.fileName;continue;
+}
 const blob=entries.get(item.path);
 const mimeType=item.fileType==='png'?'image/png':item.fileType==='jpg'?'image/jpeg':'video/mp4';
 const assetFile=new File([blob],item.fileName,{type:mimeType});
 const imported=await importMediaFile(assetFile);
 imported.id=item.id;
 }
-
-loadedMediaCount++;
-}
-
-await setOpenProgress(85,'編集画面を復元しています…');
 const restoredMedia=mediaLibrary.slice(previousMedia.length);
 for(const node of data.nodes){
 if(node.world){
@@ -8598,7 +8519,6 @@ updateLayoutControls();
 renderMediaList();
 updateWorldTabs();renderNodes();
 renderSettings();renderFolderSettings();
-await setOpenProgress(100,'読み込みが完了しました');
 }catch(error){
 console.error(error);
 for(const media of mediaLibrary.slice(previousMedia.length)){
@@ -8609,7 +8529,6 @@ renderMediaList();
 renderSettings();
 alert(`プロジェクトを開けませんでした。現在の編集内容は維持されています。\n${error.message}`);
 }finally{
-endSaveProgress();
 button.disabled=false;
 }
 }

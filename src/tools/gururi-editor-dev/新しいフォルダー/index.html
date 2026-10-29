@@ -1,0 +1,325 @@
+
+
+
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ぐるりエディタ</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="editorHomePage" class="editor-home is-open" aria-label="ぐるりエディタ トップページ">
+<div class="editor-home__inner">
+<div class="editor-home__language" role="group" aria-label="Language">
+<button type="button" data-editor-home-lang="ja" aria-pressed="true">日本語</button>
+<button type="button" data-editor-home-lang="en" aria-pressed="false">English</button>
+</div>
+<header class="editor-home__header">
+<div id="editorHomeHero" class="editor-home__hero">
+<img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
+</div>
+<p class="editor-home__version">ver.0.1.78</p>
+<h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
+<img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
+<img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
+</h1>
+</header>
+<div class="editor-home__intro">
+<p id="editorHomeDescription">ぐるりペイントで描いた素材を組み合わせて、インタラクティブ作品を制作できます。</p>
+<button type="button" id="editorHomeStart" class="editor-home__start">はじめる</button>
+</div>
+<main class="editor-home__content">
+<section id="editorHomeImportantSection" class="editor-home__section editor-home__important" hidden>
+<h2 id="editorHomeImportantHeading">重要なお知らせ</h2>
+<div id="editorHomeImportantList"></div>
+</section>
+<section class="editor-home__section">
+<h2 id="editorHomeNoticeHeading">お知らせ</h2>
+<div id="editorHomeNoticeList" class="editor-home__items"></div>
+</section>
+<section class="editor-home__section">
+<h2 id="editorHomeProductsHeading">製品情報</h2>
+<div id="editorHomeProducts" class="editor-home__items"></div>
+</section>
+<section class="editor-home__section">
+<h2 id="editorHomeLinksHeading">関連ページ</h2>
+<div id="editorHomeLinks" class="editor-home__items"></div>
+</section>
+</main>
+<footer class="editor-home__footer">© JUNOTA</footer>
+</div>
+</div>
+<div id="app">
+<header class="topbar">
+<div class="topbar-brand">
+<button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
+<span class="editor-version">ver.0.1.78</span>
+<button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
+</div>
+<div class="top-actions">
+<button id="saveGartBtn" type="button" class="primary-btn">保存 .gart</button>
+<button id="saveAsGartBtn" type="button" class="primary-btn">別名で保存</button>
+<button id="openGartBtn" type="button" class="primary-btn">開く .gart</button>
+<button id="exportWorkBtn" type="button" class="primary-btn">作品を書き出す</button>
+<div id="exportSettingsModal" class="hidden export-work-overlay" role="dialog" aria-modal="true" aria-labelledby="exportSettingsTitle">
+<form id="exportSettingsForm" class="export-work-panel">
+<div class="export-work-header"><h2 id="exportSettingsTitle">ぐるり作品として書き出す</h2><button id="exportCancelBtn" type="button" aria-label="閉じる">×</button></div>
+<div class="export-work-content">
+<label>作品タイトル <input id="exportTitle" type="text" maxlength="120" required placeholder="作品タイトル"></label>
+<label>作者名 <input id="exportAuthor" type="text" maxlength="120" required placeholder="作者名"></label>
+<label>作者URL（任意） <input id="exportAuthorUrl" type="url" maxlength="500" placeholder="https://"></label>
+<label>ZIPファイル名 <input id="exportFileName" type="text" value="gururi-work" required maxlength="120"></label>
+<div class="export-work-note">開始画角は各ワールドの設定を使用します。サムネイルは開始ワールドの画像から生成します。書き出し完了後、ZIPを展開して「ぐるり作品.html」を開いてください。</div>
+</div>
+<div class="export-work-footer"><button id="exportConfirmBtn" type="submit">書き出す</button></div>
+</form>
+</div>
+<button id="playBtn" class="primary-btn" type="button">▶ 再生</button>
+<div class="device-switch">
+<button id="pcModeBtn" class="device-btn active" type="button">PC</button>
+<button id="mobileModeBtn" class="device-btn" type="button">スマホ</button>
+</div>
+<div class="ratio-control">
+<span>画面比率</span>
+<input id="ratioWidthInput" class="ratio-input" type="number" min="1" max="100" step="1" value="16">
+<span>:</span>
+<input id="ratioHeightInput" class="ratio-input" type="number" min="1" max="100" step="1" value="9">
+</div>
+</div>
+</header>
+<section id="mediaPanel" class="media-popup hidden" aria-label="素材管理パネル">
+<div class="media-popup-header">
+<strong>素材一覧</strong>
+<div class="media-popup-actions">
+<button id="addMediaBtn" class="media-popup-add" type="button">＋ 素材を追加</button>
+<button id="closeMediaPanelBtn" class="media-popup-close" type="button" aria-label="閉じる">×</button>
+</div>
+</div>
+<div id="mediaList" class="media-list">
+<div class="settings-empty">素材はまだありません</div>
+</div>
+</section>
+<nav id="worldTabs" class="world-tabs" aria-label="ワールド編集タブ"></nav>
+<div class="main-layout">
+<main id="workspace" class="workspace" tabindex="0" aria-label="ゲーム作業エリア">
+<div id="workspaceScene" class="workspace-scene">
+<svg id="connections" class="connections" aria-hidden="true"></svg>
+<div id="nodesLayer" class="nodes-layer"></div>
+</div>
+<div id="contextMenu" class="context-menu hidden" role="menu">
+<button type="button" class="menu-parent" data-menu="material">▶ 素材</button>
+<div id="materialMenu" class="submenu hidden">
+<button type="button" data-create="animation">アニメーション（MP4）</button>
+<button type="button" data-create="animationSeq">アニメーション（連番PNG）</button>
+</div>
+<button type="button" class="menu-parent" data-menu="trigger">▶ トリガー</button>
+<div id="triggerMenu" class="submenu hidden">
+<button type="button" data-create="click">クリック</button>
+<button type="button" data-create="time">時間</button>
+<button type="button" data-create="frameIn">フレームイン</button>
+</div>
+<button type="button" class="menu-parent" data-menu="effect">▶ 効果</button>
+<div id="effectMenu" class="submenu hidden">
+<button type="button" data-create="fadeIn">フェードイン</button>
+<button type="button" data-create="fadeOut">フェードアウト</button>
+</div>
+<button type="button" class="menu-parent" data-menu="event">▶ イベント</button>
+<div id="eventMenu" class="submenu hidden">
+<button type="button" data-create="itemAcquire">アイテム取得</button>
+<button type="button" data-create="eventRecord">イベント記録</button>
+<button type="button" data-create="gameReset">リセット</button>
+</div>
+<button type="button" class="menu-parent" data-menu="branch">▶ 分岐</button>
+<div id="branchMenu" class="submenu hidden">
+<button type="button" data-create="condition">条件分岐</button>
+<button type="button" data-create="random">ランダム</button>
+<button type="button" data-create="option">オプション</button>
+<button type="button" data-create="toggle">トグル</button>
+<button type="button" data-create="toggleSet">トグル切り替え</button>
+</div>
+<button type="button" class="menu-parent" data-menu="panel">▶ UI</button>
+<div id="panelMenu" class="submenu hidden">
+<button type="button" data-create="uiButton">ボタン</button>
+<button type="button" data-create="dialogue">ダイアローグ</button>
+<button type="button" data-create="textAnswer">テキスト入力</button>
+<button type="button" data-create="media2d">2D素材</button>
+</div>
+<div class="menu-separator" role="separator"></div>
+<button type="button" data-create="worldMove">ワールド移動</button>
+<button type="button" data-create="keyframe">カメラ操作</button>
+</div>
+</main>
+<aside class="editor-sidebar">
+<section id="settingsPanel" class="settings-panel">
+<div class="settings-empty">ノードを選択してください</div>
+</section>
+</aside>
+</div>
+<div id="gamePreview" class="game-preview hidden">
+<button id="exportPreviewDiagnosticBtn" class="export-preview-diagnostic" type="button" title="ゲームの状態とエラーをテキスト保存">診断ログを保存</button>
+<button id="closePreviewBtn" class="close-preview" type="button">×</button>
+<div id="gameViewport" class="game-viewport">
+<canvas id="gameCanvas"></canvas>
+<div id="media2DLayer" class="media2d-layer"></div>
+<div id="fadeOverlay" class="fade-overlay"></div>
+<div id="dialogueOverlay" class="game-dialogue hidden">
+<div id="dialogueText" class="game-dialogue-text"></div>
+<div class="dialogue-arrow">▼</div>
+</div>
+<div id="optionChoicesOverlay" class="option-choices-overlay hidden"></div>
+<div id="textAnswerOverlay" class="game-text-answer-overlay hidden"></div>
+<label id="equippedItemLabel" class="equipped-item-label hidden" for="equippedItemSelect">
+<span>装備中のアイテム：</span>
+<select id="equippedItemSelect" aria-label="装備中のアイテムを選択"><option value="">なし</option></select>
+</label>
+<button id="inventoryButton" class="inventory-button hidden" type="button" aria-label="メニューを開く" aria-expanded="false">☰</button>
+<div id="inventoryMenu" class="inventory-menu hidden">
+<button id="inventoryToolboxButton" type="button">道具箱</button>
+</div>
+<div id="inventoryOverlay" class="inventory-overlay hidden"></div>
+<div id="previewMessage" class="preview-message"></div>
+</div>
+</div>
+</div>
+<input id="gartFileInput" type="file" accept=".gart" hidden>
+<input id="worldFileInput" type="file" accept=".png,.jpg,.jpeg,.mp4,image/png,image/jpeg,video/mp4" multiple hidden>
+<input id="animationFileInput" type="file" accept=".mp4,video/mp4" multiple hidden>
+<input id="sequenceFileInput" type="file" accept=".png,image/png" multiple hidden>
+<div id="saveProgressOverlay" class="save-progress-overlay" hidden><div class="save-progress-dialog"><strong>保存中</strong><p id="saveProgressMessage">準備しています…</p><progress id="saveProgressBar" max="100" value="0"></progress></div></div>
+<script src="app.js"></script>
+<script>
+(()=>{
+const home=document.getElementById('editorHomePage');
+const start=document.getElementById('editorHomeStart');
+const reopen=document.getElementById('editorHomeOpen');
+const langButtons=[...document.querySelectorAll('[data-editor-home-lang]')];
+const data={
+ja:{title:'ぐるりエディタ',description:'ぐるりペイントで描いた素材を組み合わせて、インタラクティブ作品を制作できます。',start:'はじめる',important:'重要なお知らせ',notice:'お知らせ',products:'製品情報',links:'関連ページ',noticeEmpty:'お知らせはまだありません。',productTitle:'ぐるりエディタ',productDesc:'360度の画像・動画を組み合わせて、体験型の作品を制作するツールです。',linkSite:'JUNOTAのウェブサイト',linkX:'ぐるりペイント公式X'},
+en:{title:'Gururi Editor',description:'Combine 360° worlds to create interactive experiences.',start:'Start',important:'Important notices',notice:'News',products:'Product information',links:'Related pages',noticeEmpty:'No announcements yet.',productTitle:'Gururi Editor',productDesc:'A tool for creating interactive works with 360° images and videos.',linkSite:'JUNOTA website',linkX:'Gururi Paint on X'}
+};
+const notices=[];
+const importantNotices=[];
+const HOME_CONTENT_URL='home-content.json';
+let homeContent=null;
+
+async function loadHomeContent(){
+try{
+const response=await fetch(HOME_CONTENT_URL,{cache:'no-store'});
+if(!response.ok)throw new Error('HTTP '+response.status);
+homeContent=await response.json();
+console.log('ぐるりエディタのお知らせを読み込みました');
+}catch(error){
+console.warn('お知らせの取得に失敗しました',error);
+}
+}
+
+function renderCards(target,items){
+ target.replaceChildren();
+ const type=target.id==='editorHomeNoticeList'?'notice':target.id==='editorHomeLinks'?'link':'simple';
+ for(const item of items){
+  const card=document.createElement(item.url?'a':'div');
+  card.className='editor-home__item editor-home__item--'+type+(item.url?'':' is-disabled');
+  if(item.url){card.href=item.url;card.target=item.newTab?'_blank':'_self';if(item.newTab)card.rel='noopener noreferrer';}
+  if(type==='link'){
+   if(item.thumbnail){
+    const thumb=document.createElement('span');thumb.className='editor-home__link-thumbnail';
+    const img=document.createElement('img');img.src=item.thumbnail;img.alt='';img.loading='lazy';
+    img.addEventListener('error',()=>thumb.remove());thumb.append(img);card.append(thumb);
+   }
+   const text=document.createElement('span');text.className='editor-home__link-text';
+   const title=document.createElement('span');title.className='editor-home__link-title';title.textContent=item.title;
+   text.append(title);
+   const desc=document.createElement('span');desc.className='editor-home__link-description';desc.textContent=item.description||'';text.append(desc);
+   card.append(text);
+  }else if(type==='notice'){
+   card.textContent=item.title;
+  }else{
+   const title=document.createElement('span');title.className='editor-home__simple-title';title.textContent=item.title;card.append(title);
+   if(item.description){const desc=document.createElement('span');desc.className='editor-home__simple-description';desc.textContent=item.description;card.append(desc);}
+  }
+  target.append(card);
+ }
+}
+function setLanguage(lang){
+const t=data[lang]||data.ja;
+const content=homeContent;
+const texts=content?.languages?.[lang]||{};
+document.documentElement.lang=lang;
+document.getElementById('editorHomeTitle').setAttribute('aria-label',texts.title||t.title);
+document.getElementById('editorHomeDescription').textContent=texts.description||t.description;
+
+start.textContent=texts.startButton||t.start;
+document.getElementById('editorHomeImportantHeading').textContent=texts.importantHeading||t.important;
+document.getElementById('editorHomeNoticeHeading').textContent=texts.noticeHeading||t.notice;
+document.getElementById('editorHomeProductsHeading').textContent=texts.productsHeading||t.products;
+document.getElementById('editorHomeLinksHeading').textContent=texts.linksHeading||t.links;
+document.querySelector('.editor-home__footer').textContent=texts.footer||'© JUNOTA';
+langButtons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.editorHomeLang===lang)));
+const managedNotices=Array.isArray(content?.notices)
+?content.notices.filter(item=>item.visible!==false).map(item=>{
+const localized=item[lang]||item.ja||{};
+return {
+title:localized.text||'',
+url:localized.url||''
+};
+}).filter(item=>item.title.trim())
+:[];
+renderCards(document.getElementById('editorHomeNoticeList'),managedNotices.length?managedNotices:[{title:t.noticeEmpty}]);
+const managedImportant=Array.isArray(content?.importantNotices)
+?content.importantNotices.filter(item=>item.visible!==false).map(item=>{
+const localized=item[lang]||item.ja||{};
+return {
+title:localized.text||'',
+url:localized.url||''
+};
+}).filter(item=>item.title.trim())
+:[];
+renderCards(document.getElementById('editorHomeImportantList'),managedImportant);
+document.getElementById('editorHomeImportantSection').hidden=managedImportant.length===0;
+const managedProducts=Array.isArray(content?.products)
+?content.products.filter(item=>item.visible!==false).map(item=>{
+const localized=item[lang]||item.ja||{};
+return {
+title:localized.title||'',
+description:localized.description||'',
+url:localized.url||''
+};
+}).filter(item=>item.title.trim())
+:[];
+
+renderCards(
+document.getElementById('editorHomeProducts'),
+managedProducts.length?managedProducts:[{title:t.productTitle,description:t.productDesc}]
+);
+const managedLinks=Array.isArray(content?.relatedPages)
+?content.relatedPages.filter(item=>item.visible!==false).map(item=>{
+const localized=item[lang]||item.ja||{};
+return {
+title:localized.title||localized.text||'',
+description:localized.description||'',
+url:localized.url||item.url||'',
+thumbnail:item.thumbnail||''
+};
+}).filter(item=>item.title.trim())
+:[];
+
+renderCards(
+document.getElementById('editorHomeLinks'),
+managedLinks.length?managedLinks:[
+{title:t.linkSite,url:'https://neco-sara.com/'},
+{title:t.linkX,url:'https://x.com/gururi_paint'}
+]
+);
+}
+start.addEventListener('click',()=>{home.classList.remove('is-open');home.setAttribute('aria-hidden','true');});
+reopen.addEventListener('click',()=>{home.classList.add('is-open');home.removeAttribute('aria-hidden');});
+langButtons.forEach(button=>button.addEventListener('click',()=>setLanguage(button.dataset.editorHomeLang)));
+setLanguage('ja');
+loadHomeContent().then(()=>setLanguage('ja'));
+})();
+</script>
+</body>
+</html>
+
