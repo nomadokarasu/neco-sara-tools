@@ -7143,13 +7143,14 @@ if(temporaryWorldOverlay){temporaryWorldOverlay=null;}
 const base=getNode(state.previewWorldNodeId||currentWorldBackerId);
 const underlying=base?.type==='world'?base.world:null;
 temporaryWorldOverlay={nodeId:node.id,image,canvas:null,ctx:null};
+const overlayInstance=temporaryWorldOverlay;
 previewMessage.textContent=media?.fileName||node.world.fileName||'360度PNG';
 if(!underlying||!state.worldFolders.some(folder=>folder.backerId===base.id))renderTemporaryWorldOverlay(underlying,underlying?.image);
 else refreshWorldComposite();
 if(node.worldInfiniteLoop)return;
 const duration=getMediaPlaybackDuration(node,null);
 schedulePreviewBranch(duration,()=>{
-if(temporaryWorldOverlay?.nodeId!==node.id)return;
+if(temporaryWorldOverlay!==overlayInstance)return;
 temporaryWorldOverlay=null;
 // 一時PNGの表示が終了したら、同じノードを次のクリックで再実行できるようにする。
 previewVisited.delete(node.id);
@@ -7398,6 +7399,7 @@ previewVisited.clear();
 state.previewClickTriggerIds=[];
 state.previewItemUseTriggerIds=[];
 state.previewFrameInIds=[];
+previewFrameInInside.clear();
 state.previewDialogueNodeId=null;
 optionChoicesOverlay.classList.add('hidden');
 optionChoicesOverlay.replaceChildren();
@@ -7449,6 +7451,9 @@ if(epoch===previewSceneEpoch&&!gamePreview.classList.contains('hidden'))callback
 },Math.max(0,seconds)*1000);
 previewBranchTimers.add(timer);
 }
+// フレームインは「範囲外→範囲内」の瞬間だけ発火する。
+// 一度発火しても監視を続け、範囲外に出た時点で再発火可能にする。
+const previewFrameInInside=new Map();
 let checkingFrameIn=false;
 function checkActiveFrameInTriggers(){
 if(checkingFrameIn||!state.previewFrameInIds?.length)return;
@@ -7457,15 +7462,26 @@ const view=getActivePreviewWorld();if(!view)return;
 checkingFrameIn=true;
 try{
 for(const id of [...state.previewFrameInIds]){
-const node=getNode(id);if(!node)continue;
-if(isPreviewOnceCompleted(node))continue;
-if(!isFrameInTriggered(node,gameCanvas,view))continue;
-state.previewFrameInIds=[];
-clearPreviewBranchTimers();
+const node=getNode(id);
+if(!node)continue;
+const inside=isFrameInTriggered(node,gameCanvas,view);
+const wasInside=previewFrameInInside.get(id)===true;
+previewFrameInInside.set(id,inside);
+if(!inside||wasInside)continue;
+if(isPreviewOnceCompleted(node)||!canFireExplorationTrigger(node))continue;
+// 接続先だけを再実行可能にし、ワールドや他の進行タイマーは維持する。
 markPreviewOnceExecuted(node);
+if(node.triggerOnce)previewCompletedTriggers.add(node.id);
+prepareExplorationBranch(id);
+for(const link of state.connections){
+if(link.from!==id)continue;
+const target=getNode(link.to);
+if(target?.type==='world'&&!state.worldFolders.some(folder=>folder.backerId===target.id)){
+previewVisited.delete(target.id);
+}
+}
 previewOutgoing(id);
 if(!state.connections.some(c=>c.from===id))previewMessage.textContent='フレームイン発火・接続先なし';
-break;
 }
 }finally{checkingFrameIn=false;}
 }
@@ -8399,7 +8415,10 @@ if(node.type==='uiButton'){
  return;
 }
 if(node.type==='frameIn'){
-if(!state.previewFrameInIds.includes(node.id))state.previewFrameInIds.push(node.id);
+if(!state.previewFrameInIds.includes(node.id)){
+state.previewFrameInIds.push(node.id);
+previewFrameInInside.delete(node.id);
+}
 checkActiveFrameInTriggers();
 return;
 }

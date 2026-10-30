@@ -2661,6 +2661,27 @@ const canvas=document.getElementById('mediaCameraCanvas');
 const range=document.getElementById('mediaCameraTime');
 const label=document.getElementById('mediaCameraTimeLabel');
 const source=node.type==='world'?node.world.image:media?.video;
+// A user-added 360 PNG is an overlay; show it together with the current world's background.
+let previewImage=source;
+if(isTemporaryWorldNode(node)&&source){
+const folder=state.worldFolders.find(f=>f.id===node.folderId);
+const background=folder?recompositeFolder(folder):null;
+if(background){
+const width=background.width;
+const height=background.height;
+const composite=document.createElement('canvas');
+composite.width=width;
+composite.height=height;
+const ctx=composite.getContext('2d');
+if(ctx){
+try{
+ctx.drawImage(background,0,0,width,height);
+ctx.drawImage(source,0,0,width,height);
+previewImage=composite;
+}catch(error){console.warn('360度素材のプレビュー合成に失敗しました',error);}
+}
+}
+}
 if(source?.pause)source.pause();
 const controller=new AbortController();const signal=controller.signal;
 cleanupAnimationSettingsPreview=()=>controller.abort();
@@ -2669,7 +2690,7 @@ const view={...getMediaCameraBase(node)};
 let syncInputs=()=>{};
 const draw=()=>{
 if(!canvas.isConnected)return;
-drawPanoramaPreview(canvas,{image:source?.readyState!==undefined&&source.readyState<2?null:source,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});
+drawPanoramaPreview(canvas,{image:previewImage?.readyState!==undefined&&previewImage.readyState<2?null:previewImage,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});
 syncInputs();
 };
 syncInputs=setupCameraNumberInputs(canvas,view,draw);
@@ -7130,6 +7151,7 @@ const duration=getMediaPlaybackDuration(node,null);
 schedulePreviewBranch(duration,()=>{
 if(temporaryWorldOverlay?.nodeId!==node.id)return;
 temporaryWorldOverlay=null;
+// 一時PNGの表示が終了したら、同じノードを次のクリックで再実行できるようにする。
 previewVisited.delete(node.id);
 if(underlying){
 const folder=state.worldFolders.find(f=>f.backerId===base.id);
