@@ -1704,6 +1704,8 @@ function refreshInventory(){
 equippedItemSelect.value=equippedItem?.id||'';
 const hasItemNodes=state.nodes.some(n=>n.type==='itemAcquire');
 equippedItemLabel.classList.toggle('hidden',!hasItemNodes);
+if(!hasItemNodes)closeMobileEquippedItemMenu();
+refreshMobileEquippedItemMenu();
 inventoryOverlay.replaceChildren();
  const header=document.createElement('div');header.className='inventory-header';header.textContent='アイテム一覧';
  const close=document.createElement('button');close.textContent='×';close.type='button';close.addEventListener('click',()=>inventoryOverlay.classList.add('hidden'));header.append(close);
@@ -1733,10 +1735,58 @@ inventoryOverlay.replaceChildren();
  inventoryOverlay.append(details);
 }
 
+const mobileEquippedItemButton=document.getElementById('mobileEquippedItemButton');
+const mobileEquippedItemMenu=document.getElementById('mobileEquippedItemMenu');
+
+function closeMobileEquippedItemMenu(){
+mobileEquippedItemMenu.style.display='none';
+mobileEquippedItemButton.setAttribute('aria-expanded','false');
+}
+
+function refreshMobileEquippedItemMenu(){
+const selected=getInventoryItem(state.selectedInventoryItemId);
+mobileEquippedItemButton.textContent=selected?itemDisplayName(selected):'なし';
+mobileEquippedItemMenu.replaceChildren();
+
+const ids=['',...[...state.inventory].filter(id=>getInventoryItem(id))];
+
+for(const id of ids){
+const item=id?getInventoryItem(id):null;
+const button=document.createElement('button');
+button.type='button';
+button.textContent=item?itemDisplayName(item):'なし';
+button.classList.toggle('active',state.selectedInventoryItemId===(id||null));
+button.addEventListener('click',event=>{
+event.preventDefault();
+event.stopPropagation();
+state.selectedInventoryItemId=id||null;
+closeMobileEquippedItemMenu();
+refreshInventory();
+});
+mobileEquippedItemMenu.append(button);
+}
+}
+
+mobileEquippedItemButton.addEventListener('click',event=>{
+event.preventDefault();
+event.stopPropagation();
+refreshMobileEquippedItemMenu();
+const opening=mobileEquippedItemMenu.style.display==='none';
+mobileEquippedItemMenu.style.display=opening?'flex':'none';
+mobileEquippedItemButton.setAttribute('aria-expanded',String(opening));
+});
+
+document.addEventListener('pointerdown',event=>{
+if(mobileEquippedItemMenu.style.display==='none')return;
+if(mobileEquippedItemButton.contains(event.target))return;
+if(mobileEquippedItemMenu.contains(event.target))return;
+closeMobileEquippedItemMenu();
+});
+
 equippedItemSelect.addEventListener('change',()=>{
- const id=equippedItemSelect.value;
- state.selectedInventoryItemId=id&&state.inventory.has(id)&&getInventoryItem(id)?id:null;
- refreshInventory();
+const id=equippedItemSelect.value;
+state.selectedInventoryItemId=id&&state.inventory.has(id)&&getInventoryItem(id)?id:null;
+refreshInventory();
 });
 
 inventoryButton.addEventListener('click',()=>{
