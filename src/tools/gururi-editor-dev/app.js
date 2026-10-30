@@ -654,6 +654,7 @@ node.type==='worldDisplay'?'ワールド表示':
 node.type==='worldMove'?'ワールド移動':
 node.type==='eventRecord'?'イベント記録':
 node.type==='gameReset'?'リセット':
+node.type==='gameEnd'?'ゲーム終了':
 node.type==='start'?'START':
 node.type==='media'||node.type==='world'||node.type==='animation'?'メディア':
 node.type==='time'?'時間':
@@ -689,6 +690,7 @@ node.type==='worldDisplay'?'探索を開始する':
 node.type==='worldMove'?(state.worldFolders.find(w=>w.id===node.destinationFolderId)?.name||'移動先未設定'):
 node.type==='eventRecord'?(node.eventName||'イベント未設定'):
 node.type==='gameReset'?'ワールド1からやり直す':
+node.type==='gameEnd'?'ゲームを終了してトップページに戻る':
 node.type==='media'?'素材を選択してください':
 node.type==='world'?(node.world.fileName||'素材未設定'):
 node.type==='animation'?(node.animation.fileName||'素材未設定'):
@@ -717,7 +719,7 @@ node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
 node.type==='keyframe'?'カメラワーク':
 '開始';
-el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div>${node.type==='gameReset'?'':'<div class="port output" data-port="output"></div>'}`;
+el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div>${node.type==='gameReset'||node.type==='gameEnd'?'':'<div class="port output" data-port="output"></div>'}`;
 
 const bodyEl=el.querySelector('.node-body');
 bodyEl.textContent=node.customBody===undefined?body:node.customBody;
@@ -1058,6 +1060,10 @@ if(node.type==='worldMove'){
 }
 if(node.type==='gameReset'){
  settingsPanel.innerHTML='<div class="settings-title">リセット</div><p class="settings-empty">ゲームの進行状況、取得したアイテム、トグル、イベントの記録をすべて初期化し、ワールド1のSTARTからやり直します。出力接続はありません。</p>';
+ return;
+}
+if(node.type==='gameEnd'){
+ settingsPanel.innerHTML='<div class="settings-title">ゲーム終了</div><p class="settings-empty">このノードを実行するとゲームを終了し、書き出した作品ではトップページに戻ります。エディタ内ではプレビューを閉じます。出力接続はありません。</p>';
  return;
 }
 if(node.type==='eventRecord'){
@@ -6228,7 +6234,7 @@ contextMenu.classList.add('hidden');
 state.insertConnection=null;
 
 let created=null;
-if(insertConnection&&nodeType!=='gameReset'){
+if(insertConnection&&nodeType!=='gameReset'&&nodeType!=='gameEnd'){
 created=insertNodeIntoConnection(nodeType,insertConnection,menuPoint);
 }else{
 created=addNode(nodeType,menuPoint.x,menuPoint.y);
@@ -7412,7 +7418,7 @@ const previewVisited=new Set();
 const previewExecutedOnceNodes=new Set();
 
 function isPreviewOnceTarget(node){
-return Boolean(node&&!['start','folderStart','worldDisplay','gameReset','world'].includes(node.type));
+return Boolean(node&&!['start','folderStart','worldDisplay','gameReset','gameEnd','world'].includes(node.type));
 }
 
 function isPreviewOnceCompleted(node){
@@ -8564,6 +8570,14 @@ if(node.type==='gameReset'){
  startPreview(false,true);
  return;
 }
+if(node.type==='gameEnd'){
+ recordPreviewDiagnostic('game-end',{nodeId:node.id});
+ stopPreview();
+ if(document.body.classList.contains('gururi-player')){
+ window.gururiReturnToTitle?.();
+ }
+ return;
+}
 if(node.type==='toggle'){
  const nextOn=!toggleWorldStates.has(node.id);
  if(nextOn)toggleWorldStates.add(node.id);else toggleWorldStates.delete(node.id);
@@ -9178,8 +9192,16 @@ if(!gamePreview.classList.contains('hidden'))resizeGameCanvas();
 renderNodes();renderSettings();
 updateLoading(100,'準備が完了しました');
 await yieldToBrowser();
-const begin=()=>{launch.style.display='none';startPreview(false,true);};
-launchButton.disabled=false;launchButton.style.opacity='1';launchButton.addEventListener('click',begin);
+const begin=()=>{
+launch.style.display='none';
+startPreview(false,true);
+};
+window.gururiReturnToTitle=()=>{
+launch.style.display='flex';
+};
+launchButton.disabled=false;
+launchButton.style.opacity='1';
+launchButton.addEventListener('click',begin);
 loading.remove();
 }catch(error){console.error(error);launch.textContent='作品を開けませんでした：'+error.message;}
 })();
