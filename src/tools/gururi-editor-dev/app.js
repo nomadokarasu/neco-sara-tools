@@ -1701,9 +1701,10 @@ function refreshInventory(){
   option.textContent=itemDisplayName(item);
   equippedItemSelect.append(option);
  }
- equippedItemSelect.value=equippedItem?.id||'';
- equippedItemLabel.classList.remove('hidden');
- inventoryOverlay.replaceChildren();
+equippedItemSelect.value=equippedItem?.id||'';
+const hasItemNodes=state.nodes.some(n=>n.type==='itemAcquire');
+equippedItemLabel.classList.toggle('hidden',!hasItemNodes);
+inventoryOverlay.replaceChildren();
  const header=document.createElement('div');header.className='inventory-header';header.textContent='アイテム一覧';
  const close=document.createElement('button');close.textContent='×';close.type='button';close.addEventListener('click',()=>inventoryOverlay.classList.add('hidden'));header.append(close);
  inventoryOverlay.append(header);
@@ -9110,7 +9111,7 @@ setSaveProgress(20+Math.round((i+1)/Math.max(1,metadata.media.length)*45),'素�
 const playerStyle=`
 html,body{margin:0!important;background:#000!important}
 body.gururi-player #editorHomePage,body.gururi-player .editor-home,body.gururi-player .topbar,body.gururi-player .main-layout,body.gururi-player .media-popup,body.gururi-player #exportPreviewDiagnosticBtn{display:none!important}
-body.gururi-player #gamePreview{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:20!important;background:#000!important}
+body.gururi-player #gamePreview{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:auto!important;width:100%!important;height:100vh!important;height:100svh!important;z-index:20!important;background:#000!important;overflow:hidden!important}
 body.gururi-player #closePreviewBtn{display:none!important}
 #gururiLaunch{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;gap:15px;align-items:center;justify-content:center;background-color:#080808;background-size:cover;background-position:center;color:#fff;font-family:sans-serif;text-align:center;padding:20px;box-sizing:border-box}
 #gururiLaunch::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.48),rgba(0,0,0,.68));pointer-events:none}
