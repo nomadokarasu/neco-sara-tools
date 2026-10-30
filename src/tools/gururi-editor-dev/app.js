@@ -7073,7 +7073,6 @@ playBtn.addEventListener('click',()=>startPreview());
 closePreviewBtn.addEventListener('click',stopPreview);
 
 gameViewport.addEventListener('click',e=>{
-if(!window.matchMedia('(pointer: coarse)').matches)return;
 if(!e.target.closest('#dialogueOverlay'))return;
 if(gamePreview.classList.contains('hidden'))return;
 if(!state.previewDialogueNodeId)return;
@@ -7186,9 +7185,111 @@ if(controller.sourceId!==animation.nodeId)return false;
 return getKeyframeNodeFrames(controller.node).length>0;
 }
 
+let gameTouchGesture=null;
+
+function getGameTouchDistance(touches){
+const dx=touches[0].clientX-touches[1].clientX;
+const dy=touches[0].clientY-touches[1].clientY;
+return Math.hypot(dx,dy);
+}
+
+gameCanvas.addEventListener('touchstart',e=>{
+if(previewKeyframeBusy||state.previewDialogueNodeId)return;
+const world=getActivePreviewWorld();
+if(!world)return;
+
+if(e.touches.length===1){
+const touch=e.touches[0];
+gameTouchGesture={
+mode:'rotate',
+x:touch.clientX,
+y:touch.clientY,
+yaw:world.yaw,
+pitch:world.pitch
+};
+}else if(e.touches.length>=2){
+gameTouchGesture={
+mode:'pinch',
+distance:getGameTouchDistance(e.touches),
+zoom:world.zoom
+};
+if(gamePreviewDrag)gamePreviewDrag.moved=true;
+}
+},{passive:false});
+
+gameCanvas.addEventListener('touchmove',e=>{
+if(!gameTouchGesture)return;
+e.preventDefault();
+
+if(previewKeyframeBusy||state.previewDialogueNodeId)return;
+if(isPreviewCameraLocked())return;
+
+const world=getActivePreviewWorld();
+if(!world)return;
+
+if(e.touches.length>=2){
+if(gameTouchGesture.mode!=='pinch'){
+gameTouchGesture={
+mode:'pinch',
+distance:getGameTouchDistance(e.touches),
+zoom:world.zoom
+};
+}
+const distance=getGameTouchDistance(e.touches);
+world.zoom=clamp(
+gameTouchGesture.zoom*distance/Math.max(1,gameTouchGesture.distance),
+0.6,
+2.2
+);
+if(gamePreviewDrag)gamePreviewDrag.moved=true;
+}else if(e.touches.length===1&&gameTouchGesture.mode==='rotate'){
+const touch=e.touches[0];
+const dx=touch.clientX-gameTouchGesture.x;
+const dy=touch.clientY-gameTouchGesture.y;
+
+if(Math.hypot(dx,dy)>4&&gamePreviewDrag){
+gamePreviewDrag.moved=true;
+}
+
+world.yaw=gameTouchGesture.yaw-dx*0.008;
+world.pitch=clamp(
+gameTouchGesture.pitch+dy*0.008,
+-Math.PI/2+0.02,
+Math.PI/2-0.02
+);
+}
+
+if(!temporaryWorldOverlay||!renderTemporaryWorldOverlay(world)){
+drawPanoramaPreview(gameCanvas,world);
+}
+},{passive:false});
+
+gameCanvas.addEventListener('touchend',e=>{
+if(e.touches.length===0){
+gameTouchGesture=null;
+}else if(e.touches.length===1){
+const world=getActivePreviewWorld();
+const touch=e.touches[0];
+if(world){
+gameTouchGesture={
+mode:'rotate',
+x:touch.clientX,
+y:touch.clientY,
+yaw:world.yaw,
+pitch:world.pitch
+};
+}
+}
+});
+
+gameCanvas.addEventListener('touchcancel',()=>{
+gameTouchGesture=null;
+});
+
 gameCanvas.addEventListener('pointerdown',e=>{
 if(previewKeyframeBusy)return;
 if(state.previewDialogueNodeId)return;
+if(e.pointerType==='touch'&&!e.isPrimary)return;
 if(e.button!==0)return;
 
 const world=getActivePreviewWorld();
@@ -7207,6 +7308,7 @@ gameCanvas.setPointerCapture(e.pointerId);
 });
 
 gameCanvas.addEventListener('pointermove',e=>{
+if(e.pointerType==='touch')return;
 if(!gamePreviewDrag)return;
 
 const dx=e.clientX-gamePreviewDrag.x;

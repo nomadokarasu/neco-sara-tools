@@ -119,7 +119,7 @@ button{cursor:pointer}
 .number-input{width:100%;padding:8px 10px;border:1px solid #c7ccd3;border-radius:6px}
 .game-preview{position:absolute;inset:0;z-index:100;background:#161616;display:flex;align-items:center;justify-content:center}
 .game-viewport{position:relative;background:#000;overflow:hidden}
-.game-viewport canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.game-viewport canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .fade-overlay{position:absolute;inset:0;z-index:3;background:#000;opacity:0;pointer-events:none}
 .game-dialogue{position:absolute;left:0;right:0;bottom:0;z-index:4;height:calc(140px * var(--dialogue-scale,1));padding:calc(20px * var(--dialogue-scale,1)) calc(48px * var(--dialogue-scale,1)) calc(28px * var(--dialogue-scale,1)) calc(24px * var(--dialogue-scale,1));background:rgba(0,0,0,.76);color:#fff;border-top:1px solid rgba(255,255,255,.38);cursor:pointer;user-select:none;overflow:hidden}
 .game-dialogue-text{font-size:calc(18px * var(--dialogue-scale,1));line-height:1.8;white-space:pre-wrap;word-break:break-word}
