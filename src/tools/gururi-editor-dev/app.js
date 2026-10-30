@@ -557,6 +557,7 @@ panView:{yaw:0,pitch:0,zoom:1,initialized:false},
 panUndoStack:[],
 panRedoStack:[],
 media2DId:null,
+media2DDuration:3,
 media2DLayouts:{pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}}
 };
 node.folderId=state.activeFolderId;
@@ -1775,7 +1776,12 @@ function renderMedia2DNodeSettings(node){
 const media=mediaLibrary.find(m=>m.id===node.media2DId);
 settingsPanel.innerHTML=`<div class="settings-title">2Dメディア</div>
 <div class="setting-group"><div class="setting-label">素材（PNG・JPG・MP4）</div><select id="media2DSelect" class="number-input">${media2DOptions(node.media2DId)}</select></div>
+<div class="setting-group"><div class="setting-label">表示時間（秒）</div><input id="media2DDurationInput" class="number-input" type="number" min="0" step="0.1" value="${Math.max(0,Number(node.media2DDuration??3)||0)}"></div>
 <div class="setting-group"><div class="setting-label">配置（${state.displayMode==='pc'?'PC':'スマホ'}）</div><div id="media2DEditor" class="media2d-editor"><canvas id="media2DBackground"></canvas><div id="media2DSelection" class="media2d-selection"><div id="media2DContent"></div>${['nw','ne','sw','se'].map(p=>`<span class="media2d-handle media2d-handle-${p}" data-corner="${p}"></span>`).join('')}</div></div><div class="pan-help">素材をドラッグ：移動 / 四隅をドラッグ：縦横比を保って拡大縮小。PC・スマホの配置はそれぞれ記憶します。</div></div>`;
+document.getElementById('media2DDurationInput').addEventListener('change',e=>{
+node.media2DDuration=Math.max(0,Number(e.target.value)||0);
+e.target.value=node.media2DDuration;
+});
 const select=document.getElementById('media2DSelect');
 const box=document.getElementById('media2DEditor');
 const selection=document.getElementById('media2DSelection');
@@ -1960,14 +1966,16 @@ media2DLayer.replaceChildren();
 }
 function showMedia2D(node){
 const media=mediaLibrary.find(m=>m.id===node.media2DId);
-if(!media)return;
+if(!media)return null;
 const layout=getMedia2DLayout(node);
 const el=createMedia2DElement(media);
-if(!el)return;
+if(!el)return null;
 const wrap=document.createElement('div');
 wrap.style.cssText=`position:absolute;left:${layout.x}%;top:${layout.y}%;width:${layout.w}%;height:${layout.h}%;pointer-events:none;`;
-wrap.appendChild(el);media2DLayer.appendChild(wrap);
+wrap.appendChild(el);
+media2DLayer.appendChild(wrap);
 if(el.tagName==='VIDEO')el.play().catch(error=>console.warn('2D動画を再生できませんでした',error));
+return wrap;
 }
 
 // Frame-in: target is sphere-anchored; frame is viewport-anchored.
@@ -8496,8 +8504,19 @@ previewOutgoing(node.id);
 return;
 }
 if(node.type==='media2d'){
-showMedia2D(node);
+const mediaWrap=showMedia2D(node);
+const duration=Math.max(0,Number(node.media2DDuration??3)||0);
+schedulePreviewBranch(duration,()=>{
+if(mediaWrap?.isConnected){
+for(const video of mediaWrap.querySelectorAll('video')){
+video.pause();
+video.removeAttribute('src');
+video.load();
+}
+mediaWrap.remove();
+}
 previewOutgoing(node.id);
+});
 return;
 }
 if(node.type==='uiButton'){
