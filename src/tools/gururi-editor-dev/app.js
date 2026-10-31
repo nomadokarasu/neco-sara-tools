@@ -6458,7 +6458,8 @@ const selectedIds=state.selectedNodeIds.size>0
 ?new Set(state.selectedNodeIds)
 :new Set(state.selectedNodeId?[state.selectedNodeId]:[]);
 
-const nodes=state.nodes.filter(node=>selectedIds.has(node.id)&&node.folderId===state.activeFolderId&&node.type!=='world');
+const excludedTypes=new Set(['start','folderStart','worldDisplay']);
+const nodes=state.nodes.filter(node=>selectedIds.has(node.id)&&!excludedTypes.has(node.type));
 
 if(nodes.length===0)return null;
 
@@ -6479,11 +6480,6 @@ const idMap=new Map();
 const choiceIdMap=new Map();
 
 for(const node of group.nodes){
-if(node.type==='folderStart'||node.type==='worldDisplay'){
-const existing=state.nodes.find(candidate=>candidate.folderId===state.activeFolderId&&candidate.type===node.type);
-if(existing)idMap.set(node.id,existing.id);
-continue;
-}
 idMap.set(node.id,uid(node.type));
 if(Array.isArray(node.optionChoices)){
 for(const choice of node.optionChoices){
@@ -6492,7 +6488,7 @@ choiceIdMap.set(choice.id,uid('choice'));
 }
 }
 
-const clonedNodes=cloneEditorValue(group.nodes.filter(node=>node.type!=='folderStart'&&node.type!=='worldDisplay'));
+const clonedNodes=cloneEditorValue(group.nodes);
 const clonedConnections=cloneEditorValue(group.connections);
 
 const remapReferences=(value)=>{
@@ -6546,17 +6542,10 @@ if('frameInUndo'in node)node.frameInUndo=[];
 if('frameInRedo'in node)node.frameInRedo=[];
 }
 
-const restoredConnections=[];
 for(const connection of clonedConnections){
-const from=idMap.get(connection.from);
-const to=idMap.get(connection.to);
-if(!from||!to)continue;
-if(state.connections.some(existing=>existing.from===from&&existing.to===to))continue;
-if(restoredConnections.some(existing=>existing.from===from&&existing.to===to))continue;
-
 connection.id=uid('conn');
-connection.from=from;
-connection.to=to;
+connection.from=idMap.get(connection.from);
+connection.to=idMap.get(connection.to);
 
 if(Array.isArray(connection.anchors)){
 connection.anchors=connection.anchors.map(anchor=>({
@@ -6565,11 +6554,10 @@ x:anchor.x+offset,
 y:anchor.y+offset
 }));
 }
-restoredConnections.push(connection);
 }
 
 state.nodes.push(...clonedNodes);
-state.connections.push(...restoredConnections);
+state.connections.push(...clonedConnections);
 
 const copiedIds=new Set(clonedNodes.map(node=>node.id));
 
@@ -6641,14 +6629,14 @@ const key=e.key.toLowerCase();
 if((e.ctrlKey||e.metaKey)&&!e.altKey&&key==='a'){
 e.preventDefault();
 
-state.selectedNodeIds=new Set(state.nodes.filter(node=>node.folderId===state.activeFolderId&&node.type!=='world').map(node=>node.id));
+state.selectedNodeIds=new Set(state.nodes.map(node=>node.id));
 state.selectedNodeId=null;
 state.selectedConnectionId=null;
 
 renderNodes();
 renderSettings();
 
-if(state.selectedNodeIds.size===0)return;
+if(state.nodes.length===0)return;
 
 let minX=Infinity;
 let minY=Infinity;
