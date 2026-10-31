@@ -656,7 +656,7 @@ node.type==='folderStart'?'ワールド開始':
 node.type==='worldDisplay'?'探索を開始する':
 node.type==='worldMove'?(state.worldFolders.find(w=>w.id===node.destinationFolderId)?.name||'移動先未設定'):
 node.type==='eventRecord'?(node.eventName||'イベント未設定'):
-node.type==='gameReset'?'ワールド1からやり直す':
+node.type==='gameReset'?`フェードアウト ${Math.max(0,Number(node.resetFadeSeconds)||0)} 秒 → リスタート`:
 node.type==='gameEnd'?'ゲームを終了してトップページに戻る':
 node.type==='media'?'素材を選択してください':
 node.type==='world'?(node.world.fileName||'素材未設定'):
@@ -1063,8 +1063,17 @@ if(node.type==='worldMove'){
  return;
 }
 if(node.type==='gameReset'){
- settingsPanel.innerHTML='<div class="settings-title">リセット</div><p class="settings-empty">ゲームの進行状況、取得したアイテム、トグル、イベントの記録をすべて初期化し、ワールド1のSTARTからやり直します。出力接続はありません。</p>';
- return;
+settingsPanel.innerHTML=`<div class="settings-title">リセット</div>
+<div class="setting-group">
+<div class="setting-label">フェードアウト時間（秒）</div>
+<input id="resetFadeSecondsInput" class="number-input" type="number" min="0" step="0.1" value="${Math.max(0,Number(node.resetFadeSeconds)||0)}">
+</div>
+<p class="settings-empty">指定した時間で画面を暗転させた後、ゲームの進行状況、アイテム、トグル、イベントを初期化してリスタートします。</p>`;
+document.getElementById('resetFadeSecondsInput').addEventListener('change',e=>{
+node.resetFadeSeconds=Math.max(0,Number(e.target.value)||0);
+renderNodes();
+});
+return;
 }
 if(node.type==='gameEnd'){
  settingsPanel.innerHTML='<div class="settings-title">ゲーム終了</div><p class="settings-empty">このノードを実行するとゲームを終了し、書き出した作品ではトップページに戻ります。エディタ内ではプレビューを閉じます。出力接続はありません。</p>';
@@ -8659,8 +8668,17 @@ return;
 if(node.type==='worldMove'){if(node.destinationFolderId)enterWorldFolder(node.destinationFolderId);return;}
 if(node.type==='gameReset'){
 recordPreviewDiagnostic('game-reset',{nodeId:node.id});
+const seconds=Math.max(0,Number(node.resetFadeSeconds)||0);
 const restartNode=state.nodes.find(n=>n.restartPoint===true);
-startPreview(false,true,restartNode?.id||null);
+const restartNodeId=restartNode?.id||null;
+const executeReset=()=>{
+startPreview(false,true,restartNodeId);
+};
+if(seconds===0){
+executeReset();
+}else{
+runFadeEffect({effectSeconds:seconds},Number(fadeOverlay.style.opacity)||0,1,executeReset);
+}
 return;
 }
 if(node.type==='gameEnd'){
