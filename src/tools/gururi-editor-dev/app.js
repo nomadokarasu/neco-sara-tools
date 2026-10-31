@@ -172,8 +172,6 @@ const gameViewport=document.getElementById('gameViewport');
 const media2DLayer=document.getElementById('media2DLayer');
 const pcModeBtn=document.getElementById('pcModeBtn');
 const mobileModeBtn=document.getElementById('mobileModeBtn');
-const ratioWidthInput=document.getElementById('ratioWidthInput');
-const ratioHeightInput=document.getElementById('ratioHeightInput');
 
 const state={
 nodes:[],
@@ -218,7 +216,9 @@ mobile:{width:9,height:16}
 function uid(prefix){return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`}
 
 function getActiveLayout(){
-return state.layouts[state.displayMode];
+return state.displayMode==='mobile'
+?{width:9,height:16}
+:{width:16,height:9};
 }
 
 function applyGameAspectRatio(){
@@ -227,11 +227,6 @@ document.documentElement.style.setProperty('--game-aspect',`${layout.width} / ${
 }
 
 function updateLayoutControls(){
-const layout=getActiveLayout();
-
-ratioWidthInput.value=layout.width;
-ratioHeightInput.value=layout.height;
-
 pcModeBtn.classList.toggle('active',state.displayMode==='pc');
 mobileModeBtn.classList.toggle('active',state.displayMode==='mobile');
 
@@ -256,31 +251,6 @@ state.displayMode=mode;
 updateLayoutControls();
 }
 
-function updateActiveLayout(){
-const width=Math.max(1,Math.min(100,Number(ratioWidthInput.value)||1));
-const height=Math.max(1,Math.min(100,Number(ratioHeightInput.value)||1));
-
-state.layouts[state.displayMode].width=width;
-state.layouts[state.displayMode].height=height;
-
-ratioWidthInput.value=width;
-ratioHeightInput.value=height;
-
-applyGameAspectRatio();
-
-if(state.selectedNodeId){
-renderSettings();
-}
-
-if(!gamePreview.classList.contains('hidden')){
-resizeGameCanvas();
-const worldNode=getNode(state.previewWorldNodeId);
-if(worldNode?.type==='world'){
-drawPanoramaPreview(gameCanvas,worldNode.world);
-}
-}
-}
-
 pcModeBtn.addEventListener('click',()=>{
 setDisplayMode('pc');
 });
@@ -288,9 +258,6 @@ setDisplayMode('pc');
 mobileModeBtn.addEventListener('click',()=>{
 setDisplayMode('mobile');
 });
-
-ratioWidthInput.addEventListener('change',updateActiveLayout);
-ratioHeightInput.addEventListener('change',updateActiveLayout);
 
 window.addEventListener('keydown',e=>{
 const target=e.target;
