@@ -887,6 +887,42 @@ if(node){
 queueMicrotask(()=>{
 if(state.selectedNodeId!==node.id)return;
 
+if(!['folderStart','worldDisplay','world','start','gameReset','gameEnd'].includes(node.type)){
+const restartGroup=document.createElement('div');
+restartGroup.className='setting-group';
+
+const restartLabel=document.createElement('label');
+const restartCheckbox=document.createElement('input');
+restartCheckbox.type='checkbox';
+restartCheckbox.checked=node.restartPoint===true;
+restartLabel.append(restartCheckbox,document.createTextNode(' リスタート地点に指定する'));
+restartGroup.append(restartLabel);
+
+const restartMode=document.createElement('select');
+restartMode.className='number-input';
+restartMode.add(new Option('このノードから実行','before'));
+restartMode.add(new Option('このノードの次から実行','after'));
+restartMode.value=node.restartMode==='before'?'before':'after';
+restartMode.style.display=restartCheckbox.checked?'':'none';
+restartGroup.append(restartMode);
+
+restartCheckbox.addEventListener('change',()=>{
+if(restartCheckbox.checked){
+for(const other of state.nodes)other.restartPoint=false;
+node.restartPoint=true;
+}else{
+node.restartPoint=false;
+}
+restartMode.style.display=restartCheckbox.checked?'':'none';
+});
+
+restartMode.addEventListener('change',()=>{
+node.restartMode=restartMode.value;
+});
+
+settingsPanel.append(restartGroup);
+}
+
 if(isPreviewOnceTarget(node)&&!settingsPanel.querySelector('#nodeExecuteOnceInput')){
 const onceGroup=document.createElement('div');
 onceGroup.className='setting-group';
@@ -7633,8 +7669,8 @@ function canUsePreviewClick(node){
 return Boolean(node.clickTarget?.initialized||Object.values(node.clickFrameRegions||{}).some(regions=>Array.isArray(regions)&&regions.some(r=>r.mode==='add'&&r.points?.length>=3)));
 }
 
-function startPreview(preserveInventory=false,resetToInitial=false){
-recordPreviewDiagnostic('preview-start',{preserveInventory});
+function startPreview(preserveInventory=false,resetToInitial=false,restartNodeId=null){
+recordPreviewDiagnostic('preview-start',{preserveInventory,restartNodeId});
 previewClickAreaCache.clear();
 if(!preserveInventory){
 previewRemovedClickIds.clear();
@@ -7664,7 +7700,15 @@ refreshInventory();
 inventoryButton.classList.remove('hidden');
 
 drawPanoramaPreview(gameCanvas,{image:null,yaw:0,pitch:0,zoom:1});
+
+const restartNode=restartNodeId?getNode(restartNodeId):null;
+const restartFolder=restartNode?state.worldFolders.find(folder=>folder.id===restartNode.folderId):null;
+
+if(restartNode&&restartFolder){
+enterWorldFolder(restartFolder.id,true,restartNode.id);
+}else{
 enterWorldFolder(state.worldFolders[0]?.id||state.startFolderId,resetToInitial);
+}
 }
 
 
@@ -8614,9 +8658,10 @@ return;
 }
 if(node.type==='worldMove'){if(node.destinationFolderId)enterWorldFolder(node.destinationFolderId);return;}
 if(node.type==='gameReset'){
- recordPreviewDiagnostic('game-reset',{nodeId:node.id});
- startPreview(false,true);
- return;
+recordPreviewDiagnostic('game-reset',{nodeId:node.id});
+const restartNode=state.nodes.find(n=>n.restartPoint===true);
+startPreview(false,true,restartNode?.id||null);
+return;
 }
 if(node.type==='gameEnd'){
  recordPreviewDiagnostic('game-end',{nodeId:node.id});
@@ -10032,19 +10077,39 @@ if(controller&&controller.folder===activeFolder()){
 controller.refresh();
 }
 }
-function enterWorldFolder(folderId,resetToInitial=false){
- const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;
- const previousWorld=getNode(currentWorldBackerId)?.world;
- const inheritedView=resetToInitial?null:(previousWorld?{yaw:previousWorld.yaw,pitch:previousWorld.pitch,zoom:previousWorld.zoom}:(state.lastCameraView?{...state.lastCameraView}:null));
- currentWorldBackerId=folder.backerId;
- const media=getFolderMedia(folder);
- if(media?.video){try{media.video.loop=true;media.video.currentTime=0;media.video.play().catch(()=>{});}catch(_e){}}
- const backer=folderBacker(folder);if(!backer)return;
- cancelPreviewScene();pendingWorldEntryFade=null;worldEntryFadeActive=false;
- if(resetToInitial){state.lastCameraView=null;applyWorldInitialView(backer);}
- else if(inheritedView)state.lastCameraView=inheritedView;
- const start=state.nodes.find(n=>n.type==='folderStart'&&n.folderId===folder.id);
- if(start)showPreviewNode(start.id);else showPreviewNode(backer.id);
+function enterWorldFolder(folderId,resetToInitial=false,restartNodeId=null){
+const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;
+const previousWorld=getNode(currentWorldBackerId)?.world;
+const inheritedView=resetToInitial?null:(previousWorld?{yaw:previousWorld.yaw,pitch:previousWorld.pitch,zoom:previousWorld.zoom}:(state.lastCameraView?{...state.lastCameraView}:null));
+currentWorldBackerId=folder.backerId;
+const media=getFolderMedia(folder);
+if(media?.video){try{media.video.loop=true;media.video.currentTime=0;media.video.play().catch(()=>{});}catch(_e){}}
+const backer=folderBacker(folder);if(!backer)return;
+cancelPreviewScene();pendingWorldEntryFade=null;worldEntryFadeActive=false;
+if(resetToInitial){state.lastCameraView=null;applyWorldInitialView(backer);}
+else if(inheritedView)state.lastCameraView=inheritedView;
+
+const restartNode=restartNodeId?getNode(restartNodeId):null;
+if(restartNode&&restartNode.folderId===folder.id){
+const worldDisplay=state.nodes.find(n=>n.type==='worldDisplay'&&n.folderId===folder.id);
+if(worldDisplay){
+showPreviewNode(worldDisplay.id);
+}else{
+showPreviewNode(backer.id);
+}
+
+recordPreviewDiagnostic('restart-point',{nodeId:restartNode.id,mode:restartNode.restartMode||'after'});
+
+if(restartNode.restartMode==='before'){
+showPreviewNode(restartNode.id);
+}else{
+previewOutgoing(restartNode.id);
+}
+return;
+}
+
+const start=state.nodes.find(n=>n.type==='folderStart'&&n.folderId===folder.id);
+if(start)showPreviewNode(start.id);else showPreviewNode(backer.id);
 }
 applyGameAspectRatio();
 updateLayoutControls();
