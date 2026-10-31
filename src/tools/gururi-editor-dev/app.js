@@ -509,6 +509,7 @@ uiButtonWidth:180,
 uiButtonHeight:56,
 uiButtonFontSize:20,
 uiButtonPositions:{pc:{x:50,y:88},mobile:{x:50,y:88}},
+skipTargetIds:[],
 conditionMode:'acquired',
 conditionItemId:'',
 conditionOwnerId:null,
@@ -645,7 +646,9 @@ nodesLayer.innerHTML='';
 for(const node of state.nodes){
 if(!state.activeFolderId||node.folderId!==state.activeFolderId||(node.type==='world'&&state.worldFolders.some(folder=>folder.backerId===node.id)))continue;
 const el=document.createElement('div');
-el.className=`node ${node.type==='start'?'start-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''}`;
+const selectedSkipNode=getNode(selectingSkipNodeId||state.selectedNodeId);
+const isSkipTarget=selectedSkipNode?.type==='skip'&&(selectedSkipNode.skipTargetIds||[]).includes(node.id);
+el.className=`node ${node.type==='start'?'start-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''} ${isSkipTarget?'skip-target-marked':''}`;
 el.dataset.id=node.id;
 el.style.left=`${node.x}px`;
 el.style.top=`${node.y}px`;
@@ -656,6 +659,7 @@ node.type==='worldMove'?'ワールド移動':
 node.type==='eventRecord'?'イベント記録':
 node.type==='gameReset'?'リセット':
 node.type==='gameEnd'?'ゲーム終了':
+node.type==='skip'?'スキップ':
 node.type==='start'?'START':
 node.type==='media'||node.type==='world'||node.type==='animation'?'メディア':
 node.type==='time'?'時間':
@@ -692,6 +696,7 @@ node.type==='worldMove'?(state.worldFolders.find(w=>w.id===node.destinationFolde
 node.type==='eventRecord'?(node.eventName||'イベント未設定'):
 node.type==='gameReset'?'ワールド1からやり直す':
 node.type==='gameEnd'?'ゲームを終了してトップページに戻る':
+node.type==='skip'?`${(node.skipTargetIds||[]).length} 個のノードを対象に設定`:
 node.type==='media'?'素材を選択してください':
 node.type==='world'?(node.world.fileName||'素材未設定'):
 node.type==='animation'?(node.animation.fileName||'素材未設定'):
@@ -816,10 +821,30 @@ resize();
 });
 }
 
+let selectingSkipNodeId=null;
+
 function attachNodeEvents(el,node){
 el.addEventListener('pointerdown',e=>{
 if(getWorkspaceTool(e))return;
 if(e.button!==0)return;
+
+if(selectingSkipNodeId){
+e.preventDefault();
+e.stopPropagation();
+const skipNode=getNode(selectingSkipNodeId);
+if(!skipNode||!['animation','dialogue'].includes(node.type))return;
+if(!Array.isArray(skipNode.skipTargetIds))skipNode.skipTargetIds=[];
+const targets=new Set(skipNode.skipTargetIds);
+if(targets.has(node.id)){
+targets.delete(node.id);
+}else{
+targets.add(node.id);
+}
+skipNode.skipTargetIds=[...targets];
+renderNodes();
+renderSettings();
+return;
+}
 
 const port=e.target.closest('.port');
 if(port){
@@ -941,21 +966,7 @@ node.executeOnce=onceCheckbox.checked;
 settingsPanel.appendChild(onceGroup);
 }
 
-if(['dialogue','animation'].includes(node.type)&&!settingsPanel.querySelector('#nodeSkipInput')){
-const skipGroup=document.createElement('div');
-skipGroup.className='setting-group';
-const skipLabel=document.createElement('label');
-const skipCheckbox=document.createElement('input');
-skipCheckbox.type='checkbox';
-skipCheckbox.id='nodeSkipInput';
-skipCheckbox.checked=node.skipByButton===true;
-skipLabel.append(skipCheckbox,document.createTextNode(' スキップ対象'));
-skipGroup.appendChild(skipLabel);
-skipCheckbox.addEventListener('change',()=>{
-node.skipByButton=skipCheckbox.checked;
-});
-settingsPanel.appendChild(skipGroup);
-}
+
 if(node.type==='dialogue'||node.type==='clickBranch')return;
 if(settingsPanel.querySelector('#nodeMemoInput'))return;
 
@@ -1079,8 +1090,23 @@ if(node.type==='gameReset'){
  return;
 }
 if(node.type==='gameEnd'){
- settingsPanel.innerHTML='<div class="settings-title">ゲーム終了</div><p class="settings-empty">このノードを実行するとゲームを終了し、書き出した作品ではトップページに戻ります。エディタ内ではプレビューを閉じます。出力接続はありません。</p>';
- return;
+settingsPanel.innerHTML='<div class="settings-title">ゲーム終了</div><p class="settings-empty">このノードを実行するとゲームを終了し、書き出した作品ではトップページに戻ります。エディタ内ではプレビューを閉じます。出力接続はありません。</p>';
+return;
+}
+if(node.type==='skip'){
+if(!Array.isArray(node.skipTargetIds))node.skipTargetIds=[];
+settingsPanel.innerHTML=`<div class="settings-title">スキップ</div>
+<div class="setting-group"><div class="setting-label">スキップ対象</div><button type="button" id="skipSelectionButton" class="add-world-btn"></button><div id="skipSelectionCount" class="settings-empty"></div><div class="pan-help">対象選択中にアニメーション・ダイアローグをクリックすると登録・解除できます。選択を終えたらボタンをもう一度押してください。</div></div>
+<p class="settings-empty">既存のボタンノードからこのノードに接続してください。ボタンを押すと登録した演出を省略します。</p>`;
+const button=document.getElementById('skipSelectionButton');
+button.textContent=selectingSkipNodeId===node.id?'選択を終了':'対象ノードを選択';
+document.getElementById('skipSelectionCount').textContent=`登録済み：${node.skipTargetIds.length}個`;
+button.addEventListener('click',()=>{
+selectingSkipNodeId=selectingSkipNodeId===node.id?null:node.id;
+renderNodes();
+renderSettings();
+});
+return;
 }
 if(node.type==='eventRecord'){
  settingsPanel.innerHTML='<div class="settings-title">イベント記録</div><div class="setting-group"><div class="setting-label">イベント名</div><input id="recordEventName" class="number-input" type="text"></div><p class="settings-empty">ここを通過するとイベント実行済みになります。</p>';
@@ -7153,28 +7179,21 @@ playBtn.addEventListener('click',()=>startPreview());
 closePreviewBtn.addEventListener('click',stopPreview);
 
 let skipRequested=false;
-const gameSkipButton=document.createElement('button');
-gameSkipButton.type='button';
-gameSkipButton.textContent='スキップ';
-gameSkipButton.setAttribute('aria-label','指定した演出をスキップ');
-gameSkipButton.style.cssText='position:absolute;top:48px;left:8px;z-index:80;padding:7px 12px;border:1px solid rgba(255,255,255,.55);border-radius:5px;background:rgba(0,0,0,.65);color:white;font-size:13px;cursor:pointer;display:none;';
-gameViewport.appendChild(gameSkipButton);
+let currentSkipTargetIds=null;
 
-gameSkipButton.addEventListener('click',event=>{
-event.preventDefault();
-event.stopPropagation();
-if(gamePreview.classList.contains('hidden'))return;
+function executeSkipNode(node){
 if(skipRequested)return;
-
+const targets=new Set((node.skipTargetIds||[]).filter(id=>['animation','dialogue'].includes(getNode(id)?.type)));
+if(!targets.size)return;
 skipRequested=true;
+currentSkipTargetIds=targets;
 try{
 const playback=state.previewAnimation;
-if(playback&&getNode(playback.nodeId)?.skipByButton===true){
+if(playback&&targets.has(playback.nodeId)){
 playback.finish?.();
 }
-
 const dialogueNode=getNode(state.previewDialogueNodeId);
-if(dialogueNode?.type==='dialogue'&&dialogueNode.skipByButton===true){
+if(dialogueNode?.type==='dialogue'&&targets.has(dialogueNode.id)){
 stopDialogueTyping();
 dialogueOverlay.classList.add('hidden');
 state.previewDialogueNodeId=null;
@@ -7182,8 +7201,9 @@ previewOutgoing(dialogueNode.id);
 }
 }finally{
 skipRequested=false;
+currentSkipTargetIds=null;
 }
-});
+}
 
 gameViewport.addEventListener('click',e=>{
 if(!e.target.closest('#dialogueOverlay'))return;
@@ -7737,7 +7757,7 @@ pendingWorldEntryFade=null;worldEntryFadeActive=false;
 if(!state.startFolderId){alert('開始ワールドを選択してください。');return;}
 gamePreview.classList.remove('hidden');
 skipRequested=false;
-gameSkipButton.style.display=state.nodes.some(node=>node.skipByButton===true&&['dialogue','animation'].includes(node.type))?'block':'none';
+currentSkipTargetIds=null;
 resizeGameCanvas();
 
 refreshInventory();
@@ -7751,7 +7771,7 @@ enterWorldFolder(state.worldFolders[0]?.id||state.startFolderId,resetToInitial);
 function stopPreview(){
 recordPreviewDiagnostic('preview-stop');
 skipRequested=false;
-gameSkipButton.style.display='none';
+currentSkipTargetIds=null;
 state.inventoryEnabled=false;
 refreshInventory();
 cancelPreviewScene();
@@ -8504,7 +8524,7 @@ return;
 if(previewVisited.has(node.id))return;
 previewVisited.add(node.id);
 
-if(skipRequested&&node.skipByButton===true&&['dialogue','animation'].includes(node.type)){
+if(skipRequested&&currentSkipTargetIds?.has(node.id)&&['dialogue','animation'].includes(node.type)){
 recordPreviewDiagnostic('node-button-skipped',{nodeId:node.id,nodeType:node.type});
 previewOutgoing(node.id,node.type==='animation'?'end':'start');
 return;
@@ -8635,6 +8655,11 @@ mediaWrap.remove();
 }
 previewOutgoing(node.id);
 });
+return;
+}
+if(node.type==='skip'){
+executeSkipNode(node);
+previewOutgoing(node.id);
 return;
 }
 if(node.type==='uiButton'){
