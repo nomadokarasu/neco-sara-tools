@@ -1,4 +1,3 @@
-
 // Preview diagnostic recorder: bounded in-memory events, exported only on user click.
 const previewDiagnosticEvents=[];
 const previewDiagnosticErrors=[];
@@ -504,15 +503,11 @@ textAnswerQuestion:'',
 textAnswerCorrect:'',
 textAnswerMode:'text',
 textBoxes:[],
-textOverlayDuration:3,
-textOverlayUntilTrigger:false,
 uiButtonText:'ボタン',
 uiButtonWidth:180,
 uiButtonHeight:56,
 uiButtonFontSize:20,
 uiButtonPositions:{pc:{x:50,y:88},mobile:{x:50,y:88}},
-uiButtonCondition:{eventType:'acquire',targetId:'',mode:'always'},
-skipTargetIds:[],
 conditionMode:'acquired',
 conditionItemId:'',
 conditionOwnerId:null,
@@ -649,9 +644,7 @@ nodesLayer.innerHTML='';
 for(const node of state.nodes){
 if(!state.activeFolderId||node.folderId!==state.activeFolderId||(node.type==='world'&&state.worldFolders.some(folder=>folder.backerId===node.id)))continue;
 const el=document.createElement('div');
-const selectedSkipNode=getNode(selectingSkipNodeId||state.selectedNodeId);
-const isSkipTarget=selectedSkipNode?.type==='skip'&&(selectedSkipNode.skipTargetIds||[]).includes(node.id);
-el.className=`node ${node.type==='start'?'start-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''} ${isSkipTarget?'skip-target-marked':''}`;
+el.className=`node ${node.type==='start'?'start-node':''} ${(state.selectedNodeId===node.id||state.selectedNodeIds.has(node.id))?'selected':''}`;
 el.dataset.id=node.id;
 el.style.left=`${node.x}px`;
 el.style.top=`${node.y}px`;
@@ -662,7 +655,6 @@ node.type==='worldMove'?'ワールド移動':
 node.type==='eventRecord'?'イベント記録':
 node.type==='gameReset'?'リセット':
 node.type==='gameEnd'?'ゲーム終了':
-node.type==='skip'?'スキップ':
 node.type==='start'?'START':
 node.type==='media'||node.type==='world'||node.type==='animation'?'メディア':
 node.type==='time'?'時間':
@@ -699,7 +691,6 @@ node.type==='worldMove'?(state.worldFolders.find(w=>w.id===node.destinationFolde
 node.type==='eventRecord'?(node.eventName||'イベント未設定'):
 node.type==='gameReset'?'ワールド1からやり直す':
 node.type==='gameEnd'?'ゲームを終了してトップページに戻る':
-node.type==='skip'?`${(node.skipTargetIds||[]).length} 個のノードを対象に設定`:
 node.type==='media'?'素材を選択してください':
 node.type==='world'?(node.world.fileName||'素材未設定'):
 node.type==='animation'?(node.animation.fileName||'素材未設定'):
@@ -824,30 +815,10 @@ resize();
 });
 }
 
-let selectingSkipNodeId=null;
-
 function attachNodeEvents(el,node){
 el.addEventListener('pointerdown',e=>{
 if(getWorkspaceTool(e))return;
 if(e.button!==0)return;
-
-if(selectingSkipNodeId){
-e.preventDefault();
-e.stopPropagation();
-const skipNode=getNode(selectingSkipNodeId);
-if(!skipNode||!['animation','dialogue','keyframe'].includes(node.type))return;
-if(!Array.isArray(skipNode.skipTargetIds))skipNode.skipTargetIds=[];
-const targets=new Set(skipNode.skipTargetIds);
-if(targets.has(node.id)){
-targets.delete(node.id);
-}else{
-targets.add(node.id);
-}
-skipNode.skipTargetIds=[...targets];
-renderNodes();
-renderSettings();
-return;
-}
 
 const port=e.target.closest('.port');
 if(port){
@@ -969,7 +940,6 @@ node.executeOnce=onceCheckbox.checked;
 settingsPanel.appendChild(onceGroup);
 }
 
-
 if(node.type==='dialogue'||node.type==='clickBranch')return;
 if(settingsPanel.querySelector('#nodeMemoInput'))return;
 
@@ -1033,53 +1003,8 @@ if(node.type==='uiButton'){
  <div class="ui-button-mode-tabs"><button type="button" data-mode="pc" class="active">PC（16:9）</button><button type="button" data-mode="mobile">スマホ（9:16）</button></div>
  <div class="ui-button-position-preview" id="uiButtonPositionPreview"><button id="uiButtonPositionTarget" type="button"></button></div>
  <div class="pan-help">ボタンをドラッグして位置を変更します。PCとスマホの位置は別々に保存されます。</div></div>
-<p class="settings-empty">ゲーム画面でボタンを押すと、接続先のノードへ進みます。</p>
-<div class="setting-group">
-<div class="setting-section-heading">表示条件</div>
-<select id="uiButtonConditionMode" class="number-input">
-<option value="always">常に表示</option>
-<option value="before">条件を満たす前</option>
-<option value="after">条件を満たした後</option>
-</select>
-<select id="uiButtonConditionType" class="number-input">
-<option value="acquire">アイテム取得</option>
-<option value="use">アイテム使用</option>
-<option value="event">イベント記録</option>
-<option value="toggle">トグル</option>
-</select>
-<select id="uiButtonConditionTarget" class="number-input"></select>
-</div>`;
-node.uiButtonCondition ||= {eventType:'acquire',targetId:'',mode:'always'};
-const buttonCondition=node.uiButtonCondition;
-const conditionModeInput=document.getElementById('uiButtonConditionMode');
-const conditionTypeInput=document.getElementById('uiButtonConditionType');
-const conditionTargetInput=document.getElementById('uiButtonConditionTarget');
-conditionModeInput.value=buttonCondition.mode||'always';
-conditionTypeInput.value=buttonCondition.eventType||'acquire';
-const refreshButtonConditionTargets=()=>{
-conditionTargetInput.replaceChildren(new Option('対象を選択',''));
-const types={acquire:'itemAcquire',use:'clickBranch',event:'eventRecord',toggle:'toggle'};
-for(const candidate of state.nodes.filter(n=>n.type===types[conditionTypeInput.value]&&(n.type!=='clickBranch'||n.clickBranchItemId!=='__other__'))){
-conditionTargetInput.add(new Option(candidate.itemName||candidate.eventName||candidate.toggleName||candidate.customBody||candidate.id,candidate.id));
-}
-conditionTargetInput.value=buttonCondition.targetId||'';
-conditionTypeInput.disabled=conditionModeInput.value==='always';
-conditionTargetInput.disabled=conditionModeInput.value==='always';
-};
-conditionModeInput.addEventListener('change',()=>{
-buttonCondition.mode=conditionModeInput.value;
-refreshButtonConditionTargets();
-});
-conditionTypeInput.addEventListener('change',()=>{
-buttonCondition.eventType=conditionTypeInput.value;
-buttonCondition.targetId='';
-refreshButtonConditionTargets();
-});
-conditionTargetInput.addEventListener('change',()=>{
-buttonCondition.targetId=conditionTargetInput.value;
-});
-refreshButtonConditionTargets();
-const preview=settingsPanel.querySelector('#uiButtonPositionPreview');
+ <p class="settings-empty">ゲーム画面でボタンを押すと、接続先のノードへ進みます。</p>`;
+ const preview=settingsPanel.querySelector('#uiButtonPositionPreview');
  const target=settingsPanel.querySelector('#uiButtonPositionTarget');
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
  const redraw=()=>{
@@ -1138,23 +1063,8 @@ if(node.type==='gameReset'){
  return;
 }
 if(node.type==='gameEnd'){
-settingsPanel.innerHTML='<div class="settings-title">ゲーム終了</div><p class="settings-empty">このノードを実行するとゲームを終了し、書き出した作品ではトップページに戻ります。エディタ内ではプレビューを閉じます。出力接続はありません。</p>';
-return;
-}
-if(node.type==='skip'){
-if(!Array.isArray(node.skipTargetIds))node.skipTargetIds=[];
-settingsPanel.innerHTML=`<div class="settings-title">スキップ</div>
-<div class="setting-group"><div class="setting-label">スキップ対象</div><button type="button" id="skipSelectionButton" class="add-world-btn"></button><div id="skipSelectionCount" class="settings-empty"></div><div class="pan-help">対象選択中にアニメーション・ダイアローグをクリックすると登録・解除できます。選択を終えたらボタンをもう一度押してください。</div></div>
-<p class="settings-empty">既存のボタンノードからこのノードに接続してください。ボタンを押すと登録した演出を省略します。</p>`;
-const button=document.getElementById('skipSelectionButton');
-button.textContent=selectingSkipNodeId===node.id?'選択を終了':'対象ノードを選択';
-document.getElementById('skipSelectionCount').textContent=`登録済み：${node.skipTargetIds.length}個`;
-button.addEventListener('click',()=>{
-selectingSkipNodeId=selectingSkipNodeId===node.id?null:node.id;
-renderNodes();
-renderSettings();
-});
-return;
+ settingsPanel.innerHTML='<div class="settings-title">ゲーム終了</div><p class="settings-empty">このノードを実行するとゲームを終了し、書き出した作品ではトップページに戻ります。エディタ内ではプレビューを閉じます。出力接続はありません。</p>';
+ return;
 }
 if(node.type==='eventRecord'){
  settingsPanel.innerHTML='<div class="settings-title">イベント記録</div><div class="setting-group"><div class="setting-label">イベント名</div><input id="recordEventName" class="number-input" type="text"></div><p class="settings-empty">ここを通過するとイベント実行済みになります。</p>';
@@ -1842,9 +1752,8 @@ const ids=['',...[...state.inventory].filter(id=>getInventoryItem(id))];
 for(const id of ids){
 const item=id?getInventoryItem(id):null;
 const button=document.createElement('button');
-button.type='button';button.className='game-ui-button';
-button.dataset.nodeId=node.id;
-button.textContent=node.uiButtonText??'ボタン';
+button.type='button';
+button.textContent=item?itemDisplayName(item):'なし';
 button.classList.toggle('active',state.selectedInventoryItemId===(id||null));
 button.addEventListener('click',event=>{
 event.preventDefault();
@@ -2011,24 +1920,7 @@ settingsPanel.innerHTML=`<div class="settings-title">テキスト</div>
 <div class="setting-group"><div class="setting-label">配置（${state.displayMode==='pc'?'PC':'スマホ'}）</div>
 <div id="textOverlayEditor" class="media2d-editor text-overlay-editor" style="aspect-ratio:${layout.width}/${layout.height}"><canvas id="textOverlayBackground"></canvas><div id="textOverlayItems"></div></div>
 <div class="pan-help">文字をドラッグ：移動 / 四隅をドラッグ：幅・高さを変更。PC・スマホの配置は別々に保存されます。</div></div>
-<div class="setting-group"><div class="setting-label">テキスト一覧</div><div id="textOverlayList"></div><button type="button" id="textOverlayAdd" class="add-world-btn">＋ テキストを追加</button></div>
-<div class="setting-group">
-<div class="setting-label">表示時間（秒）</div>
-<input type="number" id="textOverlayDurationInput" class="number-input" min="0" step="0.1">
-<label><input type="checkbox" id="textOverlayUntilTriggerInput"> トリガーが発火するまで表示</label>
-</div>`;
-const durationInput=document.getElementById('textOverlayDurationInput');
-const untilTriggerInput=document.getElementById('textOverlayUntilTriggerInput');
-durationInput.value=node.textOverlayDuration??3;
-untilTriggerInput.checked=node.textOverlayUntilTrigger===true;
-durationInput.disabled=untilTriggerInput.checked;
-durationInput.addEventListener('input',()=>{
-node.textOverlayDuration=Math.max(0,Number(durationInput.value)||0);
-});
-untilTriggerInput.addEventListener('change',()=>{
-node.textOverlayUntilTrigger=untilTriggerInput.checked;
-durationInput.disabled=untilTriggerInput.checked;
-});
+<div class="setting-group"><div class="setting-label">テキスト一覧</div><div id="textOverlayList"></div><button type="button" id="textOverlayAdd" class="add-world-btn">＋ テキストを追加</button></div>`;
 const editor=document.getElementById('textOverlayEditor');
 const items=document.getElementById('textOverlayItems');
 const list=document.getElementById('textOverlayList');
@@ -2109,45 +2001,16 @@ list.append(wrapper);
 document.getElementById('textOverlayAdd').addEventListener('click',()=>{const item=makeTextOverlayBox();node.textBoxes.push(item);selectedId=item.id;drawList();drawPreview();});
 requestAnimationFrame(()=>{if(editor.isConnected){drawList();drawPreview();}});
 }
-const activeTextOverlays=new Map();
-
-function removeTextOverlay(nodeId){
-const entry=activeTextOverlays.get(nodeId);
-if(!entry)return;
-if(entry.timer!==null)clearTimeout(entry.timer);
-for(const element of entry.elements)element.remove();
-activeTextOverlays.delete(nodeId);
-}
-
-function removeTriggerWaitingTextOverlays(){
-for(const [nodeId,entry] of [...activeTextOverlays]){
-if(entry.untilTrigger)removeTextOverlay(nodeId);
-}
-}
-
 function showTextOverlay(node){
-removeTextOverlay(node.id);
-const elements=[];
 for(const item of node.textBoxes||[]){
 const p=getTextOverlayPosition(item),wrap=document.createElement('div');
 wrap.className='game-text-overlay';
 Object.assign(wrap.style,{position:'absolute',left:p.x+'%',top:p.y+'%',width:p.w+'%',height:p.h+'%',fontSize:Math.max(8,Number(item.fontSize)||32)+'px'});
 wrap.textContent=item.text||'';
 media2DLayer.appendChild(wrap);
-elements.push(wrap);
-}
-const untilTrigger=node.textOverlayUntilTrigger===true;
-const entry={elements,untilTrigger,timer:null};
-activeTextOverlays.set(node.id,entry);
-if(!untilTrigger){
-const seconds=Math.max(0,Number(node.textOverlayDuration??3)||0);
-entry.timer=setTimeout(()=>{
-if(activeTextOverlays.get(node.id)===entry)removeTextOverlay(node.id);
-},seconds*1000);
 }
 }
 function clearMedia2DLayer(){
-for(const nodeId of [...activeTextOverlays.keys()])removeTextOverlay(nodeId);
 for(const video of media2DLayer.querySelectorAll('video')){video.pause();video.removeAttribute('src');video.load();}
 media2DLayer.replaceChildren();
 }
@@ -7273,37 +7136,6 @@ document.getElementById('exportPreviewDiagnosticBtn').addEventListener('click',e
 playBtn.addEventListener('click',()=>startPreview());
 closePreviewBtn.addEventListener('click',stopPreview);
 
-let skipRequested=false;
-let currentSkipTargetIds=null;
-
-function executeSkipNode(node){
-if(skipRequested)return;
-const targets=new Set((node.skipTargetIds||[]).filter(id=>['animation','dialogue','keyframe'].includes(getNode(id)?.type)));
-if(!targets.size)return;
-skipRequested=true;
-currentSkipTargetIds=targets;
-try{
-const keyframe=activeIndependentKeyframe;
-if(keyframe&&previewKeyframeBusy&&targets.has(keyframe.node.id)){
-keyframe.finish?.();
-}
-const playback=state.previewAnimation;
-if(playback&&targets.has(playback.nodeId)){
-playback.finish?.();
-}
-const dialogueNode=getNode(state.previewDialogueNodeId);
-if(dialogueNode?.type==='dialogue'&&targets.has(dialogueNode.id)){
-stopDialogueTyping();
-dialogueOverlay.classList.add('hidden');
-state.previewDialogueNodeId=null;
-previewOutgoing(dialogueNode.id);
-}
-}finally{
-skipRequested=false;
-currentSkipTargetIds=null;
-}
-}
-
 gameViewport.addEventListener('click',e=>{
 if(!e.target.closest('#dialogueOverlay'))return;
 if(gamePreview.classList.contains('hidden'))return;
@@ -7715,7 +7547,6 @@ function fireExplorationTrigger(node){
 if(!canFireExplorationTrigger(node))return;
 if(isPreviewOnceCompleted(node))return;
 
-removeTriggerWaitingTextOverlays();
 markPreviewOnceExecuted(node);
 
 if(node.triggerOnce){
@@ -7811,7 +7642,6 @@ const wasInside=previewFrameInInside.get(id)===true;
 previewFrameInInside.set(id,inside);
 if(!inside||wasInside)continue;
 if(isPreviewOnceCompleted(node)||!canFireExplorationTrigger(node))continue;
-removeTriggerWaitingTextOverlays();
 // 接続先だけを再実行可能にし、ワールドや他の進行タイマーは維持する。
 markPreviewOnceExecuted(node);
 if(node.triggerOnce)previewCompletedTriggers.add(node.id);
@@ -7857,8 +7687,6 @@ fadeOverlay.style.pointerEvents='none';
 pendingWorldEntryFade=null;worldEntryFadeActive=false;
 if(!state.startFolderId){alert('開始ワールドを選択してください。');return;}
 gamePreview.classList.remove('hidden');
-skipRequested=false;
-currentSkipTargetIds=null;
 resizeGameCanvas();
 
 refreshInventory();
@@ -7871,8 +7699,6 @@ enterWorldFolder(state.worldFolders[0]?.id||state.startFolderId,resetToInitial);
 
 function stopPreview(){
 recordPreviewDiagnostic('preview-stop');
-skipRequested=false;
-currentSkipTargetIds=null;
 state.inventoryEnabled=false;
 refreshInventory();
 cancelPreviewScene();
@@ -8035,8 +7861,6 @@ if(playback.baseWorldNodeId&&getNode(playback.baseWorldNodeId)){
 }
 previewOutgoing(node.id,'end');
 };
-
-playback.finish=finish;
 
 const draw=now=>{
 if(state.previewAnimation!==playback)return;
@@ -8625,23 +8449,6 @@ return;
 if(previewVisited.has(node.id))return;
 previewVisited.add(node.id);
 
-if(skipRequested&&currentSkipTargetIds?.has(node.id)&&['dialogue','animation','keyframe'].includes(node.type)){
-recordPreviewDiagnostic('node-button-skipped',{nodeId:node.id,nodeType:node.type});
-if(node.type==='keyframe'){
-const source=findPreviousClickMediaNode(node.id);
-if(source?.type==='world'&&state.previewWorldNodeId===source.id){
-const frames=getKeyframeNodeFrames(node).filter(frame=>Number.isFinite(frame.time));
-const lastTime=frames.length?Math.max(0,...frames.map(frame=>frame.time)):0;
-const configured=Number(node.keyframeDuration);
-const duration=Math.max(lastTime,Number.isFinite(configured)&&configured>0?configured:0);
-Object.assign(source.world,getIndependentCameraAt(node,duration,getMediaCameraBase(source)));
-drawPanoramaPreview(gameCanvas,source.world);
-}
-}
-previewOutgoing(node.id,node.type==='animation'?'end':'start');
-return;
-}
-
 // 待機型トリガーは発火時に実行済みとする
 if(!['click','frameIn','itemUse'].includes(node.type)){
 markPreviewOnceExecuted(node);
@@ -8725,22 +8532,7 @@ if(!source||duration<=0){previewOutgoing(node.id);return;}
 const epoch=previewSceneEpoch;
 const start=performance.now();
 previewKeyframeBusy=true;
-const controller={node,sourceId:source.id,offset:0,startedAt:start,duration};
-activeIndependentKeyframe=controller;
-let finished=false;
-controller.finish=()=>{
-if(finished||epoch!==previewSceneEpoch)return;
-finished=true;
-stopCameraAnimation();
-if(source.type==='world'&&state.previewWorldNodeId===source.id){
-Object.assign(source.world,getIndependentCameraAt(node,duration,getMediaCameraBase(source)));
-drawPanoramaPreview(gameCanvas,source.world);
-}
-previewKeyframeBusy=false;
-if(activeIndependentKeyframe===controller)activeIndependentKeyframe=null;
-recordPreviewDiagnostic('keyframe-end',{nodeId:node.id,duration});
-previewOutgoing(node.id);
-};
+activeIndependentKeyframe={node,sourceId:source.id,offset:0,startedAt:start,duration};
 recordPreviewDiagnostic('keyframe-start',{nodeId:node.id,duration});
 // The preview waits until the last keyframe has finished before continuing.
 if(source.type==='world'&&state.previewWorldNodeId===source.id){
@@ -8756,7 +8548,10 @@ else state.cameraAnimationFrame=null;
 state.cameraAnimationFrame=requestAnimationFrame(tick);
 }
 schedulePreviewBranch(duration,()=>{
-controller.finish();
+if(epoch!==previewSceneEpoch)return;
+previewKeyframeBusy=false;
+recordPreviewDiagnostic('keyframe-end',{nodeId:node.id,duration});
+previewOutgoing(node.id);
 });
 return;
 }
@@ -8781,11 +8576,6 @@ previewOutgoing(node.id);
 });
 return;
 }
-if(node.type==='skip'){
-executeSkipNode(node);
-previewOutgoing(node.id);
-return;
-}
 if(node.type==='uiButton'){
  clearUiButtonPreview();
  const button=document.createElement('button');
@@ -8798,20 +8588,15 @@ if(node.type==='uiButton'){
  button.style.position='absolute';
  button.style.left=`${Math.max(0,Math.min(100,Number(pos.x)??50))}%`;
  button.style.top=`${Math.max(0,Math.min(100,Number(pos.y)??88))}%`;
-button.style.transform='translate(-50%, -50%)';
-const updateButtonVisibility=()=>{
-if(!button.isConnected)return;
-button.style.display=layerConditionMatches(node.uiButtonCondition||{mode:'always'})?'':'none';
-};
-button.addEventListener('click',event=>{
+ button.style.transform='translate(-50%, -50%)';
+ button.addEventListener('click',event=>{
   event.preventDefault();event.stopPropagation();
   if(gamePreview.classList.contains('hidden')||!button.isConnected)return;
   clearUiButtonPreview();
   previewOutgoing(node.id);
  });
-uiButtonPreviewLayer.appendChild(button);
-updateButtonVisibility();
-return;
+ uiButtonPreviewLayer.appendChild(button);
+ return;
 }
 if(node.type==='frameIn'){
 if(!state.previewFrameInIds.includes(node.id)){
@@ -9762,15 +9547,9 @@ if(!temporaryWorldOverlay||!renderTemporaryWorldOverlay(backer.world,image))draw
 }
 }
 function worldCompositeTick(){
-refreshWorldSettingsPreview();
-if(!gamePreview.classList.contains('hidden')){
-if(state.previewWorldNodeId)refreshWorldComposite();
-for(const button of uiButtonPreviewLayer.querySelectorAll('.game-ui-button')){
-const source=getNode(button.dataset.nodeId);
-if(source)button.style.display=layerConditionMatches(source.uiButtonCondition||{mode:'always'})?'':'none';
-}
-}
-worldCompositeFrame=requestAnimationFrame(worldCompositeTick);
+ refreshWorldSettingsPreview();
+ if(!gamePreview.classList.contains('hidden')&&state.previewWorldNodeId)refreshWorldComposite();
+ worldCompositeFrame=requestAnimationFrame(worldCompositeTick);
 }
 function addFolderRow(parent,label,element){const group=document.createElement('div');group.className='setting-group';const cap=document.createElement('div');cap.className='setting-label';cap.textContent=label;group.append(cap,element);parent.append(group);}
 function folderMediaSelect(value,types,onchange){const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('素材未設定',''));for(const m of mediaLibrary.filter(m=>types.includes(m.fileType)))sel.add(new Option(m.fileName,m.id));sel.value=value||'';sel.onchange=()=>onchange(sel.value);return sel;}
@@ -10276,5 +10055,3 @@ if(source)drawClickLassoOverlay(clickNode,source);
 });
 });
 editorSettingsResizeObserver.observe(settingsPanel);
-
-
