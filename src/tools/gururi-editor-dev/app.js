@@ -941,6 +941,21 @@ node.executeOnce=onceCheckbox.checked;
 settingsPanel.appendChild(onceGroup);
 }
 
+if(['dialogue','animation'].includes(node.type)&&!settingsPanel.querySelector('#nodeSkipInput')){
+const skipGroup=document.createElement('div');
+skipGroup.className='setting-group';
+const skipLabel=document.createElement('label');
+const skipCheckbox=document.createElement('input');
+skipCheckbox.type='checkbox';
+skipCheckbox.id='nodeSkipInput';
+skipCheckbox.checked=node.skipByButton===true;
+skipLabel.append(skipCheckbox,document.createTextNode(' スキップ対象'));
+skipGroup.appendChild(skipLabel);
+skipCheckbox.addEventListener('change',()=>{
+node.skipByButton=skipCheckbox.checked;
+});
+settingsPanel.appendChild(skipGroup);
+}
 if(node.type==='dialogue'||node.type==='clickBranch')return;
 if(settingsPanel.querySelector('#nodeMemoInput'))return;
 
@@ -7137,6 +7152,39 @@ document.getElementById('exportPreviewDiagnosticBtn').addEventListener('click',e
 playBtn.addEventListener('click',()=>startPreview());
 closePreviewBtn.addEventListener('click',stopPreview);
 
+let skipRequested=false;
+const gameSkipButton=document.createElement('button');
+gameSkipButton.type='button';
+gameSkipButton.textContent='スキップ';
+gameSkipButton.setAttribute('aria-label','指定した演出をスキップ');
+gameSkipButton.style.cssText='position:absolute;top:48px;left:8px;z-index:80;padding:7px 12px;border:1px solid rgba(255,255,255,.55);border-radius:5px;background:rgba(0,0,0,.65);color:white;font-size:13px;cursor:pointer;display:none;';
+gameViewport.appendChild(gameSkipButton);
+
+gameSkipButton.addEventListener('click',event=>{
+event.preventDefault();
+event.stopPropagation();
+if(gamePreview.classList.contains('hidden'))return;
+if(skipRequested)return;
+
+skipRequested=true;
+try{
+const playback=state.previewAnimation;
+if(playback&&getNode(playback.nodeId)?.skipByButton===true){
+playback.finish?.();
+}
+
+const dialogueNode=getNode(state.previewDialogueNodeId);
+if(dialogueNode?.type==='dialogue'&&dialogueNode.skipByButton===true){
+stopDialogueTyping();
+dialogueOverlay.classList.add('hidden');
+state.previewDialogueNodeId=null;
+previewOutgoing(dialogueNode.id);
+}
+}finally{
+skipRequested=false;
+}
+});
+
 gameViewport.addEventListener('click',e=>{
 if(!e.target.closest('#dialogueOverlay'))return;
 if(gamePreview.classList.contains('hidden'))return;
@@ -7252,6 +7300,11 @@ return getKeyframeNodeFrames(controller.node).length>0;
 
 let gameTouchGesture=null;
 
+function getGameCameraSensitivity(world){
+const fov=Math.max(35,Math.min(100,75/world.zoom));
+return(fov/75)*0.0025;
+}
+
 function getGameTouchDistance(touches){
 const dx=touches[0].clientX-touches[1].clientX;
 const dy=touches[0].clientY-touches[1].clientY;
@@ -7316,11 +7369,12 @@ if(Math.hypot(dx,dy)>4&&gamePreviewDrag){
 gamePreviewDrag.moved=true;
 }
 
-world.yaw=gameTouchGesture.yaw-dx*0.008;
+const sensitivity=getGameCameraSensitivity(world);
+world.yaw=gameTouchGesture.yaw-dx*sensitivity;
 world.pitch=clamp(
-gameTouchGesture.pitch+dy*0.008,
--Math.PI/2+0.02,
-Math.PI/2-0.02
+gameTouchGesture.pitch+dy*sensitivity,
+-Math.PI/2+0.01,
+Math.PI/2-0.01
 );
 }
 
@@ -7388,12 +7442,13 @@ if(isPreviewCameraLocked())return;
 const world=getActivePreviewWorld();
 if(!world)return;
 
-world.yaw=gamePreviewDrag.yaw-dx*0.008;
+const sensitivity=getGameCameraSensitivity(world);
+world.yaw=gamePreviewDrag.yaw-dx*sensitivity;
 
 world.pitch=clamp(
-gamePreviewDrag.pitch+dy*0.008,
--Math.PI/2+0.02,
-Math.PI/2-0.02
+gamePreviewDrag.pitch+dy*sensitivity,
+-Math.PI/2+0.01,
+Math.PI/2-0.01
 );
 
 if(!temporaryWorldOverlay||!renderTemporaryWorldOverlay(world))drawPanoramaPreview(gameCanvas,world);
@@ -7681,6 +7736,8 @@ fadeOverlay.style.pointerEvents='none';
 pendingWorldEntryFade=null;worldEntryFadeActive=false;
 if(!state.startFolderId){alert('開始ワールドを選択してください。');return;}
 gamePreview.classList.remove('hidden');
+skipRequested=false;
+gameSkipButton.style.display=state.nodes.some(node=>node.skipByButton===true&&['dialogue','animation'].includes(node.type))?'block':'none';
 resizeGameCanvas();
 
 refreshInventory();
@@ -7693,6 +7750,8 @@ enterWorldFolder(state.worldFolders[0]?.id||state.startFolderId,resetToInitial);
 
 function stopPreview(){
 recordPreviewDiagnostic('preview-stop');
+skipRequested=false;
+gameSkipButton.style.display='none';
 state.inventoryEnabled=false;
 refreshInventory();
 cancelPreviewScene();
@@ -7855,6 +7914,8 @@ if(playback.baseWorldNodeId&&getNode(playback.baseWorldNodeId)){
 }
 previewOutgoing(node.id,'end');
 };
+
+playback.finish=finish;
 
 const draw=now=>{
 if(state.previewAnimation!==playback)return;
@@ -8313,7 +8374,7 @@ speaker.className='dialogue-speaker';
 dialogueOverlay.insertBefore(speaker,dialogueOverlay.firstChild);
 }
 
-const speakerName=(node.dialogueSpeaker||'').trim();
+const speakerName=node.type==='itemAcquire'?'':(node.dialogueSpeaker||'').trim();
 speaker.textContent=speakerName;
 speaker.classList.toggle('hidden',!speakerName);
 
@@ -8442,6 +8503,12 @@ return;
 // A branch converging on an already-active node is executed only once per scene.
 if(previewVisited.has(node.id))return;
 previewVisited.add(node.id);
+
+if(skipRequested&&node.skipByButton===true&&['dialogue','animation'].includes(node.type)){
+recordPreviewDiagnostic('node-button-skipped',{nodeId:node.id,nodeType:node.type});
+previewOutgoing(node.id,node.type==='animation'?'end':'start');
+return;
+}
 
 // 待機型トリガーは発火時に実行済みとする
 if(!['click','frameIn','itemUse'].includes(node.type)){
