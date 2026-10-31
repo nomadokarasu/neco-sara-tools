@@ -503,11 +503,14 @@ textAnswerQuestion:'',
 textAnswerCorrect:'',
 textAnswerMode:'text',
 textBoxes:[],
+textOverlayDuration:3,
+textOverlayUntilTrigger:false,
 uiButtonText:'ボタン',
 uiButtonWidth:180,
 uiButtonHeight:56,
 uiButtonFontSize:20,
 uiButtonPositions:{pc:{x:50,y:88},mobile:{x:50,y:88}},
+uiButtonVisibility:{mode:'always',eventType:'acquire',targetId:'',secondConditionEnabled:false,conditionOperator:'and'},
 conditionMode:'acquired',
 conditionItemId:'',
 conditionOwnerId:null,
@@ -993,7 +996,7 @@ if(node.type==='folderStart'||node.type==='worldDisplay'){
  return;
 }
 if(node.type==='uiButton'){
- const fields=[['uiButtonWidth','ボタンの幅（px）',40,1000,180],['uiButtonHeight','ボタンの高さ（px）',24,500,56],['uiButtonFontSize','文字サイズ（px）',8,120,20]];
+ const fields=[['uiButtonWidth','ボタンの幅（px）',40,1000,180],['uiButtonHeight','ボタンの高さ（px）',24,500,56],['uiButtonFontSize','文字サイズ（px）',8,120,20]];[['uiButtonWidth','ボタンの幅（px）',40,1000,180],['uiButtonHeight','ボタンの高さ（px）',24,500,56],['uiButtonFontSize','文字サイズ（px）',8,120,20]];
  node.uiButtonPositions ||= {pc:{x:50,y:88},mobile:{x:50,y:88}};
  let buttonEditorMode='pc';
  settingsPanel.innerHTML=`<div class="settings-title">ボタン</div>
@@ -1003,8 +1006,9 @@ if(node.type==='uiButton'){
  <div class="ui-button-mode-tabs"><button type="button" data-mode="pc" class="active">PC（16:9）</button><button type="button" data-mode="mobile">スマホ（9:16）</button></div>
  <div class="ui-button-position-preview" id="uiButtonPositionPreview"><button id="uiButtonPositionTarget" type="button"></button></div>
  <div class="pan-help">ボタンをドラッグして位置を変更します。PCとスマホの位置は別々に保存されます。</div></div>
- <p class="settings-empty">ゲーム画面でボタンを押すと、接続先のノードへ進みます。</p>`;
- const preview=settingsPanel.querySelector('#uiButtonPositionPreview');
+<p class="settings-empty">ゲーム画面でボタンを押すと、接続先のノードへ進みます。</p>`;
+renderUiButtonVisibilitySettings(node);
+const preview=settingsPanel.querySelector('#uiButtonPositionPreview');
  const target=settingsPanel.querySelector('#uiButtonPositionTarget');
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
  const redraw=()=>{
@@ -1920,7 +1924,24 @@ settingsPanel.innerHTML=`<div class="settings-title">テキスト</div>
 <div class="setting-group"><div class="setting-label">配置（${state.displayMode==='pc'?'PC':'スマホ'}）</div>
 <div id="textOverlayEditor" class="media2d-editor text-overlay-editor" style="aspect-ratio:${layout.width}/${layout.height}"><canvas id="textOverlayBackground"></canvas><div id="textOverlayItems"></div></div>
 <div class="pan-help">文字をドラッグ：移動 / 四隅をドラッグ：幅・高さを変更。PC・スマホの配置は別々に保存されます。</div></div>
-<div class="setting-group"><div class="setting-label">テキスト一覧</div><div id="textOverlayList"></div><button type="button" id="textOverlayAdd" class="add-world-btn">＋ テキストを追加</button></div>`;
+<div class="setting-group"><div class="setting-label">テキスト一覧</div><div id="textOverlayList"></div><button type="button" id="textOverlayAdd" class="add-world-btn">＋ テキストを追加</button></div>
+<div class="setting-group">
+<div class="setting-label">表示時間（秒）</div>
+<input id="textOverlayDurationInput" class="number-input" type="number" min="0" step="0.1">
+<label><input id="textOverlayUntilTriggerInput" type="checkbox"> トリガーが発火するまで表示</label>
+</div>`;
+const durationInput=document.getElementById('textOverlayDurationInput');
+const untilTriggerInput=document.getElementById('textOverlayUntilTriggerInput');
+durationInput.value=node.textOverlayDuration??3;
+untilTriggerInput.checked=node.textOverlayUntilTrigger===true;
+durationInput.disabled=untilTriggerInput.checked;
+durationInput.onchange=()=>{
+node.textOverlayDuration=Math.max(0,Number(durationInput.value)||0);
+};
+untilTriggerInput.onchange=()=>{
+node.textOverlayUntilTrigger=untilTriggerInput.checked;
+durationInput.disabled=untilTriggerInput.checked;
+};
 const editor=document.getElementById('textOverlayEditor');
 const items=document.getElementById('textOverlayItems');
 const list=document.getElementById('textOverlayList');
@@ -2001,16 +2022,46 @@ list.append(wrapper);
 document.getElementById('textOverlayAdd').addEventListener('click',()=>{const item=makeTextOverlayBox();node.textBoxes.push(item);selectedId=item.id;drawList();drawPreview();});
 requestAnimationFrame(()=>{if(editor.isConnected){drawList();drawPreview();}});
 }
+const activeTextOverlays=new Map();
+
+function removeTextOverlay(nodeId){
+const entry=activeTextOverlays.get(nodeId);
+if(!entry)return;
+if(entry.timer!==null)clearTimeout(entry.timer);
+for(const element of entry.elements)element.remove();
+activeTextOverlays.delete(nodeId);
+}
+
+function removeTriggerWaitingTextOverlays(){
+for(const [nodeId,entry] of [...activeTextOverlays]){
+if(entry.untilTrigger)removeTextOverlay(nodeId);
+}
+}
+
 function showTextOverlay(node){
+removeTextOverlay(node.id);
+const elements=[];
 for(const item of node.textBoxes||[]){
 const p=getTextOverlayPosition(item),wrap=document.createElement('div');
 wrap.className='game-text-overlay';
 Object.assign(wrap.style,{position:'absolute',left:p.x+'%',top:p.y+'%',width:p.w+'%',height:p.h+'%',fontSize:Math.max(8,Number(item.fontSize)||32)+'px'});
 wrap.textContent=item.text||'';
 media2DLayer.appendChild(wrap);
+elements.push(wrap);
+}
+const untilTrigger=node.textOverlayUntilTrigger===true;
+const entry={elements,untilTrigger,timer:null};
+activeTextOverlays.set(node.id,entry);
+if(!untilTrigger){
+const duration=Math.max(0,Number(node.textOverlayDuration??3)||0);
+entry.timer=setTimeout(()=>{
+if(activeTextOverlays.get(node.id)===entry)removeTextOverlay(node.id);
+},duration*1000);
 }
 }
+
 function clearMedia2DLayer(){
+for(const nodeId of [...activeTextOverlays.keys()])removeTextOverlay(nodeId);
 for(const video of media2DLayer.querySelectorAll('video')){video.pause();video.removeAttribute('src');video.load();}
 media2DLayer.replaceChildren();
 }
@@ -7547,6 +7598,7 @@ function fireExplorationTrigger(node){
 if(!canFireExplorationTrigger(node))return;
 if(isPreviewOnceCompleted(node))return;
 
+removeTriggerWaitingTextOverlays();
 markPreviewOnceExecuted(node);
 
 if(node.triggerOnce){
@@ -7642,6 +7694,7 @@ const wasInside=previewFrameInInside.get(id)===true;
 previewFrameInInside.set(id,inside);
 if(!inside||wasInside)continue;
 if(isPreviewOnceCompleted(node)||!canFireExplorationTrigger(node))continue;
+removeTriggerWaitingTextOverlays();
 // 接続先だけを再実行可能にし、ワールドや他の進行タイマーは維持する。
 markPreviewOnceExecuted(node);
 if(node.triggerOnce)previewCompletedTriggers.add(node.id);
@@ -8579,8 +8632,9 @@ return;
 if(node.type==='uiButton'){
  clearUiButtonPreview();
  const button=document.createElement('button');
- button.type='button';button.className='game-ui-button';
- button.textContent=node.uiButtonText??'ボタン';
+button.type='button';button.className='game-ui-button';
+button.dataset.nodeId=node.id;
+button.textContent=node.uiButtonText??'ボタン';
  button.style.width=`min(${Math.max(40,Number(node.uiButtonWidth)||180)}px, 90%)`;
  button.style.height=`${Math.max(24,Number(node.uiButtonHeight)||56)}px`;
  button.style.fontSize=`${Math.max(8,Number(node.uiButtonFontSize)||20)}px`;
@@ -9510,6 +9564,137 @@ function updateWorldTabs(){
  }
  const plus=document.createElement('button');plus.textContent='＋';plus.title='ワールドを追加';plus.addEventListener('click',()=>{const folder=makeWorldFolder('ワールド'+(state.worldFolders.length+1));updateWorldTabs();assignFolderTab(folder.id);});worldTabs.appendChild(plus);
 }
+function renderUiButtonVisibilitySettings(node){
+node.uiButtonVisibility ||= {mode:'always',eventType:'acquire',targetId:'',secondConditionEnabled:false,conditionOperator:'and'};
+const condition=node.uiButtonVisibility;
+const group=document.createElement('div');
+group.className='setting-group';
+settingsPanel.appendChild(group);
+const heading=document.createElement('div');
+heading.className='setting-section-heading';
+heading.textContent='表示条件';
+group.appendChild(heading);
+const alwaysLabel=document.createElement('label');
+const alwaysCheckbox=document.createElement('input');
+alwaysCheckbox.type='checkbox';
+alwaysCheckbox.checked=condition.mode==='always';
+alwaysLabel.append(alwaysCheckbox,document.createTextNode(' 常に表示'));
+group.appendChild(alwaysLabel);
+const conditionsPanel=document.createElement('div');
+group.appendChild(conditionsPanel);
+const eventOptions=[['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']];
+const renderCondition=(container,keys,label)=>{
+const cap=document.createElement('div');
+cap.className='setting-label';
+cap.textContent=label;
+container.append(cap);
+const type=document.createElement('select');
+type.className='number-input';
+for(const [value,text] of eventOptions)type.add(new Option(text,value));
+type.value=condition[keys.eventType]||'acquire';
+addFolderRow(container,'表示条件',type);
+const timing=document.createElement('select');
+timing.className='number-input';
+addFolderRow(container,type.value==='toggle'?'ON/OFF':'前/後',timing);
+const timingLabel=timing.parentElement.querySelector('.setting-label');
+const targetContainer=document.createElement('div');
+container.append(targetContainer);
+const explanation=document.createElement('p');
+explanation.className='world-layer-explanation';
+container.append(explanation);
+const updateExplanation=()=>{
+const target=getNode(condition[keys.targetId]);
+const name=target?.toggleName||target?.itemName||target?.eventName||target?.customBody||(target?.clickBranchItemId?itemDisplayName(getNode(target.clickBranchItemId)):null);
+const after=condition[keys.mode]==='after';
+const kind=condition[keys.eventType];
+if(kind==='toggle'){
+explanation.textContent=name?`「${name}」が${after?'ON':'OFF'}の間に表示`:'対象のトグルを選択してください。';
+return;
+}
+explanation.textContent=name?`「${name}」の${kind==='acquire'?'取得':kind==='use'?'使用':'終了'}${after?'後':'前'}に表示`:'対象を選ぶと表示条件がここに表示されます。';
+};
+const updateTarget=()=>{
+targetContainer.replaceChildren();
+const adapter={eventType:condition[keys.eventType],targetId:condition[keys.targetId]};
+addFolderRow(targetContainer,'対象',folderEventSelect(adapter,()=>{
+condition[keys.targetId]=adapter.targetId;
+updateExplanation();
+}));
+updateExplanation();
+};
+const updateTiming=()=>{
+const toggle=condition[keys.eventType]==='toggle';
+timingLabel.textContent=toggle?'ON/OFF':'前/後';
+timing.replaceChildren(new Option(toggle?'OFF':'前','before'),new Option(toggle?'ON':'後','after'));
+timing.value=condition[keys.mode]==='after'?'after':'before';
+};
+if(condition[keys.mode]==='always')condition[keys.mode]='before';
+updateTiming();
+updateTarget();
+type.onchange=()=>{
+condition[keys.eventType]=type.value;
+condition[keys.targetId]='';
+updateTiming();
+updateTarget();
+};
+timing.onchange=()=>{
+condition[keys.mode]=timing.value;
+updateExplanation();
+};
+};
+const redraw=()=>{
+conditionsPanel.replaceChildren();
+if(alwaysCheckbox.checked){
+condition.mode='always';
+return;
+}
+if(condition.mode==='always')condition.mode='before';
+renderCondition(conditionsPanel,{eventType:'eventType',targetId:'targetId',mode:'mode'},'条件1');
+const additional=document.createElement('div');
+additional.className='world-layer-extra-condition';
+conditionsPanel.append(additional);
+const redrawAdditional=()=>{
+additional.replaceChildren();
+if(condition.secondConditionEnabled!==true){
+const add=document.createElement('button');
+add.type='button';
+add.className='secondary-button';
+add.textContent='＋ 条件を追加';
+add.onclick=()=>{
+condition.secondConditionEnabled=true;
+condition.secondEventType||='acquire';
+condition.secondMode||='before';
+redrawAdditional();
+};
+additional.append(add);
+return;
+}
+const operator=document.createElement('select');
+operator.className='number-input';
+operator.add(new Option('かつ（両方を満たす）','and'));
+operator.add(new Option('または（どちらかを満たす）','or'));
+operator.value=condition.conditionOperator==='or'?'or':'and';
+operator.onchange=()=>{condition.conditionOperator=operator.value;};
+addFolderRow(additional,'条件の組み合わせ',operator);
+renderCondition(additional,{eventType:'secondEventType',targetId:'secondTargetId',mode:'secondMode'},'条件2');
+const remove=document.createElement('button');
+remove.type='button';
+remove.className='secondary-button';
+remove.textContent='2つ目の条件を削除';
+remove.onclick=()=>{
+condition.secondConditionEnabled=false;
+redrawAdditional();
+};
+additional.append(remove);
+};
+redrawAdditional();
+};
+alwaysCheckbox.onchange=()=>{
+condition.mode=alwaysCheckbox.checked?'always':'before';
+redraw();
+};
+redraw();
+}
 function layerConditionMatches(layer){
  const matches=(eventType,targetId,mode)=>{
   if(mode==='always'||!mode)return true;
@@ -9547,9 +9732,16 @@ if(!temporaryWorldOverlay||!renderTemporaryWorldOverlay(backer.world,image))draw
 }
 }
 function worldCompositeTick(){
- refreshWorldSettingsPreview();
- if(!gamePreview.classList.contains('hidden')&&state.previewWorldNodeId)refreshWorldComposite();
- worldCompositeFrame=requestAnimationFrame(worldCompositeTick);
+refreshWorldSettingsPreview();
+if(!gamePreview.classList.contains('hidden')){
+if(state.previewWorldNodeId)refreshWorldComposite();
+for(const button of uiButtonPreviewLayer.querySelectorAll('.game-ui-button')){
+const source=getNode(button.dataset.nodeId);
+if(!source)continue;
+button.style.display=layerConditionMatches(source.uiButtonVisibility||{mode:'always'})?'':'none';
+}
+}
+worldCompositeFrame=requestAnimationFrame(worldCompositeTick);
 }
 function addFolderRow(parent,label,element){const group=document.createElement('div');group.className='setting-group';const cap=document.createElement('div');cap.className='setting-label';cap.textContent=label;group.append(cap,element);parent.append(group);}
 function folderMediaSelect(value,types,onchange){const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('素材未設定',''));for(const m of mediaLibrary.filter(m=>types.includes(m.fileType)))sel.add(new Option(m.fileName,m.id));sel.value=value||'';sel.onchange=()=>onchange(sel.value);return sel;}
