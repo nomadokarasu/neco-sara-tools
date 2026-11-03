@@ -17,7 +17,7 @@
 <div id="editorHomeHero" class="editor-home__hero">
 <img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
-<p class="editor-home__version">ver.0.1.97</p>
+<p class="editor-home__version">ver.0.1.98</p>
 <h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
 <img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
 <img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
@@ -52,7 +52,7 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
-<span class="editor-version">ver.0.1.97</span>
+<span class="editor-version">ver.0.1.98</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
 </div>
 <div class="top-actions">
@@ -469,9 +469,354 @@ const editorTranslations={
 'ドラッグ：カメラ回転 / ホイール：ズーム。初期画角を変更するには「初期画角を記憶」を押してください。':'Drag to rotate / Scroll to zoom. To change the initial camera view, click "Save Initial View".'
 };
 
+Object.assign(editorTranslations,{
+'メディア（360度PNG）':'Media (360° PNG)',
+'メディア（360度アニメーション）':'Media (360° Animation)',
+'360度素材':'360° Media',
+'360度アニメーション':'360° Animation',
+'360度PNG':'360° PNG',
+'範囲クリック':'Click Area',
+'カメラ範囲トリガー':'Camera View Trigger',
+'内包したら発火':'Trigger When Inside',
+'接触したら発火':'Trigger When Touching',
+'ターゲット':'Target',
+'フレーム':'Frame',
+'発話者の名前':'Speaker Name',
+'サムネイル':'Thumbnail',
+'未設定':'Not Set',
+'フォントサイズ（px）':'Font Size (px)',
+'パネルの高さ（PC・画面高さの%）':'Panel Height (PC, % of Screen)',
+'パネルの高さ（スマホ・画面高さの%）':'Panel Height (Mobile, % of Screen)',
+'配置（PC）':'Position (PC)',
+'配置（スマホ）':'Position (Mobile)',
+'文字をドラッグ：移動 / 四隅をドラッグ：幅・高さ変更。PC・スマホの配置は別々に保存されます。':'Drag text to move / Drag corners to resize. PC and mobile layouts are saved separately.',
+'質問':'Question',
+'テキスト内容':'Text Content',
+'使用するアイテム':'Item to Use',
+'削除されたアイテム':'Deleted Item',
+'このアイテム分岐を削除':'Delete This Item Branch',
+'アイテムを追加':'Add Item',
+'一度だけ実行する':'Execute Only Once',
+'アイテム一覧':'Item List',
+'アイテムを選択後、使う場所をクリック':'Select an item, then click where to use it',
+'カメラ位置':'Camera Position',
+'カメラ経路':'Camera Path',
+'現在の位置にキーフレームを登録':'Add Keyframe at Current Position',
+'ドラッグ：カメラ回転 / ホイール：ズーム':'Drag: Rotate Camera / Scroll: Zoom',
+'ドラッグ：カメラ回転 / ホイール：ズーム。初期画角を変更するには「初期画角を記憶」を押してください。':'Drag to rotate / Scroll to zoom. Click "Save Initial View" to change the initial camera view.',
+'ドラッグ：カメラ回転 / ホイール：ズーム / ＋：現在の時刻とカメラ位置を登録':'Drag: Rotate Camera / Scroll: Zoom / +: Add Keyframe',
+'ドラッグ：経路描画 / 中クリック＋ドラッグ：カメラ回転 / Z＋ドラッグ：ズーム / Ctrl＋Z：Undo / Ctrl＋Y：Redo':'Drag: Draw Path / Middle Drag: Rotate / Z + Drag: Zoom / Ctrl+Z: Undo / Ctrl+Y: Redo',
+'左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す':'Left Drag: Lasso / Space + Drag or Middle Drag: Rotate / Z + Drag or Scroll: Zoom / Ctrl+Z: Undo / Ctrl+Y: Redo',
+'選択範囲に追加':'Add to Selection',
+'選択範囲から削除':'Subtract from Selection',
+'選択範囲を継承':'Inherit Selection',
+'クリックの有効条件':'Click Activation Conditions',
+'この条件はゲーム再生中のクリック可否を制御します。':'These conditions control whether clicking is enabled during gameplay.',
+'常時有効':'Always Enabled',
+'アイテム設定':'Item Settings',
+'アイテムを選択してください':'Select an Item',
+'通常のクリックを一度だけ実行する':'Execute Normal Click Only Once',
+'チェックを外すとクリック範囲のプレビューから非表示になります。ゲーム再生には影響しません。':'Uncheck to hide this layer in the click-area preview. Gameplay is unaffected.',
+'透明レイヤー（編集画面のみ）':'Transparent Layers (Editor Only)',
+'成立時は「はい」、不成立時は「いいえ」に進みます。':'If the condition is met, proceed to Yes; otherwise, proceed to No.',
+'初期状態：OFF。実行するたびに ON／OFF が切り替わり、対応する分岐へ進みます。ワールド間でも状態を保持し、ゲーム再開時にリセットします。':'Initially OFF. Each execution toggles the state and follows the corresponding branch. The state persists across worlds and resets when the game restarts.',
+'指定したトグルの状態を変更して次のノードへ進みます。対象トグルのON／OFF分岐は実行しません。':'Change the selected toggle state and proceed to the next node. The toggle ON/OFF branches are not executed.',
+'接続先のノードから1つをランダムに選んで実行します。':'Randomly select and execute one connected node.',
+'接続先がありません。ノードの右側から接続してください。':'No connections. Connect a node from the output port on the right.',
+'右端から次のノードに接続してください。':'Connect the next node from the output port on the right.',
+'このノードより前にビューまたはアニメーションノードを接続してください。':'Connect a view or animation node before this node.',
+'アニメーションノードにMP4を設定してください。':'Assign an MP4 to the animation node.',
+'参照できる360°メディアを接続してください。':'Connect a 360° media source.',
+'参照メディアがありません。メディアと同じ分岐元に接続してください。':'No reference media. Connect this node to the same branching source as the media.',
+'このノードを実行すると、ゲーム画面にインベントリボタンが表示されます。取得したアイテムを一覧表示できます。':'Executing this node shows the inventory button. Acquired items can be viewed in the inventory.',
+'使用する背景メディアを前に接続してください。':'Connect a background media node before this node.',
+'ノードを選択してください':'Select a Node',
+'ゲーム開始地点です。':'This is the game starting point.',
+'ワールド開始':'Start World',
+'探索を開始する':'Start Exploration',
+'移動先未設定':'Destination Not Set',
+'イベント未設定':'Event Not Set',
+'対象未設定':'Target Not Set',
+'アイテム名未設定':'Item Name Not Set',
+'素材未設定':'No Media Selected',
+'質問文と選択肢':'Question and Choices',
+'入力した回答を判定':'Check the Entered Answer',
+'実行ごとにON／OFF切り替え':'Toggle ON/OFF on Each Execution',
+'ONルート':'ON Branch',
+'OFFルート':'OFF Branch',
+'条件成立':'Condition Met',
+'条件不成立':'Condition Not Met',
+'正解ルート':'Correct Branch',
+'不正解ルート':'Incorrect Branch',
+'所持アイテム一覧':'Acquired Items',
+'選択アイテムを使用':'Use Selected Item',
+'その他のアイテム':'Other Items',
+'画像・動画を重ねて表示':'Overlay Image or Video',
+'カメラワーク':'Camera Movement',
+'不明':'Unknown',
+'反転':'Toggle',
+'文章を入力':'Enter Text',
+'上書き保存しています…':'Saving Changes...',
+'保存データを準備しています…':'Preparing Save Data...',
+'素材をまとめています…':'Collecting Media...',
+'プロジェクトを圧縮しています…':'Compressing Project...',
+'保存先を選択してください…':'Choose a Save Location...',
+'保存処理が完了しました':'Save Completed',
+'ファイルを確認しています…':'Checking File...',
+'プロジェクト情報を確認しています…':'Checking Project Information...',
+'編集画面を復元しています…':'Restoring Editor...',
+'読み込みが完了しました':'Loading Completed',
+'作品データを準備しています…':'Preparing Project Data...',
+'作品を準備しています… 0%':'Preparing Work... 0%',
+'作品データを確認しました':'Project Data Verified',
+'作品を初期化しています…':'Initializing Work...',
+'準備が完了しました':'Ready',
+'作品を開けませんでした：':'Could Not Open Work:',
+'ZIPを作成しています…':'Creating ZIP...',
+'作品を書き出しています…':'Exporting Work...',
+'書き出しが完了しました':'Export Completed',
+'ぐるり作品':'Gururi Work',
+'作者：':'Author:',
+'ワールド1は削除できません。':'World 1 cannot be deleted.',
+'ワールドを追加':'Add World',
+'ワールドを削除':'Delete World',
+'ワールド一覧':'World List',
+'各ワールドを選択して基本メディア・透明PNGレイヤー・ノードを編集します。移動先はワールド内部の「ワールド移動」ノードから指定します。':'Select a world to edit its media, transparent layers, and nodes. Use a Move to World node to set the destination.',
+'基本360度PNG / MP4':'360° PNG / MP4',
+'360度PNG / MP4':'360° PNG / MP4',
+'直前の画角を継承する':'Inherit Previous Camera View',
+'ワールドプレビュー（全レイヤー表示）':'World Preview (All Layers)',
+'このレイヤーをいつ表示しますか？':'When Should This Layer Be Visible?',
+'対象を選ぶと表示条件がここに表示されます。':'Select a target to display its visibility condition.',
+'対象を選択':'Select Target',
+'条件の組み合わせ':'Combine Conditions',
+'水平方向（°）':'Horizontal Angle (°)',
+'垂直方向（°）':'Vertical Angle (°)',
+'FOV・垂直画角（°）':'FOV / Vertical Angle (°)',
+'表示時間（秒）':'Display Duration (sec)',
+'トリガーが発火するまで表示':'Display Until Triggered',
+'画角を継承':'Inherit Camera View',
+'ループ回数':'Loop Count',
+'無限ループ（トリガー発火まで再生）':'Infinite Loop (Until Triggered)',
+'画像未選択':'No Image Selected',
+'画像を選択':'Choose Image',
+'連番PNGを追加':'Add PNG Sequence',
+'PNGを指定してください。':'Select a PNG.',
+'2:1のPNG画像を選択してください。':'Select a 2:1 PNG image.',
+'既存フレームと同じ解像度のPNGを指定してください。':'Select a PNG with the same resolution as the existing frames.',
+'画像を読み込めません':'Could Not Load Image',
+'画像を読み込めませんでした。':'Could Not Load Image.',
+'MP4を読み込めませんでした。':'Could Not Load MP4.',
+'画像・動画のサイズを取得できませんでした。':'Could Not Determine Image or Video Dimensions.',
+'PNG画像のみ選択できます。':'Only PNG Images Are Supported.',
+'連番PNGはすべて同じ解像度にしてください。':'All PNG Sequence Frames Must Have the Same Resolution.',
+'連番PNGのみを選択してください。':'Select Only PNG Sequence Images.',
+'すべての画像の解像度を統一してください。':'All Images Must Have the Same Resolution.',
+'360度アニメーションは2:1のPNG画像を選択してください。':'360° Animations Require 2:1 PNG Images.',
+'PNG、JPGまたはMP4を選択してください。':'Select a PNG, JPG, or MP4.',
+'360度メディアには2:1の画像・動画を選択してください。':'Select a 2:1 Image or Video for 360° Media.',
+'ZIPファイルを読み込めません。':'Could Not Read ZIP File.',
+'ZIPのファイル数が正しくありません。':'Invalid Number of Files in ZIP.',
+'ZIPの内部情報が破損しています。':'ZIP Metadata Is Corrupted.',
+'ZIPのファイル名が不正です。':'Invalid Filename in ZIP.',
+'対応していないZIP形式です。':'Unsupported ZIP Format.',
+'ZIP内の画像の合計サイズが大きすぎます（上限500MB）。':'ZIP Images Exceed the 500 MB Limit.',
+'ZIPの画像データが破損しています。':'Image Data in ZIP Is Corrupted.',
+'ZIPの画像データが途中で切れています。':'Image Data in ZIP Is Incomplete.',
+'このブラウザはZIPの展開に対応していません。':'This Browser Does Not Support ZIP Extraction.',
+'ZIPの画像を展開できませんでした。':'Could Not Extract Images from ZIP.',
+'ZIP内にPNG画像がありません。':'No PNG Images Found in ZIP.',
+'ZIPファイルを指定してください。':'Select a ZIP File.',
+'先にすべてのフレームに画像を設定してください。':'Assign Images to All Frames First.',
+'FPSは1～120で指定してください。':'FPS Must Be Between 1 and 120.',
+'すべてのフレームにPNG画像を選択してください。':'Select PNG Images for All Frames.',
+'WebGLを利用できません':'WebGL Is Unavailable',
+'2D動画を再生できませんでした':'Could Not Play 2D Video',
+'360度素材のプレビュー合成に失敗しました':'Could Not Composite the 360° Media Preview',
+'360度素材の合成に失敗しました':'Could Not Composite 360° Media',
+'開始ワールドを選択してください。':'Select a Starting World.',
+'MP4素材を選択してください':'Select MP4 Media',
+'MP4のループ再生に失敗しました':'MP4 Loop Playback Failed',
+'最終フレームへの移動に失敗しました':'Could Not Seek to Final Frame',
+'MP4の再生に失敗しました':'MP4 Playback Failed',
+'シークに失敗しました':'Seek Failed',
+'MP4を再生できませんでした':'Could Not Play MP4',
+'ビュー素材未設定':'No View Media Assigned',
+'クリック待ち':'Waiting for Click',
+'素材がZIPの上限を超えました。':'Media Exceeds the ZIP Size Limit.',
+'ファイルサイズがZIPの上限を超えました。':'File Exceeds the ZIP Size Limit.',
+'ファイル数が多すぎます。':'Too Many Files.',
+'ZIPの終端が見つかりません。':'ZIP End Record Not Found.',
+'ZIPの目次が破損しています。':'ZIP Directory Is Corrupted.',
+'ZIPの目次が不正です。':'Invalid ZIP Directory.',
+'未対応の圧縮形式です。':'Unsupported Compression Method.',
+'ZIPのパスが不正です。':'Invalid ZIP Path.',
+'ZIPのデータが不正です。':'Invalid ZIP Data.',
+'素材データが途中で切れています。':'Media Data Is Incomplete.',
+'project.jsonがありません。':'project.json Is Missing.',
+'対応していない.gart形式です。':'Unsupported .gart Format.',
+'プロジェクトの構造が不正です。':'Invalid Project Structure.',
+'STARTノードがありません。':'START Node Is Missing.',
+'ノードの接続情報が不正です。':'Invalid Node Connections.',
+'素材が不足しています。':'Some Media Files Are Missing.',
+'連番PNGが不足しています。':'Some PNG Sequence Frames Are Missing.',
+'作品データが不正です。':'Invalid Work Data.',
+'作品の構造が不正です。':'Invalid Work Structure.',
+'HTML構造が想定と異なります。':'Unexpected HTML Structure.',
+'作品HTMLを生成できませんでした。':'Could Not Generate Work HTML.',
+'サムネイル画像を生成できませんでした。':'Could Not Generate Thumbnail.',
+'開始ワールドがありません。':'Starting World Is Missing.',
+'開始ワールドの画像がありません。':'Starting World Image Is Missing.',
+'撮影できませんでした。WebGLを確認してください。':'Capture Failed. Check WebGL.',
+'ファイル名を入力してください。':'Enter a Filename.',
+'作品タイトルと作者名を入力してください。':'Enter a Work Title and Author.',
+'保存先の選択を利用できませんでした':'Save Location Selection Is Unavailable',
+'保存場所の選択を利用できませんでした。通常のダウンロードに切り替えます。':'Save Location Selection Is Unavailable. Switching to Standard Download.',
+'現在の編集内容を読み込んだプロジェクトで置き換えますか？':'Replace the Current Project with the Selected Project?',
+'診断レポートを保存できませんでした。Consoleを確認してください。':'Could Not Save the Diagnostic Report. Check the Console.',
+'画角のコピーに失敗しました':'Could Not Copy Camera View',
+'クリップボードにコピーできませんでした。':'Could Not Copy to Clipboard.',
+'画角データを読み取れませんでした。':'Could Not Read Camera Data.',
+'画角データが正しくありません。':'Invalid Camera Data.',
+'初期画角をコピーできませんでした。':'Could Not Copy Initial Camera View.',
+'対象アイテムは最大6個です。':'A Maximum of Six Target Items Is Allowed.',
+'一度だけ実行':'Execute Once',
+'条件1':'Condition 1',
+'条件2':'Condition 2',
+'イベント終了':'Event Completed',
+'取得':'Acquisition',
+'使用':'Use',
+'終了':'Completion',
+'並べ替え':'Reorder',
+'レイヤー名':'Layer Name',
+'画像':'Image',
+'レイヤー追加':'Add Layer',
+'削除':'Delete',
+'キャンセル':'Cancel',
+'閉じる':'Close'
+});
+
 const editorTranslationOriginalText=new WeakMap();
 const editorTranslationOriginalAttributes=new WeakMap();
 let editorTranslationScheduled=false;
+
+function editorTranslateValue(value){
+const source=String(value);
+if(editorTranslations[source]!==undefined)return editorTranslations[source];
+
+let match;
+
+match=source.match(/^(\d+(?:\.\d+)?) 秒$/);
+if(match)return `${match[1]} sec`;
+
+match=source.match(/^(\d+) ページ$/);
+if(match)return `${match[1]} pages`;
+
+match=source.match(/^(\d+) テキスト$/);
+if(match)return `${match[1]} text items`;
+
+match=source.match(/^(\d+)枚目$/);
+if(match)return `Frame ${match[1]}`;
+
+match=source.match(/^選択肢(\d+)$/);
+if(match)return `Choice ${match[1]}`;
+
+match=source.match(/^テキスト(\d+)$/);
+if(match)return `Text ${match[1]}`;
+
+match=source.match(/^接続先：(\d+)個$/);
+if(match)return `Connections: ${match[1]}`;
+
+match=source.match(/^各接続先の選択確率：約([\d.]+)%$/);
+if(match)return `Probability per connection: approx. ${match[1]}%`;
+
+match=source.match(/^フェードアウト ([\d.]+) 秒 → リスタート$/);
+if(match)return `Fade Out ${match[1]} sec → Restart`;
+
+match=source.match(/^([\d.]+) \/ ([\d.]+) 秒$/);
+if(match)return `${match[1]} / ${match[2]} sec`;
+
+match=source.match(/^([\d.]+) \/ ([\d.]+) 秒$/);
+if(match)return `${match[1]} / ${match[2]} sec`;
+
+match=source.match(/^◆ ([\d.]+) 秒$/);
+if(match)return `◆ ${match[1]} sec`;
+
+match=source.match(/^「(.+)」が(ON|OFF)の間に表示$/);
+if(match)return `Show while "${match[1]}" is ${match[2]}`;
+
+match=source.match(/^「(.+)」の(取得|使用|終了)(前|後)に表示$/);
+if(match){
+const action={取得:'acquisition',使用:'use',終了:'completion'}[match[2]];
+return `Show ${match[3]==='前'?'before':'after'} ${action} of "${match[1]}"`;
+}
+
+match=source.match(/^素材を読み込んでいます…（(\d+) \/ (\d+)）$/);
+if(match)return `Loading Media... (${match[1]} / ${match[2]})`;
+
+match=source.match(/^(.+) の読み込みに失敗しました。\n([\s\S]*)$/);
+if(match)return `Failed to load ${match[1]}.\n${match[2]}`;
+
+match=source.match(/^(.+) の元ファイルがありません。再度読み込んでください。$/);
+if(match)return `The original file for ${match[1]} is missing. Please import it again.`;
+
+match=source.match(/^(.+) の元ファイルがありません。$/);
+if(match)return `The original file for ${match[1]} is missing.`;
+
+match=source.match(/^(.+) の連番PNGがありません。$/);
+if(match)return `The PNG sequence for ${match[1]} is missing.`;
+
+match=source.match(/^(.+) のチェックサムが一致しません。$/);
+if(match)return `Checksum mismatch for ${match[1]}.`;
+
+match=source.match(/^(.+) を読み込めませんでした。$/);
+if(match)return `Could not load ${match[1]}.`;
+
+match=source.match(/^(.+) を読み込めません$/);
+if(match)return `Could not load ${match[1]}`;
+
+match=source.match(/^(.+) が見つかりません。$/);
+if(match)return `${match[1]} was not found.`;
+
+match=source.match(/^プロジェクトを保存できませんでした。\n([\s\S]*)$/);
+if(match)return `Could not save the project.\n${match[1]}`;
+
+match=source.match(/^プロジェクトを開けませんでした。現在の編集内容は維持されています。\n([\s\S]*)$/);
+if(match)return `Could not open the project. Your current changes have been preserved.\n${match[1]}`;
+
+match=source.match(/^作品を書き出せませんでした。\s*([\s\S]*)$/);
+if(match)return `Could not export the work.\n${match[1]}`;
+
+match=source.match(/^素材「(.+)」を削除しますか？\n使用中のワールド・レイヤー・ノードの素材指定も解除されます。$/);
+if(match)return `Delete media "${match[1]}"?\nReferences in worlds, layers, and nodes will also be cleared.`;
+
+match=source.match(/^(.+)を削除しますか？\nこのワールド内のノード・接続・透明PNGレイヤーも削除されます。([\s\S]*)$/);
+if(match)return `Delete ${match[1]}?\nIts nodes, connections, and transparent PNG layers will also be deleted.${match[2]}`;
+
+return null;
+}
+
+const editorNativeAlert=window.alert.bind(window);
+const editorNativeConfirm=window.confirm.bind(window);
+const editorNativePrompt=window.prompt.bind(window);
+
+window.alert=function(message){
+const source=String(message);
+const translated=window.editorLanguage==='en'?editorTranslateValue(source):null;
+return editorNativeAlert(translated??source);
+};
+
+window.confirm=function(message){
+const source=String(message);
+const translated=window.editorLanguage==='en'?editorTranslateValue(source):null;
+return editorNativeConfirm(translated??source);
+};
+
+window.prompt=function(message,defaultValue){
+const source=String(message);
+const translated=window.editorLanguage==='en'?editorTranslateValue(source):null;
+return editorNativePrompt(translated??source,defaultValue);
+};
 
 function translateEditorText(node,language){
 const element=node.parentElement;
@@ -494,7 +839,7 @@ editorTranslationOriginalText.delete(node);
 }
 const japanese=editorTranslationOriginalText.get(node)??current;
 const key=japanese.trim();
-const english=editorTranslations[key];
+const english=editorTranslateValue(key);
 if(!english)return;
 editorTranslationOriginalText.set(node,japanese);
 const leading=japanese.match(/^\s*/)?.[0]||'';
@@ -518,7 +863,7 @@ if(originals[attribute]!==undefined&&value!==originals[attribute]&&value!==edito
 delete originals[attribute];
 }
 const japanese=originals[attribute]??value;
-const english=editorTranslations[japanese];
+const english=editorTranslateValue(japanese);
 if(!english)continue;
 originals[attribute]=japanese;
 const result=language==='en'?english:japanese;

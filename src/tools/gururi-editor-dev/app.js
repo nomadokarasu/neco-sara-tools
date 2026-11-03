@@ -9003,7 +9003,21 @@ return result;
 }
 
 const saveProgressUI=()=>({root:document.getElementById('saveProgressOverlay'),bar:document.getElementById('saveProgressBar'),message:document.getElementById('saveProgressMessage')});
-function setSaveProgress(percent,message){const ui=saveProgressUI();if(!ui.root)return;ui.root.hidden=false;ui.bar.value=percent;ui.message.textContent=message;}
+function setSaveProgress(percent,message){
+const ui=saveProgressUI();
+if(!ui.root)return;
+ui.root.hidden=false;
+ui.bar.value=percent;
+const translated=window.editorLanguage==='en'&&typeof editorTranslateValue==='function'?editorTranslateValue(message):null;
+ui.message.textContent=translated??message;
+const title=ui.root.querySelector('.save-progress-dialog strong');
+if(title&&title.textContent==='保存中'&&window.editorLanguage==='en'){
+title.textContent='Saving';
+}
+if(title&&title.textContent==='Saving'&&window.editorLanguage!=='en'){
+title.textContent='保存中';
+}
+}
 function endSaveProgress(){const ui=saveProgressUI();if(ui.root)ui.root.hidden=true;}
 
 async function setOpenProgress(percent,message){
