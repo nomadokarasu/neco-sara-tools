@@ -2654,7 +2654,7 @@ const previewControls=`
 </div>
 </div>
 <input id="mediaCameraTime" type="range" min="0" max="${duration}" step="0.01" value="0" style="width:100%">
-<div id="mediaCameraTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} 秒</div>
+<div id="mediaCameraTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} ${window.editorLanguage==='en'?'sec':'秒'}</div>
 </div>`;
 
 const inheritControl=`<div class="setting-group"><label class="media-camera-inherit"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div>`;
@@ -2779,7 +2779,7 @@ const target=document.getElementById('mediaCameraAngleFields');
 if(fields&&target){target.appendChild(fields);const button=fields.querySelector('.camera-copy-view');if(button)fields.appendChild(button);}
 const seek=time=>{
 second=clamp(Number(time)||0,0,duration);
-range.value=String(second);label.textContent=`${second.toFixed(3)} / ${duration.toFixed(3)} 秒`;
+range.value=String(second);label.textContent=`${second.toFixed(3)} / ${duration.toFixed(3)} ${window.editorLanguage==='en'?'sec':'秒'}`;
 Object.assign(view,getMediaCameraBase(node));
 if(node.type==='animation'&&media?.duration&&source){
 const videoTime=getMediaCameraVideoTime(node,media,second);
@@ -3398,8 +3398,31 @@ function openSequenceWizard(){
  const previews=new WeakMap();
  let frame=0,playing=false,raf=0,lastTime=0,view={yaw:0,pitch:0,zoom:1};
  overlay.innerHTML=`<div class="sequence-wizard" role="dialog" aria-modal="true" aria-label="連番PNGを追加"><div class="sequence-wizard-head"><strong>アニメーション（連番PNG）</strong><button type="button" data-seq-close>×</button></div><div class="sequence-zip-row"><button type="button" data-seq-zip>＋ZIPを追加</button><input type="file" data-seq-zip-file accept=".zip,application/zip" hidden></div><label>FPS <input class="number-input" data-seq-fps type="number" min="1" max="120" step="1" value="8"></label><div class="sequence-frame-tabs"><div data-seq-tabs class="sequence-frame-list"></div><button type="button" data-seq-add>＋ フレームを追加</button></div><div class="sequence-frame-editor"><div data-seq-name>画像未選択</div><button type="button" data-seq-choose>画像を選択</button><input type="file" accept="image/png,.png" data-seq-file hidden></div><div class="sequence-preview"><canvas class="world-preview" data-seq-preview width="320" height="320"></canvas><div class="sequence-preview-controls"><button type="button" data-seq-play>▶ 再生</button><span data-seq-count>0 / 0</span></div><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div><div class="sequence-wizard-footer"><button type="button" data-seq-save>登録する</button></div></div>`;
- document.body.appendChild(overlay);
- const $=q=>overlay.querySelector(q),canvas=$('[data-seq-preview]');
+document.body.appendChild(overlay);
+const $=q=>overlay.querySelector(q),canvas=$('[data-seq-preview]');
+const sequenceEnglish=window.editorLanguage==='en';
+if(sequenceEnglish){
+const replacements={
+'アニメーション（連番PNG）':'Animation (PNG Sequence)',
+'＋ZIPを追加':'+ Add ZIP',
+'＋ フレームを追加':'+ Add Frame',
+'画像未選択':'No Image Selected',
+'画像を選択':'Choose Image',
+'▶ 再生':'▶ Play',
+'登録する':'Add',
+'ドラッグ：カメラ回転 / ホイール：ズーム':'Drag: Rotate Camera / Scroll: Zoom'
+};
+const walker=document.createTreeWalker(overlay,NodeFilter.SHOW_TEXT);
+let textNode;
+while((textNode=walker.nextNode())){
+const original=textNode.nodeValue;
+const key=original.trim();
+if(replacements[key]){
+textNode.nodeValue=original.replace(key,replacements[key]);
+}
+}
+overlay.querySelector('.sequence-wizard')?.setAttribute('aria-label','Add PNG Sequence');
+}
  const getImage=async file=>{
   if(!file)return null;
   if(previews.has(file))return previews.get(file);
@@ -3416,13 +3439,13 @@ function openSequenceWizard(){
   if(version!==drawVersion||!canvas.isConnected)return;
   drawPanoramaPreview(canvas,{image,...view});
  };
- const refresh=()=>{
-  $('[data-seq-tabs]').innerHTML=files.map((file,i)=>`<button type="button" class="sequence-frame-tab ${i===active?'is-active':''}" data-seq-tab="${i}">${i+1}枚目</button>`).join('');
-  $('[data-seq-name]').textContent=files[active]?.name||'画像未選択';
-  $('[data-seq-count]').textContent=`${frame+1} / ${files.length}`;
-  void draw();
- };
- const stop=()=>{playing=false;cancelAnimationFrame(raf);$('[data-seq-play]').textContent='▶ 再生';};
+const refresh=()=>{
+$('[data-seq-tabs]').innerHTML=files.map((file,i)=>`<button type="button" class="sequence-frame-tab ${i===active?'is-active':''}" data-seq-tab="${i}">${sequenceEnglish?`Frame ${i+1}`:`${i+1}枚目`}</button>`).join('');
+$('[data-seq-name]').textContent=files[active]?.name||(sequenceEnglish?'No Image Selected':'画像未選択');
+$('[data-seq-count]').textContent=`${frame+1} / ${files.length}`;
+void draw();
+};
+const stop=()=>{playing=false;cancelAnimationFrame(raf);$('[data-seq-play]').textContent=sequenceEnglish?'▶ Play':'▶ 再生';};
  const close=()=>{stop();overlay.remove();sequenceInsertionNodeId=null;};
  $('[data-seq-close]').addEventListener('click',close);
  $('[data-seq-tabs]').addEventListener('click',e=>{const btn=e.target.closest('[data-seq-tab]');if(!btn)return;stop();active=frame=Number(btn.dataset.seqTab);refresh();});
@@ -3455,7 +3478,7 @@ function openSequenceWizard(){
  $('[data-seq-play]').addEventListener('click',()=>{
   if(playing){stop();return;}
   if(files.some(f=>!f)){alert('先にすべてのフレームに画像を設定してください。');return;}
-  playing=true;lastTime=performance.now();$('[data-seq-play]').textContent='■ 停止';raf=requestAnimationFrame(tick);
+  playing=true;lastTime=performance.now();$('[data-seq-play]').textContent=sequenceEnglish?'■ Stop':'■ 停止';raf=requestAnimationFrame(tick);
  });
  let drag=null;
  canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch};canvas.setPointerCapture(e.pointerId);});
@@ -6244,8 +6267,17 @@ nestedMenu.classList.add('hidden');
 }
 
 if(nestedButton){
-nestedButton.textContent='▶ パネル';
+nestedButton.textContent=window.editorLanguage==='en'?'▶ Panels':'▶ パネル';
 }
+
+const englishCategoryLabels={
+material:'360° Media',
+trigger:'Triggers',
+effect:'Effects',
+event:'Events',
+branch:'Branches',
+panel:'UI'
+};
 
 for(const [key,category] of Object.entries(nodeMenuCategories)){
 const isOpen=key===openCategory;
@@ -6253,7 +6285,8 @@ category.element.classList.toggle('hidden',!isOpen);
 
 const button=contextMenu.querySelector(`[data-menu="${key}"]`);
 if(button){
-button.textContent=`${isOpen?'▼':'▶'} ${key==='panel'?'UI':category.label}`;
+const label=window.editorLanguage==='en'?englishCategoryLabels[key]:(key==='panel'?'UI':category.label);
+button.textContent=`${isOpen?'▼':'▶'} ${label}`;
 }
 }
 }
@@ -6279,7 +6312,7 @@ if(!submenu)return;
 
 const willOpen=submenu.classList.contains('hidden');
 submenu.classList.toggle('hidden',!willOpen);
-nested.textContent=`${willOpen?'▼':'▶'} パネル`;
+nested.textContent=`${willOpen?'▼':'▶'} ${window.editorLanguage==='en'?'Panels':'パネル'}`;
 return;
 }
 
