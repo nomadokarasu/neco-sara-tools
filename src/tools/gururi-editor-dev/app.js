@@ -8976,7 +8976,7 @@ function endSaveProgress(){const ui=saveProgressUI();if(ui.root)ui.root.hidden=t
 async function setOpenProgress(percent,message){
 setSaveProgress(percent,message);
 const title=saveProgressUI().root?.querySelector('.save-progress-dialog strong');
-if(title)title.textContent='作品データを開いています';
+if(title)title.textContent=window.editorLanguage==='en'?'Opening Project Data':'作品データを開いています';
 await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
 }
 let currentGartSaveHandle=null;
@@ -9065,7 +9065,9 @@ const totalMediaCount=data.media.length;
 for(const item of data.media){
 await setOpenProgress(
 20+Math.round(65*loadedMediaCount/Math.max(1,totalMediaCount)),
-`素材を読み込んでいます…（${loadedMediaCount+1} / ${totalMediaCount}）`
+window.editorLanguage==='en'
+?`Loading Media... (${loadedMediaCount+1} / ${totalMediaCount})`
+:`素材を読み込んでいます…（${loadedMediaCount+1} / ${totalMediaCount}）`
 );
 
 if(item.fileType==='pngseq'){
@@ -9795,7 +9797,7 @@ function renderWorldFolderEditor(){
  settingsPanel.prepend(title);
  const section=document.createElement('div');section.className='world-folder-settings';title.after(section);
  
- const media=folderMediaSelect(folderBacker(folder)?.world?.mediaId,['png','jpg','mp4'],id=>{const b=folderBacker(folder);const m=mediaLibrary.find(m=>m.id===id);b.world.mediaId=id;b.world.fileName=m?.fileName||'';b.world.fileType=m?.fileType||'';b.world.image=m?.image||m?.video||null;worldComposites.delete(folder.id);});addFolderRow(section,'基本360度PNG / MP4',media);
+ const media=folderMediaSelect(folderBacker(folder)?.world?.mediaId,['png','jpg','mp4'],id=>{const b=folderBacker(folder);const m=mediaLibrary.find(m=>m.id===id);b.world.mediaId=id;b.world.fileName=m?.fileName||'';b.world.fileType=m?.fileType||'';b.world.image=m?.image||m?.video||null;worldComposites.delete(folder.id);});addFolderRow(section,'360度PNG / MP4',media);
  const inheritGroup=document.createElement('div');inheritGroup.className='setting-group';
  const inheritLabel=document.createElement('label');inheritLabel.className='media-camera-inherit';
  const inheritCheckbox=document.createElement('input');inheritCheckbox.type='checkbox';inheritCheckbox.checked=Boolean(folderBacker(folder)?.inheritCamera);
@@ -9933,8 +9935,9 @@ const heading=document.createElement('h3');heading.textContent='透明PNGレイ�
   summary.append(remove);details.append(summary);section.append(details);
   details.addEventListener('toggle',()=>{layer.editorOpen=details.open;});
   const panel=document.createElement('div');panel.className='world-layer-fields';details.append(panel);
-  const label=document.createElement('input');label.className='number-input';label.placeholder='レイヤー名';label.value=layer.name||'';
-  label.oninput=()=>{layer.name=label.value;layerName.textContent=label.value||'名称未設定レイヤー';};addFolderRow(panel,'レイヤー名',label);
+ const label=document.createElement('input');label.className='number-input';label.placeholder='レイヤー名';
+label.value=window.editorLanguage==='en'&&layer.name==='新規レイヤー'?'New Layer':layer.name||'';
+label.oninput=()=>{layer.name=label.value;layerName.textContent=label.value||'名称未設定レイヤー';};addFolderRow(panel,'レイヤー名',label);
   addFolderRow(panel,'画像',folderMediaSelect(layer.mediaId,['png'],id=>layer.mediaId=id));
   const heading=document.createElement('div');heading.className='setting-label';heading.textContent='このレイヤーをいつ表示しますか？';panel.append(heading);
   const eventOptions=[['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']];
@@ -9993,7 +9996,7 @@ const heading=document.createElement('h3');heading.textContent='透明PNGレイ�
   renderAdditional();
   
  }
- const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);
+ const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:window.editorLanguage==='en'?'New Layer':'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);
 if(section._cameraSection)section.append(section._cameraSection);
 if(section._initialCameraSection)section.append(section._initialCameraSection);
 }
