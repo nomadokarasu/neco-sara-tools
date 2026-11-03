@@ -9817,6 +9817,7 @@ updateRememberCameraButton();
 previewGroup.append(previewHeading,previewCanvas,previewNote,rememberCameraButton);
 section.append(previewGroup);
 setupWorldSettingsCameraPreview(previewCanvas,folder);
+let rememberCameraFeedbackTimer=null;
 rememberCameraButton.addEventListener('click',()=>{
 const controller=worldSettingsCameraPreviews.get(previewCanvas);
 if(!controller||!worldBacker)return;
@@ -9824,6 +9825,15 @@ controller.persist();
 worldBacker.initialCameraRecorded=true;
 updateRememberCameraButton();
 section._refreshInitialCameraFields?.();
+
+if(rememberCameraFeedbackTimer!==null){
+clearTimeout(rememberCameraFeedbackTimer);
+}
+rememberCameraButton.style.color='transparent';
+rememberCameraFeedbackTimer=setTimeout(()=>{
+rememberCameraButton.style.color='';
+rememberCameraFeedbackTimer=null;
+},150);
 });
  const cameraInputs=previewCanvas.nextElementSibling;
  if(cameraInputs?.classList.contains('camera-number-settings')){
