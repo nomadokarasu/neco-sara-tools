@@ -1701,12 +1701,13 @@ function refreshInventory(){
  const equippedItem=state.inventory.has(state.selectedInventoryItemId)
   ?getInventoryItem(state.selectedInventoryItemId):null;
  if(!equippedItem&&state.selectedInventoryItemId!==null)state.selectedInventoryItemId=null;
- const ids=[...state.inventory].filter(id=>getInventoryItem(id));
- equippedItemSelect.replaceChildren();
- const noneOption=document.createElement('option');
- noneOption.value='';noneOption.textContent='なし';
- equippedItemSelect.append(noneOption);
- for(const id of ids){
+const ids=[...state.inventory].filter(id=>getInventoryItem(id));
+equippedItemSelect.replaceChildren();
+const noneOption=document.createElement('option');
+noneOption.value='';
+noneOption.textContent=window.editorLanguage==='en'?'None':'なし';
+equippedItemSelect.append(noneOption);
+for(const id of ids){
   const item=getInventoryItem(id);
   const option=document.createElement('option');
   option.value=id;
@@ -1757,7 +1758,8 @@ mobileEquippedItemButton.setAttribute('aria-expanded','false');
 
 function refreshMobileEquippedItemMenu(){
 const selected=getInventoryItem(state.selectedInventoryItemId);
-mobileEquippedItemButton.textContent=selected?itemDisplayName(selected):'なし';
+const noneText=window.editorLanguage==='en'?'None':'なし';
+mobileEquippedItemButton.textContent=selected?itemDisplayName(selected):noneText;
 mobileEquippedItemMenu.replaceChildren();
 
 const ids=['',...[...state.inventory].filter(id=>getInventoryItem(id))];
@@ -1766,7 +1768,7 @@ for(const id of ids){
 const item=id?getInventoryItem(id):null;
 const button=document.createElement('button');
 button.type='button';
-button.textContent=item?itemDisplayName(item):'なし';
+button.textContent=item?itemDisplayName(item):noneText;
 button.classList.toggle('active',state.selectedInventoryItemId===(id||null));
 button.addEventListener('click',event=>{
 event.preventDefault();
@@ -1778,6 +1780,25 @@ refreshInventory();
 mobileEquippedItemMenu.append(button);
 }
 }
+
+function updateEquippedItemLanguage(){
+const english=window.editorLanguage==='en';
+const label=equippedItemLabel.querySelector('span');
+if(label){
+label.textContent=english?'Equipped Item:':'装備中のアイテム：';
+}
+equippedItemSelect.setAttribute('aria-label',english?'Select Equipped Item':'装備中のアイテムを選択');
+mobileEquippedItemButton.setAttribute('aria-label',english?'Choose Item to Equip':'装備するアイテムを選択');
+
+const noneOption=equippedItemSelect.querySelector('option[value=""]');
+if(noneOption){
+noneOption.textContent=english?'None':'なし';
+}
+refreshMobileEquippedItemMenu();
+}
+
+window.addEventListener('gururi-language-change',updateEquippedItemLanguage);
+updateEquippedItemLanguage();
 
 mobileEquippedItemButton.addEventListener('click',event=>{
 event.preventDefault();

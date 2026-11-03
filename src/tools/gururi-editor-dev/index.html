@@ -17,7 +17,7 @@
 <div id="editorHomeHero" class="editor-home__hero">
 <img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
-<p class="editor-home__version">ver.0.1.98</p>
+<p class="editor-home__version">ver.0.1.99</p>
 <h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
 <img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
 <img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
@@ -52,7 +52,7 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
-<span class="editor-version">ver.0.1.98</span>
+<span class="editor-version">ver.0.1.99</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
 </div>
 <div class="top-actions">
@@ -696,6 +696,38 @@ Object.assign(editorTranslations,{
 '閉じる':'Close'
 });
 
+Object.assign(editorTranslations,{
+'ここからワールドの開始演出を接続します。':'Connect the opening sequence for this world here.',
+'ワールドの基本メディアとレイヤーを表示して探索を開始します。':'Display the world media and layers, then begin exploration.',
+'指定した時間で画面を暗転させた後、ゲームの進行状況、アイテム、トグル、イベントを初期化してリスタートします。':'Fade to black over the specified duration, then reset game progress, items, toggles, and events before restarting.',
+'このノードを実行するとゲームを終了し、書き出した作品ではトップページに戻ります。エディタ内ではプレビューを閉じます。出力接続はありません。':'Ends the game and returns to the home screen in exported works. In the editor, it closes the preview. This node has no output.',
+'ここを通過するとイベント実行済みになります。':'Passing through this node marks the event as completed.',
+'ワールドのタブを開いてからノードを追加してください。':'Open a world tab before adding nodes.',
+'PNG素材を選択してください':'Select PNG media',
+'クリック発火・接続先なし':'Click triggered — no connected node',
+'フレームイン発火・接続先なし':'Frame In triggered — no connected node',
+'トップページの背景画像を撮影して「決定」を押してください。':'Capture a home screen background image and click Confirm.',
+'PNG画像を読み込めませんでした。':'Could not load the PNG image.',
+'素材を変換できませんでした。':'Could not convert media.',
+'サムネイルの描画に失敗しました':'Failed to render thumbnail',
+'素材を削除':'Delete Media',
+'スタート':'Start',
+'取得済み':'Acquired',
+'アイテム':'Item',
+'1コマ戻る':'Previous Frame',
+'1コマ進む':'Next Frame',
+'フレームを変更できませんでした。':'Could not change the frame.',
+'連番PNGを登録できませんでした。':'Could not add the PNG sequence.',
+'この画像は追加できません。':'This image cannot be added.',
+'このZIPはアップロードできません。':'This ZIP file cannot be uploaded.',
+'ZIPには2:1のPNG画像だけを入れてください。':'The ZIP must contain only 2:1 PNG images.',
+'フレームを追加':'Add Frame',
+'ワールドの設定':'World Settings',
+'保存データ':'Saved Data',
+'画角を継承する':'Inherit Camera View',
+'画角を継承しない':'Do Not Inherit Camera View'
+});
+
 const editorTranslationOriginalText=new WeakMap();
 const editorTranslationOriginalAttributes=new WeakMap();
 let editorTranslationScheduled=false;
@@ -778,6 +810,21 @@ if(match)return `Could not load ${match[1]}`;
 match=source.match(/^(.+) が見つかりません。$/);
 if(match)return `${match[1]} was not found.`;
 
+match=source.match(/^([\s\S]+)を削除しますか？$/);
+if(match)return `Delete ${match[1]}?`;
+
+match=source.match(/^([\s\S]+)の読み込みに失敗しました。$/);
+if(match)return `Failed to load ${match[1]}.`;
+
+match=source.match(/^([\s\S]+)の読み込みに失敗しました。?\n([\s\S]*)$/);
+if(match)return `Failed to load ${match[1]}.\n${match[2]}`;
+
+match=source.match(/^(\d+)枚の連番PNG（(.+)）$/);
+if(match)return `PNG Sequence: ${match[1]} Frames (${match[2]})`;
+
+match=source.match(/^トグル (.+)$/);
+if(match)return `Toggle ${match[1]}`;
+
 match=source.match(/^プロジェクトを保存できませんでした。\n([\s\S]*)$/);
 if(match)return `Could not save the project.\n${match[1]}`;
 
@@ -834,7 +881,7 @@ if(sourceNode?.customBody!==undefined||sourceNode?.type==='uiButton')return;
 const current=node.nodeValue;
 if(!current||!current.trim())return;
 const original=editorTranslationOriginalText.get(node);
-if(original!==undefined&&current!==original&&current!==editorTranslations[original]){
+if(original!==undefined&&current!==original&&current!==editorTranslateValue(original.trim())){
 editorTranslationOriginalText.delete(node);
 }
 const japanese=editorTranslationOriginalText.get(node)??current;
@@ -859,7 +906,7 @@ editorTranslationOriginalAttributes.set(element,originals);
 for(const attribute of attributes){
 const value=element.getAttribute(attribute);
 if(value===null)continue;
-if(originals[attribute]!==undefined&&value!==originals[attribute]&&value!==editorTranslations[originals[attribute]]){
+if(originals[attribute]!==undefined&&value!==originals[attribute]&&value!==editorTranslateValue(originals[attribute])){
 delete originals[attribute];
 }
 const japanese=originals[attribute]??value;
