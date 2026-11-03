@@ -192,6 +192,362 @@
 <div id="saveProgressOverlay" class="save-progress-overlay" hidden><div class="save-progress-dialog"><strong>保存中</strong><p id="saveProgressMessage">準備しています…</p><progress id="saveProgressBar" max="100" value="0"></progress></div></div>
 <script src="app.js"></script>
 <script>
+const editorTranslations={
+'ぐるりエディタ':'Gururi Editor',
+'トップページに戻る':'Back to home',
+'素材追加':'Add Media',
+'上書き保存':'Save',
+'別名で保存':'Save As',
+'開く(.gart)':'Open (.gart)',
+'書き出し':'Export',
+'▶ 再生':'▶ Play',
+'スマホ':'Mobile',
+'素材一覧':'Media Library',
+'＋ 素材を追加':'+ Add Media',
+'素材はまだありません':'No media added',
+'素材管理パネル':'Media Library',
+'ワールド編集タブ':'World Tabs',
+'ゲーム作業エリア':'Game Workspace',
+'設定パネルの幅を調整':'Resize Settings Panel',
+'ノードを選択してください':'Select a node',
+'▶ 360度素材':'▶ 360° Media',
+'アニメーション（MP4）':'Animation (MP4)',
+'アニメーション（連番PNG）':'Animation (PNG Sequence)',
+'▶ トリガー':'▶ Triggers',
+'クリック':'Click',
+'時間':'Timer',
+'フレームイン':'Frame In',
+'▶ 効果':'▶ Effects',
+'フェードイン':'Fade In',
+'フェードアウト':'Fade Out',
+'▶ イベント':'▶ Events',
+'アイテム取得':'Acquire Item',
+'イベント記録':'Record Event',
+'リセット':'Reset',
+'ゲーム終了':'End Game',
+'▶ 分岐':'▶ Branches',
+'条件分岐':'Condition Branch',
+'ランダム':'Random',
+'オプション':'Options',
+'トグル':'Toggle',
+'トグル切り替え':'Set Toggle',
+'▶ UI':'▶ UI',
+'ボタン':'Button',
+'ダイアローグ':'Dialogue',
+'クイズ':'Quiz',
+'テキスト':'Text',
+'2D素材':'2D Media',
+'ワールド移動':'Move to World',
+'カメラ操作':'Camera Control',
+'ワールド表示':'Display World',
+'メディア':'Media',
+'条件':'Condition',
+'はい':'Yes',
+'いいえ':'No',
+'正解':'Correct',
+'不正解':'Incorrect',
+'選択肢':'Choice',
+'クリック分岐':'Click Branch',
+'2Dメディア':'2D Media',
+'パン':'Pan',
+'キーフレーム':'Keyframe',
+'インベントリ表示':'Show Inventory',
+'アイテム使用':'Use Item',
+'道具箱':'Inventory',
+'装備中のアイテム：':'Equipped Item:',
+'装備中のアイテムを選択':'Select Equipped Item',
+'装備するアイテムを選択':'Choose Item to Equip',
+'メニューを開く':'Open Menu',
+'なし':'None',
+'診断ログを保存':'Save Diagnostic Log',
+'ゲームの状態とエラーをテキスト保存':'Save Game State and Errors',
+'保存中':'Saving',
+'準備しています…':'Preparing...',
+'ぐるり作品として書き出す':'Export Gururi Work',
+'閉じる':'Close',
+'作品タイトル':'Work Title',
+'作者名':'Author',
+'トップページの背景画像（必須）':'Home Background Image (Required)',
+'撮影した背景':'Captured Background',
+'開始ワールドの画像をここに表示します':'The starting world will appear here',
+'決定':'Confirm',
+'やり直す':'Retry',
+'ZIPファイル名':'ZIP Filename',
+'書き出す':'Export',
+'ドラッグ：カメラ回転 ／ ホイール：ズーム。画角を決めて「決定」を押してください。':'Drag to rotate / Scroll to zoom. Choose the view and press Confirm.',
+'リスタート地点に指定する':'Set as Restart Point',
+'このノードから実行':'Run from This Node',
+'このノードの次から実行':'Run from Next Node',
+'一回だけ実行':'Execute Only Once',
+'メモ':'Memo',
+'ノードに表示する文章を入力':'Enter a note for this node',
+'ダブルクリックで文章を編集':'Double-click to edit text',
+'ゲーム開始地点です。':'Game starting point.',
+'ワールド開始':'Start World',
+'探索を開始する':'Start Exploration',
+'ゲームを終了してトップページに戻る':'End the game and return home',
+'ワールド1からやり直す':'Restart from World 1',
+'素材を選択してください':'Select media',
+'素材未設定':'No media selected',
+'イベント未設定':'No event selected',
+'対象未設定':'No target selected',
+'選択してください':'Please select',
+'開始':'Start',
+'終了':'End',
+'追加':'Add',
+'削除':'Delete',
+'編集':'Edit',
+'保存':'Save',
+'キャンセル':'Cancel',
+'戻る':'Back',
+'次へ':'Next',
+'前へ':'Previous',
+'コピー':'Copy',
+'貼り付け':'Paste',
+'有効':'Enabled',
+'無効':'Disabled',
+'表示':'Show',
+'非表示':'Hide',
+'常に表示':'Always Show',
+'条件を指定':'Set Conditions',
+'表示条件':'Visibility Conditions',
+'条件1':'Condition 1',
+'条件2':'Condition 2',
+'対象':'Target',
+'前/後':'Before / After',
+'ON/OFF':'ON / OFF',
+'前':'Before',
+'後':'After',
+'かつ（両方を満たす）':'AND (Both)',
+'または（どちらかを満たす）':'OR (Either)',
+'＋ 条件を追加':'+ Add Condition',
+'2つ目の条件を削除':'Remove Second Condition',
+'アイテム取得済み':'Item Acquired',
+'イベント実行済み':'Event Completed',
+'トグルON':'Toggle ON',
+'アイテム取得前':'Before Item Acquisition',
+'アイテム取得後':'After Item Acquisition',
+'イベント終了':'Event Completed',
+'アイテム取得':'Acquire Item',
+'アイテム使用':'Use Item',
+'トグル名':'Toggle Name',
+'対象のトグル':'Target Toggle',
+'操作':'Action',
+'ONにする':'Turn ON',
+'OFFにする':'Turn OFF',
+'反転する（ON ↔ OFF）':'Toggle (ON ↔ OFF)',
+'判定方法':'Condition Type',
+'初期状態':'Initial State',
+'設定':'Settings',
+'表示プレビュー':'Display Preview',
+'質問文':'Question',
+'正解（空欄も正解として設定できます）':'Correct Answer (May Be Empty)',
+'入力形式':'Input Type',
+'文字・数字':'Text and Numbers',
+'数字のみ':'Numbers Only',
+'ここに回答を入力':'Enter your answer',
+'ボタンのテキスト':'Button Text',
+'ボタンの幅（px）':'Button Width (px)',
+'ボタンの高さ（px）':'Button Height (px)',
+'文字サイズ（px）':'Font Size (px)',
+'ボタンの表示位置':'Button Position',
+'PC（16:9）':'PC (16:9)',
+'スマホ（9:16）':'Mobile (9:16)',
+'このボタンをいつ表示しますか？':'When should this button appear?',
+'このテキストをいつ表示しますか？':'When should this text appear?',
+'ゲーム画面でボタンを押すと、接続先のノードへ進みます。':'Pressing the button runs connected nodes.',
+'ボタンをドラッグして位置を変更します。PCとスマホの位置は別々に保存されます。':'Drag to position. PC and mobile positions are saved separately.',
+'フェードアウト時間（秒）':'Fade-out Duration (sec)',
+'待機時間（秒）':'Wait Duration (sec)',
+'時間（秒）':'Duration (sec)',
+'移動時間（秒）':'Movement Duration (sec)',
+'再生位置':'Playback Position',
+'カメラ位置':'Camera Position',
+'カメラ経路':'Camera Path',
+'範囲設定':'Selection Area',
+'範囲を消去':'Clear Selection',
+'選択範囲を継承':'Inherit Selection',
+'通常のクリックを一度だけ実行する':'Execute Normal Click Only Once',
+'コマ送り':'Frame Navigation',
+'◀ 前':'◀ Previous',
+'次 ▶':'Next ▶',
+'ワールド':'World',
+'ワールド設定':'World Settings',
+'ワールドを追加':'Add World',
+'移動先ワールド':'Destination World',
+'背景画像':'Background Image',
+'透明PNGレイヤー':'Transparent PNG Layers',
+'透明レイヤー':'Transparent Layers',
+'透明レイヤー（編集画面のみ）':'Transparent Layers (Editor Only)',
+'レイヤー追加':'Add Layer',
+'新規レイヤー':'New Layer',
+'レイヤー名':'Layer Name',
+'並べ替え':'Reorder',
+'カメラ情報':'Camera Information',
+'初期画角':'Initial Camera View',
+'初期画角を記憶':'Save Initial View',
+'初期画角を更新':'Update Initial View',
+'水平角度':'Horizontal Angle',
+'垂直角度':'Vertical Angle',
+'水平角度（°）':'Horizontal Angle (°)',
+'垂直角度（°）':'Vertical Angle (°)',
+'FOV値':'FOV',
+'FOV値（°）':'FOV (°)',
+'初期画角をコピー':'Copy Initial View',
+'コピーしました':'Copied',
+'画像':'Image',
+'動画':'Video',
+'読み込み':'Load',
+'ファイルを選択':'Choose File',
+'テキスト一覧':'Text List',
+'＋ テキストを追加':'+ Add Text',
+'テキストを追加':'Add Text',
+'テキストを削除':'Delete Text',
+'フォントサイズ':'Font Size',
+'発話者':'Speaker',
+'ページを追加':'Add Page',
+'選択肢を追加':'Add Choice',
+'インベントリ':'Inventory',
+'アイテム名':'Item Name',
+'アイテム説明':'Item Description',
+'イベント名':'Event Name',
+'ループ':'Loop',
+'無限ループ':'Infinite Loop',
+'再生':'Play',
+'停止':'Stop',
+'一時停止':'Pause',
+'画角をコピー':'Copy Camera View',
+'画角情報':'Camera Information'
+};
+
+const editorTranslationOriginalText=new WeakMap();
+const editorTranslationOriginalAttributes=new WeakMap();
+let editorTranslationScheduled=false;
+
+function translateEditorText(node,language){
+const element=node.parentElement;
+if(!element)return;
+if(element.closest('#editorHomePage,script,style,textarea,.game-viewport,.game-dialogue,.game-text-overlay,.game-ui-button,.editor-home__items'))return;
+if(element.closest('[contenteditable="true"]'))return;
+
+const nodeBody=element.closest('.node-body');
+if(nodeBody){
+const nodeElement=nodeBody.closest('.node');
+const sourceNode=nodeElement&&typeof getNode==='function'?getNode(nodeElement.dataset.id):null;
+if(sourceNode?.customBody!==undefined||sourceNode?.type==='uiButton')return;
+}
+
+const current=node.nodeValue;
+if(!current||!current.trim())return;
+const original=editorTranslationOriginalText.get(node);
+if(original!==undefined&&current!==original&&current!==editorTranslations[original]){
+editorTranslationOriginalText.delete(node);
+}
+const japanese=editorTranslationOriginalText.get(node)??current;
+const key=japanese.trim();
+const english=editorTranslations[key];
+if(!english)return;
+editorTranslationOriginalText.set(node,japanese);
+const leading=japanese.match(/^\s*/)?.[0]||'';
+const trailing=japanese.match(/\s*$/)?.[0]||'';
+const result=language==='en'?leading+english+trailing:japanese;
+if(current!==result)node.nodeValue=result;
+}
+
+function translateEditorAttributes(element,language){
+if(element.closest('#editorHomePage,.game-viewport'))return;
+const attributes=['title','placeholder','aria-label'];
+let originals=editorTranslationOriginalAttributes.get(element);
+if(!originals){
+originals={};
+editorTranslationOriginalAttributes.set(element,originals);
+}
+for(const attribute of attributes){
+const value=element.getAttribute(attribute);
+if(value===null)continue;
+if(originals[attribute]!==undefined&&value!==originals[attribute]&&value!==editorTranslations[originals[attribute]]){
+delete originals[attribute];
+}
+const japanese=originals[attribute]??value;
+const english=editorTranslations[japanese];
+if(!english)continue;
+originals[attribute]=japanese;
+const result=language==='en'?english:japanese;
+if(value!==result)element.setAttribute(attribute,result);
+}
+}
+
+function translateEditorTree(root){
+const language=window.editorLanguage==='en'?'en':'ja';
+const container=document.getElementById('app');
+if(!container)return;
+if(root.nodeType===3){
+translateEditorText(root,language);
+return;
+}
+if(root.nodeType!==1)return;
+if(root!==container&&!container.contains(root))return;
+if(root.matches('script,style'))return;
+translateEditorAttributes(root,language);
+const walker=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);
+let current;
+while((current=walker.nextNode())){
+if(current.nodeType===3)translateEditorText(current,language);
+else translateEditorAttributes(current,language);
+}
+}
+
+const editorTranslationPendingRoots=new Set();
+
+function refreshEditorTranslation(){
+translateEditorTree(document.getElementById('app'));
+}
+
+function scheduleEditorTranslation(root){
+if(root instanceof Node){
+editorTranslationPendingRoots.add(root);
+}else{
+editorTranslationPendingRoots.add(document.getElementById('app'));
+}
+if(editorTranslationScheduled)return;
+editorTranslationScheduled=true;
+queueMicrotask(()=>{
+editorTranslationScheduled=false;
+const roots=[...editorTranslationPendingRoots];
+editorTranslationPendingRoots.clear();
+for(const root of roots)translateEditorTree(root);
+});
+}
+
+window.addEventListener('gururi-language-change',()=>{
+editorTranslationPendingRoots.clear();
+scheduleEditorTranslation(document.getElementById('app'));
+});
+
+const editorTranslationObserver=new MutationObserver(mutations=>{
+for(const mutation of mutations){
+if(mutation.type==='characterData'){
+scheduleEditorTranslation(mutation.target);
+}else if(mutation.type==='attributes'){
+scheduleEditorTranslation(mutation.target);
+}else{
+for(const node of mutation.addedNodes){
+scheduleEditorTranslation(node);
+}
+}
+}
+});
+
+editorTranslationObserver.observe(document.getElementById('app'),{
+subtree:true,
+childList:true,
+characterData:true,
+attributes:true,
+attributeFilter:['title','placeholder','aria-label']
+});
+
+scheduleEditorTranslation(document.getElementById('app'));
+
 (()=>{
 const home=document.getElementById('editorHomePage');
 const start=document.getElementById('editorHomeStart');
