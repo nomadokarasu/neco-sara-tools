@@ -9048,6 +9048,55 @@ if(title)title.textContent=window.editorLanguage==='en'?'Opening Project Data':'
 await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
 }
 let currentGartSaveHandle=null;
+let gururiSavedProjectSignature=null;
+
+function getGururiProjectSignature(){
+const seen=new WeakSet();
+const media=mediaLibrary.map(item=>({
+id:item.id,
+fileName:item.fileName,
+fileType:item.fileType,
+width:item.width,
+height:item.height,
+fps:item.fps,
+duration:item.duration,
+sourceName:item.sourceFile?.name,
+sourceSize:item.sourceFile?.size,
+frameFiles:item.frameFiles?.map(file=>({
+name:file.name,
+size:file.size
+}))
+}));
+
+return JSON.stringify({
+nodes:state.nodes,
+connections:state.connections,
+worldFolders:state.worldFolders,
+startFolderId:state.startFolderId,
+media
+},(key,value)=>{
+if(['raw','image','video','frameImages','sourceFile','url','canvas','ctx','panUndoStack','panRedoStack','clickUndoStack','clickRedoStack','frameInUndo','frameInRedo'].includes(key))return undefined;
+if(value instanceof Blob)return `${value.name||''}:${value.size}`;
+if(value instanceof Element||value instanceof ImageBitmap)return undefined;
+if(value&&typeof value==='object'){
+if(seen.has(value))return undefined;
+seen.add(value);
+}
+return value;
+});
+}
+
+window.addEventListener('load',()=>{
+gururiSavedProjectSignature=getGururiProjectSignature();
+});
+
+window.addEventListener('beforeunload',event=>{
+if(gururiSavedProjectSignature===null)return;
+if(getGururiProjectSignature()===gururiSavedProjectSignature)return;
+event.preventDefault();
+event.returnValue='';
+});
+
 async function writeProjectFile(blob,saveAs=false){
  if(currentGartSaveHandle){const stream=await currentGartSaveHandle.createWritable();setSaveProgress(92,'上書き保存しています…');await stream.write(blob);await stream.close();return true;}
  const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='project.gart';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);return true;
@@ -9096,7 +9145,12 @@ setSaveProgress(65,'プロジェクトを圧縮しています…');
 await new Promise(requestAnimationFrame);
 const blob=await gartCreateZip(entries);
 setSaveProgress(90,'保存先を選択してください…');
-const saved=await writeProjectFile(blob,saveAs);if(saved)setSaveProgress(100,'保存処理が完了しました');
+const savingSignature=getGururiProjectSignature();
+const saved=await writeProjectFile(blob,saveAs);
+if(saved){
+gururiSavedProjectSignature=savingSignature;
+setSaveProgress(100,'保存処理が完了しました');
+}
 }catch(error){
 console.error(error);
 alert(`プロジェクトを保存できませんでした。\n${error.message}`);
@@ -9186,6 +9240,7 @@ updateLayoutControls();
 renderMediaList();
 updateWorldTabs();renderNodes();
 renderSettings();renderFolderSettings();
+gururiSavedProjectSignature=getGururiProjectSignature();
 await setOpenProgress(100,'読み込みが完了しました');
 }catch(error){
 console.error(error);
