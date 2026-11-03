@@ -9422,7 +9422,7 @@ if(saveHandle){const stream=await saveHandle.createWritable();await stream.write
 else{const url=URL.createObjectURL(archive);const link=document.createElement('a');link.href=url;link.download=fileName;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 setSaveProgress(100,'書き出しが完了しました');
 document.getElementById('exportSettingsModal').classList.add('hidden');
-}catch(error){console.error(error);alert('作品を書き出せませんでした。\\n'+error.message);}
+}catch(error){console.error(error);alert('作品を書き出せませんでした。\n'+error.message);}
 finally{button.disabled=false;endSaveProgress();}
 }
 

@@ -17,7 +17,7 @@
 <div id="editorHomeHero" class="editor-home__hero">
 <img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
-<p class="editor-home__version">ver.0.1.99</p>
+<p class="editor-home__version">ver.0.1.100</p>
 <h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
 <img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
 <img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
@@ -52,7 +52,7 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
-<span class="editor-version">ver.0.1.99</span>
+<span class="editor-version">ver.0.1.100</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
 </div>
 <div class="top-actions">
@@ -728,6 +728,65 @@ Object.assign(editorTranslations,{
 '画角を継承しない':'Do Not Inherit Camera View'
 });
 
+Object.assign(editorTranslations,{
+'例：照明':'e.g. Lighting',
+'接続先をランダムに選択':'Randomly Select a Connected Node',
+'未取得':'Not Acquired',
+'連番PNG':'PNG Sequence',
+'■ 停止':'■ Stop',
+'トリガー':'Trigger',
+'効果':'Effect',
+'イベント':'Event',
+'分岐':'Branch',
+'パネル':'Panel',
+'▶ パネル':'▶ Panels',
+'レイヤー':'Layer',
+'ZIPファイル':'ZIP File',
+'メディアを選択（PNG / MP4）':'Select Media (PNG / MP4)',
+'ダイアローグを追加':'Add Dialogue',
+'使用後にアイテムを消費する':'Consume Item After Use',
+'この分岐を削除':'Delete This Branch',
+'右端からダイアローグやメディアへ接続してください。':'Connect a dialogue or media node from the output port on the right.',
+'サムネイル（正方形）':'Thumbnail (Square)',
+'説明':'Description',
+'取得後にクリック範囲を削除する':'Remove Click Area After Acquisition',
+'取得に使用したクリック範囲を、ゲーム再生中だけ無効にします。':'Disables the click area used for acquisition during gameplay.',
+'使用するアイテムを選択':'Select an Item to Use',
+'クリック範囲を指定':'Define Click Area',
+'左ドラッグ：投げ縄 / Space＋ドラッグ：回転 / Z＋ドラッグ：ズーム':'Left Drag: Lasso / Space + Drag: Rotate / Z + Drag: Zoom',
+'素材（PNG・JPG・MP4）':'Media (PNG, JPG, MP4)',
+'素材をドラッグ：移動 / 四隅をドラッグ：縦横比を保って拡大縮小。PC・スマホの配置はそれぞれ記憶します。':'Drag to move / Drag corners to resize while preserving aspect ratio. PC and mobile layouts are saved separately.',
+'文字をドラッグ：移動 / 四隅をドラッグ：幅・高さを変更。PC・スマホの配置は別々に保存されます。':'Drag text to move / Drag corners to resize. PC and mobile layouts are saved separately.',
+'参照メディア':'Reference Media',
+'キーフレームの再生時間（秒）':'Keyframe Duration (sec)',
+'現在の時間（秒）':'Current Time (sec)',
+'＋ キーフレームを登録':'+ Add Keyframe',
+'通常の素材を使用':'Use Default Media',
+'判定するアイテム（取得済み）':'Items to Check (Acquired)',
+'素材を読み込めません':'Could Not Load Media',
+'作品を準備しています…':'Preparing Work...',
+'診断レポートの保存に失敗しました':'Failed to Save Diagnostic Report',
+'ワールド1':'World 1',
+'素材を変換できませんでした。':'Could Not Convert Media.',
+'使用中':'In Use',
+'ノード':'Nodes',
+'表示条件':'Visibility Conditions',
+'表示条件なし':'No Visibility Conditions',
+'一度だけ実行する':'Execute Only Once',
+'アイテムを消費':'Consume Item',
+'取得前':'Before Acquisition',
+'取得後':'After Acquisition',
+'前のワールドからの移動':'Arrival from Previous World',
+'ゲームを終了':'End Game',
+'フレームの追加':'Add Frame',
+'フレームの削除':'Delete Frame',
+'再生を停止':'Stop Playback',
+'ファイルを開く':'Open File',
+'保存に失敗しました':'Save Failed',
+'読み込みに失敗しました':'Loading Failed',
+'書き出しに失敗しました':'Export Failed'
+});
+
 const editorTranslationOriginalText=new WeakMap();
 const editorTranslationOriginalAttributes=new WeakMap();
 let editorTranslationScheduled=false;
@@ -787,7 +846,10 @@ match=source.match(/^素材を読み込んでいます…（(\d+) \/ (\d+)）$/)
 if(match)return `Loading Media... (${match[1]} / ${match[2]})`;
 
 match=source.match(/^(.+) の読み込みに失敗しました。\n([\s\S]*)$/);
-if(match)return `Failed to load ${match[1]}.\n${match[2]}`;
+if(match){
+const detail=editorTranslateValue(match[2])??match[2];
+return `Failed to load ${match[1]}.\n${detail}`;
+}
 
 match=source.match(/^(.+) の元ファイルがありません。再度読み込んでください。$/);
 if(match)return `The original file for ${match[1]} is missing. Please import it again.`;
@@ -825,14 +887,76 @@ if(match)return `PNG Sequence: ${match[1]} Frames (${match[2]})`;
 match=source.match(/^トグル (.+)$/);
 if(match)return `Toggle ${match[1]}`;
 
+match=source.match(/^ワールド(\d+)$/);
+if(match)return `World ${match[1]}`;
+
+match=source.match(/^ダイアローグ\s*(\d+)$/);
+if(match)return `Dialogue ${match[1]}`;
+
+match=source.match(/^([▼▶])\s*テキスト(\d+)$/);
+if(match)return `${match[1]} Text ${match[2]}`;
+
+match=source.match(/^パネルの高さ（(PC|スマホ)・画面高さの[％%]）$/);
+if(match)return `Panel Height (${match[1]==='スマホ'?'Mobile':'PC'}, % of Screen)`;
+
+match=source.match(/^配置（(PC|スマホ)）$/);
+if(match)return `Position (${match[1]==='スマホ'?'Mobile':'PC'})`;
+
+match=source.match(/^クリック分岐：(.+)$/);
+if(match)return `Click Branch: ${match[1]}`;
+
+match=source.match(/^(.+)：このノードの右端から遷移先につないでください。$/);
+if(match)return `${match[1]}: Connect the next node from the output port on the right.`;
+
+match=source.match(/^(.+)：(.+)$/);
+if(match&&['取得済み','イベント実行済み','対象未設定'].includes(match[1])){
+return `${editorTranslateValue(match[1])??match[1]}: ${match[2]}`;
+}
+
+match=source.match(/^(.+?)を削除$/);
+if(match)return `Delete ${match[1]}`;
+
+match=source.match(/^([\d.]+)\s*秒$/);
+if(match)return `${match[1]} sec`;
+
+match=source.match(/^([\d.]+)\s*\/\s*([\d.]+)\s*秒$/);
+if(match)return `${match[1]} / ${match[2]} sec`;
+
+match=source.match(/^取得状況別メディア（(\d+)通り）$/);
+if(match)return `Media by Acquisition State (${match[1]} combinations)`;
+
+match=source.match(/^各状態に同じ形式（(.+)）の素材を指定します。未設定時は通常の素材を使用します。$/);
+if(match)return `Assign ${match[1]} media for each state. Default media is used when no override is assigned.`;
+
+match=source.match(/^(.+?)・使用中\s*(\d+)\s*ノード$/);
+if(match)return `${match[1]} · Used by ${match[2]} nodes`;
+
+match=source.match(/^([\d.]+)\s*\/\s*([\d.]+)\s*秒$/);
+if(match)return `${match[1]} / ${match[2]} sec`;
+
+match=source.match(/^ZIPには2:1のPNG画像だけを入れてください。\n対象外のファイル:\s*(.+)$/);
+if(match)return `The ZIP must contain only 2:1 PNG images.\nUnsupported file: ${match[1]}`;
+
+match=source.match(/^フレームを変更できませんでした。\n([\s\S]*)$/);
+if(match)return `Could not change the frame.\n${editorTranslateValue(match[1])??match[1]}`;
+
+match=source.match(/^この画像は追加できません。\n([\s\S]*)$/);
+if(match)return `Could not add this image.\n${editorTranslateValue(match[1])??match[1]}`;
+
+match=source.match(/^このZIPはアップロードできません。\n([\s\S]*)$/);
+if(match)return `Could not import the ZIP file.\n${editorTranslateValue(match[1])??match[1]}`;
+
+match=source.match(/^連番PNGを登録できませんでした。\n([\s\S]*)$/);
+if(match)return `Could not add the PNG sequence.\n${editorTranslateValue(match[1])??match[1]}`;
+
 match=source.match(/^プロジェクトを保存できませんでした。\n([\s\S]*)$/);
-if(match)return `Could not save the project.\n${match[1]}`;
+if(match)return `Could not save the project.\n${editorTranslateValue(match[1])??match[1]}`;
 
 match=source.match(/^プロジェクトを開けませんでした。現在の編集内容は維持されています。\n([\s\S]*)$/);
-if(match)return `Could not open the project. Your current changes have been preserved.\n${match[1]}`;
+if(match)return `Could not open the project. Your current changes have been preserved.\n${editorTranslateValue(match[1])??match[1]}`;
 
 match=source.match(/^作品を書き出せませんでした。\s*([\s\S]*)$/);
-if(match)return `Could not export the work.\n${match[1]}`;
+if(match)return `Could not export the work.\n${editorTranslateValue(match[1])??match[1]}`;
 
 match=source.match(/^素材「(.+)」を削除しますか？\n使用中のワールド・レイヤー・ノードの素材指定も解除されます。$/);
 if(match)return `Delete media "${match[1]}"?\nReferences in worlds, layers, and nodes will also be cleared.`;
