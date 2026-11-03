@@ -9805,9 +9805,20 @@ function renderWorldFolderEditor(){
  const previewHeading=document.createElement('div');previewHeading.className='setting-label';previewHeading.textContent='ワールドプレビュー（全レイヤー表示）';
  const previewCanvas=document.createElement('canvas');previewCanvas.className='world-settings-preview world-preview';previewCanvas.width=320;previewCanvas.height=Math.round(320*getActiveLayout().height/getActiveLayout().width);
  previewCanvas.dataset.folderId=folder.id;
- const previewNote=document.createElement('div');previewNote.className='world-settings-preview-note';previewNote.textContent='ドラッグ：カメラ回転 / ホイール：ズーム。現在の方向と画角がゲーム開始時の初期表示位置になります。透明PNGレイヤーはすべて表示します。';
- previewGroup.append(previewHeading,previewCanvas,previewNote);section.append(previewGroup);
- setupWorldSettingsCameraPreview(previewCanvas,folder);
+const previewNote=document.createElement('div');previewNote.className='world-settings-preview-note';previewNote.textContent='ドラッグ：カメラ回転 / ホイール：ズーム。初期画角を変更するには「初期画角を記憶」を押してください。';
+const rememberCameraButton=document.createElement('button');
+rememberCameraButton.type='button';
+rememberCameraButton.className='add-world-btn';
+rememberCameraButton.textContent='初期画角を記憶';
+previewGroup.append(previewHeading,previewCanvas,previewNote,rememberCameraButton);
+section.append(previewGroup);
+setupWorldSettingsCameraPreview(previewCanvas,folder);
+rememberCameraButton.addEventListener('click',()=>{
+const controller=worldSettingsCameraPreviews.get(previewCanvas);
+if(!controller)return;
+controller.persist();
+rememberCameraButton.textContent='記憶しました';
+});
  const cameraInputs=previewCanvas.nextElementSibling;
  if(cameraInputs?.classList.contains('camera-number-settings')){
   const cameraSection=document.createElement('details');
@@ -10045,7 +10056,6 @@ image:compositeCache.valid?composite:null,
 };
 
 syncInputs=setupCameraNumberInputs(canvas,view,()=>{
-persist();
 draw();
 });
 
@@ -10063,7 +10073,6 @@ if(!drag||e.pointerId!==drag.pointerId)return;
 view.yaw=drag.yaw-(e.clientX-drag.x)*0.008;
 view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*0.008,-Math.PI/2+.02,Math.PI/2-.02);
 
-persist();
 draw();
 });
 
@@ -10075,11 +10084,10 @@ e.preventDefault();
 
 view.zoom=clamp(view.zoom+(e.deltaY>0?-0.1:0.1),0.75,75/35);
 
-persist();
 draw();
 },{passive:false});
 
-worldSettingsCameraPreviews.set(canvas,{folder,draw,refresh});
+worldSettingsCameraPreviews.set(canvas,{folder,draw,refresh,persist});
 draw();
 }
 let worldSettingsPreviewFrames=0;

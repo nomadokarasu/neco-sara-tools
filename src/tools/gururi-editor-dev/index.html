@@ -249,6 +249,8 @@ const t=data[lang]||data.ja;
 const content=homeContent;
 const texts=content?.languages?.[lang]||{};
 document.documentElement.lang=lang;
+window.editorLanguage=lang;
+window.dispatchEvent(new CustomEvent('gururi-language-change',{detail:{language:lang}}));
 document.getElementById('editorHomeTitle').setAttribute('aria-label',texts.title||t.title);
 document.getElementById('editorHomeDescription').textContent=texts.description||t.description;
 
@@ -319,7 +321,7 @@ start.addEventListener('click',()=>{home.classList.remove('is-open');home.setAtt
 reopen.addEventListener('click',()=>{home.classList.add('is-open');home.removeAttribute('aria-hidden');});
 langButtons.forEach(button=>button.addEventListener('click',()=>setLanguage(button.dataset.editorHomeLang)));
 setLanguage('ja');
-loadHomeContent().then(()=>setLanguage('ja'));
+loadHomeContent().then(()=>setLanguage(document.documentElement.lang==='en'?'en':'ja'));
 })();
 </script>
 </body>
