@@ -9809,15 +9809,21 @@ const previewNote=document.createElement('div');previewNote.className='world-set
 const rememberCameraButton=document.createElement('button');
 rememberCameraButton.type='button';
 rememberCameraButton.className='add-world-btn';
-rememberCameraButton.textContent='初期画角を記憶';
+const worldBacker=folderBacker(folder);
+const updateRememberCameraButton=()=>{
+rememberCameraButton.textContent=worldBacker?.initialCameraRecorded===true?'初期画角を更新':'初期画角を記憶';
+};
+updateRememberCameraButton();
 previewGroup.append(previewHeading,previewCanvas,previewNote,rememberCameraButton);
 section.append(previewGroup);
 setupWorldSettingsCameraPreview(previewCanvas,folder);
 rememberCameraButton.addEventListener('click',()=>{
 const controller=worldSettingsCameraPreviews.get(previewCanvas);
-if(!controller)return;
+if(!controller||!worldBacker)return;
 controller.persist();
-rememberCameraButton.textContent='記憶しました';
+worldBacker.initialCameraRecorded=true;
+updateRememberCameraButton();
+section._refreshInitialCameraFields?.();
 });
  const cameraInputs=previewCanvas.nextElementSibling;
  if(cameraInputs?.classList.contains('camera-number-settings')){
@@ -9843,9 +9849,70 @@ rememberCameraButton.textContent='記憶しました';
   const pitchLabel=cameraInputs.querySelector('[data-camera-value="pitch"]')?.closest('.setting-group')?.querySelector('.setting-label');
   if(pitchLabel)pitchLabel.textContent='垂直方向（°）';
   const fovLabel=cameraInputs.querySelector('[data-camera-value="fov"]')?.closest('.setting-group')?.querySelector('.setting-label');
-  if(fovLabel)fovLabel.textContent='FOV値（°）';
- }
- const heading=document.createElement('h3');heading.textContent='透明PNGレイヤー';section.append(heading);
+if(fovLabel)fovLabel.textContent='FOV値（°）';
+}
+if(cameraInputs?.classList.contains('camera-number-settings')){
+const initialCameraSection=document.createElement('details');
+initialCameraSection.className='world-camera-section';
+initialCameraSection.open=Boolean(folder.editorInitialCameraOpen);
+const initialCameraSummary=document.createElement('summary');
+initialCameraSummary.textContent='初期画角';
+initialCameraSection.append(initialCameraSummary);
+
+const initialCameraInputs=cameraInputs.cloneNode(true);
+initialCameraInputs.querySelectorAll('[data-camera-value]').forEach(input=>{
+input.readOnly=true;
+input.tabIndex=-1;
+});
+
+const refreshInitialCameraFields=()=>{
+const backer=folderBacker(folder);
+if(!backer)return;
+const saved=getWorldInitialView(backer);
+if(!saved)return;
+const values={
+yaw:((saved.yaw*180/Math.PI+180)%360+360)%360-180,
+pitch:saved.pitch*180/Math.PI,
+fov:75/saved.zoom
+};
+for(const [key,value] of Object.entries(values)){
+const input=initialCameraInputs.querySelector(`[data-camera-value="${key}"]`);
+if(input)input.value=Number(value.toFixed(2)).toString();
+}
+};
+
+const initialCopyButton=initialCameraInputs.querySelector('.camera-copy-view');
+if(initialCopyButton){
+initialCopyButton.textContent='初期画角をコピー';
+initialCopyButton.addEventListener('click',async()=>{
+const saved=getWorldInitialView(folderBacker(folder));
+if(!saved)return;
+const cameraData={
+yaw:Number((saved.yaw*180/Math.PI).toFixed(6)),
+pitch:Number((saved.pitch*180/Math.PI).toFixed(6)),
+fov:Number((75/saved.zoom).toFixed(6))
+};
+try{
+await navigator.clipboard.writeText('GURURI_CAMERA:'+JSON.stringify(cameraData));
+initialCopyButton.textContent='コピーしました';
+setTimeout(()=>{
+if(initialCopyButton.isConnected)initialCopyButton.textContent='初期画角をコピー';
+},1500);
+}catch(error){
+alert('初期画角をコピーできませんでした。');
+}
+});
+}
+
+initialCameraSection.append(initialCameraInputs);
+initialCameraSection.addEventListener('toggle',()=>{
+folder.editorInitialCameraOpen=initialCameraSection.open;
+});
+section._initialCameraSection=initialCameraSection;
+section._refreshInitialCameraFields=refreshInitialCameraFields;
+refreshInitialCameraFields();
+}
+const heading=document.createElement('h3');heading.textContent='透明PNGレイヤー';section.append(heading);
  for(const layer of folder.layers){
   const details=document.createElement('details');details.className='world-layer-entry';
   details.open=!!layer.editorOpen;
@@ -9916,7 +9983,9 @@ rememberCameraButton.textContent='記憶しました';
   renderAdditional();
   
  }
- const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);if(section._cameraSection)section.append(section._cameraSection);
+ const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);
+if(section._cameraSection)section.append(section._cameraSection);
+if(section._initialCameraSection)section.append(section._initialCameraSection);
 }
 const originalRenderSettings=renderSettings;
 renderSettings=function(){
