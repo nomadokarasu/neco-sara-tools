@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ぐるりエディタ</title>
 <link rel="stylesheet" href="style.css">
-<meta name="robots" content="index, follow">
 </head>
 <body>
 <div id="editorHomePage" class="editor-home is-open" aria-label="ぐるりエディタ トップページ">
@@ -18,7 +17,7 @@
 <div id="editorHomeHero" class="editor-home__hero">
 <img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
-<p class="editor-home__version">ver.0.1.0</p>
+<p class="editor-home__version">ver.0.1.113</p>
 <h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
 <img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
 <img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
@@ -53,36 +52,55 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
-<span class="editor-version">ver.0.1.46</span>
+<span class="editor-version">ver.0.1.113</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
+<details class="editor-header-menu" id="editorFileMenu">
+<summary>ファイル</summary>
+<div class="editor-header-dropdown">
+<button id="newGartBtn" type="button">新規作成</button>
+<div class="editor-header-menu-divider"></div>
+<button id="openGartBtn" type="button">ファイルを開く (.gart)</button>
+<button id="saveGartBtn" type="button">上書き保存</button>
+<button id="saveAsGartBtn" type="button">名前を付けて保存</button>
+<div class="editor-header-menu-divider"></div>
+<button id="exportWorkBtn" type="button">書き出し</button>
+</div>
+</details>
+<details class="editor-header-menu" id="editorHelpMenu">
+<summary>ヘルプ</summary>
+<div class="editor-header-dropdown">
+<a class="editor-header-link" id="editorHelpGuide" href="https://neco-sara.com/2026/11/04/howtouse-gururieditor-jp/" target="_blank" rel="noopener noreferrer">使い方</a>
+<a class="editor-header-link" href="https://docs.google.com/forms/d/e/1FAIpQLSe6DLbVSBJuwVfUO3lGIaC5F-GFFIEmMJjZ6X2WcyI3wawuUw/viewform" target="_blank" rel="noopener noreferrer">不具合報告</a>
+<a class="editor-header-link" id="editorHelpSupport" href="https://note.com/junnoota/n/n87a466960ce6" target="_blank" rel="noopener noreferrer">JUNOTAを応援する</a>
+</div>
+</details>
 </div>
 <div class="top-actions">
-<button id="saveGartBtn" type="button" class="primary-btn">保存 .gart</button>
-<button id="openGartBtn" type="button" class="primary-btn">開く .gart</button>
-<button id="exportWorkBtn" type="button" class="primary-btn">作品を書き出す</button>
-<div id="exportSettingsModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="exportSettingsTitle" style="position:fixed;inset:0;z-index:10000;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
-<form id="exportSettingsForm" style="width:min(420px,100%);background:#292929;border:1px solid #666;border-radius:12px;padding:24px;color:#fff;box-sizing:border-box;box-shadow:0 12px 35px #0009">
-<h2 id="exportSettingsTitle" style="font-size:20px;margin:0 0 20px">作品を書き出す</h2>
-<label for="exportFileName" style="display:block;margin-bottom:8px">ファイル名</label>
-<input id="exportFileName" type="text" value="gururi-work" required maxlength="120" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #777;border-radius:6px;background:#141414;color:#fff;font-size:16px">
-<p style="color:#aaa;font-size:12px;line-height:1.6;margin:8px 0 20px">拡張子 .zip は自動で付きます。対応ブラウザでは、次の画面で保存場所を選択できます。</p>
-<div style="display:flex;gap:10px;justify-content:flex-end">
-<button id="exportCancelBtn" type="button" style="padding:10px 16px">キャンセル</button>
-<button id="exportConfirmBtn" type="submit" style="padding:10px 16px">保存する</button>
+<div id="exportSettingsModal" class="hidden export-work-overlay" role="dialog" aria-modal="true" aria-labelledby="exportSettingsTitle">
+<form id="exportSettingsForm" class="export-work-panel">
+<div class="export-work-header"><h2 id="exportSettingsTitle">ぐるり作品として書き出す</h2><button id="exportCancelBtn" type="button" aria-label="閉じる">×</button></div>
+<div class="export-work-content">
+<label>作品タイトル <input id="exportTitle" type="text" maxlength="120" required placeholder="作品タイトル"></label>
+<label>作者名 <input id="exportAuthor" type="text" maxlength="120" required placeholder="作者名"></label>
+<div class="export-cover-setting">
+<div class="export-cover-label">トップページの背景画像（必須）</div>
+<div class="export-cover-camera"><canvas id="exportCoverCamera" width="640" height="360"></canvas><img id="exportCoverPhoto" alt="撮影した背景" hidden><span id="exportCoverEmpty">開始ワールドの画像をここに表示します</span></div>
+<div class="export-cover-actions"><button id="exportCoverShoot" type="button">決定</button><button id="exportCoverClear" type="button">やり直す</button></div>
+<p class="export-cover-help">ドラッグ：カメラ回転 ／ ホイール：ズーム。画角を決めて「決定」を押してください。</p>
 </div>
+<label>ZIPファイル名 <input id="exportFileName" type="text" value="gururi-work" required maxlength="120"></label>
+</div>
+<div class="export-work-footer"><button id="exportConfirmBtn" type="submit">書き出す</button></div>
 </form>
 </div>
-<style>#exportSettingsModal.hidden{display:none!important}</style>
 <button id="playBtn" class="primary-btn" type="button">▶ 再生</button>
 <div class="device-switch">
 <button id="pcModeBtn" class="device-btn active" type="button">PC</button>
 <button id="mobileModeBtn" class="device-btn" type="button">スマホ</button>
 </div>
-<div class="ratio-control">
-<span>画面比率</span>
-<input id="ratioWidthInput" class="ratio-input" type="number" min="1" max="100" step="1" value="16">
-<span>:</span>
-<input id="ratioHeightInput" class="ratio-input" type="number" min="1" max="100" step="1" value="9">
+<div class="device-switch editor-language-switch" role="group" aria-label="Language">
+<button class="device-btn" type="button" data-editor-home-lang="ja" aria-pressed="true">日本語</button>
+<button class="device-btn" type="button" data-editor-home-lang="en" aria-pressed="false">English</button>
 </div>
 </div>
 </header>
@@ -90,7 +108,7 @@
 <div class="media-popup-header">
 <strong>素材一覧</strong>
 <div class="media-popup-actions">
-<button id="addMediaBtn" class="media-popup-add" type="button">＋ 追加</button>
+<button id="addMediaBtn" class="media-popup-add" type="button">＋ 素材を追加</button>
 <button id="closeMediaPanelBtn" class="media-popup-close" type="button" aria-label="閉じる">×</button>
 </div>
 </div>
@@ -98,6 +116,7 @@
 <div class="settings-empty">素材はまだありません</div>
 </div>
 </section>
+<nav id="worldTabs" class="world-tabs" aria-label="ワールド編集タブ"></nav>
 <div class="main-layout">
 <main id="workspace" class="workspace" tabindex="0" aria-label="ゲーム作業エリア">
 <div id="workspaceScene" class="workspace-scene">
@@ -105,14 +124,16 @@
 <div id="nodesLayer" class="nodes-layer"></div>
 </div>
 <div id="contextMenu" class="context-menu hidden" role="menu">
-<button type="button" class="menu-parent" data-menu="material">▶ 素材</button>
+<button type="button" class="menu-parent" data-menu="material">▶ 360度素材</button>
 <div id="materialMenu" class="submenu hidden">
-<button type="button" data-create="media">メディア</button>
+<button type="button" data-create="world">2:1 PNG</button>
+<button type="button" data-create="animation">アニメーション（MP4）</button>
+<button type="button" data-create="animationSeq">アニメーション（連番PNG）</button>
 </div>
 <button type="button" class="menu-parent" data-menu="trigger">▶ トリガー</button>
 <div id="triggerMenu" class="submenu hidden">
-<button type="button" data-create="time">時間</button>
 <button type="button" data-create="click">クリック</button>
+<button type="button" data-create="time">時間</button>
 <button type="button" data-create="frameIn">フレームイン</button>
 </div>
 <button type="button" class="menu-parent" data-menu="effect">▶ 効果</button>
@@ -120,22 +141,34 @@
 <button type="button" data-create="fadeIn">フェードイン</button>
 <button type="button" data-create="fadeOut">フェードアウト</button>
 </div>
-<button type="button" class="menu-parent" data-menu="camera">▶ カメラ</button>
-<div id="cameraMenu" class="submenu hidden">
-<button type="button" data-create="keyframe">キーフレーム</button>
+<button type="button" class="menu-parent" data-menu="event">▶ イベント</button>
+<div id="eventMenu" class="submenu hidden">
+<button type="button" data-create="itemAcquire">アイテム取得</button>
+<button type="button" data-create="eventRecord">イベント記録</button>
+<button type="button" data-create="gameReset">リセット</button>
+<button type="button" data-create="gameEnd">ゲーム終了</button>
+</div>
+<button type="button" class="menu-parent" data-menu="branch">▶ 分岐</button>
+<div id="branchMenu" class="submenu hidden">
+<button type="button" data-create="condition">条件分岐</button>
+<button type="button" data-create="random">ランダム</button>
+<button type="button" data-create="option">オプション</button>
+<button type="button" data-create="toggle">トグル</button>
+<button type="button" data-create="toggleSet">トグル切り替え</button>
 </div>
 <button type="button" class="menu-parent" data-menu="panel">▶ UI</button>
 <div id="panelMenu" class="submenu hidden">
-<button type="button" disabled title="今後実装予定">ボタン（準備中）</button>
-<button type="button" class="menu-parent" data-submenu="uiPanel">▶ パネル</button>
-<div id="uiPanelMenu" class="submenu hidden">
+<button type="button" data-create="uiButton">ボタン</button>
 <button type="button" data-create="dialogue">ダイアローグ</button>
-<button type="button" disabled title="今後実装予定">オプション（準備中）</button>
-<button type="button" data-create="media2d">2Dメディア</button>
+<button type="button" data-create="textAnswer">クイズ</button>
+<button type="button" data-create="uiPanel">パネル</button>
 </div>
-</div>
+<div class="menu-separator" role="separator"></div>
+<button type="button" data-create="worldMove">ワールド移動</button>
+<button type="button" data-create="keyframe">カメラ操作</button>
 </div>
 </main>
+<div id="editorPanelResizer" class="editor-panel-resizer" role="separator" aria-label="設定パネルの幅を調整" aria-orientation="vertical" tabindex="0"></div>
 <aside class="editor-sidebar">
 <section id="settingsPanel" class="settings-panel">
 <div class="settings-empty">ノードを選択してください</div>
@@ -143,6 +176,7 @@
 </aside>
 </div>
 <div id="gamePreview" class="game-preview hidden">
+<button id="exportPreviewDiagnosticBtn" class="export-preview-diagnostic" type="button" title="ゲームの状態とエラーをテキスト保存">診断ログを保存</button>
 <button id="closePreviewBtn" class="close-preview" type="button">×</button>
 <div id="gameViewport" class="game-viewport">
 <canvas id="gameCanvas"></canvas>
@@ -152,6 +186,19 @@
 <div id="dialogueText" class="game-dialogue-text"></div>
 <div class="dialogue-arrow">▼</div>
 </div>
+<div id="optionChoicesOverlay" class="option-choices-overlay hidden"></div>
+<div id="textAnswerOverlay" class="game-text-answer-overlay hidden"></div>
+<div id="equippedItemLabel" class="equipped-item-label hidden">
+<span>装備中のアイテム：</span>
+<select id="equippedItemSelect" aria-label="装備中のアイテムを選択"><option value="">なし</option></select>
+<button id="mobileEquippedItemButton" type="button" aria-label="装備するアイテムを選択" aria-expanded="false">なし</button>
+</div>
+<div id="mobileEquippedItemMenu" class="mobile-equipped-item-menu" style="display:none"></div>
+<button id="inventoryButton" class="inventory-button hidden" type="button" aria-label="メニューを開く" aria-expanded="false">☰</button>
+<div id="inventoryMenu" class="inventory-menu hidden">
+<button id="inventoryToolboxButton" type="button">道具箱</button>
+</div>
+<div id="inventoryOverlay" class="inventory-overlay hidden"></div>
 <div id="previewMessage" class="preview-message"></div>
 </div>
 </div>
@@ -159,8 +206,986 @@
 <input id="gartFileInput" type="file" accept=".gart" hidden>
 <input id="worldFileInput" type="file" accept=".png,.jpg,.jpeg,.mp4,image/png,image/jpeg,video/mp4" multiple hidden>
 <input id="animationFileInput" type="file" accept=".mp4,video/mp4" multiple hidden>
+<input id="sequenceFileInput" type="file" accept=".png,image/png" multiple hidden>
+<div id="saveProgressOverlay" class="save-progress-overlay" hidden><div class="save-progress-dialog"><strong>保存中</strong><p id="saveProgressMessage">準備しています…</p><progress id="saveProgressBar" max="100" value="0"></progress></div></div>
 <script src="app.js"></script>
 <script>
+(()=>{
+const menus=[document.getElementById('editorFileMenu'),document.getElementById('editorHelpMenu')].filter(Boolean);
+for(const menu of menus){
+menu.addEventListener('toggle',()=>{
+if(!menu.open)return;
+for(const other of menus){
+if(other!==menu)other.open=false;
+}
+});
+menu.querySelectorAll('.editor-header-dropdown button').forEach(button=>{
+button.addEventListener('click',()=>{menu.open=false;});
+});
+}
+document.addEventListener('pointerdown',event=>{
+for(const menu of menus){
+if(menu.open&&!menu.contains(event.target))menu.open=false;
+}
+});
+})();
+const editorTranslations={
+'ぐるりエディタ':'Gururi Editor',
+'トップページに戻る':'Back to home',
+'素材追加':'Add Media',
+'上書き保存':'Save',
+'別名で保存':'Save As',
+'開く(.gart)':'Open (.gart)',
+'書き出し':'Export',
+'▶ 再生':'▶ Play',
+'スマホ':'Mobile',
+'素材一覧':'Media Library',
+'＋ 素材を追加':'+ Add Media',
+'素材はまだありません':'No media added',
+'素材管理パネル':'Media Library',
+'ワールド編集タブ':'World Tabs',
+'ゲーム作業エリア':'Game Workspace',
+'設定パネルの幅を調整':'Resize Settings Panel',
+'ノードを選択してください':'Select a node',
+'▶ 360度素材':'▶ 360° Media',
+'アニメーション（MP4）':'Animation (MP4)',
+'アニメーション（連番PNG）':'Animation (PNG Sequence)',
+'▶ トリガー':'▶ Triggers',
+'クリック':'Click',
+'時間':'Timer',
+'フレームイン':'Frame In',
+'▶ 効果':'▶ Effects',
+'フェードイン':'Fade In',
+'フェードアウト':'Fade Out',
+'▶ イベント':'▶ Events',
+'アイテム取得':'Acquire Item',
+'イベント記録':'Record Event',
+'リセット':'Reset',
+'ゲーム終了':'End Game',
+'▶ 分岐':'▶ Branches',
+'条件分岐':'Condition Branch',
+'ランダム':'Random',
+'オプション':'Options',
+'トグル':'Toggle',
+'トグル切り替え':'Set Toggle',
+'▶ UI':'▶ UI',
+'ボタン':'Button',
+'ダイアローグ':'Dialogue',
+'クイズ':'Quiz',
+'テキスト':'Text',
+'2D素材':'2D Media',
+'ワールド移動':'Move to World',
+'カメラ操作':'Camera Control',
+'ワールド表示':'Display World',
+'メディア':'Media',
+'条件':'Condition',
+'はい':'Yes',
+'いいえ':'No',
+'正解':'Correct',
+'不正解':'Incorrect',
+'選択肢':'Choice',
+'クリック分岐':'Click Branch',
+'2Dメディア':'2D Media',
+'パン':'Pan',
+'キーフレーム':'Keyframe',
+'インベントリ表示':'Show Inventory',
+'アイテム使用':'Use Item',
+'道具箱':'Inventory',
+'装備中のアイテム：':'Equipped Item:',
+'装備中のアイテムを選択':'Select Equipped Item',
+'装備するアイテムを選択':'Choose Item to Equip',
+'メニューを開く':'Open Menu',
+'なし':'None',
+'診断ログを保存':'Save Diagnostic Log',
+'ゲームの状態とエラーをテキスト保存':'Save Game State and Errors',
+'保存中':'Saving',
+'準備しています…':'Preparing...',
+'ぐるり作品として書き出す':'Export Gururi Work',
+'閉じる':'Close',
+'作品タイトル':'Work Title',
+'作者名':'Author',
+'トップページの背景画像（必須）':'Home Background Image (Required)',
+'撮影した背景':'Captured Background',
+'開始ワールドの画像をここに表示します':'The starting world will appear here',
+'決定':'Confirm',
+'やり直す':'Retry',
+'ZIPファイル名':'ZIP Filename',
+'書き出す':'Export',
+'ドラッグ：カメラ回転 ／ ホイール：ズーム。画角を決めて「決定」を押してください。':'Drag to rotate / Scroll to zoom. Choose the view and press Confirm.',
+'リスタート地点に指定する':'Set as Restart Point',
+'このノードから実行':'Run from This Node',
+'このノードの次から実行':'Run from Next Node',
+'一回だけ実行':'Execute Only Once',
+'メモ':'Memo',
+'ノードに表示する文章を入力':'Enter a note for this node',
+'ダブルクリックで文章を編集':'Double-click to edit text',
+'ゲーム開始地点です。':'Game starting point.',
+'ワールド開始':'Start World',
+'探索を開始する':'Start Exploration',
+'ゲームを終了してトップページに戻る':'End the game and return home',
+'ワールド1からやり直す':'Restart from World 1',
+'素材を選択してください':'Select media',
+'素材未設定':'No media selected',
+'イベント未設定':'No event selected',
+'対象未設定':'No target selected',
+'選択してください':'Please select',
+'開始':'Start',
+'終了':'End',
+'追加':'Add',
+'削除':'Delete',
+'編集':'Edit',
+'保存':'Save',
+'キャンセル':'Cancel',
+'戻る':'Back',
+'次へ':'Next',
+'前へ':'Previous',
+'コピー':'Copy',
+'貼り付け':'Paste',
+'有効':'Enabled',
+'無効':'Disabled',
+'表示':'Show',
+'非表示':'Hide',
+'常に表示':'Always Show',
+'条件を指定':'Set Conditions',
+'表示条件':'Visibility Conditions',
+'条件1':'Condition 1',
+'条件2':'Condition 2',
+'対象':'Target',
+'前/後':'Before / After',
+'ON/OFF':'ON / OFF',
+'前':'Before',
+'後':'After',
+'かつ（両方を満たす）':'AND (Both)',
+'または（どちらかを満たす）':'OR (Either)',
+'＋ 条件を追加':'+ Add Condition',
+'2つ目の条件を削除':'Remove Second Condition',
+'アイテム取得済み':'Item Acquired',
+'イベント実行済み':'Event Completed',
+'トグルON':'Toggle ON',
+'アイテム取得前':'Before Item Acquisition',
+'アイテム取得後':'After Item Acquisition',
+'イベント終了':'Event Completed',
+'アイテム取得':'Acquire Item',
+'アイテム使用':'Use Item',
+'トグル名':'Toggle Name',
+'対象のトグル':'Target Toggle',
+'操作':'Action',
+'ONにする':'Turn ON',
+'OFFにする':'Turn OFF',
+'反転する（ON ↔ OFF）':'Toggle (ON ↔ OFF)',
+'判定方法':'Condition Type',
+'初期状態':'Initial State',
+'設定':'Settings',
+'表示プレビュー':'Display Preview',
+'質問文':'Question',
+'正解（空欄も正解として設定できます）':'Correct Answer (May Be Empty)',
+'入力形式':'Input Type',
+'文字・数字':'Text and Numbers',
+'数字のみ':'Numbers Only',
+'ここに回答を入力':'Enter your answer',
+'ボタンのテキスト':'Button Text',
+'ボタンの幅（px）':'Button Width (px)',
+'ボタンの高さ（px）':'Button Height (px)',
+'文字サイズ（px）':'Font Size (px)',
+'ボタンの表示位置':'Button Position',
+'PC（16:9）':'PC (16:9)',
+'スマホ（9:16）':'Mobile (9:16)',
+'このボタンをいつ表示しますか？':'When should this button appear?',
+'このテキストをいつ表示しますか？':'When should this text appear?',
+'ゲーム画面でボタンを押すと、接続先のノードへ進みます。':'Pressing the button runs connected nodes.',
+'ボタンをドラッグして位置を変更します。PCとスマホの位置は別々に保存されます。':'Drag to position. PC and mobile positions are saved separately.',
+'フェードアウト時間（秒）':'Fade-out Duration (sec)',
+'待機時間（秒）':'Wait Duration (sec)',
+'時間（秒）':'Duration (sec)',
+'移動時間（秒）':'Movement Duration (sec)',
+'再生位置':'Playback Position',
+'カメラ位置':'Camera Position',
+'カメラ経路':'Camera Path',
+'範囲設定':'Selection Area',
+'範囲を消去':'Clear Selection',
+'選択範囲を継承':'Inherit Selection',
+'通常のクリックを一度だけ実行する':'Execute Normal Click Only Once',
+'コマ送り':'Frame Navigation',
+'◀ 前':'◀ Previous',
+'次 ▶':'Next ▶',
+'ワールド':'World',
+'ワールド設定':'World Settings',
+'ワールドを追加':'Add World',
+'移動先ワールド':'Destination World',
+'背景画像':'Background Image',
+'透明PNGレイヤー':'Transparent PNG Layers',
+'透明レイヤー':'Transparent Layers',
+'透明レイヤー（編集画面のみ）':'Transparent Layers (Editor Only)',
+'レイヤー追加':'Add Layer',
+'新規レイヤー':'New Layer',
+'レイヤー名':'Layer Name',
+'並べ替え':'Reorder',
+'カメラ情報':'Camera Information',
+'初期画角':'Initial Camera View',
+'初期画角を記憶':'Save Initial View',
+'初期画角を更新':'Update Initial View',
+'水平角度':'Horizontal Angle',
+'垂直角度':'Vertical Angle',
+'水平角度（°）':'Horizontal Angle (°)',
+'垂直角度（°）':'Vertical Angle (°)',
+'FOV値':'FOV',
+'FOV値（°）':'FOV (°)',
+'初期画角をコピー':'Copy Initial View',
+'コピーしました':'Copied',
+'画像':'Image',
+'動画':'Video',
+'読み込み':'Load',
+'ファイルを選択':'Choose File',
+'テキスト一覧':'Text List',
+'＋ テキストを追加':'+ Add Text',
+'テキストを追加':'Add Text',
+'テキストを削除':'Delete Text',
+'フォントサイズ':'Font Size',
+'発話者':'Speaker',
+'ページを追加':'Add Page',
+'選択肢を追加':'Add Choice',
+'インベントリ':'Inventory',
+'アイテム名':'Item Name',
+'アイテム説明':'Item Description',
+'イベント名':'Event Name',
+'ループ':'Loop',
+'無限ループ':'Infinite Loop',
+'再生':'Play',
+'停止':'Stop',
+'一時停止':'Pause',
+'画角をコピー':'Copy Camera View',
+'画角情報':'Camera Information',
+'ワールド1':'World 1',
+'ワールド2':'World 2',
+'ワールド3':'World 3',
+'360度PNG / MP4':'360° PNG / MP4',
+'直前の画角を継承する':'Inherit Previous Camera View',
+'ワールドプレビュー（全レイヤー表示）':'World Preview (All Layers)',
+'新規レイヤー':'New Layer',
+'名称未設定レイヤー':'Unnamed Layer',
+'このレイヤーをいつ表示しますか？':'When should this layer be visible?',
+'対象を選択':'Select Target',
+'対象を選ぶと表示条件がここに表示されます。':'Select a target to see the visibility condition here.',
+'対象のトグルを選択してください。':'Select a target toggle.',
+'条件の組み合わせ':'Combine Conditions',
+'水平方向（°）':'Horizontal Angle (°)',
+'垂直方向（°）':'Vertical Angle (°)',
+'作品データを開いています':'Opening Project Data',
+'素材を読み込んでいます…':'Loading Media...',
+'作品を初期化しています…':'Initializing Project...',
+'初期画角を記憶':'Save Initial View',
+'初期画角を更新':'Update Initial View',
+'360度素材':'360° Media',
+'メディア（360度PNG）':'Media (360° PNG)',
+'メディア（360度アニメーション）':'Media (360° Animation)',
+'アニメーション（連番PNG）':'Animation (PNG Sequence)',
+'連番PNGの画像':'PNG Sequence Frames',
+'素材':'Media',
+'表示時間（秒）':'Display Duration (sec)',
+'トリガーが発火するまで表示':'Display Until Triggered',
+'画角を継承':'Inherit Camera View',
+'ドラッグ：カメラ回転 / ホイール：ズーム':'Drag: Rotate Camera / Scroll: Zoom',
+'ループ回数':'Loop Count',
+'無限ループ（トリガー発火まで再生）':'Infinite Loop (Until Triggered)',
+'FOV・垂直画角（°）':'FOV / Vertical Angle (°)',
+'FOV･垂直画角（°）':'FOV / Vertical Angle (°)',
+'アイテム設定':'Item Settings',
+'アイテムを選択してください':'Select an item',
+'クリックの有効条件':'Click Activation Conditions',
+'この条件はゲーム再生中のクリック可否を制御します。':'These conditions determine whether clicking is enabled during gameplay.',
+'常時有効':'Always Enabled',
+'チェックを外すとクリック範囲のプレビューから非表示になります。ゲーム再生には影響しません。':'Uncheck to hide from the click-area preview. This does not affect gameplay.',
+'＋ZIPを追加':'+ Add ZIP',
+'＋ フレームを追加':'+ Add Frame',
+'画像未選択':'No Image Selected',
+'画像を選択':'Choose Image',
+'登録する':'Add',
+'▶ 再生':'▶ Play',
+'1枚目':'Frame 1',
+'初期画角をコピー':'Copy Initial View',
+'ドラッグ：カメラ回転 / ホイール：ズーム。初期画角を変更するには「初期画角を記憶」を押してください。':'Drag to rotate / Scroll to zoom. To change the initial camera view, click "Save Initial View".'
+};
+
+Object.assign(editorTranslations,{
+'メディア（360度PNG）':'Media (360° PNG)',
+'メディア（360度アニメーション）':'Media (360° Animation)',
+'360度素材':'360° Media',
+'360度アニメーション':'360° Animation',
+'360度PNG':'360° PNG',
+'範囲クリック':'Click Area',
+'カメラ範囲トリガー':'Camera View Trigger',
+'内包したら発火':'Trigger When Inside',
+'接触したら発火':'Trigger When Touching',
+'ターゲット':'Target',
+'フレーム':'Frame',
+'発話者の名前':'Speaker Name',
+'サムネイル':'Thumbnail',
+'未設定':'Not Set',
+'フォントサイズ（px）':'Font Size (px)',
+'パネルの高さ（PC・画面高さの%）':'Panel Height (PC, % of Screen)',
+'パネルの高さ（スマホ・画面高さの%）':'Panel Height (Mobile, % of Screen)',
+'配置（PC）':'Position (PC)',
+'配置（スマホ）':'Position (Mobile)',
+'文字をドラッグ：移動 / 四隅をドラッグ：幅・高さ変更。PC・スマホの配置は別々に保存されます。':'Drag text to move / Drag corners to resize. PC and mobile layouts are saved separately.',
+'質問':'Question',
+'テキスト内容':'Text Content',
+'使用するアイテム':'Item to Use',
+'削除されたアイテム':'Deleted Item',
+'このアイテム分岐を削除':'Delete This Item Branch',
+'アイテムを追加':'Add Item',
+'一度だけ実行する':'Execute Only Once',
+'アイテム一覧':'Item List',
+'アイテムを選択後、使う場所をクリック':'Select an item, then click where to use it',
+'カメラ位置':'Camera Position',
+'カメラ経路':'Camera Path',
+'現在の位置にキーフレームを登録':'Add Keyframe at Current Position',
+'ドラッグ：カメラ回転 / ホイール：ズーム':'Drag: Rotate Camera / Scroll: Zoom',
+'ドラッグ：カメラ回転 / ホイール：ズーム。初期画角を変更するには「初期画角を記憶」を押してください。':'Drag to rotate / Scroll to zoom. Click "Save Initial View" to change the initial camera view.',
+'ドラッグ：カメラ回転 / ホイール：ズーム / ＋：現在の時刻とカメラ位置を登録':'Drag: Rotate Camera / Scroll: Zoom / +: Add Keyframe',
+'ドラッグ：経路描画 / 中クリック＋ドラッグ：カメラ回転 / Z＋ドラッグ：ズーム / Ctrl＋Z：Undo / Ctrl＋Y：Redo':'Drag: Draw Path / Middle Drag: Rotate / Z + Drag: Zoom / Ctrl+Z: Undo / Ctrl+Y: Redo',
+'左ドラッグ：投げ縄 / Space＋ドラッグ・中ドラッグ：カメラ回転 / Z＋ドラッグ・ホイール：ズーム / Ctrl＋Z：戻す / Ctrl＋Y：やり直す':'Left Drag: Lasso / Space + Drag or Middle Drag: Rotate / Z + Drag or Scroll: Zoom / Ctrl+Z: Undo / Ctrl+Y: Redo',
+'選択範囲に追加':'Add to Selection',
+'選択範囲から削除':'Subtract from Selection',
+'選択範囲を継承':'Inherit Selection',
+'クリックの有効条件':'Click Activation Conditions',
+'この条件はゲーム再生中のクリック可否を制御します。':'These conditions control whether clicking is enabled during gameplay.',
+'常時有効':'Always Enabled',
+'アイテム設定':'Item Settings',
+'アイテムを選択してください':'Select an Item',
+'通常のクリックを一度だけ実行する':'Execute Normal Click Only Once',
+'チェックを外すとクリック範囲のプレビューから非表示になります。ゲーム再生には影響しません。':'Uncheck to hide this layer in the click-area preview. Gameplay is unaffected.',
+'透明レイヤー（編集画面のみ）':'Transparent Layers (Editor Only)',
+'成立時は「はい」、不成立時は「いいえ」に進みます。':'If the condition is met, proceed to Yes; otherwise, proceed to No.',
+'初期状態：OFF。実行するたびに ON／OFF が切り替わり、対応する分岐へ進みます。ワールド間でも状態を保持し、ゲーム再開時にリセットします。':'Initially OFF. Each execution toggles the state and follows the corresponding branch. The state persists across worlds and resets when the game restarts.',
+'指定したトグルの状態を変更して次のノードへ進みます。対象トグルのON／OFF分岐は実行しません。':'Change the selected toggle state and proceed to the next node. The toggle ON/OFF branches are not executed.',
+'接続先のノードから1つをランダムに選んで実行します。':'Randomly select and execute one connected node.',
+'接続先がありません。ノードの右側から接続してください。':'No connections. Connect a node from the output port on the right.',
+'右端から次のノードに接続してください。':'Connect the next node from the output port on the right.',
+'このノードより前にビューまたはアニメーションノードを接続してください。':'Connect a view or animation node before this node.',
+'アニメーションノードにMP4を設定してください。':'Assign an MP4 to the animation node.',
+'参照できる360°メディアを接続してください。':'Connect a 360° media source.',
+'参照メディアがありません。メディアと同じ分岐元に接続してください。':'No reference media. Connect this node to the same branching source as the media.',
+'このノードを実行すると、ゲーム画面にインベントリボタンが表示されます。取得したアイテムを一覧表示できます。':'Executing this node shows the inventory button. Acquired items can be viewed in the inventory.',
+'使用する背景メディアを前に接続してください。':'Connect a background media node before this node.',
+'ノードを選択してください':'Select a Node',
+'ゲーム開始地点です。':'This is the game starting point.',
+'ワールド開始':'Start World',
+'探索を開始する':'Start Exploration',
+'移動先未設定':'Destination Not Set',
+'イベント未設定':'Event Not Set',
+'対象未設定':'Target Not Set',
+'アイテム名未設定':'Item Name Not Set',
+'素材未設定':'No Media Selected',
+'質問文と選択肢':'Question and Choices',
+'入力した回答を判定':'Check the Entered Answer',
+'実行ごとにON／OFF切り替え':'Toggle ON/OFF on Each Execution',
+'ONルート':'ON Branch',
+'OFFルート':'OFF Branch',
+'条件成立':'Condition Met',
+'条件不成立':'Condition Not Met',
+'正解ルート':'Correct Branch',
+'不正解ルート':'Incorrect Branch',
+'所持アイテム一覧':'Acquired Items',
+'選択アイテムを使用':'Use Selected Item',
+'その他のアイテム':'Other Items',
+'画像・動画を重ねて表示':'Overlay Image or Video',
+'カメラワーク':'Camera Movement',
+'不明':'Unknown',
+'反転':'Toggle',
+'文章を入力':'Enter Text',
+'上書き保存しています…':'Saving Changes...',
+'保存データを準備しています…':'Preparing Save Data...',
+'素材をまとめています…':'Collecting Media...',
+'プロジェクトを圧縮しています…':'Compressing Project...',
+'保存先を選択してください…':'Choose a Save Location...',
+'保存処理が完了しました':'Save Completed',
+'ファイルを確認しています…':'Checking File...',
+'プロジェクト情報を確認しています…':'Checking Project Information...',
+'編集画面を復元しています…':'Restoring Editor...',
+'読み込みが完了しました':'Loading Completed',
+'作品データを準備しています…':'Preparing Project Data...',
+'作品を準備しています… 0%':'Preparing Work... 0%',
+'作品データを確認しました':'Project Data Verified',
+'作品を初期化しています…':'Initializing Work...',
+'準備が完了しました':'Ready',
+'作品を開けませんでした：':'Could Not Open Work:',
+'ZIPを作成しています…':'Creating ZIP...',
+'作品を書き出しています…':'Exporting Work...',
+'書き出しが完了しました':'Export Completed',
+'ぐるり作品':'Gururi Work',
+'作者：':'Author:',
+'ワールド1は削除できません。':'World 1 cannot be deleted.',
+'ワールドを追加':'Add World',
+'ワールドを削除':'Delete World',
+'ワールド一覧':'World List',
+'各ワールドを選択して基本メディア・透明PNGレイヤー・ノードを編集します。移動先はワールド内部の「ワールド移動」ノードから指定します。':'Select a world to edit its media, transparent layers, and nodes. Use a Move to World node to set the destination.',
+'基本360度PNG / MP4':'360° PNG / MP4',
+'360度PNG / MP4':'360° PNG / MP4',
+'直前の画角を継承する':'Inherit Previous Camera View',
+'ワールドプレビュー（全レイヤー表示）':'World Preview (All Layers)',
+'このレイヤーをいつ表示しますか？':'When Should This Layer Be Visible?',
+'対象を選ぶと表示条件がここに表示されます。':'Select a target to display its visibility condition.',
+'対象を選択':'Select Target',
+'条件の組み合わせ':'Combine Conditions',
+'水平方向（°）':'Horizontal Angle (°)',
+'垂直方向（°）':'Vertical Angle (°)',
+'FOV・垂直画角（°）':'FOV / Vertical Angle (°)',
+'表示時間（秒）':'Display Duration (sec)',
+'トリガーが発火するまで表示':'Display Until Triggered',
+'画角を継承':'Inherit Camera View',
+'ループ回数':'Loop Count',
+'無限ループ（トリガー発火まで再生）':'Infinite Loop (Until Triggered)',
+'画像未選択':'No Image Selected',
+'画像を選択':'Choose Image',
+'連番PNGを追加':'Add PNG Sequence',
+'PNGを指定してください。':'Select a PNG.',
+'2:1のPNG画像を選択してください。':'Select a 2:1 PNG image.',
+'既存フレームと同じ解像度のPNGを指定してください。':'Select a PNG with the same resolution as the existing frames.',
+'画像を読み込めません':'Could Not Load Image',
+'画像を読み込めませんでした。':'Could Not Load Image.',
+'MP4を読み込めませんでした。':'Could Not Load MP4.',
+'画像・動画のサイズを取得できませんでした。':'Could Not Determine Image or Video Dimensions.',
+'PNG画像のみ選択できます。':'Only PNG Images Are Supported.',
+'連番PNGはすべて同じ解像度にしてください。':'All PNG Sequence Frames Must Have the Same Resolution.',
+'連番PNGのみを選択してください。':'Select Only PNG Sequence Images.',
+'すべての画像の解像度を統一してください。':'All Images Must Have the Same Resolution.',
+'360度アニメーションは2:1のPNG画像を選択してください。':'360° Animations Require 2:1 PNG Images.',
+'PNG、JPGまたはMP4を選択してください。':'Select a PNG, JPG, or MP4.',
+'360度メディアには2:1の画像・動画を選択してください。':'Select a 2:1 Image or Video for 360° Media.',
+'ZIPファイルを読み込めません。':'Could Not Read ZIP File.',
+'ZIPのファイル数が正しくありません。':'Invalid Number of Files in ZIP.',
+'ZIPの内部情報が破損しています。':'ZIP Metadata Is Corrupted.',
+'ZIPのファイル名が不正です。':'Invalid Filename in ZIP.',
+'対応していないZIP形式です。':'Unsupported ZIP Format.',
+'ZIP内の画像の合計サイズが大きすぎます（上限500MB）。':'ZIP Images Exceed the 500 MB Limit.',
+'ZIPの画像データが破損しています。':'Image Data in ZIP Is Corrupted.',
+'ZIPの画像データが途中で切れています。':'Image Data in ZIP Is Incomplete.',
+'このブラウザはZIPの展開に対応していません。':'This Browser Does Not Support ZIP Extraction.',
+'ZIPの画像を展開できませんでした。':'Could Not Extract Images from ZIP.',
+'ZIP内にPNG画像がありません。':'No PNG Images Found in ZIP.',
+'ZIPファイルを指定してください。':'Select a ZIP File.',
+'先にすべてのフレームに画像を設定してください。':'Assign Images to All Frames First.',
+'FPSは1～120で指定してください。':'FPS Must Be Between 1 and 120.',
+'すべてのフレームにPNG画像を選択してください。':'Select PNG Images for All Frames.',
+'WebGLを利用できません':'WebGL Is Unavailable',
+'2D動画を再生できませんでした':'Could Not Play 2D Video',
+'360度素材のプレビュー合成に失敗しました':'Could Not Composite the 360° Media Preview',
+'360度素材の合成に失敗しました':'Could Not Composite 360° Media',
+'開始ワールドを選択してください。':'Select a Starting World.',
+'MP4素材を選択してください':'Select MP4 Media',
+'MP4のループ再生に失敗しました':'MP4 Loop Playback Failed',
+'最終フレームへの移動に失敗しました':'Could Not Seek to Final Frame',
+'MP4の再生に失敗しました':'MP4 Playback Failed',
+'シークに失敗しました':'Seek Failed',
+'MP4を再生できませんでした':'Could Not Play MP4',
+'ビュー素材未設定':'No View Media Assigned',
+'クリック待ち':'Waiting for Click',
+'素材がZIPの上限を超えました。':'Media Exceeds the ZIP Size Limit.',
+'ファイルサイズがZIPの上限を超えました。':'File Exceeds the ZIP Size Limit.',
+'ファイル数が多すぎます。':'Too Many Files.',
+'ZIPの終端が見つかりません。':'ZIP End Record Not Found.',
+'ZIPの目次が破損しています。':'ZIP Directory Is Corrupted.',
+'ZIPの目次が不正です。':'Invalid ZIP Directory.',
+'未対応の圧縮形式です。':'Unsupported Compression Method.',
+'ZIPのパスが不正です。':'Invalid ZIP Path.',
+'ZIPのデータが不正です。':'Invalid ZIP Data.',
+'素材データが途中で切れています。':'Media Data Is Incomplete.',
+'project.jsonがありません。':'project.json Is Missing.',
+'対応していない.gart形式です。':'Unsupported .gart Format.',
+'プロジェクトの構造が不正です。':'Invalid Project Structure.',
+'STARTノードがありません。':'START Node Is Missing.',
+'ノードの接続情報が不正です。':'Invalid Node Connections.',
+'素材が不足しています。':'Some Media Files Are Missing.',
+'連番PNGが不足しています。':'Some PNG Sequence Frames Are Missing.',
+'作品データが不正です。':'Invalid Work Data.',
+'作品の構造が不正です。':'Invalid Work Structure.',
+'HTML構造が想定と異なります。':'Unexpected HTML Structure.',
+'作品HTMLを生成できませんでした。':'Could Not Generate Work HTML.',
+'サムネイル画像を生成できませんでした。':'Could Not Generate Thumbnail.',
+'開始ワールドがありません。':'Starting World Is Missing.',
+'開始ワールドの画像がありません。':'Starting World Image Is Missing.',
+'撮影できませんでした。WebGLを確認してください。':'Capture Failed. Check WebGL.',
+'ファイル名を入力してください。':'Enter a Filename.',
+'作品タイトルと作者名を入力してください。':'Enter a Work Title and Author.',
+'保存先の選択を利用できませんでした':'Save Location Selection Is Unavailable',
+'保存場所の選択を利用できませんでした。通常のダウンロードに切り替えます。':'Save Location Selection Is Unavailable. Switching to Standard Download.',
+'現在の編集内容を読み込んだプロジェクトで置き換えますか？':'Replace the Current Project with the Selected Project?',
+'診断レポートを保存できませんでした。Consoleを確認してください。':'Could Not Save the Diagnostic Report. Check the Console.',
+'画角のコピーに失敗しました':'Could Not Copy Camera View',
+'クリップボードにコピーできませんでした。':'Could Not Copy to Clipboard.',
+'画角データを読み取れませんでした。':'Could Not Read Camera Data.',
+'画角データが正しくありません。':'Invalid Camera Data.',
+'初期画角をコピーできませんでした。':'Could Not Copy Initial Camera View.',
+'対象アイテムは最大6個です。':'A Maximum of Six Target Items Is Allowed.',
+'一度だけ実行':'Execute Once',
+'条件1':'Condition 1',
+'条件2':'Condition 2',
+'イベント終了':'Event Completed',
+'取得':'Acquisition',
+'使用':'Use',
+'終了':'Completion',
+'並べ替え':'Reorder',
+'レイヤー名':'Layer Name',
+'画像':'Image',
+'レイヤー追加':'Add Layer',
+'削除':'Delete',
+'キャンセル':'Cancel',
+'閉じる':'Close'
+});
+
+Object.assign(editorTranslations,{
+'ここからワールドの開始演出を接続します。':'Connect the opening sequence for this world here.',
+'ワールドの基本メディアとレイヤーを表示して探索を開始します。':'Display the world media and layers, then begin exploration.',
+'指定した時間で画面を暗転させた後、ゲームの進行状況、アイテム、トグル、イベントを初期化してリスタートします。':'Fade to black over the specified duration, then reset game progress, items, toggles, and events before restarting.',
+'このノードを実行するとゲームを終了し、書き出した作品ではトップページに戻ります。エディタ内ではプレビューを閉じます。出力接続はありません。':'Ends the game and returns to the home screen in exported works. In the editor, it closes the preview. This node has no output.',
+'ここを通過するとイベント実行済みになります。':'Passing through this node marks the event as completed.',
+'ワールドのタブを開いてからノードを追加してください。':'Open a world tab before adding nodes.',
+'PNG素材を選択してください':'Select PNG media',
+'クリック発火・接続先なし':'Click triggered — no connected node',
+'フレームイン発火・接続先なし':'Frame In triggered — no connected node',
+'トップページの背景画像を撮影して「決定」を押してください。':'Capture a home screen background image and click Confirm.',
+'PNG画像を読み込めませんでした。':'Could not load the PNG image.',
+'素材を変換できませんでした。':'Could not convert media.',
+'サムネイルの描画に失敗しました':'Failed to render thumbnail',
+'素材を削除':'Delete Media',
+'スタート':'Start',
+'取得済み':'Acquired',
+'アイテム':'Item',
+'1コマ戻る':'Previous Frame',
+'1コマ進む':'Next Frame',
+'フレームを変更できませんでした。':'Could not change the frame.',
+'連番PNGを登録できませんでした。':'Could not add the PNG sequence.',
+'この画像は追加できません。':'This image cannot be added.',
+'このZIPはアップロードできません。':'This ZIP file cannot be uploaded.',
+'ZIPには2:1のPNG画像だけを入れてください。':'The ZIP must contain only 2:1 PNG images.',
+'フレームを追加':'Add Frame',
+'ワールドの設定':'World Settings',
+'保存データ':'Saved Data',
+'画角を継承する':'Inherit Camera View',
+'画角を継承しない':'Do Not Inherit Camera View'
+});
+
+Object.assign(editorTranslations,{
+'例：照明':'e.g. Lighting',
+'接続先をランダムに選択':'Randomly Select a Connected Node',
+'未取得':'Not Acquired',
+'連番PNG':'PNG Sequence',
+'■ 停止':'■ Stop',
+'トリガー':'Trigger',
+'効果':'Effect',
+'イベント':'Event',
+'分岐':'Branch',
+'パネル':'Panel',
+'▶ パネル':'▶ Panels',
+'レイヤー':'Layer',
+'ZIPファイル':'ZIP File',
+'メディアを選択（PNG / MP4）':'Select Media (PNG / MP4)',
+'ダイアローグを追加':'Add Dialogue',
+'使用後にアイテムを消費する':'Consume Item After Use',
+'この分岐を削除':'Delete This Branch',
+'右端からダイアローグやメディアへ接続してください。':'Connect a dialogue or media node from the output port on the right.',
+'サムネイル（正方形）':'Thumbnail (Square)',
+'説明':'Description',
+'取得後にクリック範囲を削除する':'Remove Click Area After Acquisition',
+'取得に使用したクリック範囲を、ゲーム再生中だけ無効にします。':'Disables the click area used for acquisition during gameplay.',
+'使用するアイテムを選択':'Select an Item to Use',
+'クリック範囲を指定':'Define Click Area',
+'左ドラッグ：投げ縄 / Space＋ドラッグ：回転 / Z＋ドラッグ：ズーム':'Left Drag: Lasso / Space + Drag: Rotate / Z + Drag: Zoom',
+'素材（PNG・JPG・MP4）':'Media (PNG, JPG, MP4)',
+'素材をドラッグ：移動 / 四隅をドラッグ：縦横比を保って拡大縮小。PC・スマホの配置はそれぞれ記憶します。':'Drag to move / Drag corners to resize while preserving aspect ratio. PC and mobile layouts are saved separately.',
+'文字をドラッグ：移動 / 四隅をドラッグ：幅・高さを変更。PC・スマホの配置は別々に保存されます。':'Drag text to move / Drag corners to resize. PC and mobile layouts are saved separately.',
+'参照メディア':'Reference Media',
+'キーフレームの再生時間（秒）':'Keyframe Duration (sec)',
+'現在の時間（秒）':'Current Time (sec)',
+'＋ キーフレームを登録':'+ Add Keyframe',
+'通常の素材を使用':'Use Default Media',
+'判定するアイテム（取得済み）':'Items to Check (Acquired)',
+'素材を読み込めません':'Could Not Load Media',
+'作品を準備しています…':'Preparing Work...',
+'診断レポートの保存に失敗しました':'Failed to Save Diagnostic Report',
+'ワールド1':'World 1',
+'素材を変換できませんでした。':'Could Not Convert Media.',
+'使用中':'In Use',
+'ノード':'Nodes',
+'表示条件':'Visibility Conditions',
+'表示条件なし':'No Visibility Conditions',
+'一度だけ実行する':'Execute Only Once',
+'アイテムを消費':'Consume Item',
+'取得前':'Before Acquisition',
+'取得後':'After Acquisition',
+'前のワールドからの移動':'Arrival from Previous World',
+'ゲームを終了':'End Game',
+'フレームの追加':'Add Frame',
+'フレームの削除':'Delete Frame',
+'再生を停止':'Stop Playback',
+'ファイルを開く':'Open File',
+'保存に失敗しました':'Save Failed',
+'読み込みに失敗しました':'Loading Failed',
+'書き出しに失敗しました':'Export Failed'
+});
+
+Object.assign(editorTranslations,{
+'ファイル':'File',
+'ファイルを開く (.gart)':'Open File (.gart)',
+'名前を付けて保存':'Save As',
+'ヘルプ':'Help',
+'使い方':'How to Use',
+'オープンソースライセンス':'Open Source Licenses',
+'不具合報告':'Report a Bug',
+'JUNOTAを応援する':'Support JUNOTA',
+'基本操作':'Basic Controls',
+'右クリック：ノードを追加':'Right-click: Add Node',
+'Space + ドラッグ：画面移動':'Space + Drag: Pan',
+'Z + ドラッグ：拡大・縮小':'Z + Drag: Zoom',
+'中ボタンドラッグ：画面移動':'Middle Drag: Pan',
+'Ctrl + Z：元に戻す':'Ctrl + Z: Undo',
+'Ctrl + Y：やり直す':'Ctrl + Y: Redo'
+});
+
+function updateEditorHelpLinks(){
+const english=window.editorLanguage==='en';
+const guide=document.getElementById('editorHelpGuide');
+const support=document.getElementById('editorHelpSupport');
+if(guide){
+guide.href=english
+?'https://neco-sara.com/2026/11/04/how-to-use-gururi-editor-en/'
+:'https://neco-sara.com/2026/11/04/howtouse-gururieditor-jp/';
+}
+if(support){
+support.href=english
+?'https://ko-fi.com/junota'
+:'https://note.com/junnoota/n/n87a466960ce6';
+}
+}
+window.addEventListener('gururi-language-change',updateEditorHelpLinks);
+updateEditorHelpLinks();
+
+const editorTranslationOriginalText=new WeakMap();
+const editorTranslationOriginalAttributes=new WeakMap();
+let editorTranslationScheduled=false;
+
+function editorTranslateValue(value){
+const source=String(value);
+if(editorTranslations[source]!==undefined)return editorTranslations[source];
+
+let match;
+
+match=source.match(/^(\d+(?:\.\d+)?) 秒$/);
+if(match)return `${match[1]} sec`;
+
+match=source.match(/^(\d+) ページ$/);
+if(match)return `${match[1]} pages`;
+
+match=source.match(/^(\d+) テキスト$/);
+if(match)return `${match[1]} text items`;
+
+match=source.match(/^(\d+)枚目$/);
+if(match)return `Frame ${match[1]}`;
+
+match=source.match(/^選択肢(\d+)$/);
+if(match)return `Choice ${match[1]}`;
+
+match=source.match(/^テキスト(\d+)$/);
+if(match)return `Text ${match[1]}`;
+
+match=source.match(/^接続先：(\d+)個$/);
+if(match)return `Connections: ${match[1]}`;
+
+match=source.match(/^各接続先の選択確率：約([\d.]+)%$/);
+if(match)return `Probability per connection: approx. ${match[1]}%`;
+
+match=source.match(/^フェードアウト ([\d.]+) 秒 → リスタート$/);
+if(match)return `Fade Out ${match[1]} sec → Restart`;
+
+match=source.match(/^([\d.]+) \/ ([\d.]+) 秒$/);
+if(match)return `${match[1]} / ${match[2]} sec`;
+
+match=source.match(/^([\d.]+) \/ ([\d.]+) 秒$/);
+if(match)return `${match[1]} / ${match[2]} sec`;
+
+match=source.match(/^◆ ([\d.]+) 秒$/);
+if(match)return `◆ ${match[1]} sec`;
+
+match=source.match(/^「(.+)」が(ON|OFF)の間に表示$/);
+if(match)return `Show while "${match[1]}" is ${match[2]}`;
+
+match=source.match(/^「(.+)」の(取得|使用|終了)(前|後)に表示$/);
+if(match){
+const action={取得:'acquisition',使用:'use',終了:'completion'}[match[2]];
+return `Show ${match[3]==='前'?'before':'after'} ${action} of "${match[1]}"`;
+}
+
+match=source.match(/^素材を読み込んでいます…（(\d+) \/ (\d+)）$/);
+if(match)return `Loading Media... (${match[1]} / ${match[2]})`;
+
+match=source.match(/^(.+) の読み込みに失敗しました。\n([\s\S]*)$/);
+if(match){
+const detail=editorTranslateValue(match[2])??match[2];
+return `Failed to load ${match[1]}.\n${detail}`;
+}
+
+match=source.match(/^(.+) の元ファイルがありません。再度読み込んでください。$/);
+if(match)return `The original file for ${match[1]} is missing. Please import it again.`;
+
+match=source.match(/^(.+) の元ファイルがありません。$/);
+if(match)return `The original file for ${match[1]} is missing.`;
+
+match=source.match(/^(.+) の連番PNGがありません。$/);
+if(match)return `The PNG sequence for ${match[1]} is missing.`;
+
+match=source.match(/^(.+) のチェックサムが一致しません。$/);
+if(match)return `Checksum mismatch for ${match[1]}.`;
+
+match=source.match(/^(.+) を読み込めませんでした。$/);
+if(match)return `Could not load ${match[1]}.`;
+
+match=source.match(/^(.+) を読み込めません$/);
+if(match)return `Could not load ${match[1]}`;
+
+match=source.match(/^(.+) が見つかりません。$/);
+if(match)return `${match[1]} was not found.`;
+
+match=source.match(/^([\s\S]+)を削除しますか？$/);
+if(match)return `Delete ${match[1]}?`;
+
+match=source.match(/^([\s\S]+)の読み込みに失敗しました。$/);
+if(match)return `Failed to load ${match[1]}.`;
+
+match=source.match(/^([\s\S]+)の読み込みに失敗しました。?\n([\s\S]*)$/);
+if(match)return `Failed to load ${match[1]}.\n${match[2]}`;
+
+match=source.match(/^(\d+)枚の連番PNG（(.+)）$/);
+if(match)return `PNG Sequence: ${match[1]} Frames (${match[2]})`;
+
+match=source.match(/^トグル (.+)$/);
+if(match)return `Toggle ${match[1]}`;
+
+match=source.match(/^ワールド(\d+)$/);
+if(match)return `World ${match[1]}`;
+
+match=source.match(/^ダイアローグ\s*(\d+)$/);
+if(match)return `Dialogue ${match[1]}`;
+
+match=source.match(/^([▼▶])\s*テキスト(\d+)$/);
+if(match)return `${match[1]} Text ${match[2]}`;
+
+match=source.match(/^パネルの高さ（(PC|スマホ)・画面高さの[％%]）$/);
+if(match)return `Panel Height (${match[1]==='スマホ'?'Mobile':'PC'}, % of Screen)`;
+
+match=source.match(/^配置（(PC|スマホ)）$/);
+if(match)return `Position (${match[1]==='スマホ'?'Mobile':'PC'})`;
+
+match=source.match(/^クリック分岐：(.+)$/);
+if(match)return `Click Branch: ${match[1]}`;
+
+match=source.match(/^(.+)：このノードの右端から遷移先につないでください。$/);
+if(match)return `${match[1]}: Connect the next node from the output port on the right.`;
+
+match=source.match(/^(.+)：(.+)$/);
+if(match&&['取得済み','イベント実行済み','対象未設定'].includes(match[1])){
+return `${editorTranslateValue(match[1])??match[1]}: ${match[2]}`;
+}
+
+match=source.match(/^(.+?)を削除$/);
+if(match)return `Delete ${match[1]}`;
+
+match=source.match(/^([\d.]+)\s*秒$/);
+if(match)return `${match[1]} sec`;
+
+match=source.match(/^([\d.]+)\s*\/\s*([\d.]+)\s*秒$/);
+if(match)return `${match[1]} / ${match[2]} sec`;
+
+match=source.match(/^取得状況別メディア（(\d+)通り）$/);
+if(match)return `Media by Acquisition State (${match[1]} combinations)`;
+
+match=source.match(/^各状態に同じ形式（(.+)）の素材を指定します。未設定時は通常の素材を使用します。$/);
+if(match)return `Assign ${match[1]} media for each state. Default media is used when no override is assigned.`;
+
+match=source.match(/^(.+?)・使用中\s*(\d+)\s*ノード$/);
+if(match)return `${match[1]} · Used by ${match[2]} nodes`;
+
+match=source.match(/^([\d.]+)\s*\/\s*([\d.]+)\s*秒$/);
+if(match)return `${match[1]} / ${match[2]} sec`;
+
+match=source.match(/^ZIPには2:1のPNG画像だけを入れてください。\n対象外のファイル:\s*(.+)$/);
+if(match)return `The ZIP must contain only 2:1 PNG images.\nUnsupported file: ${match[1]}`;
+
+match=source.match(/^フレームを変更できませんでした。\n([\s\S]*)$/);
+if(match)return `Could not change the frame.\n${editorTranslateValue(match[1])??match[1]}`;
+
+match=source.match(/^この画像は追加できません。\n([\s\S]*)$/);
+if(match)return `Could not add this image.\n${editorTranslateValue(match[1])??match[1]}`;
+
+match=source.match(/^このZIPはアップロードできません。\n([\s\S]*)$/);
+if(match)return `Could not import the ZIP file.\n${editorTranslateValue(match[1])??match[1]}`;
+
+match=source.match(/^連番PNGを登録できませんでした。\n([\s\S]*)$/);
+if(match)return `Could not add the PNG sequence.\n${editorTranslateValue(match[1])??match[1]}`;
+
+match=source.match(/^プロジェクトを保存できませんでした。\n([\s\S]*)$/);
+if(match)return `Could not save the project.\n${editorTranslateValue(match[1])??match[1]}`;
+
+match=source.match(/^プロジェクトを開けませんでした。現在の編集内容は維持されています。\n([\s\S]*)$/);
+if(match)return `Could not open the project. Your current changes have been preserved.\n${editorTranslateValue(match[1])??match[1]}`;
+
+match=source.match(/^作品を書き出せませんでした。\s*([\s\S]*)$/);
+if(match)return `Could not export the work.\n${editorTranslateValue(match[1])??match[1]}`;
+
+match=source.match(/^素材「(.+)」を削除しますか？\n使用中のワールド・レイヤー・ノードの素材指定も解除されます。$/);
+if(match)return `Delete media "${match[1]}"?\nReferences in worlds, layers, and nodes will also be cleared.`;
+
+match=source.match(/^(.+)を削除しますか？\nこのワールド内のノード・接続・透明PNGレイヤーも削除されます。([\s\S]*)$/);
+if(match)return `Delete ${match[1]}?\nIts nodes, connections, and transparent PNG layers will also be deleted.${match[2]}`;
+
+return null;
+}
+
+const editorNativeAlert=window.alert.bind(window);
+const editorNativeConfirm=window.confirm.bind(window);
+const editorNativePrompt=window.prompt.bind(window);
+
+window.alert=function(message){
+const source=String(message);
+const translated=window.editorLanguage==='en'?editorTranslateValue(source):null;
+return editorNativeAlert(translated??source);
+};
+
+window.confirm=function(message){
+const source=String(message);
+const translated=window.editorLanguage==='en'?editorTranslateValue(source):null;
+return editorNativeConfirm(translated??source);
+};
+
+window.prompt=function(message,defaultValue){
+const source=String(message);
+const translated=window.editorLanguage==='en'?editorTranslateValue(source):null;
+return editorNativePrompt(translated??source,defaultValue);
+};
+
+function translateEditorText(node,language){
+const element=node.parentElement;
+if(!element)return;
+if(element.closest('#editorHomePage,script,style,textarea,.game-viewport,.game-dialogue,.game-text-overlay,.game-ui-button,.editor-home__items'))return;
+if(element.closest('[contenteditable="true"]'))return;
+
+const nodeBody=element.closest('.node-body');
+if(nodeBody){
+const nodeElement=nodeBody.closest('.node');
+const sourceNode=nodeElement&&typeof getNode==='function'?getNode(nodeElement.dataset.id):null;
+if(sourceNode?.customBody!==undefined||sourceNode?.type==='uiButton')return;
+}
+
+const current=node.nodeValue;
+if(!current||!current.trim())return;
+const original=editorTranslationOriginalText.get(node);
+if(original!==undefined&&current!==original&&current!==editorTranslateValue(original.trim())){
+editorTranslationOriginalText.delete(node);
+}
+const japanese=editorTranslationOriginalText.get(node)??current;
+const key=japanese.trim();
+const english=editorTranslateValue(key);
+if(!english)return;
+editorTranslationOriginalText.set(node,japanese);
+const leading=japanese.match(/^\s*/)?.[0]||'';
+const trailing=japanese.match(/\s*$/)?.[0]||'';
+const result=language==='en'?leading+english+trailing:japanese;
+if(current!==result)node.nodeValue=result;
+}
+
+function translateEditorAttributes(element,language){
+if(element.closest('#editorHomePage,.game-viewport'))return;
+const attributes=['title','placeholder','aria-label'];
+let originals=editorTranslationOriginalAttributes.get(element);
+if(!originals){
+originals={};
+editorTranslationOriginalAttributes.set(element,originals);
+}
+for(const attribute of attributes){
+const value=element.getAttribute(attribute);
+if(value===null)continue;
+if(originals[attribute]!==undefined&&value!==originals[attribute]&&value!==editorTranslateValue(originals[attribute])){
+delete originals[attribute];
+}
+const japanese=originals[attribute]??value;
+const english=editorTranslateValue(japanese);
+if(!english)continue;
+originals[attribute]=japanese;
+const result=language==='en'?english:japanese;
+if(value!==result)element.setAttribute(attribute,result);
+}
+}
+
+function translateEditorTree(root){
+const language=window.editorLanguage==='en'?'en':'ja';
+const container=document.getElementById('app');
+if(!container)return;
+if(root.nodeType===3){
+translateEditorText(root,language);
+return;
+}
+if(root.nodeType!==1)return;
+if(root!==container&&!container.contains(root))return;
+if(root.matches('script,style'))return;
+translateEditorAttributes(root,language);
+const walker=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);
+let current;
+while((current=walker.nextNode())){
+if(current.nodeType===3)translateEditorText(current,language);
+else translateEditorAttributes(current,language);
+}
+}
+
+const editorTranslationPendingRoots=new Set();
+
+function refreshEditorTranslation(){
+translateEditorTree(document.getElementById('app'));
+}
+
+function scheduleEditorTranslation(root){
+if(root instanceof Node){
+editorTranslationPendingRoots.add(root);
+}else{
+editorTranslationPendingRoots.add(document.getElementById('app'));
+}
+if(editorTranslationScheduled)return;
+editorTranslationScheduled=true;
+queueMicrotask(()=>{
+editorTranslationScheduled=false;
+const roots=[...editorTranslationPendingRoots];
+editorTranslationPendingRoots.clear();
+for(const root of roots)translateEditorTree(root);
+});
+}
+
+window.addEventListener('gururi-language-change',()=>{
+editorTranslationPendingRoots.clear();
+scheduleEditorTranslation(document.getElementById('app'));
+});
+
+const editorTranslationObserver=new MutationObserver(mutations=>{
+for(const mutation of mutations){
+if(mutation.type==='characterData'){
+scheduleEditorTranslation(mutation.target);
+}else if(mutation.type==='attributes'){
+scheduleEditorTranslation(mutation.target);
+}else{
+for(const node of mutation.addedNodes){
+scheduleEditorTranslation(node);
+}
+}
+}
+});
+
+editorTranslationObserver.observe(document.getElementById('app'),{
+subtree:true,
+childList:true,
+characterData:true,
+attributes:true,
+attributeFilter:['title','placeholder','aria-label']
+});
+
+scheduleEditorTranslation(document.getElementById('app'));
+
 (()=>{
 const home=document.getElementById('editorHomePage');
 const start=document.getElementById('editorHomeStart');
@@ -218,6 +1243,8 @@ const t=data[lang]||data.ja;
 const content=homeContent;
 const texts=content?.languages?.[lang]||{};
 document.documentElement.lang=lang;
+window.editorLanguage=lang;
+window.dispatchEvent(new CustomEvent('gururi-language-change',{detail:{language:lang}}));
 document.getElementById('editorHomeTitle').setAttribute('aria-label',texts.title||t.title);
 document.getElementById('editorHomeDescription').textContent=texts.description||t.description;
 
@@ -288,7 +1315,7 @@ start.addEventListener('click',()=>{home.classList.remove('is-open');home.setAtt
 reopen.addEventListener('click',()=>{home.classList.add('is-open');home.removeAttribute('aria-hidden');});
 langButtons.forEach(button=>button.addEventListener('click',()=>setLanguage(button.dataset.editorHomeLang)));
 setLanguage('ja');
-loadHomeContent().then(()=>setLanguage('ja'));
+loadHomeContent().then(()=>setLanguage(document.documentElement.lang==='en'?'en':'ja'));
 })();
 </script>
 </body>

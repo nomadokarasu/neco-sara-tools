@@ -6,13 +6,29 @@ button{cursor:pointer}
 .topbar{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#fff;border-bottom:1px solid #d9dde3;flex:none}
 .brand{font-weight:700}
 .top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.editor-header-menu{position:relative}
+.editor-header-menu summary{list-style:none;cursor:pointer;padding:8px 12px;border:1px solid #c7ccd3;border-radius:7px;background:#fff;font-size:13px;white-space:nowrap;user-select:none}
+.editor-header-menu summary::-webkit-details-marker{display:none}
+.editor-header-menu summary::after{content:" ▾";font-size:11px}
+.editor-header-menu[open] summary{background:#edf2f8}
+.editor-header-dropdown{position:absolute;top:calc(100% + 5px);left:0;z-index:1000;min-width:210px;padding:5px;background:#fff;border:1px solid #c7ccd3;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.editor-header-dropdown button{display:block;width:100%;padding:10px 12px;border:0;border-radius:5px;background:transparent;text-align:left;color:#202124;cursor:pointer;white-space:nowrap;font-size:13px}
+.editor-header-dropdown button:hover{background:#edf2f8}
+.editor-header-dropdown .editor-header-link{display:block;width:100%;box-sizing:border-box;padding:10px 12px;border:0;border-radius:5px;background:transparent;text-align:left;color:#202124;text-decoration:none;cursor:pointer;white-space:nowrap;font-size:13px}
+.editor-header-dropdown .editor-header-link:hover{background:#edf2f8}
+.editor-header-dropdown button:disabled{opacity:.45;cursor:default}
+.editor-header-menu-divider{height:1px;background:#e0e3e8;margin:5px}
+.editor-header-help{min-width:255px;padding:12px;font-size:12px;line-height:1.9;color:#444}
+.editor-header-help p{margin:0 0 6px;font-weight:700;color:#202124}
+.editor-header-help div{white-space:nowrap}
 .primary-btn{border:0;border-radius:7px;padding:8px 14px;background:#202124;color:#fff}
 .device-switch{display:flex;border:1px solid #c7ccd3;border-radius:7px;overflow:hidden}
 .device-btn{border:0;border-right:1px solid #c7ccd3;background:#fff;padding:7px 12px}
 .device-btn:last-child{border-right:0}
 .device-btn.active{background:#202124;color:#fff}
-.ratio-control{display:flex;align-items:center;gap:5px;font-size:12px;color:#666}
-.ratio-input{width:48px;padding:6px;border:1px solid #c7ccd3;border-radius:5px;text-align:center}
+.editor-language-switch .device-btn{cursor:pointer}
+.editor-language-switch .device-btn[aria-pressed="true"]{background:#202124;color:#fff}
+
 .main-layout{min-height:0;flex:1;display:grid;grid-template-columns:minmax(0,1fr) 320px}
 .workspace{position:relative;overflow:hidden;background-color:#f7f8fa;background-image:radial-gradient(#c9ced6 1px,transparent 1px);background-size:20px 20px;outline:none;touch-action:none}
 .workspace-scene{position:absolute;inset:0;transform-origin:0 0;pointer-events:none}
@@ -41,7 +57,7 @@ button{cursor:pointer}
 .connection-plus circle{fill:#fff;stroke:#7b828c;stroke-width:1.5}
 .connection-plus text{font-size:15px;font-weight:700;text-anchor:middle;dominant-baseline:middle;fill:#333}
 .temp-path{fill:none;stroke:#3b82f6;stroke-width:2;stroke-dasharray:5 4}
-.context-menu{position:absolute;z-index:20;width:260px;max-width:calc(100vw - 24px);background:#fff;border:1px solid #cfd4dc;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px}
+.context-menu{position:absolute;z-index:20;width:260px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;background:#fff;border:1px solid #cfd4dc;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px}
 .context-menu button{width:100%;text-align:left;border:0;background:transparent;padding:9px 10px;border-radius:5px}
 .context-menu button:hover{background:#f0f2f5}
 .submenu{margin:2px 0 4px 0;padding:2px 0 2px 18px;border-left:2px solid #eceff3}
@@ -118,7 +134,7 @@ button{cursor:pointer}
 .number-input{width:100%;padding:8px 10px;border:1px solid #c7ccd3;border-radius:6px}
 .game-preview{position:absolute;inset:0;z-index:100;background:#161616;display:flex;align-items:center;justify-content:center}
 .game-viewport{position:relative;background:#000;overflow:hidden}
-.game-viewport canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.game-viewport canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .fade-overlay{position:absolute;inset:0;z-index:3;background:#000;opacity:0;pointer-events:none}
 .game-dialogue{position:absolute;left:0;right:0;bottom:0;z-index:4;height:calc(140px * var(--dialogue-scale,1));padding:calc(20px * var(--dialogue-scale,1)) calc(48px * var(--dialogue-scale,1)) calc(28px * var(--dialogue-scale,1)) calc(24px * var(--dialogue-scale,1));background:rgba(0,0,0,.76);color:#fff;border-top:1px solid rgba(255,255,255,.38);cursor:pointer;user-select:none;overflow:hidden}
 .game-dialogue-text{font-size:calc(18px * var(--dialogue-scale,1));line-height:1.8;white-space:pre-wrap;word-break:break-word}
@@ -620,6 +636,16 @@ width:100%;
 .media2d-handle-sw{left:-6px;bottom:-6px;cursor:nesw-resize}
 .media2d-handle-se{right:-6px;bottom:-6px;cursor:nwse-resize}
 .media2d-layer{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+#uiPanelBackground{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#uiPanelEditorBox{position:absolute;box-sizing:border-box;border:2px solid #f0ad45;cursor:move;touch-action:none;min-width:3%;min-height:3%}
+.ui-panel-editor-close{position:absolute;right:5px;top:0;font-size:20px;color:#fff;pointer-events:none;z-index:5}
+.ui-panel-editor-item{position:absolute;border:1px dashed #fff;color:white;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;box-sizing:border-box;cursor:move;touch-action:none}
+.ui-panel-editor-item.selected{border:2px solid #ff9900;z-index:2}
+.ui-panel-editor-item img{width:100%;height:100%;object-fit:fill;pointer-events:none}
+.game-ui-panel{position:absolute;pointer-events:auto;box-sizing:border-box;overflow:hidden;color:#fff}
+.game-ui-panel-close{position:absolute;right:5px;top:4px;width:30px;height:30px;font-size:22px;line-height:26px;border:0;border-radius:4px;background:rgba(0,0,0,.35);color:white;cursor:pointer;z-index:10}
+.game-ui-panel-item{position:absolute;overflow:hidden;box-sizing:border-box;pointer-events:none}
+.game-ui-panel-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.35}
 
 /* Frame-in editor */
 .framein-checks{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
@@ -654,3 +680,420 @@ cursor:pointer;
 .dialogue-delete-btn:hover{
 background:#f2f2f2;
 }
+
+/* Options share the dialogue panel and appear on the right of the game screen. */
+.option-choices-overlay{position:absolute;right:4%;top:50%;transform:translateY(-50%);width:38%;max-height:62%;overflow-y:auto;z-index:7;display:flex;flex-direction:column;gap:calc(12px * var(--dialogue-scale,1));pointer-events:auto}
+.option-choices-overlay.hidden{display:none}
+.option-choice-button{width:100%;padding:calc(12px * var(--dialogue-scale,1));background:rgba(10,10,15,.82);border:1px solid rgba(255,255,255,.65);color:#fff;border-radius:6px;font-size:calc(18px * var(--dialogue-scale,1));line-height:1.4;cursor:pointer;text-align:center;white-space:normal;overflow-wrap:anywhere}
+.option-choice-button:hover,.option-choice-button:focus-visible{background:rgba(70,70,84,.95)}
+.option-choice-row{display:flex;align-items:center;gap:6px;margin:8px 0}
+.option-choice-row span{font-size:12px;white-space:nowrap}
+.option-choice-row input{min-width:0;flex:1}
+
+/* Inventory: a reusable overlay above the 360-degree scene. */
+.inventory-button{
+position:absolute;
+top:14px;
+right:56px;
+z-index:8;
+width:42px;
+height:42px;
+display:flex;
+align-items:center;
+justify-content:center;
+background:#202530;
+color:white;
+font-size:23px;
+border:1px solid #758095;
+border-radius:7px;
+cursor:pointer;
+}
+
+.inventory-menu{
+position:absolute;
+top:62px;
+right:56px;
+z-index:9;
+min-width:140px;
+padding:6px;
+background:#202530;
+border:1px solid #758095;
+border-radius:7px;
+}
+
+.inventory-menu button{
+display:block;
+width:100%;
+padding:10px 12px;
+background:transparent;
+color:white;
+border:0;
+border-radius:4px;
+text-align:left;
+cursor:pointer;
+}
+
+.inventory-menu button:hover{
+background:#414b5a;
+}
+
+.inventory-instruction{
+font-size:13px;
+line-height:1.5;
+color:#ddd;
+}
+
+.inventory-button.hidden,
+.inventory-menu.hidden,
+.inventory-overlay.hidden{
+display:none;
+}
+.inventory-overlay{position:absolute;inset:8% 8%;z-index:12;background:rgba(22,26,33,.96);border:1px solid #8b96a7;border-radius:10px;padding:16px;color:white;display:flex;flex-direction:column;gap:12px}
+.inventory-header{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:bold}
+.inventory-header button{background:transparent;border:0;color:white;font-size:26px;cursor:pointer}
+.inventory-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;overflow-y:auto}
+.inventory-item{background:#3b4452;color:white;border:1px solid #758094;border-radius:6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:7px;min-width:0}
+.inventory-item.active{border-color:#ffa533;box-shadow:0 0 0 2px #ffa533 inset}
+.inventory-item img{width:100%;aspect-ratio:1;object-fit:contain}
+.inventory-item span{font-size:12px;overflow-wrap:anywhere}
+.inventory-details{font-size:13px;line-height:1.6}
+.inventory-grid{
+min-height:0;
+}
+
+.inventory-instruction{
+flex-shrink:0;
+}
+
+/* クリックノード：アイテム分岐設定 */
+.click-item-branch-settings{display:flex;flex-direction:column;gap:9px}
+.click-item-branch-list{display:flex;flex-direction:column;gap:6px}
+.click-item-branch-row{display:flex;align-items:center;gap:8px}
+.click-item-branch-open{flex:1;min-width:0;padding:9px 10px;text-align:left;white-space:normal;overflow-wrap:anywhere;background:#fff;border:1px solid #cad0d9;border-radius:6px;cursor:pointer}
+.click-item-branch-remove{flex:none;width:32px;height:36px;border:1px solid #cad0d9;border-radius:6px;background:#fff;cursor:pointer}
+.click-item-branch-add{display:block;width:100%;height:auto;min-height:36px;padding:8px 12px;background:#fff;border:1px solid #cad0d9;border-radius:6px;white-space:normal;cursor:pointer}
+.click-item-branch-settings .setting-label:not(:first-child){margin-top:12px}
+
+/* クリックノード：見出しと簡潔なアイテム行 */
+.setting-section-heading{font-size:14px;font-weight:700;color:#282e37;margin:0 0 12px;padding-bottom:7px;border-bottom:1px solid #d6dce3}
+.click-item-branch-settings{gap:8px}
+.click-item-branch-row{display:flex;align-items:center;gap:8px}
+.click-item-branch-select{flex:1;min-width:0;width:0}
+.click-item-branch-remove{width:auto;min-width:52px;padding:0 10px;white-space:nowrap}
+.click-item-branch-add:disabled{opacity:.5;cursor:not-allowed}
+
+/* クリックノード：追加用アイテム選択欄 */
+.click-item-branch-add-select{display:block;width:100%;min-width:0;}
+
+/* テキスト入力パネル */
+.game-text-answer-overlay{position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;padding:16px;pointer-events:auto}
+.game-text-answer-form{width:min(90%,480px);max-height:90%;overflow:auto;background:rgba(18,22,30,.96);border:1px solid #758095;border-radius:10px;padding:22px;color:#fff;display:flex;flex-direction:column;gap:14px;box-shadow:0 12px 45px rgba(0,0,0,.45)}
+.game-text-answer-question{font-size:18px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.game-text-answer-field{box-sizing:border-box;width:100%;min-width:0;background:#fff;color:#111;border:1px solid #9ca3af;border-radius:6px;padding:10px;font-size:16px}
+.game-text-answer-actions{display:flex;gap:10px}
+.game-text-answer-actions button,.game-text-answer-preview button{padding:9px 18px;border:1px solid #aab2c0;border-radius:6px;cursor:pointer}
+.game-text-answer-actions button:first-child{background:#e5e7eb;color:#111}
+.game-text-answer-actions button:last-child{background:#303b4a;color:#fff}
+.game-text-answer-preview{display:flex;flex-direction:column;gap:10px;background:#252a32;color:#fff;padding:12px;border-radius:7px;white-space:pre-wrap}
+.game-text-answer-preview button{align-self:flex-start}
+
+#clickBranchRemove{display:block;width:100%;height:auto;min-height:38px;padding:8px 12px;font-size:13px;line-height:1.5;white-space:nowrap;text-align:center;cursor:pointer}
+
+/* Game preview diagnostic export: separate from the 360-degree canvas. */
+.export-preview-diagnostic{position:absolute;top:14px;right:62px;z-index:12;padding:9px 12px;min-height:38px;border-radius:7px;background:rgba(25,32,44,.92);color:#fff;border:1px solid rgba(255,255,255,.55);font-size:13px;cursor:pointer;white-space:nowrap}
+.export-preview-diagnostic:hover{background:#36465e}
+
+/* Currently equipped item, immediately left of the inventory menu. */
+.equipped-item-label{
+ position:absolute;
+ top:14px;
+ right:106px;
+ z-index:8;
+ height:42px;
+ max-width:min(55%,360px);
+ display:flex;
+ align-items:center;
+ padding:0 11px;
+ border:1px solid #758095;
+ border-radius:7px;
+ background:rgba(32,37,48,.94);
+ color:#fff;
+ font-size:13px;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ pointer-events:none;
+ box-sizing:border-box;
+}
+@media(max-width:480px){
+ .equipped-item-label{font-size:11px;padding:0 7px;max-width:calc(100% - 174px)}
+}
+
+/* 2026-10: Replace the old toolbox menu with a compact name-only selector. */
+.inventory-button,.inventory-menu,.inventory-overlay{display:none !important}
+.equipped-item-label{
+ right:14px;
+ max-width:min(75%,450px);
+ width:auto;
+ gap:7px;
+ padding:0 10px;
+ overflow:visible;
+ pointer-events:auto;
+ white-space:nowrap;
+}
+.equipped-item-label span{flex:none}
+.equipped-item-label select{
+ min-width:78px;
+ max-width:min(45vw,240px);
+ width:auto;
+ height:30px;
+ padding:3px 25px 3px 8px;
+ background:#fff;
+ color:#202530;
+ border:1px solid #758095;
+ border-radius:5px;
+ font-size:13px;
+ cursor:pointer;
+}
+#mobileEquippedItemButton{
+display:none;
+}
+.mobile-equipped-item-menu{
+position:absolute;
+top:62px;
+right:8px;
+z-index:20;
+min-width:160px;
+max-width:80%;
+max-height:60%;
+overflow-y:auto;
+flex-direction:column;
+gap:2px;
+padding:5px;
+background:#202530;
+border:1px solid #758095;
+border-radius:7px;
+box-sizing:border-box;
+overscroll-behavior:contain;
+touch-action:pan-y;
+}
+.mobile-equipped-item-menu button{
+display:block;
+width:100%;
+padding:11px 14px;
+border:0;
+border-radius:4px;
+background:transparent;
+color:#fff;
+text-align:left;
+font-size:14px;
+cursor:pointer;
+}
+.mobile-equipped-item-menu button.active{
+background:#414b5a;
+}
+@media(pointer:coarse){
+.equipped-item-label select{
+display:none;
+}
+#mobileEquippedItemButton{
+display:block;
+min-width:78px;
+max-width:40vw;
+height:30px;
+padding:3px 8px;
+background:#fff;
+color:#202530;
+border:1px solid #758095;
+border-radius:5px;
+font-size:13px;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+cursor:pointer;
+}
+}
+@media(max-width:480px){
+.equipped-item-label{
+right:8px;
+max-width:calc(100% - 16px);
+padding:0 7px;
+gap:4px;
+}
+}
+
+/* World folders v2 */
+.world-tabs{display:flex;gap:5px;align-items:center;overflow-x:auto;padding:8px 12px;background:#222832;border-bottom:1px solid #48505b;flex:none;white-space:nowrap}
+.world-tabs button{flex:0 0 auto;border:1px solid #566476;background:#374151;color:#f2f4f7;border-radius:5px;padding:7px 13px;cursor:pointer}
+.world-tabs button.active{background:#64748b;border-color:#8da6bf}
+.world-folder-panel{position:absolute;inset:0;background:#20252d;color:#f3f3f3;z-index:5;padding:24px;overflow:auto}
+.world-folder-panel.hidden{display:none}
+.world-folder-panel h2{font-size:18px;margin:0 0 10px}
+.world-folder-panel p{color:#cbd5e1;font-size:13px;line-height:1.6}
+.world-folder-card{display:inline-flex;align-items:center;gap:14px;padding:20px;margin:8px;border:1px solid #66758c;border-radius:9px;background:#354156;color:white;cursor:pointer;min-width:180px}
+.world-folder-card span{font-size:24px}.world-folder-card small{color:#b9c6d8}
+.world-folder-settings{border-top:1px solid #657080;padding-top:12px;margin-top:10px}.world-folder-settings h3{font-size:14px;margin:16px 0 10px}
+.world-layer-entry{border:1px solid #677484;border-radius:8px;padding:10px;margin-bottom:10px}
+
+.world-folder-card{display:inline-flex;align-items:center;gap:4px;min-width:0;padding:6px}
+.world-folder-card button{border:1px solid #5a6a7c;border-radius:5px;background:#313e50;color:white;cursor:pointer;padding:8px}
+.world-folder-card .world-folder-open{min-width:145px;padding:16px;font-weight:600}
+
+/* World settings: flattened 2:1 preview, including every registered layer */
+.world-settings-preview{display:block;width:100%;height:auto;aspect-ratio:2/1;border:1px solid #aab4c2;border-radius:5px;background:#edf0f4;object-fit:contain}
+.world-settings-preview-note{font-size:11px;line-height:1.5;color:#697586;margin-top:6px}
+
+/* Panoramic world settings camera preview */
+.world-settings-preview{display:block;width:100%;height:auto;aspect-ratio:var(--game-aspect,16/9);touch-action:none;cursor:grab;background:#151923;object-fit:fill}
+.world-settings-preview:active{cursor:grabbing}
+
+/* World editing refinements */
+#worldTabs .world-tab-rename{min-width:110px;max-width:180px;padding:5px 9px;font-size:13px;border:1px solid #8799b0;border-radius:5px}
+.world-layer-entry{padding:0;overflow:hidden}
+.world-layer-entry>summary{cursor:pointer;padding:10px 12px;font-weight:600;list-style:disclosure-closed}
+.world-layer-entry[open]>summary{list-style:disclosure-open;border-bottom:1px solid #677484}
+.world-layer-fields{padding:10px 12px}
+.world-layer-explanation{font-size:12px;line-height:1.5;color:#536478;margin:10px 0}
+
+/* World tab and layer-button layout fixes */
+#worldTabs.world-tabs{display:flex;flex:none;min-height:48px;align-items:center;gap:5px;overflow-x:auto;}
+.world-folder-settings .add-world-btn,.settings-panel .add-world-btn{display:block;width:100%;min-width:0;height:auto;min-height:38px;padding:8px 12px;font-size:13px;line-height:1.5;white-space:nowrap;text-align:center;}
+
+/* World camera settings: collapsible and positioned below layers */
+.world-camera-section{border:1px solid #677484;border-radius:8px;margin:14px 0 8px;overflow:hidden;}
+.world-camera-section>summary{cursor:pointer;padding:10px 12px;font-weight:600;list-style:disclosure-closed;}
+.world-camera-section[open]>summary{list-style:disclosure-open;border-bottom:1px solid #677484;}
+.world-camera-section>.camera-number-settings{padding:12px;}
+.world-camera-section .camera-copy-view{display:block;width:100%;height:auto;min-height:34px;white-space:nowrap;}
+
+/* Compact camera info section distinct from layer accordion */
+.world-camera-section{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important;margin-top:8px;}
+.world-camera-section>summary{cursor:pointer;list-style:none;font-weight:600;font-size:13px;padding:7px 0;background:transparent!important;border:0!important;}
+.world-camera-section>summary::-webkit-details-marker{display:none;}
+.world-camera-section>summary::before{content:"▶ ";font-size:12px;}
+.world-camera-section[open]>summary::before{content:"▼ ";}
+.dialogue-add-full{display:block;width:100%;min-height:36px;white-space:nowrap;}
+
+/* Collapsed world layer header with independent delete action */
+.world-layer-entry{position:relative;}
+.world-layer-entry>summary{padding-right:68px;min-height:42px;box-sizing:border-box;}
+.world-layer-entry>.world-layer-remove{position:absolute;right:7px;top:6px;width:auto;min-width:44px;min-height:28px;padding:3px 8px;z-index:1;border:1px solid #cbd2dd;border-radius:4px;background:#fff;white-space:nowrap;font-size:12px;cursor:pointer;}
+.world-layer-entry>.world-layer-remove:hover{background:#f4e9e9;}
+#keyframeAngleFields .world-camera-section{margin:0;}
+.world-layer-entry[open]>.world-layer-remove{display:none;}
+
+/* Asset library removal control */
+.media-item{position:relative}
+.media-item-remove{position:absolute;right:5px;top:5px;z-index:3;width:25px;height:25px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #d0d6df;border-radius:5px;color:#303741;cursor:pointer;font-size:19px;line-height:1;padding:0}
+.media-item-remove:hover{background:#fff0f0;border-color:#cc7777}
+/* Layer name and delete live together in the native collapsible heading. */
+.world-layer-entry>summary{display:flex;align-items:center;gap:8px;padding:9px 10px;min-height:42px;cursor:pointer}
+.world-layer-entry>summary>span{flex:1;min-width:0;overflow-wrap:anywhere}
+.world-layer-entry>summary>.world-layer-remove{position:static;display:inline-flex;flex:none;width:auto;min-width:44px;height:28px;align-items:center;justify-content:center;padding:3px 8px;z-index:auto}
+.world-layer-entry[open]>summary>.world-layer-remove{display:none}
+
+/* World tabs: removable worlds 2+; world 1 is protected. */
+#worldTabs .world-tab-remove{padding:4px 7px;margin-left:-4px;margin-right:5px;min-width:25px;border-color:#6e7888;background:#404755;color:#fff;font-weight:700;line-height:1.25}
+#worldTabs .world-tab-remove:hover{background:#873b3b;border-color:#c66}
+
+.save-progress-overlay[hidden]{display:none!important}.save-progress-overlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background:#0007}.save-progress-dialog{width:min(400px,90vw);background:#fff;color:#171717;padding:24px;border-radius:10px;box-shadow:0 10px 40px #0006}.save-progress-dialog p{font-size:14px;margin:14px 0}.save-progress-dialog progress{width:100%;height:18px}.media-popup-actions{flex-wrap:wrap}
+/* 保存進行表示はぐるりペイントのダークパネルに寄せたデザイン */
+.save-progress-dialog{background:#292929;color:#f8f8f8;border:1px solid #666}
+.save-progress-dialog progress{appearance:none;border:0;border-radius:6px;overflow:hidden;background:#4b4b4b}
+.save-progress-dialog progress::-webkit-progress-bar{background:#4b4b4b;border-radius:6px}
+.save-progress-dialog progress::-webkit-progress-value{background:#8ec5fc;border-radius:6px}
+
+/* 右クリックメニューの独立項目 */
+.context-menu .menu-separator{border-top:1px solid #e4e7ec;margin:6px 4px}
+
+/* 連番PNG: FPSの下でフレームを選択する */
+.sequence-frame-tabs{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.sequence-frame-tab{border:1px solid #cfd4dc;border-radius:5px;background:#f6f7f9;padding:6px 10px;cursor:pointer;font-size:12px}
+.sequence-frame-tab.is-active{background:#e6efff;border-color:#6591d7;font-weight:600}
+.sequence-frame-editor{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:10px;border:1px solid #e1e4e9;border-radius:6px}
+.sequence-frame-editor button{border:1px solid #cfd4dc;background:#fff;border-radius:5px;padding:7px 12px;cursor:pointer}
+
+.sequence-wizard-overlay{position:fixed;inset:0;z-index:11000;background:#0008;display:grid;place-items:center;padding:20px}.sequence-wizard{background:#fff;color:#222;padding:20px;width:min(510px,100%);max-height:90vh;overflow:auto;border-radius:10px;box-shadow:0 10px 35px #0005;display:flex;flex-direction:column;gap:15px}.sequence-wizard-head{display:flex;justify-content:space-between;align-items:center}.sequence-wizard-head button{font-size:23px;background:transparent;border:0;cursor:pointer}.sequence-wizard-footer{display:flex;justify-content:space-between;gap:12px}.sequence-wizard-footer button{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}.sequence-wizard-footer [data-seq-save]{background:#2666bb;color:white;border-color:#2666bb}
+
+/* クリック設定: 編集プレビュー用透明レイヤー表示 */
+.click-layer-visibility-row{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:13px;cursor:pointer;}
+.click-layer-visibility-row input{margin:0;flex:none;}
+.click-layer-visibility-row span{overflow-wrap:anywhere;}
+
+/* UI button node: only visible while waiting for a click in game preview. */
+.game-ui-button-layer{position:absolute;inset:0;z-index:8;display:flex;align-items:flex-end;justify-content:center;padding:5% 2%;pointer-events:none}
+.game-ui-button{pointer-events:auto;max-width:90%;max-height:90%;border:1px solid rgba(255,255,255,.75);border-radius:7px;background:rgba(13,13,18,.86);color:#fff;line-height:1.2;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+.game-ui-button:hover,.game-ui-button:focus-visible{background:rgba(60,60,75,.95)}
+
+/* ボタンノード：PC・スマホ別配置プレビュー */
+.ui-button-mode-tabs{display:flex;gap:6px;margin:8px 0}
+.ui-button-mode-tabs button{flex:1;padding:7px;border:1px solid #777;background:#28282b;color:#eee;border-radius:4px;cursor:pointer}
+.ui-button-mode-tabs button.active{background:#555d71;border-color:#b3c7f5}
+.ui-button-position-preview{position:relative;aspect-ratio:16/9;width:100%;overflow:hidden;background:linear-gradient(160deg,#454954,#20242c);border:1px solid #888;border-radius:4px;touch-action:none}
+.ui-button-position-preview.mobile{aspect-ratio:9/16;width:min(65%,240px);margin:0 auto}
+#uiButtonPositionTarget{position:absolute;transform:translate(-50%,-50%);border:1px solid #fff;border-radius:5px;background:#292932;color:white;white-space:normal;overflow:hidden;cursor:grab;touch-action:none;user-select:none;padding:0}
+#uiButtonPositionTarget:active{cursor:grabbing}
+.game-ui-button-layer{display:block;padding:0}
+
+/* ぐるりペイントの作品書き出し画面に合わせた設定パネル */
+.export-work-overlay{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.68);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
+.export-work-overlay.hidden{display:none!important}
+.export-work-panel{width:min(460px,100%);max-height:90vh;overflow:auto;background:#292929;border:1px solid #555;border-radius:10px;color:#fff;box-shadow:0 12px 35px #0009}
+.export-work-header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #484848}
+.export-work-header h2{margin:0;font-size:18px;font-weight:600}
+.export-work-header button{border:0;background:transparent;color:#fff;font-size:24px;cursor:pointer}
+.export-work-content{padding:20px;display:flex;flex-direction:column;gap:18px}
+.export-work-content label{display:flex;flex-direction:column;gap:8px;font-size:14px}
+.export-work-content input{box-sizing:border-box;width:100%;padding:11px;border:1px solid #666;border-radius:6px;background:#181818;color:#fff;font-size:15px}
+.export-work-note{font-size:12px;line-height:1.7;color:#bbb}
+.export-work-footer{padding:14px 20px;border-top:1px solid #484848;display:flex;justify-content:center}
+.export-work-footer button{background:#454545;color:#fff;border:1px solid #777;border-radius:5px;padding:10px 20px;cursor:pointer}
+.export-work-footer button:hover{background:#5b5b5b}
+
+/* Exported work cover-camera controls */
+.export-cover-setting{display:flex;flex-direction:column;gap:8px;margin:12px 0}.export-cover-label{font-weight:600}.export-cover-camera{position:relative;width:100%;max-width:640px;aspect-ratio:16/9;background:#111;border-radius:8px;overflow:hidden}.export-cover-camera canvas,.export-cover-camera img{width:100%;height:100%;display:block;object-fit:cover;touch-action:none}.export-cover-camera [hidden]{display:none!important}#exportCoverEmpty{position:absolute;inset:0;display:grid;place-items:center;color:#ccc;pointer-events:none}.export-cover-actions{display:flex;gap:8px;flex-wrap:wrap}.export-cover-actions button{padding:8px 14px;border-radius:6px;cursor:pointer}.export-cover-help{font-size:12px;opacity:.8;margin:0}
+
+/* Draggable settings / graph boundary */
+.main-layout{grid-template-columns:minmax(0,1fr) 8px minmax(240px,var(--editor-sidebar-width,320px));}
+.editor-panel-resizer{background:#d8dde4;cursor:col-resize;touch-action:none;position:relative;z-index:8;outline:none;}
+.editor-panel-resizer:hover,.editor-panel-resizer:focus-visible,.is-resizing-editor .editor-panel-resizer{background:#7d9bb6;}
+.is-resizing-editor,.is-resizing-editor *{cursor:col-resize!important;user-select:none!important;}
+.editor-sidebar{min-width:0;border-left:0;}
+@media(max-width:800px){.main-layout{grid-template-columns:minmax(0,1fr) 8px minmax(240px,var(--editor-sidebar-width,260px));}}
+/* Keep each world tab's delete control in its upper-right corner. */
+#worldTabs .world-tab-wrap{position:relative;flex:0 0 auto;display:flex;align-items:stretch;min-width:0;}
+#worldTabs .world-tab-wrap>button[data-folder-tab]{padding-right:28px;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#worldTabs .world-tab-wrap>.world-tab-remove{position:absolute;right:2px;top:1px;margin:0;padding:0;width:20px;min-width:20px;height:19px;line-height:17px;text-align:center;border-radius:4px;z-index:1;}
+
+/* Sequence import and playback */
+.sequence-preview{display:flex;flex-direction:column;align-items:center;gap:8px}
+.sequence-preview canvas{width:100%;max-width:440px;aspect-ratio:1/1;touch-action:none}
+.sequence-preview-controls{display:flex;align-items:center;gap:14px}
+.sequence-preview-controls button,.sequence-wizard-actions button{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}
+.sequence-wizard-actions{display:flex;flex-wrap:wrap;gap:8px}
+.sequence-wizard{width:min(570px,100%)}
+
+/* 連番PNG：ZIP操作は見出しの下、フレーム追加は一覧の末尾 */
+.sequence-frame-list{display:contents}
+.sequence-frame-tabs [data-seq-add],.sequence-zip-row [data-seq-zip],.sequence-zip-row [data-seq-multiple]{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}
+.sequence-zip-row [data-seq-multiple]:disabled{opacity:.5;cursor:wait}
+.sequence-wizard-footer{justify-content:flex-end}
+
+/* Text overlay node editor and playback */
+.text-overlay-editor #textOverlayBackground{position:absolute;inset:0;width:100%;height:100%;display:block}
+#textOverlayItems{position:absolute;inset:0}
+.text-overlay-edit-box{position:absolute;border:1px dashed #eee;box-sizing:border-box;cursor:move;touch-action:none;min-width:1px;min-height:1px}
+.text-overlay-edit-box.selected{border:2px solid #ff9900;z-index:2}
+.text-overlay-edit-text{width:100%;height:100%;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;white-space:pre-wrap;overflow:hidden;overflow-wrap:anywhere;pointer-events:none;box-sizing:border-box}
+.text-overlay-list-row{display:flex;gap:8px;margin-bottom:6px}
+.text-overlay-list-row button:first-child{flex:1;text-align:left}
+.text-overlay-list-row button.selected{outline:2px solid #ff9900}
+.game-text-overlay{color:white;white-space:pre-wrap;overflow-wrap:anywhere;overflow:hidden;text-shadow:0 1px 3px #000,0 0 6px #000;box-sizing:border-box;pointer-events:none;line-height:1.35}
+
+/* Collapsible per-text settings */
+.text-overlay-list-entry{margin-bottom:8px}
+.text-overlay-list-row{display:flex;gap:8px;margin-bottom:0}
+.text-overlay-list-row button:first-child{flex:1;text-align:left}
+.text-overlay-inline-properties{padding:10px 10px 12px;border:1px solid var(--border-color,#444);border-top:0;border-radius:0 0 6px 6px}
+.text-overlay-inline-properties .setting-label:not(:first-child){margin-top:10px}
+.text-overlay-inline-properties textarea,.text-overlay-inline-properties input{width:100%;box-sizing:border-box}
