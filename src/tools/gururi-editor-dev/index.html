@@ -17,7 +17,7 @@
 <div id="editorHomeHero" class="editor-home__hero">
 <img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
-<p class="editor-home__version">ver.0.1.105</p>
+<p class="editor-home__version">ver.0.1.106</p>
 <h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
 <img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
 <img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
@@ -52,7 +52,7 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
-<span class="editor-version">ver.0.1.105</span>
+<span class="editor-version">ver.0.1.106</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
 <details class="editor-header-menu" id="editorFileMenu">
 <summary>ファイル</summary>
@@ -67,10 +67,9 @@
 <details class="editor-header-menu" id="editorHelpMenu">
 <summary>ヘルプ</summary>
 <div class="editor-header-dropdown">
-<button type="button" disabled>使い方</button>
-<button type="button" disabled>オープンソースライセンス</button>
-<button type="button" disabled>不具合報告</button>
-<button type="button" disabled>JUNOTAを応援する</button>
+<a class="editor-header-link" id="editorHelpGuide" href="https://neco-sara.com/2026/11/04/howtouse-gururieditor-jp/" target="_blank" rel="noopener noreferrer">使い方</a>
+<a class="editor-header-link" href="https://docs.google.com/forms/d/e/1FAIpQLSe6DLbVSBJuwVfUO3lGIaC5F-GFFIEmMJjZ6X2WcyI3wawuUw/viewform" target="_blank" rel="noopener noreferrer">不具合報告</a>
+<a class="editor-header-link" id="editorHelpSupport" href="https://note.com/junnoota/n/n87a466960ce6" target="_blank" rel="noopener noreferrer">JUNOTAを応援する</a>
 </div>
 </details>
 </div>
@@ -841,6 +840,24 @@ Object.assign(editorTranslations,{
 'Ctrl + Z：元に戻す':'Ctrl + Z: Undo',
 'Ctrl + Y：やり直す':'Ctrl + Y: Redo'
 });
+
+function updateEditorHelpLinks(){
+const english=window.editorLanguage==='en';
+const guide=document.getElementById('editorHelpGuide');
+const support=document.getElementById('editorHelpSupport');
+if(guide){
+guide.href=english
+?'https://neco-sara.com/2026/11/04/how-to-use-gururi-editor-en/'
+:'https://neco-sara.com/2026/11/04/howtouse-gururieditor-jp/';
+}
+if(support){
+support.href=english
+?'https://ko-fi.com/junota'
+:'https://note.com/junnoota/n/n87a466960ce6';
+}
+}
+window.addEventListener('gururi-language-change',updateEditorHelpLinks);
+updateEditorHelpLinks();
 
 const editorTranslationOriginalText=new WeakMap();
 const editorTranslationOriginalAttributes=new WeakMap();
