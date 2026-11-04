@@ -17,7 +17,7 @@
 <div id="editorHomeHero" class="editor-home__hero">
 <img id="editorHomeHeroImage" src="./images/gururi-editor-hero.png" alt="">
 </div>
-<p class="editor-home__version">ver.0.1.104</p>
+<p class="editor-home__version">ver.0.1.105</p>
 <h1 class="editor-home__title has-logo" id="editorHomeTitle" aria-label="ぐるりエディタ">
 <img id="editorHomeLogoJa" class="editor-home__title-image" src="./images/home-title-ja.png" alt="" aria-hidden="true">
 <img id="editorHomeLogoEn" class="editor-home__title-image" src="./images/home-title-en.png" alt="" aria-hidden="true">
@@ -52,10 +52,8 @@
 <header class="topbar">
 <div class="topbar-brand">
 <button id="editorHomeOpen" class="brand editor-home__back" type="button" title="トップページに戻る">ぐるりエディタ</button>
-<span class="editor-version">ver.0.1.104</span>
+<span class="editor-version">ver.0.1.105</span>
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
-</div>
-<div class="top-actions">
 <details class="editor-header-menu" id="editorFileMenu">
 <summary>ファイル</summary>
 <div class="editor-header-dropdown">
@@ -68,16 +66,15 @@
 </details>
 <details class="editor-header-menu" id="editorHelpMenu">
 <summary>ヘルプ</summary>
-<div class="editor-header-dropdown editor-header-help">
-<p>基本操作</p>
-<div>右クリック：ノードを追加</div>
-<div>Space + ドラッグ：画面移動</div>
-<div>Z + ドラッグ：拡大・縮小</div>
-<div>中ボタンドラッグ：画面移動</div>
-<div>Ctrl + Z：元に戻す</div>
-<div>Ctrl + Y：やり直す</div>
+<div class="editor-header-dropdown">
+<button type="button" disabled>使い方</button>
+<button type="button" disabled>オープンソースライセンス</button>
+<button type="button" disabled>不具合報告</button>
+<button type="button" disabled>JUNOTAを応援する</button>
 </div>
 </details>
+</div>
+<div class="top-actions">
 <div id="exportSettingsModal" class="hidden export-work-overlay" role="dialog" aria-modal="true" aria-labelledby="exportSettingsTitle">
 <form id="exportSettingsForm" class="export-work-panel">
 <div class="export-work-header"><h2 id="exportSettingsTitle">ぐるり作品として書き出す</h2><button id="exportCancelBtn" type="button" aria-label="閉じる">×</button></div>
@@ -832,6 +829,10 @@ Object.assign(editorTranslations,{
 'ファイルを開く (.gart)':'Open File (.gart)',
 '名前を付けて保存':'Save As',
 'ヘルプ':'Help',
+'使い方':'How to Use',
+'オープンソースライセンス':'Open Source Licenses',
+'不具合報告':'Report a Bug',
+'JUNOTAを応援する':'Support JUNOTA',
 '基本操作':'Basic Controls',
 '右クリック：ノードを追加':'Right-click: Add Node',
 'Space + ドラッグ：画面移動':'Space + Drag: Pan',
