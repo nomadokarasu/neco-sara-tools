@@ -56,10 +56,28 @@
 <button id="browseMediaBtn" class="browse-media-btn" type="button" aria-expanded="false" aria-controls="mediaPanel">素材追加</button>
 </div>
 <div class="top-actions">
-<button id="saveGartBtn" type="button" class="primary-btn">上書き保存</button>
-<button id="saveAsGartBtn" type="button" class="primary-btn">別名で保存</button>
-<button id="openGartBtn" type="button" class="primary-btn">開く(.gart)</button>
-<button id="exportWorkBtn" type="button" class="primary-btn">書き出し</button>
+<details class="editor-header-menu" id="editorFileMenu">
+<summary>ファイル</summary>
+<div class="editor-header-dropdown">
+<button id="openGartBtn" type="button">ファイルを開く (.gart)</button>
+<button id="saveGartBtn" type="button">上書き保存</button>
+<button id="saveAsGartBtn" type="button">名前を付けて保存</button>
+<div class="editor-header-menu-divider"></div>
+<button id="exportWorkBtn" type="button">書き出し</button>
+</div>
+</details>
+<details class="editor-header-menu" id="editorHelpMenu">
+<summary>ヘルプ</summary>
+<div class="editor-header-dropdown editor-header-help">
+<p>基本操作</p>
+<div>右クリック：ノードを追加</div>
+<div>Space + ドラッグ：画面移動</div>
+<div>Z + ドラッグ：拡大・縮小</div>
+<div>中ボタンドラッグ：画面移動</div>
+<div>Ctrl + Z：元に戻す</div>
+<div>Ctrl + Y：やり直す</div>
+</div>
+</details>
 <div id="exportSettingsModal" class="hidden export-work-overlay" role="dialog" aria-modal="true" aria-labelledby="exportSettingsTitle">
 <form id="exportSettingsForm" class="export-work-panel">
 <div class="export-work-header"><h2 id="exportSettingsTitle">ぐるり作品として書き出す</h2><button id="exportCancelBtn" type="button" aria-label="閉じる">×</button></div>
@@ -82,7 +100,10 @@
 <button id="pcModeBtn" class="device-btn active" type="button">PC</button>
 <button id="mobileModeBtn" class="device-btn" type="button">スマホ</button>
 </div>
-
+<div class="device-switch editor-language-switch" role="group" aria-label="Language">
+<button class="device-btn" type="button" data-editor-home-lang="ja" aria-pressed="true">日本語</button>
+<button class="device-btn" type="button" data-editor-home-lang="en" aria-pressed="false">English</button>
+</div>
 </div>
 </header>
 <section id="mediaPanel" class="media-popup hidden" aria-label="素材管理パネル">
@@ -192,6 +213,25 @@
 <div id="saveProgressOverlay" class="save-progress-overlay" hidden><div class="save-progress-dialog"><strong>保存中</strong><p id="saveProgressMessage">準備しています…</p><progress id="saveProgressBar" max="100" value="0"></progress></div></div>
 <script src="app.js"></script>
 <script>
+(()=>{
+const menus=[document.getElementById('editorFileMenu'),document.getElementById('editorHelpMenu')].filter(Boolean);
+for(const menu of menus){
+menu.addEventListener('toggle',()=>{
+if(!menu.open)return;
+for(const other of menus){
+if(other!==menu)other.open=false;
+}
+});
+menu.querySelectorAll('.editor-header-dropdown button').forEach(button=>{
+button.addEventListener('click',()=>{menu.open=false;});
+});
+}
+document.addEventListener('pointerdown',event=>{
+for(const menu of menus){
+if(menu.open&&!menu.contains(event.target))menu.open=false;
+}
+});
+})();
 const editorTranslations={
 'ぐるりエディタ':'Gururi Editor',
 'トップページに戻る':'Back to home',
@@ -785,6 +825,20 @@ Object.assign(editorTranslations,{
 '保存に失敗しました':'Save Failed',
 '読み込みに失敗しました':'Loading Failed',
 '書き出しに失敗しました':'Export Failed'
+});
+
+Object.assign(editorTranslations,{
+'ファイル':'File',
+'ファイルを開く (.gart)':'Open File (.gart)',
+'名前を付けて保存':'Save As',
+'ヘルプ':'Help',
+'基本操作':'Basic Controls',
+'右クリック：ノードを追加':'Right-click: Add Node',
+'Space + ドラッグ：画面移動':'Space + Drag: Pan',
+'Z + ドラッグ：拡大・縮小':'Z + Drag: Zoom',
+'中ボタンドラッグ：画面移動':'Middle Drag: Pan',
+'Ctrl + Z：元に戻す':'Ctrl + Z: Undo',
+'Ctrl + Y：やり直す':'Ctrl + Y: Redo'
 });
 
 const editorTranslationOriginalText=new WeakMap();

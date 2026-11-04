@@ -6,11 +6,26 @@ button{cursor:pointer}
 .topbar{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#fff;border-bottom:1px solid #d9dde3;flex:none}
 .brand{font-weight:700}
 .top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.editor-header-menu{position:relative}
+.editor-header-menu summary{list-style:none;cursor:pointer;padding:8px 12px;border:1px solid #c7ccd3;border-radius:7px;background:#fff;font-size:13px;white-space:nowrap;user-select:none}
+.editor-header-menu summary::-webkit-details-marker{display:none}
+.editor-header-menu summary::after{content:" ▾";font-size:11px}
+.editor-header-menu[open] summary{background:#edf2f8}
+.editor-header-dropdown{position:absolute;top:calc(100% + 5px);left:0;z-index:1000;min-width:210px;padding:5px;background:#fff;border:1px solid #c7ccd3;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.editor-header-dropdown button{display:block;width:100%;padding:10px 12px;border:0;border-radius:5px;background:transparent;text-align:left;color:#202124;cursor:pointer;white-space:nowrap;font-size:13px}
+.editor-header-dropdown button:hover{background:#edf2f8}
+.editor-header-dropdown button:disabled{opacity:.45;cursor:default}
+.editor-header-menu-divider{height:1px;background:#e0e3e8;margin:5px}
+.editor-header-help{min-width:255px;padding:12px;font-size:12px;line-height:1.9;color:#444}
+.editor-header-help p{margin:0 0 6px;font-weight:700;color:#202124}
+.editor-header-help div{white-space:nowrap}
 .primary-btn{border:0;border-radius:7px;padding:8px 14px;background:#202124;color:#fff}
 .device-switch{display:flex;border:1px solid #c7ccd3;border-radius:7px;overflow:hidden}
 .device-btn{border:0;border-right:1px solid #c7ccd3;background:#fff;padding:7px 12px}
 .device-btn:last-child{border-right:0}
 .device-btn.active{background:#202124;color:#fff}
+.editor-language-switch .device-btn{cursor:pointer}
+.editor-language-switch .device-btn[aria-pressed="true"]{background:#202124;color:#fff}
 
 .main-layout{min-height:0;flex:1;display:grid;grid-template-columns:minmax(0,1fr) 320px}
 .workspace{position:relative;overflow:hidden;background-color:#f7f8fa;background-image:radial-gradient(#c9ced6 1px,transparent 1px);background-size:20px 20px;outline:none;touch-action:none}
