@@ -5862,15 +5862,22 @@ function findBestPreviewClick(clientX,clientY,world,animation,itemId){
 if(node.clickAnimationMode){
 const source=findPreviousClickMediaNode(node.id);
 let video=null;
-if(source?.type==='animation'&&animation?.nodeId===source.id){
+let finalFrame=null;
+const fps=Math.max(1,Number(node.clickFrameFps)||8);
+if(source?.type==='animation'){
+if(animation?.nodeId===source.id){
 video=animation.video;
+}else{
+const media=getClickAnimationMedia(source);
+if(!media)continue;
+finalFrame=Math.max(0,Math.ceil((Number(media.duration)||0)*fps)-1);
+}
 }else if(source?.type==='world'&&state.previewWorldNodeId===source.id){
 const media=getClickFrameVideoMedia(source);
 if(media?.id===node.clickSourceMediaId)video=media.video;
 }
-if(!video)continue;
-const fps=Math.max(1,Number(node.clickFrameFps)||8);
-const frame=Math.max(0,Math.floor(video.currentTime*fps));
+if(!video&&finalFrame===null)continue;
+const frame=video?Math.max(0,Math.floor(video.currentTime*fps)):finalFrame;
 frameKey=`frame:${frame}`;
 regions=getClickFrameRegions(node,frame);
 }
