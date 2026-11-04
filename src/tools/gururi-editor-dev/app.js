@@ -1206,14 +1206,15 @@ return;
 }
 
 const isAnimation=sourceNode.type==='animation';
-const media=isAnimation?getClickAnimationMedia(sourceNode):null;
+const media=getClickFrameVideoMedia(sourceNode);
+const isFrameVideo=Boolean(media);
 
 if(isAnimation&&!media){
 settingsPanel.innerHTML='<div class="settings-title">クリック</div><div class="settings-empty">アニメーションノードにMP4を設定してください。</div>';
 return;
 }
 
-if(isAnimation){
+if(isFrameVideo){
 if(!node.clickAnimationMode||node.clickSourceMediaId!==media.id){
 node.clickAnimationMode=true;
 node.clickSourceMediaId=media.id;
@@ -1235,7 +1236,7 @@ node.clickFrameFps=8;
 node.clickAnimationMode=false;
 }
 
-const frameCount=isAnimation
+const frameCount=isFrameVideo
 ?Math.max(1,Math.ceil(media.duration*node.clickFrameFps))
 :1;
 
@@ -1245,11 +1246,11 @@ node.clickFrameIndex||0,
 frameCount-1
 );
 
-const frameControls=isAnimation
+const frameControls=isFrameVideo
 ?`<div class="setting-group"><div class="setting-label">コマ送り</div><div class="click-frame-controls"><button id="clickPreviousFrameBtn" type="button">◀ 前</button><span id="clickFrameLabel">${node.clickFrameIndex+1} / ${frameCount}</span><button id="clickNextFrameBtn" type="button">次 ▶</button></div><input id="clickFrameRange" type="range" min="0" max="${frameCount-1}" step="1" value="${node.clickFrameIndex}" style="width:100%"><div id="clickFrameTimeLabel" class="settings-empty"></div></div>`
 :'';
 
-const inheritControl=isAnimation
+const inheritControl=isFrameVideo
 ?`<label class="click-inherit-control"><input id="clickInheritRegionsInput" type="checkbox" ${node.clickInheritRegions!==false?'checked':''}> 選択範囲を継承</label>`
 :'';
 
@@ -4919,6 +4920,13 @@ isAnimationAsset(media)
 )||null;
 }
 
+function getClickFrameVideoMedia(sourceNode){
+if(sourceNode?.type==='animation')return getClickAnimationMedia(sourceNode);
+if(sourceNode?.type!=='world')return null;
+const media=mediaLibrary.find(m=>m.id===sourceNode.world?.mediaId);
+return media?.fileType==='mp4'?media:null;
+}
+
 function getClickFrameRegions(node,frameIndex){
 const frames=node.clickFrameRegions||{};
 
@@ -5461,11 +5469,10 @@ updateLassoModeButtons();
 updateLassoModeButtons();
 ensureClickView(node,worldNode);
 
-const isAnimation=worldNode.type==='animation';
-const media=isAnimation?getClickAnimationMedia(worldNode):null;
+const media=getClickFrameVideoMedia(worldNode);
 const video=media?.video||null;
 
-if(isAnimation&&video&&document.getElementById('clickFrameRange')){
+if(video&&document.getElementById('clickFrameRange')){
 const range=document.getElementById('clickFrameRange');
 const previousButton=document.getElementById('clickPreviousFrameBtn');
 const nextButton=document.getElementById('clickNextFrameBtn');
@@ -5547,7 +5554,7 @@ drawClickLassoOverlay(node,worldNode);
 });
 
 showFrame(node.clickFrameIndex||0);
-}else if(isAnimation&&video){
+}else if(video){
 
 video.pause();
 
@@ -5859,12 +5866,21 @@ function findBestPreviewClick(clientX,clientY,world,animation,itemId){
   if(!node||previewRemovedClickIds.has(node.id)||!canFireExplorationTrigger(node)||!isClickConditionActive(node))continue;
   let regions=null;
   let frameKey='static';
-  if(animation&&node.clickAnimationMode){
-   const fps=Math.max(1,Number(node.clickFrameFps)||8);
-   const frame=Math.max(0,Math.floor(animation.video.currentTime*fps));
-   frameKey=`frame:${frame}`;
-   regions=getClickFrameRegions(node,frame);
-  }
+if(node.clickAnimationMode){
+const source=findPreviousClickMediaNode(node.id);
+let video=null;
+if(source?.type==='animation'&&animation?.nodeId===source.id){
+video=animation.video;
+}else if(source?.type==='world'&&state.previewWorldNodeId===source.id){
+const media=getClickFrameVideoMedia(source);
+if(media?.id===node.clickSourceMediaId)video=media.video;
+}
+if(!video)continue;
+const fps=Math.max(1,Number(node.clickFrameFps)||8);
+const frame=Math.max(0,Math.floor(video.currentTime*fps));
+frameKey=`frame:${frame}`;
+regions=getClickFrameRegions(node,frame);
+}
   if(!isClickTargetHit(node,world,clientX,clientY,regions))continue;
   const action=resolvePreviewClickAction(node,itemId);
   if(!action)continue;
