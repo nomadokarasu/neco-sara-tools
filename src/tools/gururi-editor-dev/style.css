@@ -1048,7 +1048,8 @@ gap:4px;
 
 /* 連番PNG：ZIP操作は見出しの下、フレーム追加は一覧の末尾 */
 .sequence-frame-list{display:contents}
-.sequence-frame-tabs [data-seq-add],.sequence-zip-row [data-seq-zip]{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}
+.sequence-frame-tabs [data-seq-add],.sequence-zip-row [data-seq-zip],.sequence-zip-row [data-seq-multiple]{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}
+.sequence-zip-row [data-seq-multiple]:disabled{opacity:.5;cursor:wait}
 .sequence-wizard-footer{justify-content:flex-end}
 
 /* Text overlay node editor and playback */

@@ -3418,7 +3418,7 @@ function openSequenceWizard(){
  const files=[null];let active=0;
  const previews=new WeakMap();
  let frame=0,playing=false,raf=0,lastTime=0,view={yaw:0,pitch:0,zoom:1};
- overlay.innerHTML=`<div class="sequence-wizard" role="dialog" aria-modal="true" aria-label="連番PNGを追加"><div class="sequence-wizard-head"><strong>アニメーション（連番PNG）</strong><button type="button" data-seq-close>×</button></div><div class="sequence-zip-row"><button type="button" data-seq-zip>＋ZIPを追加</button><input type="file" data-seq-zip-file accept=".zip,application/zip" hidden></div><label>FPS <input class="number-input" data-seq-fps type="number" min="1" max="120" step="1" value="8"></label><div class="sequence-frame-tabs"><div data-seq-tabs class="sequence-frame-list"></div><button type="button" data-seq-add>＋ フレームを追加</button></div><div class="sequence-frame-editor"><div data-seq-name>画像未選択</div><button type="button" data-seq-choose>画像を選択</button><input type="file" accept="image/png,.png" data-seq-file hidden></div><div class="sequence-preview"><canvas class="world-preview" data-seq-preview width="320" height="320"></canvas><div class="sequence-preview-controls"><button type="button" data-seq-play>▶ 再生</button><span data-seq-count>0 / 0</span></div><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div><div class="sequence-wizard-footer"><button type="button" data-seq-save>登録する</button></div></div>`;
+ overlay.innerHTML=`<div class="sequence-wizard" role="dialog" aria-modal="true" aria-label="連番PNGを追加"><div class="sequence-wizard-head"><strong>アニメーション（連番PNG）</strong><button type="button" data-seq-close>×</button></div><div class="sequence-zip-row"><button type="button" data-seq-zip>＋ZIPを追加</button><input type="file" data-seq-zip-file accept=".zip,application/zip" hidden><button type="button" data-seq-multiple>複数画像追加</button><input type="file" data-seq-multiple-file accept="image/png,.png" multiple hidden></div><label>FPS <input class="number-input" data-seq-fps type="number" min="1" max="120" step="1" value="8"></label><div class="sequence-frame-tabs"><div data-seq-tabs class="sequence-frame-list"></div><button type="button" data-seq-add>＋ フレームを追加</button></div><div class="sequence-frame-editor"><div data-seq-name>画像未選択</div><button type="button" data-seq-choose>画像を選択</button><button type="button" data-seq-delete>フレームを削除</button><input type="file" accept="image/png,.png" data-seq-file hidden></div><div class="sequence-preview"><canvas class="world-preview" data-seq-preview width="320" height="320"></canvas><div class="sequence-preview-controls"><button type="button" data-seq-play>▶ 再生</button><span data-seq-count>0 / 0</span></div><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div><div class="sequence-wizard-footer"><button type="button" data-seq-save>登録する</button></div></div>`;
 document.body.appendChild(overlay);
 const $=q=>overlay.querySelector(q),canvas=$('[data-seq-preview]');
 const sequenceEnglish=window.editorLanguage==='en';
@@ -3426,6 +3426,8 @@ if(sequenceEnglish){
 const replacements={
 'アニメーション（連番PNG）':'Animation (PNG Sequence)',
 '＋ZIPを追加':'+ Add ZIP',
+'複数画像追加':'Add Multiple Images',
+'フレームを削除':'Delete Frame',
 '＋ フレームを追加':'+ Add Frame',
 '画像未選択':'No Image Selected',
 '画像を選択':'Choose Image',
@@ -3469,18 +3471,70 @@ void draw();
 const stop=()=>{playing=false;cancelAnimationFrame(raf);$('[data-seq-play]').textContent=sequenceEnglish?'▶ Play':'▶ 再生';};
  const close=()=>{stop();overlay.remove();sequenceInsertionNodeId=null;};
  $('[data-seq-close]').addEventListener('click',close);
- $('[data-seq-tabs]').addEventListener('click',e=>{const btn=e.target.closest('[data-seq-tab]');if(!btn)return;stop();active=frame=Number(btn.dataset.seqTab);refresh();});
- $('[data-seq-add]').addEventListener('click',()=>{stop();files.push(null);active=frame=files.length-1;refresh();});
- $('[data-seq-choose]').addEventListener('click',()=>$('[data-seq-file]').click());
+$('[data-seq-tabs]').addEventListener('click',e=>{const btn=e.target.closest('[data-seq-tab]');if(!btn)return;stop();active=frame=Number(btn.dataset.seqTab);refresh();});
+$('[data-seq-add]').addEventListener('click',()=>{stop();files.push(null);active=frame=files.length-1;refresh();});
+$('[data-seq-delete]').addEventListener('click',()=>{
+stop();
+files.splice(active,1);
+if(files.length===0)files.push(null);
+active=Math.min(active,files.length-1);
+frame=active;
+drawVersion++;
+if(!files[frame]){
+const context=canvas.getContext('2d');
+context?.clearRect(0,0,canvas.width,canvas.height);
+}
+refresh();
+});
+$('[data-seq-choose]').addEventListener('click',()=>$('[data-seq-file]').click());
  $('[data-seq-file]').addEventListener('change',async e=>{
   const file=e.target.files?.[0];e.target.value='';if(!file)return;
   try{const first=files.find((f,i)=>i!==active&&f);const reference=first?await validateSequencePng(first):null;await validateSequencePng(file,reference?.naturalWidth??null,reference?.naturalHeight??null);files[active]=file;frame=active;refresh();}
   catch(error){alert('この画像は追加できません。\n'+error.message);}
  });
- $('[data-seq-zip]').addEventListener('click',()=>$('[data-seq-zip-file]').click());
- $('[data-seq-zip-file]').addEventListener('change',async e=>{
-  const file=e.target.files?.[0];e.target.value='';if(!file)return;
-  const button=$('[data-seq-zip]');button.disabled=true;
+$('[data-seq-multiple]').addEventListener('click',()=>$('[data-seq-multiple-file]').click());
+$('[data-seq-multiple-file]').addEventListener('change',async e=>{
+const selected=[...(e.target.files||[])];
+e.target.value='';
+if(!selected.length)return;
+
+const button=$('[data-seq-multiple]');
+button.disabled=true;
+
+try{
+const imported=selected.sort(naturalFrameOrder);
+const existing=files.filter(Boolean);
+let width=null;
+let height=null;
+
+if(existing.length){
+const reference=await validateSequencePng(existing[0]);
+width=reference.naturalWidth;
+height=reference.naturalHeight;
+}
+
+for(const file of imported){
+const image=await validateSequencePng(file,width,height);
+if(width===null){
+width=image.naturalWidth;
+height=image.naturalHeight;
+}
+}
+
+stop();
+files.splice(0,files.length,...existing,...imported);
+active=frame=existing.length;
+refresh();
+}catch(error){
+alert((sequenceEnglish?'Could not add images.\n':'複数画像を追加できませんでした。\n')+(sequenceEnglish?(editorTranslateValue(error.message)||error.message):error.message));
+}finally{
+button.disabled=false;
+}
+});
+$('[data-seq-zip]').addEventListener('click',()=>$('[data-seq-zip-file]').click());
+$('[data-seq-zip-file]').addEventListener('change',async e=>{
+const file=e.target.files?.[0];e.target.value='';if(!file)return;
+const button=$('[data-seq-zip]');button.disabled=true;
   try{
    if(!file.name.toLowerCase().endsWith('.zip'))throw new Error('ZIPファイルを指定してください。');
    const imported=await readSequenceZip(file);
