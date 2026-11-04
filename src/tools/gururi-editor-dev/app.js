@@ -2076,6 +2076,15 @@ function panelItemPosition(item){
 item.position ||= {x:8,y:10,w:84,h:30};
 return item.position;
 }
+function fitPanelMediaPosition(item,box){
+if(item.type!=='media')return;
+const media=mediaLibrary.find(m=>m.id===item.mediaId);
+if(!media?.width||!media?.height)return;
+if(!box.clientWidth||!box.clientHeight)return;
+const p=panelItemPosition(item);
+p.h=p.w*box.clientWidth/box.clientHeight*media.height/media.width;
+}
+
 function renderUiPanelSettings(node){
 node.panelItems ||= [];
 let selectedId=node.panelItems[0]?.id||null;
@@ -2120,13 +2129,40 @@ target.setPointerCapture(e.pointerId);e.preventDefault();
 target.addEventListener('pointermove',e=>{
 if(!drag||drag.id!==e.pointerId||!drag.w||!drag.h)return;
 const a=drag.start,dx=(e.clientX-drag.x)/drag.w*100,dy=(e.clientY-drag.y)/drag.h*100;
-if(!drag.corner){position.x=a.x+dx;position.y=a.y+dy;}
-else{
-const west=drag.corner.includes('w'),north=drag.corner.includes('n');
-if(west){position.x=Math.min(a.x+a.w-3,a.x+dx);position.w=a.x+a.w-position.x;}
-else position.w=Math.max(3,a.w+dx);
-if(north){position.y=Math.min(a.y+a.h-3,a.y+dy);position.h=a.y+a.h-position.y;}
-else position.h=Math.max(3,a.h+dy);
+if(!drag.corner){
+position.x=a.x+dx;
+position.y=a.y+dy;
+}else{
+const west=drag.corner.includes('w');
+const north=drag.corner.includes('n');
+const mediaItem=node.panelItems.find(item=>item.position===position);
+const media=mediaItem?.type==='media'?mediaLibrary.find(m=>m.id===mediaItem.mediaId):null;
+const aspect=media?.width&&media?.height?media.width/media.height:null;
+if(aspect){
+const widthFromX=west?a.w-dx:a.w+dx;
+const heightFromY=north?a.h-dy:a.h+dy;
+const widthFromY=heightFromY*drag.h/drag.w*aspect;
+const useVertical=Math.abs(e.clientY-drag.y)>Math.abs(e.clientX-drag.x);
+const newWidth=Math.max(3,useVertical?widthFromY:widthFromX);
+const newHeight=newWidth*drag.w/drag.h/aspect;
+position.w=newWidth;
+position.h=newHeight;
+position.x=west?a.x+a.w-newWidth:a.x;
+position.y=north?a.y+a.h-newHeight:a.y;
+}else{
+if(west){
+position.x=Math.min(a.x+a.w-3,a.x+dx);
+position.w=a.x+a.w-position.x;
+}else{
+position.w=Math.max(3,a.w+dx);
+}
+if(north){
+position.y=Math.min(a.y+a.h-3,a.y+dy);
+position.h=a.y+a.h-position.y;
+}else{
+position.h=Math.max(3,a.h+dy);
+}
+}
 }
 Object.assign(target.style,{left:position.x+'%',top:position.y+'%',width:position.w+'%',height:position.h+'%'});
 });
@@ -2140,6 +2176,9 @@ const handle=document.createElement('span');handle.className=`media2d-handle med
 };
 function drawPreview(){
 Object.assign(box.style,{left:layout.x+'%',top:layout.y+'%',width:layout.w+'%',height:layout.h+'%'});
+for(const item of node.panelItems){
+fitPanelMediaPosition(item,box);
+}
 box.replaceChildren();
 const x=document.createElement('span');x.className='ui-panel-editor-close';x.textContent='×';box.append(x);
 for(const item of node.panelItems){
@@ -2151,12 +2190,16 @@ element.textContent=item.text||'';
 element.style.fontSize=`${(Number(item.fontSize)||24)*editor.clientWidth/(state.displayMode==='mobile'?540:960)}px`;
 }else{
 const media=mediaLibrary.find(m=>m.id===item.mediaId);
-if(media?.fileType==='mp4'){
-const label=document.createElement('div');label.textContent='▶ '+media.fileName;element.append(label);
-}else if(media?.image){const img=document.createElement('img');img.src=media.url||media.image.src||'';img.draggable=false;element.append(img);}
-else element.textContent=media?.fileName||'素材未設定';
+const preview=createMedia2DElement(media);
+if(preview){
+element.append(preview);
+}else{
+element.textContent='素材未設定';
+}
 }
 handles(element);box.append(element);
+const previewVideo=element.querySelector('video');
+if(previewVideo)previewVideo.play().catch(()=>{});
 attachDrag(element,p,()=>{selectedId=item.id;drawList();drawPreview();});
 element.addEventListener('click',()=>{if(selectedId!==item.id){selectedId=item.id;drawList();drawPreview();}});
 }
@@ -2187,7 +2230,11 @@ fields.append(label,input,sizeLabel,size);
 }else{
 const label=document.createElement('div');label.className='setting-label';label.textContent='素材（PNG・JPG・MP4）';
 const select=document.createElement('select');select.className='number-input';select.innerHTML=media2DOptions(item.mediaId);select.value=item.mediaId||'';
-select.addEventListener('change',()=>{item.mediaId=select.value||null;drawPreview();});
+select.addEventListener('change',()=>{
+item.mediaId=select.value||null;
+fitPanelMediaPosition(item,box);
+drawPreview();
+});
 fields.append(label,select);
 }
 entry.append(fields);
