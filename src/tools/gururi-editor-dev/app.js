@@ -3481,8 +3481,12 @@ active=Math.min(active,files.length-1);
 frame=active;
 drawVersion++;
 if(!files[frame]){
-const context=canvas.getContext('2d');
-context?.clearRect(0,0,canvas.width,canvas.height);
+const renderer=panoramaRenderers.get(canvas);
+if(renderer){
+const gl=renderer.gl;
+gl.clearColor(0,0,0,1);
+gl.clear(gl.COLOR_BUFFER_BIT);
+}
 }
 refresh();
 });
