@@ -994,6 +994,21 @@ group.appendChild(label);
 group.appendChild(textarea);
 group.appendChild(counter);
 settingsPanel.appendChild(group);
+
+if(node.type==='click'){
+const previewGroup=settingsPanel.querySelector('#clickPreviewCanvas')?.closest('.setting-group');
+const frameGroup=settingsPanel.querySelector('#clickFrameRange')?.closest('.setting-group');
+const clearGroup=settingsPanel.querySelector('#clearClickLassoBtn')?.closest('.setting-group');
+const itemGroup=settingsPanel.querySelector('.click-item-branch-settings');
+const conditionGroup=settingsPanel.querySelector('#clickEnablePrimary')?.closest('.setting-group');
+const layerGroup=Array.from(settingsPanel.querySelectorAll('.setting-group')).find(el=>el.querySelector('.setting-section-heading')?.textContent==='透明レイヤー（編集画面のみ）');
+const restartGroup=settingsPanel.querySelector('#nodeExecuteOnceInput')?.closest('.setting-group')?.previousElementSibling;
+const onceGroup=settingsPanel.querySelector('#nodeExecuteOnceInput')?.closest('.setting-group');
+
+for(const section of [previewGroup,layerGroup,frameGroup,clearGroup,itemGroup,conditionGroup,group,restartGroup,onceGroup]){
+if(section)settingsPanel.appendChild(section);
+}
+}
 });
 }
 
