@@ -930,26 +930,6 @@ node.restartMode=restartMode.value;
 settingsPanel.append(restartGroup);
 }
 
-if(isPreviewOnceTarget(node)&&!settingsPanel.querySelector('#nodeExecuteOnceInput')){
-const onceGroup=document.createElement('div');
-onceGroup.className='setting-group';
-
-const onceLabel=document.createElement('label');
-const onceCheckbox=document.createElement('input');
-onceCheckbox.type='checkbox';
-onceCheckbox.id='nodeExecuteOnceInput';
-onceCheckbox.checked=node.executeOnce===true;
-
-onceLabel.append(onceCheckbox,document.createTextNode(' 一回だけ実行'));
-onceGroup.appendChild(onceLabel);
-
-onceCheckbox.addEventListener('change',()=>{
-node.executeOnce=onceCheckbox.checked;
-});
-
-settingsPanel.appendChild(onceGroup);
-}
-
 if(node.type==='dialogue'||node.type==='clickBranch')return;
 if(settingsPanel.querySelector('#nodeMemoInput'))return;
 
@@ -1002,10 +982,9 @@ const clearGroup=settingsPanel.querySelector('#clearClickLassoBtn')?.closest('.s
 const itemGroup=settingsPanel.querySelector('.click-item-branch-settings');
 const conditionGroup=settingsPanel.querySelector('#clickEnablePrimary')?.closest('.setting-group');
 const layerGroup=Array.from(settingsPanel.querySelectorAll('.setting-group')).find(el=>el.querySelector('.setting-section-heading')?.textContent==='透明レイヤー（編集画面のみ）');
-const restartGroup=settingsPanel.querySelector('#nodeExecuteOnceInput')?.closest('.setting-group')?.previousElementSibling;
-const onceGroup=settingsPanel.querySelector('#nodeExecuteOnceInput')?.closest('.setting-group');
+const restartGroup=Array.from(settingsPanel.querySelectorAll('.setting-group')).find(el=>el.textContent.includes('リスタート地点に指定する'));
 
-for(const section of [previewGroup,layerGroup,frameGroup,clearGroup,itemGroup,conditionGroup,group,restartGroup,onceGroup]){
+for(const section of [previewGroup,layerGroup,frameGroup,clearGroup,itemGroup,conditionGroup,group,restartGroup]){
 if(section)settingsPanel.appendChild(section);
 }
 }
@@ -6101,16 +6080,26 @@ function findBestPreviewClick(clientX,clientY,world,animation,itemId){
   let frameKey='static';
 if(node.clickAnimationMode){
 const source=findPreviousClickMediaNode(node.id);
-let video=null;
-if(source?.type==='animation'&&animation?.nodeId===source.id){
-video=animation.video;
+const fps=Math.max(1,Number(node.clickFrameFps)||8);
+let frame=null;
+if(source?.type==='animation'){
+const media=getClickAnimationMedia(source);
+if(!media)continue;
+const maxFrame=media.fileType==='pngseq'&&Array.isArray(media.frameImages)
+?Math.max(0,media.frameImages.length-1)
+:Math.max(0,Math.ceil((Number(media.duration)||0)*fps)-1);
+if(animation?.nodeId===source.id&&animation.video){
+frame=Math.min(maxFrame,Math.max(0,Math.floor(animation.video.currentTime*fps)));
+}else{
+frame=maxFrame;
+}
 }else if(source?.type==='world'&&state.previewWorldNodeId===source.id){
 const media=getClickFrameVideoMedia(source);
-if(media?.id===node.clickSourceMediaId)video=media.video;
+if(media?.id===node.clickSourceMediaId&&media.video){
+frame=Math.max(0,Math.floor(media.video.currentTime*fps));
 }
-if(!video)continue;
-const fps=Math.max(1,Number(node.clickFrameFps)||8);
-const frame=Math.max(0,Math.floor(video.currentTime*fps));
+}
+if(frame===null)continue;
 frameKey=`frame:${frame}`;
 regions=getClickFrameRegions(node,frame);
 }
@@ -7856,24 +7845,6 @@ let previewKeyframeBusy=false;
 const previewBranchTimers=new Set();
 const previewVisited=new Set();
 
-// 一回だけ実行するノードの実行履歴
-const previewExecutedOnceNodes=new Set();
-
-function isPreviewOnceTarget(node){
-return Boolean(node&&!['start','folderStart','worldDisplay','gameReset','gameEnd','world'].includes(node.type));
-}
-
-function isPreviewOnceCompleted(node){
-return Boolean(isPreviewOnceTarget(node)&&node.executeOnce===true&&previewExecutedOnceNodes.has(node.id));
-}
-
-function markPreviewOnceExecuted(node){
-if(isPreviewOnceTarget(node)&&node.executeOnce===true){
-previewExecutedOnceNodes.add(node.id);
-recordPreviewDiagnostic('node-execute-once',{nodeId:node.id,nodeType:node.type});
-}
-}
-
 // ゲーム中に一度でも取得したアイテム
 const acquiredItems=new Set();
 const previewCompletedTriggers=new Set();
@@ -7922,9 +7893,6 @@ function prepareExplorationBranch(nodeId){
 
 function fireExplorationTrigger(node){
 if(!canFireExplorationTrigger(node))return;
-if(isPreviewOnceCompleted(node))return;
-
-markPreviewOnceExecuted(node);
 
 if(node.triggerOnce){
 previewCompletedTriggers.add(node.id);
@@ -8018,9 +7986,8 @@ const inside=isFrameInTriggered(node,gameCanvas,view);
 const wasInside=previewFrameInInside.get(id)===true;
 previewFrameInInside.set(id,inside);
 if(!inside||wasInside)continue;
-if(isPreviewOnceCompleted(node)||!canFireExplorationTrigger(node))continue;
+if(!canFireExplorationTrigger(node))continue;
 // 接続先だけを再実行可能にし、ワールドや他の進行タイマーは維持する。
-markPreviewOnceExecuted(node);
 if(node.triggerOnce)previewCompletedTriggers.add(node.id);
 prepareExplorationBranch(id);
 for(const link of state.connections){
@@ -8048,7 +8015,6 @@ state.inventory=new Set();
 state.selectedInventoryItemId=null;
 state.inventoryEnabled=false;
 previewCompletedTriggers.clear();
-previewExecutedOnceNodes.clear();
 acquiredItems.clear();
 recordedWorldEvents.clear();usedWorldBranches.clear();toggleWorldStates.clear();
 }
@@ -8804,40 +8770,9 @@ recordPreviewDiagnostic('node-enter',{nodeId,nodeType:getNode(nodeId)?.type||'mi
 const node=getNode(nodeId);
 if(!node||gamePreview.classList.contains('hidden'))return;
 
-// 一回だけ実行したノードへの再到達を処理する
-if(isPreviewOnceCompleted(node)){
-recordPreviewDiagnostic('node-once-skipped',{nodeId:node.id,nodeType:node.type});
-
-const blockingTypes=new Set([
-'click',
-'frameIn',
-'itemUse',
-'condition',
-'random',
-'toggle',
-'textAnswer',
-'option',
-'optionChoice',
-'conditionBranch',
-'toggleBranch',
-'textAnswerBranch',
-'clickBranch'
-]);
-
-if(!blockingTypes.has(node.type)){
-previewOutgoing(node.id);
-}
-return;
-}
-
 // A branch converging on an already-active node is executed only once per scene.
 if(previewVisited.has(node.id))return;
 previewVisited.add(node.id);
-
-// 待機型トリガーは発火時に実行済みとする
-if(!['click','frameIn','itemUse'].includes(node.type)){
-markPreviewOnceExecuted(node);
-}
 
 if(node.type==='folderStart'){previewOutgoing(node.id);return;}
 if(node.type==='worldDisplay'){
@@ -9609,7 +9544,6 @@ state.lastCameraView=null;
 currentGartSaveHandle=null;
 worldComposites.clear();
 previewCompletedTriggers.clear();
-previewExecutedOnceNodes.clear();
 acquiredItems.clear();
 recordedWorldEvents.clear();
 usedWorldBranches.clear();
