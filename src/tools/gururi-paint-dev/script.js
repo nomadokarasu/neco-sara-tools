@@ -1439,7 +1439,7 @@ t("download");
 document.getElementById("previewTransparentLabel").textContent =
 currentLanguage === "en"
 ? "Transparent background"
-: "背景を透明にする";
+: "背景を透過する";
 
 shortcutSettingsButton.textContent =
 t("shortcutMenu");
@@ -1948,10 +1948,7 @@ String(isActive)
 );
 
 
-setElementText(
-".preview-header span",
-t("previewTitle")
-);
+// プレビュー見出しの自動更新は行わない
 
 
 previewCloseButton.textContent =
