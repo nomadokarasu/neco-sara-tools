@@ -1288,13 +1288,6 @@ if(clickLayerFolder?.layers?.length){
  settingsPanel.appendChild(group);
 }
 deferSelectedNodePreview(node,'clickPreviewCanvas',()=>setupClickTriggerPreview(node,sourceNode));
-const normalOnceGroup=document.createElement('div');
-normalOnceGroup.className='setting-group';
-normalOnceGroup.innerHTML=`<label><input id="clickNormalOnceInput" type="checkbox" ${node.clickNormalOnce===true?'checked':''}> 通常のクリックを一度だけ実行する</label>`;
-settingsPanel.appendChild(normalOnceGroup);
-document.getElementById('clickNormalOnceInput').addEventListener('change',e=>{
- node.clickNormalOnce=e.target.checked;
-});
 renderClickItemBranchSettings(node);
 // クリック範囲そのものの有効条件。2条件の場合のみ AND / OR を適用する。
 const enableGroup=document.createElement('div');enableGroup.className='setting-group';
