@@ -23,7 +23,7 @@ content="カメラをぐるぐる回しながらお絵描きできる無料の�
 
 <title>ぐるりペイント｜開発版</title>
 
-<link rel="stylesheet" href="./style.css?v=2.0.20-dev-touchfix1">
+<link rel="stylesheet" href="./style.css?v=2.0.21-dev-touchfix1">
 </head>
 
 <body>
@@ -1889,6 +1889,8 @@ class="preview-overlay"
 
 <div class="preview-header__main">
 
+<div class="preview-transparent-position">
+
 <div class="canvas-size-control">
 
 <label for="canvasSize">
@@ -1909,6 +1911,13 @@ selected
 </option>
 
 </select>
+
+</div>
+
+<label class="preview-transparent-option">
+<input id="previewTransparentBackground" type="checkbox">
+<span id="previewTransparentLabel">背景を透明にする</span>
+</label>
 
 </div>
 
@@ -1961,11 +1970,6 @@ id="previewCanvas"
 
 <div class="preview-footer">
 
-<label class="preview-transparent-option">
-<input id="previewTransparentBackground" type="checkbox">
-<span id="previewTransparentLabel">背景を透明にする</span>
-</label>
-
 <button
 id="previewDownloadButton"
 class="tool-button"
@@ -1982,7 +1986,7 @@ type="button"
 
 <script
 type="module"
-src="./script.js?v=2.0.20-dev"
+src="./script.js?v=2.0.21-dev"
 ></script>
 
 </body>

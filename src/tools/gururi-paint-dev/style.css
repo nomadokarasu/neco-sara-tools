@@ -1553,6 +1553,13 @@ padding:0 12px 12px;
 background:#111;
 }
 
+.preview-transparent-position {
+display:flex;
+align-items:center;
+gap:20px;
+flex-wrap:wrap;
+}
+
 .preview-transparent-option {
 display:flex;
 align-items:center;
