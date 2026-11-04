@@ -6101,16 +6101,26 @@ function findBestPreviewClick(clientX,clientY,world,animation,itemId){
   let frameKey='static';
 if(node.clickAnimationMode){
 const source=findPreviousClickMediaNode(node.id);
-let video=null;
-if(source?.type==='animation'&&animation?.nodeId===source.id){
-video=animation.video;
+const fps=Math.max(1,Number(node.clickFrameFps)||8);
+let frame=null;
+if(source?.type==='animation'){
+const media=getClickAnimationMedia(source);
+if(!media)continue;
+const maxFrame=media.fileType==='pngseq'&&Array.isArray(media.frameImages)
+?Math.max(0,media.frameImages.length-1)
+:Math.max(0,Math.ceil((Number(media.duration)||0)*fps)-1);
+if(animation?.nodeId===source.id&&animation.video){
+frame=Math.min(maxFrame,Math.max(0,Math.floor(animation.video.currentTime*fps)));
+}else{
+frame=maxFrame;
+}
 }else if(source?.type==='world'&&state.previewWorldNodeId===source.id){
 const media=getClickFrameVideoMedia(source);
-if(media?.id===node.clickSourceMediaId)video=media.video;
+if(media?.id===node.clickSourceMediaId&&media.video){
+frame=Math.max(0,Math.floor(media.video.currentTime*fps));
 }
-if(!video)continue;
-const fps=Math.max(1,Number(node.clickFrameFps)||8);
-const frame=Math.max(0,Math.floor(video.currentTime*fps));
+}
+if(frame===null)continue;
 frameKey=`frame:${frame}`;
 regions=getClickFrameRegions(node,frame);
 }
