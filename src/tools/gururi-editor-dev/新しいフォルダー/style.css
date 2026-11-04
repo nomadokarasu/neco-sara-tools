@@ -1,4 +1,3 @@
-
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f4f6;color:#202124;overflow:hidden}
 button,input{font:inherit}
@@ -7,13 +6,29 @@ button{cursor:pointer}
 .topbar{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#fff;border-bottom:1px solid #d9dde3;flex:none}
 .brand{font-weight:700}
 .top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.editor-header-menu{position:relative}
+.editor-header-menu summary{list-style:none;cursor:pointer;padding:8px 12px;border:1px solid #c7ccd3;border-radius:7px;background:#fff;font-size:13px;white-space:nowrap;user-select:none}
+.editor-header-menu summary::-webkit-details-marker{display:none}
+.editor-header-menu summary::after{content:" ▾";font-size:11px}
+.editor-header-menu[open] summary{background:#edf2f8}
+.editor-header-dropdown{position:absolute;top:calc(100% + 5px);left:0;z-index:1000;min-width:210px;padding:5px;background:#fff;border:1px solid #c7ccd3;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.editor-header-dropdown button{display:block;width:100%;padding:10px 12px;border:0;border-radius:5px;background:transparent;text-align:left;color:#202124;cursor:pointer;white-space:nowrap;font-size:13px}
+.editor-header-dropdown button:hover{background:#edf2f8}
+.editor-header-dropdown .editor-header-link{display:block;width:100%;box-sizing:border-box;padding:10px 12px;border:0;border-radius:5px;background:transparent;text-align:left;color:#202124;text-decoration:none;cursor:pointer;white-space:nowrap;font-size:13px}
+.editor-header-dropdown .editor-header-link:hover{background:#edf2f8}
+.editor-header-dropdown button:disabled{opacity:.45;cursor:default}
+.editor-header-menu-divider{height:1px;background:#e0e3e8;margin:5px}
+.editor-header-help{min-width:255px;padding:12px;font-size:12px;line-height:1.9;color:#444}
+.editor-header-help p{margin:0 0 6px;font-weight:700;color:#202124}
+.editor-header-help div{white-space:nowrap}
 .primary-btn{border:0;border-radius:7px;padding:8px 14px;background:#202124;color:#fff}
 .device-switch{display:flex;border:1px solid #c7ccd3;border-radius:7px;overflow:hidden}
 .device-btn{border:0;border-right:1px solid #c7ccd3;background:#fff;padding:7px 12px}
 .device-btn:last-child{border-right:0}
 .device-btn.active{background:#202124;color:#fff}
-.ratio-control{display:flex;align-items:center;gap:5px;font-size:12px;color:#666}
-.ratio-input{width:48px;padding:6px;border:1px solid #c7ccd3;border-radius:5px;text-align:center}
+.editor-language-switch .device-btn{cursor:pointer}
+.editor-language-switch .device-btn[aria-pressed="true"]{background:#202124;color:#fff}
+
 .main-layout{min-height:0;flex:1;display:grid;grid-template-columns:minmax(0,1fr) 320px}
 .workspace{position:relative;overflow:hidden;background-color:#f7f8fa;background-image:radial-gradient(#c9ced6 1px,transparent 1px);background-size:20px 20px;outline:none;touch-action:none}
 .workspace-scene{position:absolute;inset:0;transform-origin:0 0;pointer-events:none}
@@ -119,7 +134,7 @@ button{cursor:pointer}
 .number-input{width:100%;padding:8px 10px;border:1px solid #c7ccd3;border-radius:6px}
 .game-preview{position:absolute;inset:0;z-index:100;background:#161616;display:flex;align-items:center;justify-content:center}
 .game-viewport{position:relative;background:#000;overflow:hidden}
-.game-viewport canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.game-viewport canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .fade-overlay{position:absolute;inset:0;z-index:3;background:#000;opacity:0;pointer-events:none}
 .game-dialogue{position:absolute;left:0;right:0;bottom:0;z-index:4;height:calc(140px * var(--dialogue-scale,1));padding:calc(20px * var(--dialogue-scale,1)) calc(48px * var(--dialogue-scale,1)) calc(28px * var(--dialogue-scale,1)) calc(24px * var(--dialogue-scale,1));background:rgba(0,0,0,.76);color:#fff;border-top:1px solid rgba(255,255,255,.38);cursor:pointer;user-select:none;overflow:hidden}
 .game-dialogue-text{font-size:calc(18px * var(--dialogue-scale,1));line-height:1.8;white-space:pre-wrap;word-break:break-word}
@@ -830,9 +845,71 @@ flex-shrink:0;
  font-size:13px;
  cursor:pointer;
 }
+#mobileEquippedItemButton{
+display:none;
+}
+.mobile-equipped-item-menu{
+position:absolute;
+top:62px;
+right:8px;
+z-index:20;
+min-width:160px;
+max-width:80%;
+max-height:60%;
+overflow-y:auto;
+flex-direction:column;
+gap:2px;
+padding:5px;
+background:#202530;
+border:1px solid #758095;
+border-radius:7px;
+box-sizing:border-box;
+overscroll-behavior:contain;
+touch-action:pan-y;
+}
+.mobile-equipped-item-menu button{
+display:block;
+width:100%;
+padding:11px 14px;
+border:0;
+border-radius:4px;
+background:transparent;
+color:#fff;
+text-align:left;
+font-size:14px;
+cursor:pointer;
+}
+.mobile-equipped-item-menu button.active{
+background:#414b5a;
+}
+@media(pointer:coarse){
+.equipped-item-label select{
+display:none;
+}
+#mobileEquippedItemButton{
+display:block;
+min-width:78px;
+max-width:40vw;
+height:30px;
+padding:3px 8px;
+background:#fff;
+color:#202530;
+border:1px solid #758095;
+border-radius:5px;
+font-size:13px;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+cursor:pointer;
+}
+}
 @media(max-width:480px){
- .equipped-item-label{right:8px;max-width:calc(100% - 16px);padding:0 7px;gap:4px}
- .equipped-item-label select{max-width:40vw;font-size:12px}
+.equipped-item-label{
+right:8px;
+max-width:calc(100% - 16px);
+padding:0 7px;
+gap:4px;
+}
 }
 
 /* World folders v2 */
@@ -988,7 +1065,8 @@ flex-shrink:0;
 
 /* 連番PNG：ZIP操作は見出しの下、フレーム追加は一覧の末尾 */
 .sequence-frame-list{display:contents}
-.sequence-frame-tabs [data-seq-add],.sequence-zip-row [data-seq-zip]{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}
+.sequence-frame-tabs [data-seq-add],.sequence-zip-row [data-seq-zip],.sequence-zip-row [data-seq-multiple]{border:1px solid #cbd0d8;background:#fff;border-radius:6px;padding:9px 12px;cursor:pointer}
+.sequence-zip-row [data-seq-multiple]:disabled{opacity:.5;cursor:wait}
 .sequence-wizard-footer{justify-content:flex-end}
 
 /* Text overlay node editor and playback */

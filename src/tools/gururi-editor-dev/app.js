@@ -470,6 +470,11 @@ textAnswerQuestion:'',
 textAnswerCorrect:'',
 textAnswerMode:'text',
 textBoxes:[],
+panelItems:[],
+panelLayouts:{pc:{x:20,y:20,w:60,h:60},mobile:{x:8,y:20,w:84,h:55}},
+panelColor:'#202124',
+panelOpacity:90,
+panelSeconds:0,
 uiButtonText:'ボタン',
 uiButtonWidth:180,
 uiButtonHeight:56,
@@ -631,6 +636,7 @@ node.type==='dialogue'?'ダイアローグ':
 node.type==='uiButton'?'ボタン':
 node.type==='option'?'オプション':
 node.type==='textAnswer'?'クイズ':
+node.type==='uiPanel'?'パネル':
 node.type==='textOverlay'?'テキスト':
 node.type==='condition'?'条件':
 node.type==='random'?'ランダム':
@@ -668,6 +674,7 @@ node.type==='dialogue'?`${node.dialoguePages.length} ページ`:
 node.type==='uiButton'?(node.uiButtonText||'ボタン'):
 node.type==='option'?'質問文と選択肢':
 node.type==='textAnswer'?'入力した回答を判定':
+node.type==='uiPanel'?`${(node.panelItems||[]).length} 要素`:
 node.type==='textOverlay'?`${(node.textBoxes||[]).length} テキスト`:
 node.type==='toggle'?(node.toggleName||'実行ごとにON／OFF切り替え'):
 node.type==='toggleSet'?((getNode(node.toggleSetTargetId)?.toggleName||'対象未設定')+'：'+(node.toggleSetAction==='on'?'ON':node.toggleSetAction==='off'?'OFF':'反転')):
@@ -1173,6 +1180,7 @@ return;
 }
 if(node.type==='option'){renderOptionSettings(node);return;}
 if(node.type==='textAnswer'){renderTextAnswerSettings(node);return;}
+if(node.type==='uiPanel'){renderUiPanelSettings(node);return;}
 if(node.type==='textOverlay'){renderTextOverlaySettings(node);return;}
 if(node.type==='random'){
 const count=state.connections.filter(c=>c.from===node.id).length;
@@ -2059,6 +2067,176 @@ if(el.tagName==='VIDEO')el.play().catch(error=>console.warn('2D動画を再生�
 return wrap;
 }
 
+function panelLayout(node,mode=state.displayMode){
+node.panelLayouts ||= {pc:{x:20,y:20,w:60,h:60},mobile:{x:8,y:20,w:84,h:55}};
+node.panelLayouts[mode] ||= mode==='mobile'?{x:8,y:20,w:84,h:55}:{x:20,y:20,w:60,h:60};
+return node.panelLayouts[mode];
+}
+function panelItemPosition(item){
+item.position ||= {x:8,y:10,w:84,h:30};
+return item.position;
+}
+function renderUiPanelSettings(node){
+node.panelItems ||= [];
+let selectedId=node.panelItems[0]?.id||null;
+const screen=getActiveLayout();
+settingsPanel.innerHTML=`<div class="settings-title">パネル</div>
+<div class="setting-group"><label class="setting-label">表示時間： <input id="uiPanelSeconds" class="number-input" type="number" min="0" step="0.1" style="width:90px" value="${Math.max(0,Number(node.panelSeconds)||0)}"> 秒</label></div>
+<div class="setting-group"><label class="setting-label">パネルの色 <input id="uiPanelColor" type="color" value="${/^#[0-9a-f]{6}$/i.test(node.panelColor||'')?node.panelColor:'#202124'}"></label></div>
+<div class="setting-group"><label class="setting-label">透明度 <input id="uiPanelOpacity" type="range" min="0" max="100" value="${Math.max(0,Math.min(100,Number(node.panelOpacity??90)))}"> <span id="uiPanelOpacityLabel"></span></label></div>
+<div class="setting-group"><div class="setting-label">配置（${state.displayMode==='mobile'?'スマホ':'PC'}）</div><div id="uiPanelEditor" class="media2d-editor" style="aspect-ratio:${screen.width}/${screen.height}"><canvas id="uiPanelBackground"></canvas><div id="uiPanelEditorBox"></div></div><div class="pan-help">パネル：ドラッグで移動、四隅でサイズ変更。要素もドラッグして配置できます。</div></div>
+<div class="setting-group"><div class="setting-label">要素一覧</div><div id="uiPanelItemsList"></div><button type="button" class="add-world-btn" id="uiPanelAddText">＋ テキストを追加</button><button type="button" class="add-world-btn" id="uiPanelAddMedia">＋ 2Dメディアを追加</button></div>`;
+const $=id=>document.getElementById(id);
+const editor=$('uiPanelEditor'),box=$('uiPanelEditorBox'),list=$('uiPanelItemsList');
+const layout=panelLayout(node);
+const previous=findPreviousClickMediaNode(node.id);
+const source=previous?.type==='world'?previous.world.image:previous?.type==='animation'?mediaLibrary.find(m=>m.id===previous.animation.mediaId)?.video:null;
+if(source){
+const view=getMediaCameraBase(previous);
+const background=$('uiPanelBackground');
+const draw=()=>{if(background.isConnected)drawPanoramaPreview(background,{image:source,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom});};
+requestAnimationFrame(draw);
+if(source.tagName==='VIDEO')source.addEventListener('loadeddata',draw,{once:true});
+}
+const opacity=$('uiPanelOpacity'),opacityLabel=$('uiPanelOpacityLabel');
+const updateColor=()=>{
+box.style.backgroundColor=node.panelColor||'#202124';
+box.style.backgroundColor=panelColorRgba(node);
+opacityLabel.textContent=`${opacity.value}%`;
+};
+$('uiPanelColor').addEventListener('input',e=>{node.panelColor=e.target.value;updateColor();});
+opacity.addEventListener('input',e=>{node.panelOpacity=Number(e.target.value);updateColor();});
+$('uiPanelSeconds').addEventListener('change',e=>{node.panelSeconds=Math.max(0,Number(e.target.value)||0);e.target.value=node.panelSeconds;});
+const attachDrag=(target,position,onEnd)=>{
+let drag=null;
+target.addEventListener('pointerdown',e=>{
+if(e.button!==0)return;
+e.stopPropagation();
+const corner=e.target.dataset.corner||null;
+const rect=(target===box?editor:box).getBoundingClientRect();
+drag={id:e.pointerId,corner,x:e.clientX,y:e.clientY,start:{...position},w:rect.width,h:rect.height};
+target.setPointerCapture(e.pointerId);e.preventDefault();
+});
+target.addEventListener('pointermove',e=>{
+if(!drag||drag.id!==e.pointerId||!drag.w||!drag.h)return;
+const a=drag.start,dx=(e.clientX-drag.x)/drag.w*100,dy=(e.clientY-drag.y)/drag.h*100;
+if(!drag.corner){position.x=a.x+dx;position.y=a.y+dy;}
+else{
+const west=drag.corner.includes('w'),north=drag.corner.includes('n');
+if(west){position.x=Math.min(a.x+a.w-3,a.x+dx);position.w=a.x+a.w-position.x;}
+else position.w=Math.max(3,a.w+dx);
+if(north){position.y=Math.min(a.y+a.h-3,a.y+dy);position.h=a.y+a.h-position.y;}
+else position.h=Math.max(3,a.h+dy);
+}
+Object.assign(target.style,{left:position.x+'%',top:position.y+'%',width:position.w+'%',height:position.h+'%'});
+});
+const end=e=>{if(drag?.id!==e.pointerId)return;drag=null;onEnd?.();};
+target.addEventListener('pointerup',end);target.addEventListener('pointercancel',end);
+};
+const handles=target=>{
+for(const corner of ['nw','ne','sw','se']){
+const handle=document.createElement('span');handle.className=`media2d-handle media2d-handle-${corner}`;handle.dataset.corner=corner;target.appendChild(handle);
+}
+};
+function drawPreview(){
+Object.assign(box.style,{left:layout.x+'%',top:layout.y+'%',width:layout.w+'%',height:layout.h+'%'});
+box.replaceChildren();
+const x=document.createElement('span');x.className='ui-panel-editor-close';x.textContent='×';box.append(x);
+for(const item of node.panelItems){
+const p=panelItemPosition(item),element=document.createElement('div');
+element.className='ui-panel-editor-item'+(item.id===selectedId?' selected':'');
+Object.assign(element.style,{left:p.x+'%',top:p.y+'%',width:p.w+'%',height:p.h+'%'});
+if(item.type==='text'){
+element.textContent=item.text||'';
+element.style.fontSize=`${(Number(item.fontSize)||24)*editor.clientWidth/(state.displayMode==='mobile'?540:960)}px`;
+}else{
+const media=mediaLibrary.find(m=>m.id===item.mediaId);
+if(media?.fileType==='mp4'){
+const label=document.createElement('div');label.textContent='▶ '+media.fileName;element.append(label);
+}else if(media?.image){const img=document.createElement('img');img.src=media.url||media.image.src||'';img.draggable=false;element.append(img);}
+else element.textContent=media?.fileName||'素材未設定';
+}
+handles(element);box.append(element);
+attachDrag(element,p,()=>{selectedId=item.id;drawList();drawPreview();});
+element.addEventListener('click',()=>{if(selectedId!==item.id){selectedId=item.id;drawList();drawPreview();}});
+}
+handles(box);
+updateColor();
+}
+attachDrag(box,layout,drawPreview);
+function drawList(){
+list.replaceChildren();
+for(const [index,item] of node.panelItems.entries()){
+const entry=document.createElement('div');entry.className='text-overlay-list-entry';
+const row=document.createElement('div');row.className='text-overlay-list-row';
+const pick=document.createElement('button');pick.type='button';pick.textContent=`${item.id===selectedId?'▼':'▶'} ${item.type==='text'?'テキスト':'2Dメディア'}${index+1}`;
+pick.addEventListener('click',()=>{selectedId=selectedId===item.id?null:item.id;drawList();drawPreview();});
+const remove=document.createElement('button');remove.type='button';remove.textContent='削除';
+remove.addEventListener('click',()=>{node.panelItems=node.panelItems.filter(i=>i.id!==item.id);if(selectedId===item.id)selectedId=node.panelItems[0]?.id||null;drawList();drawPreview();});
+row.append(pick,remove);entry.append(row);
+if(item.id===selectedId){
+const fields=document.createElement('div');fields.className='text-overlay-inline-properties';
+if(item.type==='text'){
+const label=document.createElement('div');label.className='setting-label';label.textContent='テキスト内容';
+const input=document.createElement('textarea');input.className='dialogue-textarea';input.rows=3;input.value=item.text||'';
+input.addEventListener('input',()=>{item.text=input.value;drawPreview();});
+const sizeLabel=document.createElement('div');sizeLabel.className='setting-label';sizeLabel.textContent='フォントサイズ（px）';
+const size=document.createElement('input');size.type='number';size.className='number-input';size.min='8';size.max='200';size.value=item.fontSize||24;
+size.addEventListener('input',()=>{item.fontSize=Math.max(8,Math.min(200,Number(size.value)||24));drawPreview();});
+fields.append(label,input,sizeLabel,size);
+}else{
+const label=document.createElement('div');label.className='setting-label';label.textContent='素材（PNG・JPG・MP4）';
+const select=document.createElement('select');select.className='number-input';select.innerHTML=media2DOptions(item.mediaId);select.value=item.mediaId||'';
+select.addEventListener('change',()=>{item.mediaId=select.value||null;drawPreview();});
+fields.append(label,select);
+}
+entry.append(fields);
+}
+list.append(entry);
+}
+}
+$('uiPanelAddText').addEventListener('click',()=>{const item={id:uid('panelText'),type:'text',text:'テキスト',fontSize:24,position:{x:8,y:15,w:84,h:25}};node.panelItems.push(item);selectedId=item.id;drawList();drawPreview();});
+$('uiPanelAddMedia').addEventListener('click',()=>{const item={id:uid('panelMedia'),type:'media',mediaId:null,position:{x:8,y:15,w:84,h:65}};node.panelItems.push(item);selectedId=item.id;drawList();drawPreview();});
+drawList();requestAnimationFrame(()=>{if(editor.isConnected)drawPreview();});
+}
+function panelColorRgba(node){
+const color=/^#[0-9a-f]{6}$/i.test(node.panelColor||'')?node.panelColor:'#202124';
+const r=parseInt(color.slice(1,3),16),g=parseInt(color.slice(3,5),16),b=parseInt(color.slice(5,7),16);
+return `rgba(${r},${g},${b},${Math.max(0,Math.min(100,Number(node.panelOpacity??90)))/100})`;
+}
+function showUiPanel(node){
+for(const existing of media2DLayer.querySelectorAll('.game-ui-panel')){
+if(existing.dataset.nodeId===node.id)existing.remove();
+}
+const p=panelLayout(node);
+const panel=document.createElement('div');panel.className='game-ui-panel';panel.dataset.nodeId=node.id;
+Object.assign(panel.style,{left:p.x+'%',top:p.y+'%',width:p.w+'%',height:p.h+'%',backgroundColor:panelColorRgba(node)});
+const close=document.createElement('button');close.type='button';close.className='game-ui-panel-close';close.textContent='×';close.setAttribute('aria-label','閉じる');
+const hide=()=>{
+for(const video of panel.querySelectorAll('video')){video.pause();video.removeAttribute('src');video.load();}
+panel.remove();
+};
+close.addEventListener('pointerdown',e=>e.stopPropagation());
+close.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();hide();});
+panel.append(close);
+panel.addEventListener('pointerdown',e=>e.stopPropagation());
+panel.addEventListener('click',e=>e.stopPropagation());
+for(const item of node.panelItems||[]){
+const pos=panelItemPosition(item),el=document.createElement('div');el.className='game-ui-panel-item';
+Object.assign(el.style,{left:pos.x+'%',top:pos.y+'%',width:pos.w+'%',height:pos.h+'%'});
+if(item.type==='text'){el.textContent=item.text||'';el.classList.add('game-ui-panel-text');el.style.fontSize=`${Math.max(8,Number(item.fontSize)||24)}px`;}
+else if(item.type==='media'){
+const media=mediaLibrary.find(m=>m.id===item.mediaId);
+const view=createMedia2DElement(media);
+if(view){el.append(view);if(view.tagName==='VIDEO')view.play().catch(()=>{});}
+}
+panel.append(el);
+}
+media2DLayer.append(panel);
+const seconds=Math.max(0,Number(node.panelSeconds)||0);
+if(seconds>0)schedulePreviewBranch(seconds,hide);
+return panel;
+}
 // Frame-in: target is sphere-anchored; frame is viewport-anchored.
 function frameInCopy(regions){return regions.map(r=>({mode:r.mode,points:r.points.map(p=>({...p}))}));}
 function frameInHistory(node){
@@ -8698,6 +8876,11 @@ previewKeyframeBusy=false;
 recordPreviewDiagnostic('keyframe-end',{nodeId:node.id,duration});
 previewOutgoing(node.id);
 });
+return;
+}
+if(node.type==='uiPanel'){
+showUiPanel(node);
+previewOutgoing(node.id);
 return;
 }
 if(node.type==='textOverlay'){

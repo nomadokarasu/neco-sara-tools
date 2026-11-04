@@ -1,4 +1,3 @@
-
 // Preview diagnostic recorder: bounded in-memory events, exported only on user click.
 const previewDiagnosticEvents=[];
 const previewDiagnosticErrors=[];
@@ -173,8 +172,6 @@ const gameViewport=document.getElementById('gameViewport');
 const media2DLayer=document.getElementById('media2DLayer');
 const pcModeBtn=document.getElementById('pcModeBtn');
 const mobileModeBtn=document.getElementById('mobileModeBtn');
-const ratioWidthInput=document.getElementById('ratioWidthInput');
-const ratioHeightInput=document.getElementById('ratioHeightInput');
 
 const state={
 nodes:[],
@@ -219,7 +216,9 @@ mobile:{width:9,height:16}
 function uid(prefix){return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`}
 
 function getActiveLayout(){
-return state.layouts[state.displayMode];
+return state.displayMode==='mobile'
+?{width:9,height:16}
+:{width:16,height:9};
 }
 
 function applyGameAspectRatio(){
@@ -228,11 +227,6 @@ document.documentElement.style.setProperty('--game-aspect',`${layout.width} / ${
 }
 
 function updateLayoutControls(){
-const layout=getActiveLayout();
-
-ratioWidthInput.value=layout.width;
-ratioHeightInput.value=layout.height;
-
 pcModeBtn.classList.toggle('active',state.displayMode==='pc');
 mobileModeBtn.classList.toggle('active',state.displayMode==='mobile');
 
@@ -257,31 +251,6 @@ state.displayMode=mode;
 updateLayoutControls();
 }
 
-function updateActiveLayout(){
-const width=Math.max(1,Math.min(100,Number(ratioWidthInput.value)||1));
-const height=Math.max(1,Math.min(100,Number(ratioHeightInput.value)||1));
-
-state.layouts[state.displayMode].width=width;
-state.layouts[state.displayMode].height=height;
-
-ratioWidthInput.value=width;
-ratioHeightInput.value=height;
-
-applyGameAspectRatio();
-
-if(state.selectedNodeId){
-renderSettings();
-}
-
-if(!gamePreview.classList.contains('hidden')){
-resizeGameCanvas();
-const worldNode=getNode(state.previewWorldNodeId);
-if(worldNode?.type==='world'){
-drawPanoramaPreview(gameCanvas,worldNode.world);
-}
-}
-}
-
 pcModeBtn.addEventListener('click',()=>{
 setDisplayMode('pc');
 });
@@ -289,9 +258,6 @@ setDisplayMode('pc');
 mobileModeBtn.addEventListener('click',()=>{
 setDisplayMode('mobile');
 });
-
-ratioWidthInput.addEventListener('change',updateActiveLayout);
-ratioHeightInput.addEventListener('change',updateActiveLayout);
 
 window.addEventListener('keydown',e=>{
 const target=e.target;
@@ -557,6 +523,7 @@ panView:{yaw:0,pitch:0,zoom:1,initialized:false},
 panUndoStack:[],
 panRedoStack:[],
 media2DId:null,
+media2DDuration:3,
 media2DLayouts:{pc:{x:30,y:25,w:40,h:40},mobile:{x:15,y:30,w:70,h:30}}
 };
 node.folderId=state.activeFolderId;
@@ -654,6 +621,7 @@ node.type==='worldDisplay'?'ワールド表示':
 node.type==='worldMove'?'ワールド移動':
 node.type==='eventRecord'?'イベント記録':
 node.type==='gameReset'?'リセット':
+node.type==='gameEnd'?'ゲーム終了':
 node.type==='start'?'START':
 node.type==='media'||node.type==='world'||node.type==='animation'?'メディア':
 node.type==='time'?'時間':
@@ -688,7 +656,8 @@ node.type==='folderStart'?'ワールド開始':
 node.type==='worldDisplay'?'探索を開始する':
 node.type==='worldMove'?(state.worldFolders.find(w=>w.id===node.destinationFolderId)?.name||'移動先未設定'):
 node.type==='eventRecord'?(node.eventName||'イベント未設定'):
-node.type==='gameReset'?'ワールド1からやり直す':
+node.type==='gameReset'?`フェードアウト ${Math.max(0,Number(node.resetFadeSeconds)||0)} 秒 → リスタート`:
+node.type==='gameEnd'?'ゲームを終了してトップページに戻る':
 node.type==='media'?'素材を選択してください':
 node.type==='world'?(node.world.fileName||'素材未設定'):
 node.type==='animation'?(node.animation.fileName||'素材未設定'):
@@ -717,7 +686,7 @@ node.type==='fadeIn'||node.type==='fadeOut'?`${node.effectSeconds} 秒`:
 node.type==='pan'?`${node.panSeconds} 秒`:
 node.type==='keyframe'?'カメラワーク':
 '開始';
-el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div>${node.type==='gameReset'?'':'<div class="port output" data-port="output"></div>'}`;
+el.innerHTML=`<div class="port input" data-port="input"></div><div class="node-header">${title}</div><div class="node-body" title="ダブルクリックで文章を編集"></div>${node.type==='gameReset'||node.type==='gameEnd'?'':'<div class="port output" data-port="output"></div>'}`;
 
 const bodyEl=el.querySelector('.node-body');
 bodyEl.textContent=node.customBody===undefined?body:node.customBody;
@@ -918,6 +887,42 @@ if(node){
 queueMicrotask(()=>{
 if(state.selectedNodeId!==node.id)return;
 
+if(!['folderStart','worldDisplay','world','start','gameReset','gameEnd'].includes(node.type)){
+const restartGroup=document.createElement('div');
+restartGroup.className='setting-group';
+
+const restartLabel=document.createElement('label');
+const restartCheckbox=document.createElement('input');
+restartCheckbox.type='checkbox';
+restartCheckbox.checked=node.restartPoint===true;
+restartLabel.append(restartCheckbox,document.createTextNode(' リスタート地点に指定する'));
+restartGroup.append(restartLabel);
+
+const restartMode=document.createElement('select');
+restartMode.className='number-input';
+restartMode.add(new Option('このノードから実行','before'));
+restartMode.add(new Option('このノードの次から実行','after'));
+restartMode.value=node.restartMode==='before'?'before':'after';
+restartMode.style.display=restartCheckbox.checked?'':'none';
+restartGroup.append(restartMode);
+
+restartCheckbox.addEventListener('change',()=>{
+if(restartCheckbox.checked){
+for(const other of state.nodes)other.restartPoint=false;
+node.restartPoint=true;
+}else{
+node.restartPoint=false;
+}
+restartMode.style.display=restartCheckbox.checked?'':'none';
+});
+
+restartMode.addEventListener('change',()=>{
+node.restartMode=restartMode.value;
+});
+
+settingsPanel.append(restartGroup);
+}
+
 if(isPreviewOnceTarget(node)&&!settingsPanel.querySelector('#nodeExecuteOnceInput')){
 const onceGroup=document.createElement('div');
 onceGroup.className='setting-group';
@@ -1002,8 +1007,9 @@ if(node.type==='uiButton'){
  <div class="ui-button-position-preview" id="uiButtonPositionPreview"><button id="uiButtonPositionTarget" type="button"></button></div>
  <div class="pan-help">ボタンをドラッグして位置を変更します。PCとスマホの位置は別々に保存されます。</div></div>
  <p class="settings-empty">ゲーム画面でボタンを押すと、接続先のノードへ進みます。</p>`;
- const preview=settingsPanel.querySelector('#uiButtonPositionPreview');
- const target=settingsPanel.querySelector('#uiButtonPositionTarget');
+renderSharedVisibilitySettings(settingsPanel,node,'このボタンをいつ表示しますか？');
+const preview=settingsPanel.querySelector('#uiButtonPositionPreview');
+const target=settingsPanel.querySelector('#uiButtonPositionTarget');
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
  const redraw=()=>{
   preview.classList.toggle('mobile',buttonEditorMode==='mobile');
@@ -1057,7 +1063,20 @@ if(node.type==='worldMove'){
  return;
 }
 if(node.type==='gameReset'){
- settingsPanel.innerHTML='<div class="settings-title">リセット</div><p class="settings-empty">ゲームの進行状況、取得したアイテム、トグル、イベントの記録をすべて初期化し、ワールド1のSTARTからやり直します。出力接続はありません。</p>';
+settingsPanel.innerHTML=`<div class="settings-title">リセット</div>
+<div class="setting-group">
+<div class="setting-label">フェードアウト時間（秒）</div>
+<input id="resetFadeSecondsInput" class="number-input" type="number" min="0" step="0.1" value="${Math.max(0,Number(node.resetFadeSeconds)||0)}">
+</div>
+<p class="settings-empty">指定した時間で画面を暗転させた後、ゲームの進行状況、アイテム、トグル、イベントを初期化してリスタートします。</p>`;
+document.getElementById('resetFadeSecondsInput').addEventListener('change',e=>{
+node.resetFadeSeconds=Math.max(0,Number(e.target.value)||0);
+renderNodes();
+});
+return;
+}
+if(node.type==='gameEnd'){
+ settingsPanel.innerHTML='<div class="settings-title">ゲーム終了</div><p class="settings-empty">このノードを実行するとゲームを終了し、書き出した作品ではトップページに戻ります。エディタ内ではプレビューを閉じます。出力接続はありません。</p>';
  return;
 }
 if(node.type==='eventRecord'){
@@ -1187,14 +1206,15 @@ return;
 }
 
 const isAnimation=sourceNode.type==='animation';
-const media=isAnimation?getClickAnimationMedia(sourceNode):null;
+const media=getClickFrameVideoMedia(sourceNode);
+const isFrameVideo=Boolean(media);
 
 if(isAnimation&&!media){
 settingsPanel.innerHTML='<div class="settings-title">クリック</div><div class="settings-empty">アニメーションノードにMP4を設定してください。</div>';
 return;
 }
 
-if(isAnimation){
+if(isFrameVideo){
 if(!node.clickAnimationMode||node.clickSourceMediaId!==media.id){
 node.clickAnimationMode=true;
 node.clickSourceMediaId=media.id;
@@ -1216,7 +1236,7 @@ node.clickFrameFps=8;
 node.clickAnimationMode=false;
 }
 
-const frameCount=isAnimation
+const frameCount=isFrameVideo
 ?Math.max(1,Math.ceil(media.duration*node.clickFrameFps))
 :1;
 
@@ -1226,11 +1246,11 @@ node.clickFrameIndex||0,
 frameCount-1
 );
 
-const frameControls=isAnimation
+const frameControls=isFrameVideo
 ?`<div class="setting-group"><div class="setting-label">コマ送り</div><div class="click-frame-controls"><button id="clickPreviousFrameBtn" type="button">◀ 前</button><span id="clickFrameLabel">${node.clickFrameIndex+1} / ${frameCount}</span><button id="clickNextFrameBtn" type="button">次 ▶</button></div><input id="clickFrameRange" type="range" min="0" max="${frameCount-1}" step="1" value="${node.clickFrameIndex}" style="width:100%"><div id="clickFrameTimeLabel" class="settings-empty"></div></div>`
 :'';
 
-const inheritControl=isAnimation
+const inheritControl=isFrameVideo
 ?`<label class="click-inherit-control"><input id="clickInheritRegionsInput" type="checkbox" ${node.clickInheritRegions!==false?'checked':''}> 選択範囲を継承</label>`
 :'';
 
@@ -1268,13 +1288,6 @@ if(clickLayerFolder?.layers?.length){
  settingsPanel.appendChild(group);
 }
 deferSelectedNodePreview(node,'clickPreviewCanvas',()=>setupClickTriggerPreview(node,sourceNode));
-const normalOnceGroup=document.createElement('div');
-normalOnceGroup.className='setting-group';
-normalOnceGroup.innerHTML=`<label><input id="clickNormalOnceInput" type="checkbox" ${node.clickNormalOnce===true?'checked':''}> 通常のクリックを一度だけ実行する</label>`;
-settingsPanel.appendChild(normalOnceGroup);
-document.getElementById('clickNormalOnceInput').addEventListener('change',e=>{
- node.clickNormalOnce=e.target.checked;
-});
 renderClickItemBranchSettings(node);
 // クリック範囲そのものの有効条件。2条件の場合のみ AND / OR を適用する。
 const enableGroup=document.createElement('div');enableGroup.className='setting-group';
@@ -1682,21 +1695,25 @@ function refreshInventory(){
  const equippedItem=state.inventory.has(state.selectedInventoryItemId)
   ?getInventoryItem(state.selectedInventoryItemId):null;
  if(!equippedItem&&state.selectedInventoryItemId!==null)state.selectedInventoryItemId=null;
- const ids=[...state.inventory].filter(id=>getInventoryItem(id));
- equippedItemSelect.replaceChildren();
- const noneOption=document.createElement('option');
- noneOption.value='';noneOption.textContent='なし';
- equippedItemSelect.append(noneOption);
- for(const id of ids){
+const ids=[...state.inventory].filter(id=>getInventoryItem(id));
+equippedItemSelect.replaceChildren();
+const noneOption=document.createElement('option');
+noneOption.value='';
+noneOption.textContent=window.editorLanguage==='en'?'None':'なし';
+equippedItemSelect.append(noneOption);
+for(const id of ids){
   const item=getInventoryItem(id);
   const option=document.createElement('option');
   option.value=id;
   option.textContent=itemDisplayName(item);
   equippedItemSelect.append(option);
  }
- equippedItemSelect.value=equippedItem?.id||'';
- equippedItemLabel.classList.remove('hidden');
- inventoryOverlay.replaceChildren();
+equippedItemSelect.value=equippedItem?.id||'';
+const hasItemNodes=state.nodes.some(n=>n.type==='itemAcquire');
+equippedItemLabel.classList.toggle('hidden',!hasItemNodes);
+if(!hasItemNodes)closeMobileEquippedItemMenu();
+refreshMobileEquippedItemMenu();
+inventoryOverlay.replaceChildren();
  const header=document.createElement('div');header.className='inventory-header';header.textContent='アイテム一覧';
  const close=document.createElement('button');close.textContent='×';close.type='button';close.addEventListener('click',()=>inventoryOverlay.classList.add('hidden'));header.append(close);
  inventoryOverlay.append(header);
@@ -1725,10 +1742,78 @@ function refreshInventory(){
  inventoryOverlay.append(details);
 }
 
+const mobileEquippedItemButton=document.getElementById('mobileEquippedItemButton');
+const mobileEquippedItemMenu=document.getElementById('mobileEquippedItemMenu');
+
+function closeMobileEquippedItemMenu(){
+mobileEquippedItemMenu.style.display='none';
+mobileEquippedItemButton.setAttribute('aria-expanded','false');
+}
+
+function refreshMobileEquippedItemMenu(){
+const selected=getInventoryItem(state.selectedInventoryItemId);
+const noneText=window.editorLanguage==='en'?'None':'なし';
+mobileEquippedItemButton.textContent=selected?itemDisplayName(selected):noneText;
+mobileEquippedItemMenu.replaceChildren();
+
+const ids=['',...[...state.inventory].filter(id=>getInventoryItem(id))];
+
+for(const id of ids){
+const item=id?getInventoryItem(id):null;
+const button=document.createElement('button');
+button.type='button';
+button.textContent=item?itemDisplayName(item):noneText;
+button.classList.toggle('active',state.selectedInventoryItemId===(id||null));
+button.addEventListener('click',event=>{
+event.preventDefault();
+event.stopPropagation();
+state.selectedInventoryItemId=id||null;
+closeMobileEquippedItemMenu();
+refreshInventory();
+});
+mobileEquippedItemMenu.append(button);
+}
+}
+
+function updateEquippedItemLanguage(){
+const english=window.editorLanguage==='en';
+const label=equippedItemLabel.querySelector('span');
+if(label){
+label.textContent=english?'Equipped Item:':'装備中のアイテム：';
+}
+equippedItemSelect.setAttribute('aria-label',english?'Select Equipped Item':'装備中のアイテムを選択');
+mobileEquippedItemButton.setAttribute('aria-label',english?'Choose Item to Equip':'装備するアイテムを選択');
+
+const noneOption=equippedItemSelect.querySelector('option[value=""]');
+if(noneOption){
+noneOption.textContent=english?'None':'なし';
+}
+refreshMobileEquippedItemMenu();
+}
+
+window.addEventListener('gururi-language-change',updateEquippedItemLanguage);
+updateEquippedItemLanguage();
+
+mobileEquippedItemButton.addEventListener('click',event=>{
+event.preventDefault();
+event.stopPropagation();
+refreshMobileEquippedItemMenu();
+const opening=mobileEquippedItemMenu.style.display==='none';
+mobileEquippedItemMenu.style.display=opening?'flex':'none';
+mobileEquippedItemButton.setAttribute('aria-expanded',String(opening));
+});
+
+document.addEventListener('pointerdown',event=>{
+if(mobileEquippedItemMenu.style.display==='none')return;
+if(mobileEquippedItemButton.contains(event.target))return;
+if(mobileEquippedItemMenu.contains(event.target))return;
+closeMobileEquippedItemMenu();
+});
+
 equippedItemSelect.addEventListener('change',()=>{
- const id=equippedItemSelect.value;
- state.selectedInventoryItemId=id&&state.inventory.has(id)&&getInventoryItem(id)?id:null;
- refreshInventory();
+const id=equippedItemSelect.value;
+state.selectedInventoryItemId=id&&state.inventory.has(id)&&getInventoryItem(id)?id:null;
+refreshInventory();
 });
 
 inventoryButton.addEventListener('click',()=>{
@@ -1769,7 +1854,12 @@ function renderMedia2DNodeSettings(node){
 const media=mediaLibrary.find(m=>m.id===node.media2DId);
 settingsPanel.innerHTML=`<div class="settings-title">2Dメディア</div>
 <div class="setting-group"><div class="setting-label">素材（PNG・JPG・MP4）</div><select id="media2DSelect" class="number-input">${media2DOptions(node.media2DId)}</select></div>
+<div class="setting-group"><div class="setting-label">表示時間（秒）</div><input id="media2DDurationInput" class="number-input" type="number" min="0" step="0.1" value="${Math.max(0,Number(node.media2DDuration??3)||0)}"></div>
 <div class="setting-group"><div class="setting-label">配置（${state.displayMode==='pc'?'PC':'スマホ'}）</div><div id="media2DEditor" class="media2d-editor"><canvas id="media2DBackground"></canvas><div id="media2DSelection" class="media2d-selection"><div id="media2DContent"></div>${['nw','ne','sw','se'].map(p=>`<span class="media2d-handle media2d-handle-${p}" data-corner="${p}"></span>`).join('')}</div></div><div class="pan-help">素材をドラッグ：移動 / 四隅をドラッグ：縦横比を保って拡大縮小。PC・スマホの配置はそれぞれ記憶します。</div></div>`;
+document.getElementById('media2DDurationInput').addEventListener('change',e=>{
+node.media2DDuration=Math.max(0,Number(e.target.value)||0);
+e.target.value=node.media2DDuration;
+});
 const select=document.getElementById('media2DSelect');
 const box=document.getElementById('media2DEditor');
 const selection=document.getElementById('media2DSelection');
@@ -1859,6 +1949,7 @@ settingsPanel.innerHTML=`<div class="settings-title">テキスト</div>
 <div id="textOverlayEditor" class="media2d-editor text-overlay-editor" style="aspect-ratio:${layout.width}/${layout.height}"><canvas id="textOverlayBackground"></canvas><div id="textOverlayItems"></div></div>
 <div class="pan-help">文字をドラッグ：移動 / 四隅をドラッグ：幅・高さを変更。PC・スマホの配置は別々に保存されます。</div></div>
 <div class="setting-group"><div class="setting-label">テキスト一覧</div><div id="textOverlayList"></div><button type="button" id="textOverlayAdd" class="add-world-btn">＋ テキストを追加</button></div>`;
+renderSharedVisibilitySettings(settingsPanel,node,'このテキストをいつ表示しますか？');
 const editor=document.getElementById('textOverlayEditor');
 const items=document.getElementById('textOverlayItems');
 const list=document.getElementById('textOverlayList');
@@ -1943,8 +2034,10 @@ function showTextOverlay(node){
 for(const item of node.textBoxes||[]){
 const p=getTextOverlayPosition(item),wrap=document.createElement('div');
 wrap.className='game-text-overlay';
+wrap.dataset.nodeId=node.id;
 Object.assign(wrap.style,{position:'absolute',left:p.x+'%',top:p.y+'%',width:p.w+'%',height:p.h+'%',fontSize:Math.max(8,Number(item.fontSize)||32)+'px'});
 wrap.textContent=item.text||'';
+wrap.style.display=visibilityConditionMatches(node)?'':'none';
 media2DLayer.appendChild(wrap);
 }
 }
@@ -1954,14 +2047,16 @@ media2DLayer.replaceChildren();
 }
 function showMedia2D(node){
 const media=mediaLibrary.find(m=>m.id===node.media2DId);
-if(!media)return;
+if(!media)return null;
 const layout=getMedia2DLayout(node);
 const el=createMedia2DElement(media);
-if(!el)return;
+if(!el)return null;
 const wrap=document.createElement('div');
 wrap.style.cssText=`position:absolute;left:${layout.x}%;top:${layout.y}%;width:${layout.w}%;height:${layout.h}%;pointer-events:none;`;
-wrap.appendChild(el);media2DLayer.appendChild(wrap);
+wrap.appendChild(el);
+media2DLayer.appendChild(wrap);
 if(el.tagName==='VIDEO')el.play().catch(error=>console.warn('2D動画を再生できませんでした',error));
+return wrap;
 }
 
 // Frame-in: target is sphere-anchored; frame is viewport-anchored.
@@ -2574,7 +2669,7 @@ const previewControls=`
 </div>
 </div>
 <input id="mediaCameraTime" type="range" min="0" max="${duration}" step="0.01" value="0" style="width:100%">
-<div id="mediaCameraTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} 秒</div>
+<div id="mediaCameraTimeLabel" class="settings-empty">0.00 / ${duration.toFixed(2)} ${window.editorLanguage==='en'?'sec':'秒'}</div>
 </div>`;
 
 const inheritControl=`<div class="setting-group"><label class="media-camera-inherit"><input id="inheritCameraInput" type="checkbox" ${node.inheritCamera?'checked':''}> 画角を継承</label></div>`;
@@ -2699,7 +2794,7 @@ const target=document.getElementById('mediaCameraAngleFields');
 if(fields&&target){target.appendChild(fields);const button=fields.querySelector('.camera-copy-view');if(button)fields.appendChild(button);}
 const seek=time=>{
 second=clamp(Number(time)||0,0,duration);
-range.value=String(second);label.textContent=`${second.toFixed(3)} / ${duration.toFixed(3)} 秒`;
+range.value=String(second);label.textContent=`${second.toFixed(3)} / ${duration.toFixed(3)} ${window.editorLanguage==='en'?'sec':'秒'}`;
 Object.assign(view,getMediaCameraBase(node));
 if(node.type==='animation'&&media?.duration&&source){
 const videoTime=getMediaCameraVideoTime(node,media,second);
@@ -3317,9 +3412,34 @@ function openSequenceWizard(){
  const files=[null];let active=0;
  const previews=new WeakMap();
  let frame=0,playing=false,raf=0,lastTime=0,view={yaw:0,pitch:0,zoom:1};
- overlay.innerHTML=`<div class="sequence-wizard" role="dialog" aria-modal="true" aria-label="連番PNGを追加"><div class="sequence-wizard-head"><strong>アニメーション（連番PNG）</strong><button type="button" data-seq-close>×</button></div><div class="sequence-zip-row"><button type="button" data-seq-zip>＋ZIPを追加</button><input type="file" data-seq-zip-file accept=".zip,application/zip" hidden></div><label>FPS <input class="number-input" data-seq-fps type="number" min="1" max="120" step="1" value="8"></label><div class="sequence-frame-tabs"><div data-seq-tabs class="sequence-frame-list"></div><button type="button" data-seq-add>＋ フレームを追加</button></div><div class="sequence-frame-editor"><div data-seq-name>画像未選択</div><button type="button" data-seq-choose>画像を選択</button><input type="file" accept="image/png,.png" data-seq-file hidden></div><div class="sequence-preview"><canvas class="world-preview" data-seq-preview width="320" height="320"></canvas><div class="sequence-preview-controls"><button type="button" data-seq-play>▶ 再生</button><span data-seq-count>0 / 0</span></div><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div><div class="sequence-wizard-footer"><button type="button" data-seq-save>登録する</button></div></div>`;
- document.body.appendChild(overlay);
- const $=q=>overlay.querySelector(q),canvas=$('[data-seq-preview]');
+ overlay.innerHTML=`<div class="sequence-wizard" role="dialog" aria-modal="true" aria-label="連番PNGを追加"><div class="sequence-wizard-head"><strong>アニメーション（連番PNG）</strong><button type="button" data-seq-close>×</button></div><div class="sequence-zip-row"><button type="button" data-seq-zip>＋ZIPを追加</button><input type="file" data-seq-zip-file accept=".zip,application/zip" hidden><button type="button" data-seq-multiple>複数画像追加</button><input type="file" data-seq-multiple-file accept="image/png,.png" multiple hidden></div><label>FPS <input class="number-input" data-seq-fps type="number" min="1" max="120" step="1" value="8"></label><div class="sequence-frame-tabs"><div data-seq-tabs class="sequence-frame-list"></div><button type="button" data-seq-add>＋ フレームを追加</button></div><div class="sequence-frame-editor"><div data-seq-name>画像未選択</div><button type="button" data-seq-choose>画像を選択</button><button type="button" data-seq-delete>フレームを削除</button><input type="file" accept="image/png,.png" data-seq-file hidden></div><div class="sequence-preview"><canvas class="world-preview" data-seq-preview width="320" height="320"></canvas><div class="sequence-preview-controls"><button type="button" data-seq-play>▶ 再生</button><span data-seq-count>0 / 0</span></div><div class="pan-help">ドラッグ：カメラ回転 / ホイール：ズーム</div></div><div class="sequence-wizard-footer"><button type="button" data-seq-save>登録する</button></div></div>`;
+document.body.appendChild(overlay);
+const $=q=>overlay.querySelector(q),canvas=$('[data-seq-preview]');
+const sequenceEnglish=window.editorLanguage==='en';
+if(sequenceEnglish){
+const replacements={
+'アニメーション（連番PNG）':'Animation (PNG Sequence)',
+'＋ZIPを追加':'+ Add ZIP',
+'複数画像追加':'Add Multiple Images',
+'フレームを削除':'Delete Frame',
+'＋ フレームを追加':'+ Add Frame',
+'画像未選択':'No Image Selected',
+'画像を選択':'Choose Image',
+'▶ 再生':'▶ Play',
+'登録する':'Add',
+'ドラッグ：カメラ回転 / ホイール：ズーム':'Drag: Rotate Camera / Scroll: Zoom'
+};
+const walker=document.createTreeWalker(overlay,NodeFilter.SHOW_TEXT);
+let textNode;
+while((textNode=walker.nextNode())){
+const original=textNode.nodeValue;
+const key=original.trim();
+if(replacements[key]){
+textNode.nodeValue=original.replace(key,replacements[key]);
+}
+}
+overlay.querySelector('.sequence-wizard')?.setAttribute('aria-label','Add PNG Sequence');
+}
  const getImage=async file=>{
   if(!file)return null;
   if(previews.has(file))return previews.get(file);
@@ -3336,27 +3456,83 @@ function openSequenceWizard(){
   if(version!==drawVersion||!canvas.isConnected)return;
   drawPanoramaPreview(canvas,{image,...view});
  };
- const refresh=()=>{
-  $('[data-seq-tabs]').innerHTML=files.map((file,i)=>`<button type="button" class="sequence-frame-tab ${i===active?'is-active':''}" data-seq-tab="${i}">${i+1}枚目</button>`).join('');
-  $('[data-seq-name]').textContent=files[active]?.name||'画像未選択';
-  $('[data-seq-count]').textContent=`${frame+1} / ${files.length}`;
-  void draw();
- };
- const stop=()=>{playing=false;cancelAnimationFrame(raf);$('[data-seq-play]').textContent='▶ 再生';};
+const refresh=()=>{
+$('[data-seq-tabs]').innerHTML=files.map((file,i)=>`<button type="button" class="sequence-frame-tab ${i===active?'is-active':''}" data-seq-tab="${i}">${sequenceEnglish?`Frame ${i+1}`:`${i+1}枚目`}</button>`).join('');
+$('[data-seq-name]').textContent=files[active]?.name||(sequenceEnglish?'No Image Selected':'画像未選択');
+$('[data-seq-count]').textContent=`${frame+1} / ${files.length}`;
+void draw();
+};
+const stop=()=>{playing=false;cancelAnimationFrame(raf);$('[data-seq-play]').textContent=sequenceEnglish?'▶ Play':'▶ 再生';};
  const close=()=>{stop();overlay.remove();sequenceInsertionNodeId=null;};
  $('[data-seq-close]').addEventListener('click',close);
- $('[data-seq-tabs]').addEventListener('click',e=>{const btn=e.target.closest('[data-seq-tab]');if(!btn)return;stop();active=frame=Number(btn.dataset.seqTab);refresh();});
- $('[data-seq-add]').addEventListener('click',()=>{stop();files.push(null);active=frame=files.length-1;refresh();});
- $('[data-seq-choose]').addEventListener('click',()=>$('[data-seq-file]').click());
+$('[data-seq-tabs]').addEventListener('click',e=>{const btn=e.target.closest('[data-seq-tab]');if(!btn)return;stop();active=frame=Number(btn.dataset.seqTab);refresh();});
+$('[data-seq-add]').addEventListener('click',()=>{stop();files.push(null);active=frame=files.length-1;refresh();});
+$('[data-seq-delete]').addEventListener('click',()=>{
+stop();
+files.splice(active,1);
+if(files.length===0)files.push(null);
+active=Math.min(active,files.length-1);
+frame=active;
+drawVersion++;
+if(!files[frame]){
+const renderer=panoramaRenderers.get(canvas);
+if(renderer){
+const gl=renderer.gl;
+gl.clearColor(0,0,0,1);
+gl.clear(gl.COLOR_BUFFER_BIT);
+}
+}
+refresh();
+});
+$('[data-seq-choose]').addEventListener('click',()=>$('[data-seq-file]').click());
  $('[data-seq-file]').addEventListener('change',async e=>{
   const file=e.target.files?.[0];e.target.value='';if(!file)return;
   try{const first=files.find((f,i)=>i!==active&&f);const reference=first?await validateSequencePng(first):null;await validateSequencePng(file,reference?.naturalWidth??null,reference?.naturalHeight??null);files[active]=file;frame=active;refresh();}
   catch(error){alert('この画像は追加できません。\n'+error.message);}
  });
- $('[data-seq-zip]').addEventListener('click',()=>$('[data-seq-zip-file]').click());
- $('[data-seq-zip-file]').addEventListener('change',async e=>{
-  const file=e.target.files?.[0];e.target.value='';if(!file)return;
-  const button=$('[data-seq-zip]');button.disabled=true;
+$('[data-seq-multiple]').addEventListener('click',()=>$('[data-seq-multiple-file]').click());
+$('[data-seq-multiple-file]').addEventListener('change',async e=>{
+const selected=[...(e.target.files||[])];
+e.target.value='';
+if(!selected.length)return;
+
+const button=$('[data-seq-multiple]');
+button.disabled=true;
+
+try{
+const imported=selected.sort(naturalFrameOrder);
+const existing=files.filter(Boolean);
+let width=null;
+let height=null;
+
+if(existing.length){
+const reference=await validateSequencePng(existing[0]);
+width=reference.naturalWidth;
+height=reference.naturalHeight;
+}
+
+for(const file of imported){
+const image=await validateSequencePng(file,width,height);
+if(width===null){
+width=image.naturalWidth;
+height=image.naturalHeight;
+}
+}
+
+stop();
+files.splice(0,files.length,...existing,...imported);
+active=frame=existing.length;
+refresh();
+}catch(error){
+alert((sequenceEnglish?'Could not add images.\n':'複数画像を追加できませんでした。\n')+(sequenceEnglish?(editorTranslateValue(error.message)||error.message):error.message));
+}finally{
+button.disabled=false;
+}
+});
+$('[data-seq-zip]').addEventListener('click',()=>$('[data-seq-zip-file]').click());
+$('[data-seq-zip-file]').addEventListener('change',async e=>{
+const file=e.target.files?.[0];e.target.value='';if(!file)return;
+const button=$('[data-seq-zip]');button.disabled=true;
   try{
    if(!file.name.toLowerCase().endsWith('.zip'))throw new Error('ZIPファイルを指定してください。');
    const imported=await readSequenceZip(file);
@@ -3375,7 +3551,7 @@ function openSequenceWizard(){
  $('[data-seq-play]').addEventListener('click',()=>{
   if(playing){stop();return;}
   if(files.some(f=>!f)){alert('先にすべてのフレームに画像を設定してください。');return;}
-  playing=true;lastTime=performance.now();$('[data-seq-play]').textContent='■ 停止';raf=requestAnimationFrame(tick);
+  playing=true;lastTime=performance.now();$('[data-seq-play]').textContent=sequenceEnglish?'■ Stop':'■ 停止';raf=requestAnimationFrame(tick);
  });
  let drag=null;
  canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch};canvas.setPointerCapture(e.pointerId);});
@@ -4737,6 +4913,13 @@ isAnimationAsset(media)
 )||null;
 }
 
+function getClickFrameVideoMedia(sourceNode){
+if(sourceNode?.type==='animation')return getClickAnimationMedia(sourceNode);
+if(sourceNode?.type!=='world')return null;
+const media=mediaLibrary.find(m=>m.id===sourceNode.world?.mediaId);
+return media?.fileType==='mp4'?media:null;
+}
+
 function getClickFrameRegions(node,frameIndex){
 const frames=node.clickFrameRegions||{};
 
@@ -5279,11 +5462,10 @@ updateLassoModeButtons();
 updateLassoModeButtons();
 ensureClickView(node,worldNode);
 
-const isAnimation=worldNode.type==='animation';
-const media=isAnimation?getClickAnimationMedia(worldNode):null;
+const media=getClickFrameVideoMedia(worldNode);
 const video=media?.video||null;
 
-if(isAnimation&&video&&document.getElementById('clickFrameRange')){
+if(video&&document.getElementById('clickFrameRange')){
 const range=document.getElementById('clickFrameRange');
 const previousButton=document.getElementById('clickPreviousFrameBtn');
 const nextButton=document.getElementById('clickNextFrameBtn');
@@ -5365,7 +5547,7 @@ drawClickLassoOverlay(node,worldNode);
 });
 
 showFrame(node.clickFrameIndex||0);
-}else if(isAnimation&&video){
+}else if(video){
 
 video.pause();
 
@@ -5677,12 +5859,21 @@ function findBestPreviewClick(clientX,clientY,world,animation,itemId){
   if(!node||previewRemovedClickIds.has(node.id)||!canFireExplorationTrigger(node)||!isClickConditionActive(node))continue;
   let regions=null;
   let frameKey='static';
-  if(animation&&node.clickAnimationMode){
-   const fps=Math.max(1,Number(node.clickFrameFps)||8);
-   const frame=Math.max(0,Math.floor(animation.video.currentTime*fps));
-   frameKey=`frame:${frame}`;
-   regions=getClickFrameRegions(node,frame);
-  }
+if(node.clickAnimationMode){
+const source=findPreviousClickMediaNode(node.id);
+let video=null;
+if(source?.type==='animation'&&animation?.nodeId===source.id){
+video=animation.video;
+}else if(source?.type==='world'&&state.previewWorldNodeId===source.id){
+const media=getClickFrameVideoMedia(source);
+if(media?.id===node.clickSourceMediaId)video=media.video;
+}
+if(!video)continue;
+const fps=Math.max(1,Number(node.clickFrameFps)||8);
+const frame=Math.max(0,Math.floor(video.currentTime*fps));
+frameKey=`frame:${frame}`;
+regions=getClickFrameRegions(node,frame);
+}
   if(!isClickTargetHit(node,world,clientX,clientY,regions))continue;
   const action=resolvePreviewClickAction(node,itemId);
   if(!action)continue;
@@ -6164,8 +6355,17 @@ nestedMenu.classList.add('hidden');
 }
 
 if(nestedButton){
-nestedButton.textContent='▶ パネル';
+nestedButton.textContent=window.editorLanguage==='en'?'▶ Panels':'▶ パネル';
 }
+
+const englishCategoryLabels={
+material:'360° Media',
+trigger:'Triggers',
+effect:'Effects',
+event:'Events',
+branch:'Branches',
+panel:'UI'
+};
 
 for(const [key,category] of Object.entries(nodeMenuCategories)){
 const isOpen=key===openCategory;
@@ -6173,7 +6373,8 @@ category.element.classList.toggle('hidden',!isOpen);
 
 const button=contextMenu.querySelector(`[data-menu="${key}"]`);
 if(button){
-button.textContent=`${isOpen?'▼':'▶'} ${key==='panel'?'UI':category.label}`;
+const label=window.editorLanguage==='en'?englishCategoryLabels[key]:(key==='panel'?'UI':category.label);
+button.textContent=`${isOpen?'▼':'▶'} ${label}`;
 }
 }
 }
@@ -6199,7 +6400,7 @@ if(!submenu)return;
 
 const willOpen=submenu.classList.contains('hidden');
 submenu.classList.toggle('hidden',!willOpen);
-nested.textContent=`${willOpen?'▼':'▶'} パネル`;
+nested.textContent=`${willOpen?'▼':'▶'} ${window.editorLanguage==='en'?'Panels':'パネル'}`;
 return;
 }
 
@@ -6228,7 +6429,7 @@ contextMenu.classList.add('hidden');
 state.insertConnection=null;
 
 let created=null;
-if(insertConnection&&nodeType!=='gameReset'){
+if(insertConnection&&nodeType!=='gameReset'&&nodeType!=='gameEnd'){
 created=insertNodeIntoConnection(nodeType,insertConnection,menuPoint);
 }else{
 created=addNode(nodeType,menuPoint.x,menuPoint.y);
@@ -7073,7 +7274,6 @@ playBtn.addEventListener('click',()=>startPreview());
 closePreviewBtn.addEventListener('click',stopPreview);
 
 gameViewport.addEventListener('click',e=>{
-if(!window.matchMedia('(pointer: coarse)').matches)return;
 if(!e.target.closest('#dialogueOverlay'))return;
 if(gamePreview.classList.contains('hidden'))return;
 if(!state.previewDialogueNodeId)return;
@@ -7143,13 +7343,14 @@ if(temporaryWorldOverlay){temporaryWorldOverlay=null;}
 const base=getNode(state.previewWorldNodeId||currentWorldBackerId);
 const underlying=base?.type==='world'?base.world:null;
 temporaryWorldOverlay={nodeId:node.id,image,canvas:null,ctx:null};
+const overlayInstance=temporaryWorldOverlay;
 previewMessage.textContent=media?.fileName||node.world.fileName||'360度PNG';
 if(!underlying||!state.worldFolders.some(folder=>folder.backerId===base.id))renderTemporaryWorldOverlay(underlying,underlying?.image);
 else refreshWorldComposite();
 if(node.worldInfiniteLoop)return;
 const duration=getMediaPlaybackDuration(node,null);
 schedulePreviewBranch(duration,()=>{
-if(temporaryWorldOverlay?.nodeId!==node.id)return;
+if(temporaryWorldOverlay!==overlayInstance)return;
 temporaryWorldOverlay=null;
 // 一時PNGの表示が終了したら、同じノードを次のクリックで再実行できるようにする。
 previewVisited.delete(node.id);
@@ -7185,9 +7386,117 @@ if(controller.sourceId!==animation.nodeId)return false;
 return getKeyframeNodeFrames(controller.node).length>0;
 }
 
+let gameTouchGesture=null;
+
+function getGameCameraSensitivity(world){
+const fov=Math.max(35,Math.min(100,75/world.zoom));
+return(fov/75)*0.0025;
+}
+
+function getGameTouchDistance(touches){
+const dx=touches[0].clientX-touches[1].clientX;
+const dy=touches[0].clientY-touches[1].clientY;
+return Math.hypot(dx,dy);
+}
+
+gameCanvas.addEventListener('touchstart',e=>{
+if(previewKeyframeBusy||state.previewDialogueNodeId)return;
+const world=getActivePreviewWorld();
+if(!world)return;
+
+if(e.touches.length===1){
+const touch=e.touches[0];
+gameTouchGesture={
+mode:'rotate',
+x:touch.clientX,
+y:touch.clientY,
+yaw:world.yaw,
+pitch:world.pitch
+};
+}else if(e.touches.length>=2){
+gameTouchGesture={
+mode:'pinch',
+distance:getGameTouchDistance(e.touches),
+zoom:world.zoom
+};
+if(gamePreviewDrag)gamePreviewDrag.moved=true;
+}
+},{passive:false});
+
+gameCanvas.addEventListener('touchmove',e=>{
+if(!gameTouchGesture)return;
+e.preventDefault();
+
+if(previewKeyframeBusy||state.previewDialogueNodeId)return;
+if(isPreviewCameraLocked())return;
+
+const world=getActivePreviewWorld();
+if(!world)return;
+
+if(e.touches.length>=2){
+if(gameTouchGesture.mode!=='pinch'){
+gameTouchGesture={
+mode:'pinch',
+distance:getGameTouchDistance(e.touches),
+zoom:world.zoom
+};
+}
+const distance=getGameTouchDistance(e.touches);
+world.zoom=clamp(
+gameTouchGesture.zoom*distance/Math.max(1,gameTouchGesture.distance),
+0.6,
+2.2
+);
+if(gamePreviewDrag)gamePreviewDrag.moved=true;
+}else if(e.touches.length===1&&gameTouchGesture.mode==='rotate'){
+const touch=e.touches[0];
+const dx=touch.clientX-gameTouchGesture.x;
+const dy=touch.clientY-gameTouchGesture.y;
+
+if(Math.hypot(dx,dy)>4&&gamePreviewDrag){
+gamePreviewDrag.moved=true;
+}
+
+const sensitivity=getGameCameraSensitivity(world);
+world.yaw=gameTouchGesture.yaw-dx*sensitivity;
+world.pitch=clamp(
+gameTouchGesture.pitch+dy*sensitivity,
+-Math.PI/2+0.01,
+Math.PI/2-0.01
+);
+}
+
+if(!temporaryWorldOverlay||!renderTemporaryWorldOverlay(world)){
+drawPanoramaPreview(gameCanvas,world);
+}
+},{passive:false});
+
+gameCanvas.addEventListener('touchend',e=>{
+if(e.touches.length===0){
+gameTouchGesture=null;
+}else if(e.touches.length===1){
+const world=getActivePreviewWorld();
+const touch=e.touches[0];
+if(world){
+gameTouchGesture={
+mode:'rotate',
+x:touch.clientX,
+y:touch.clientY,
+yaw:world.yaw,
+pitch:world.pitch
+};
+}
+}
+});
+
+gameCanvas.addEventListener('touchcancel',()=>{
+gameTouchGesture=null;
+});
+
 gameCanvas.addEventListener('pointerdown',e=>{
 if(previewKeyframeBusy)return;
 if(state.previewDialogueNodeId)return;
+if(e.pointerType==='touch'&&!e.isPrimary)return;
 if(e.button!==0)return;
 
 const world=getActivePreviewWorld();
@@ -7206,6 +7515,7 @@ gameCanvas.setPointerCapture(e.pointerId);
 });
 
 gameCanvas.addEventListener('pointermove',e=>{
+if(e.pointerType==='touch')return;
 if(!gamePreviewDrag)return;
 
 const dx=e.clientX-gamePreviewDrag.x;
@@ -7220,12 +7530,13 @@ if(isPreviewCameraLocked())return;
 const world=getActivePreviewWorld();
 if(!world)return;
 
-world.yaw=gamePreviewDrag.yaw-dx*0.008;
+const sensitivity=getGameCameraSensitivity(world);
+world.yaw=gamePreviewDrag.yaw-dx*sensitivity;
 
 world.pitch=clamp(
-gamePreviewDrag.pitch+dy*0.008,
--Math.PI/2+0.02,
-Math.PI/2-0.02
+gamePreviewDrag.pitch+dy*sensitivity,
+-Math.PI/2+0.01,
+Math.PI/2-0.01
 );
 
 if(!temporaryWorldOverlay||!renderTemporaryWorldOverlay(world))drawPanoramaPreview(gameCanvas,world);
@@ -7309,7 +7620,7 @@ const previewVisited=new Set();
 const previewExecutedOnceNodes=new Set();
 
 function isPreviewOnceTarget(node){
-return Boolean(node&&!['start','folderStart','worldDisplay','gameReset','world'].includes(node.type));
+return Boolean(node&&!['start','folderStart','worldDisplay','gameReset','gameEnd','world'].includes(node.type));
 }
 
 function isPreviewOnceCompleted(node){
@@ -7398,6 +7709,7 @@ previewVisited.clear();
 state.previewClickTriggerIds=[];
 state.previewItemUseTriggerIds=[];
 state.previewFrameInIds=[];
+previewFrameInInside.clear();
 state.previewDialogueNodeId=null;
 optionChoicesOverlay.classList.add('hidden');
 optionChoicesOverlay.replaceChildren();
@@ -7449,6 +7761,9 @@ if(epoch===previewSceneEpoch&&!gamePreview.classList.contains('hidden'))callback
 },Math.max(0,seconds)*1000);
 previewBranchTimers.add(timer);
 }
+// フレームインは「範囲外→範囲内」の瞬間だけ発火する。
+// 一度発火しても監視を続け、範囲外に出た時点で再発火可能にする。
+const previewFrameInInside=new Map();
 let checkingFrameIn=false;
 function checkActiveFrameInTriggers(){
 if(checkingFrameIn||!state.previewFrameInIds?.length)return;
@@ -7457,15 +7772,26 @@ const view=getActivePreviewWorld();if(!view)return;
 checkingFrameIn=true;
 try{
 for(const id of [...state.previewFrameInIds]){
-const node=getNode(id);if(!node)continue;
-if(isPreviewOnceCompleted(node))continue;
-if(!isFrameInTriggered(node,gameCanvas,view))continue;
-state.previewFrameInIds=[];
-clearPreviewBranchTimers();
+const node=getNode(id);
+if(!node)continue;
+const inside=isFrameInTriggered(node,gameCanvas,view);
+const wasInside=previewFrameInInside.get(id)===true;
+previewFrameInInside.set(id,inside);
+if(!inside||wasInside)continue;
+if(isPreviewOnceCompleted(node)||!canFireExplorationTrigger(node))continue;
+// 接続先だけを再実行可能にし、ワールドや他の進行タイマーは維持する。
 markPreviewOnceExecuted(node);
+if(node.triggerOnce)previewCompletedTriggers.add(node.id);
+prepareExplorationBranch(id);
+for(const link of state.connections){
+if(link.from!==id)continue;
+const target=getNode(link.to);
+if(target?.type==='world'&&!state.worldFolders.some(folder=>folder.backerId===target.id)){
+previewVisited.delete(target.id);
+}
+}
 previewOutgoing(id);
 if(!state.connections.some(c=>c.from===id))previewMessage.textContent='フレームイン発火・接続先なし';
-break;
 }
 }finally{checkingFrameIn=false;}
 }
@@ -7473,8 +7799,8 @@ function canUsePreviewClick(node){
 return Boolean(node.clickTarget?.initialized||Object.values(node.clickFrameRegions||{}).some(regions=>Array.isArray(regions)&&regions.some(r=>r.mode==='add'&&r.points?.length>=3)));
 }
 
-function startPreview(preserveInventory=false,resetToInitial=false){
-recordPreviewDiagnostic('preview-start',{preserveInventory});
+function startPreview(preserveInventory=false,resetToInitial=false,restartNodeId=null){
+recordPreviewDiagnostic('preview-start',{preserveInventory,restartNodeId});
 previewClickAreaCache.clear();
 if(!preserveInventory){
 previewRemovedClickIds.clear();
@@ -7504,7 +7830,15 @@ refreshInventory();
 inventoryButton.classList.remove('hidden');
 
 drawPanoramaPreview(gameCanvas,{image:null,yaw:0,pitch:0,zoom:1});
+
+const restartNode=restartNodeId?getNode(restartNodeId):null;
+const restartFolder=restartNode?state.worldFolders.find(folder=>folder.id===restartNode.folderId):null;
+
+if(restartNode&&restartFolder){
+enterWorldFolder(restartFolder.id,true,restartNode.id);
+}else{
 enterWorldFolder(state.worldFolders[0]?.id||state.startFolderId,resetToInitial);
+}
 }
 
 
@@ -8130,7 +8464,7 @@ speaker.className='dialogue-speaker';
 dialogueOverlay.insertBefore(speaker,dialogueOverlay.firstChild);
 }
 
-const speakerName=(node.dialogueSpeaker||'').trim();
+const speakerName=node.type==='itemAcquire'?'':(node.dialogueSpeaker||'').trim();
 speaker.textContent=speakerName;
 speaker.classList.toggle('hidden',!speakerName);
 
@@ -8372,15 +8706,27 @@ previewOutgoing(node.id);
 return;
 }
 if(node.type==='media2d'){
-showMedia2D(node);
+const mediaWrap=showMedia2D(node);
+const duration=Math.max(0,Number(node.media2DDuration??3)||0);
+schedulePreviewBranch(duration,()=>{
+if(mediaWrap?.isConnected){
+for(const video of mediaWrap.querySelectorAll('video')){
+video.pause();
+video.removeAttribute('src');
+video.load();
+}
+mediaWrap.remove();
+}
 previewOutgoing(node.id);
+});
 return;
 }
 if(node.type==='uiButton'){
  clearUiButtonPreview();
  const button=document.createElement('button');
- button.type='button';button.className='game-ui-button';
- button.textContent=node.uiButtonText??'ボタン';
+button.type='button';button.className='game-ui-button';
+button.dataset.nodeId=node.id;
+button.textContent=node.uiButtonText??'ボタン';
  button.style.width=`min(${Math.max(40,Number(node.uiButtonWidth)||180)}px, 90%)`;
  button.style.height=`${Math.max(24,Number(node.uiButtonHeight)||56)}px`;
  button.style.fontSize=`${Math.max(8,Number(node.uiButtonFontSize)||20)}px`;
@@ -8399,7 +8745,10 @@ if(node.type==='uiButton'){
  return;
 }
 if(node.type==='frameIn'){
-if(!state.previewFrameInIds.includes(node.id))state.previewFrameInIds.push(node.id);
+if(!state.previewFrameInIds.includes(node.id)){
+state.previewFrameInIds.push(node.id);
+previewFrameInInside.delete(node.id);
+}
 checkActiveFrameInTriggers();
 return;
 }
@@ -8439,8 +8788,26 @@ return;
 }
 if(node.type==='worldMove'){if(node.destinationFolderId)enterWorldFolder(node.destinationFolderId);return;}
 if(node.type==='gameReset'){
- recordPreviewDiagnostic('game-reset',{nodeId:node.id});
- startPreview(false,true);
+recordPreviewDiagnostic('game-reset',{nodeId:node.id});
+const seconds=Math.max(0,Number(node.resetFadeSeconds)||0);
+const restartNode=state.nodes.find(n=>n.restartPoint===true);
+const restartNodeId=restartNode?.id||null;
+const executeReset=()=>{
+startPreview(false,true,restartNodeId);
+};
+if(seconds===0){
+executeReset();
+}else{
+runFadeEffect({effectSeconds:seconds},Number(fadeOverlay.style.opacity)||0,1,executeReset);
+}
+return;
+}
+if(node.type==='gameEnd'){
+ recordPreviewDiagnostic('game-end',{nodeId:node.id});
+ stopPreview();
+ if(document.body.classList.contains('gururi-player')){
+ window.gururiReturnToTitle?.();
+ }
  return;
 }
 if(node.type==='toggle'){
@@ -8724,16 +9091,79 @@ return result;
 }
 
 const saveProgressUI=()=>({root:document.getElementById('saveProgressOverlay'),bar:document.getElementById('saveProgressBar'),message:document.getElementById('saveProgressMessage')});
-function setSaveProgress(percent,message){const ui=saveProgressUI();if(!ui.root)return;ui.root.hidden=false;ui.bar.value=percent;ui.message.textContent=message;}
+function setSaveProgress(percent,message){
+const ui=saveProgressUI();
+if(!ui.root)return;
+ui.root.hidden=false;
+ui.bar.value=percent;
+const translated=window.editorLanguage==='en'&&typeof editorTranslateValue==='function'?editorTranslateValue(message):null;
+ui.message.textContent=translated??message;
+const title=ui.root.querySelector('.save-progress-dialog strong');
+if(title&&title.textContent==='保存中'&&window.editorLanguage==='en'){
+title.textContent='Saving';
+}
+if(title&&title.textContent==='Saving'&&window.editorLanguage!=='en'){
+title.textContent='保存中';
+}
+}
 function endSaveProgress(){const ui=saveProgressUI();if(ui.root)ui.root.hidden=true;}
 
 async function setOpenProgress(percent,message){
 setSaveProgress(percent,message);
 const title=saveProgressUI().root?.querySelector('.save-progress-dialog strong');
-if(title)title.textContent='作品データを開いています';
+if(title)title.textContent=window.editorLanguage==='en'?'Opening Project Data':'作品データを開いています';
 await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
 }
 let currentGartSaveHandle=null;
+let gururiSavedProjectSignature=null;
+
+function getGururiProjectSignature(){
+const seen=new WeakSet();
+const media=mediaLibrary.map(item=>({
+id:item.id,
+fileName:item.fileName,
+fileType:item.fileType,
+width:item.width,
+height:item.height,
+fps:item.fps,
+duration:item.duration,
+sourceName:item.sourceFile?.name,
+sourceSize:item.sourceFile?.size,
+frameFiles:item.frameFiles?.map(file=>({
+name:file.name,
+size:file.size
+}))
+}));
+
+return JSON.stringify({
+nodes:state.nodes,
+connections:state.connections,
+worldFolders:state.worldFolders,
+startFolderId:state.startFolderId,
+media
+},(key,value)=>{
+if(['raw','image','video','frameImages','sourceFile','url','canvas','ctx','panUndoStack','panRedoStack','clickUndoStack','clickRedoStack','frameInUndo','frameInRedo'].includes(key))return undefined;
+if(value instanceof Blob)return `${value.name||''}:${value.size}`;
+if(value instanceof Element||value instanceof ImageBitmap)return undefined;
+if(value&&typeof value==='object'){
+if(seen.has(value))return undefined;
+seen.add(value);
+}
+return value;
+});
+}
+
+window.addEventListener('load',()=>{
+gururiSavedProjectSignature=getGururiProjectSignature();
+});
+
+window.addEventListener('beforeunload',event=>{
+if(gururiSavedProjectSignature===null)return;
+if(getGururiProjectSignature()===gururiSavedProjectSignature)return;
+event.preventDefault();
+event.returnValue='';
+});
+
 async function writeProjectFile(blob,saveAs=false){
  if(currentGartSaveHandle){const stream=await currentGartSaveHandle.createWritable();setSaveProgress(92,'上書き保存しています…');await stream.write(blob);await stream.close();return true;}
  const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='project.gart';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);return true;
@@ -8782,7 +9212,12 @@ setSaveProgress(65,'プロジェクトを圧縮しています…');
 await new Promise(requestAnimationFrame);
 const blob=await gartCreateZip(entries);
 setSaveProgress(90,'保存先を選択してください…');
-const saved=await writeProjectFile(blob,saveAs);if(saved)setSaveProgress(100,'保存処理が完了しました');
+const savingSignature=getGururiProjectSignature();
+const saved=await writeProjectFile(blob,saveAs);
+if(saved){
+gururiSavedProjectSignature=savingSignature;
+setSaveProgress(100,'保存処理が完了しました');
+}
 }catch(error){
 console.error(error);
 alert(`プロジェクトを保存できませんでした。\n${error.message}`);
@@ -8819,7 +9254,9 @@ const totalMediaCount=data.media.length;
 for(const item of data.media){
 await setOpenProgress(
 20+Math.round(65*loadedMediaCount/Math.max(1,totalMediaCount)),
-`素材を読み込んでいます…（${loadedMediaCount+1} / ${totalMediaCount}）`
+window.editorLanguage==='en'
+?`Loading Media... (${loadedMediaCount+1} / ${totalMediaCount})`
+:`素材を読み込んでいます…（${loadedMediaCount+1} / ${totalMediaCount}）`
 );
 
 if(item.fileType==='pngseq'){
@@ -8870,6 +9307,7 @@ updateLayoutControls();
 renderMediaList();
 updateWorldTabs();renderNodes();
 renderSettings();renderFolderSettings();
+gururiSavedProjectSignature=getGururiProjectSignature();
 await setOpenProgress(100,'読み込みが完了しました');
 }catch(error){
 console.error(error);
@@ -8956,7 +9394,7 @@ setSaveProgress(20+Math.round((i+1)/Math.max(1,metadata.media.length)*45),'素�
 const playerStyle=`
 html,body{margin:0!important;background:#000!important}
 body.gururi-player #editorHomePage,body.gururi-player .editor-home,body.gururi-player .topbar,body.gururi-player .main-layout,body.gururi-player .media-popup,body.gururi-player #exportPreviewDiagnosticBtn{display:none!important}
-body.gururi-player #gamePreview{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:20!important;background:#000!important}
+body.gururi-player #gamePreview{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:auto!important;width:100%!important;height:100vh!important;height:100svh!important;z-index:20!important;background:#000!important;overflow:hidden!important}
 body.gururi-player #closePreviewBtn{display:none!important}
 #gururiLaunch{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;gap:15px;align-items:center;justify-content:center;background-color:#080808;background-size:cover;background-position:center;color:#fff;font-family:sans-serif;text-align:center;padding:20px;box-sizing:border-box}
 #gururiLaunch::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.48),rgba(0,0,0,.68));pointer-events:none}
@@ -9057,8 +9495,16 @@ if(!gamePreview.classList.contains('hidden'))resizeGameCanvas();
 renderNodes();renderSettings();
 updateLoading(100,'準備が完了しました');
 await yieldToBrowser();
-const begin=()=>{launch.style.display='none';startPreview(false,true);};
-launchButton.disabled=false;launchButton.style.opacity='1';launchButton.addEventListener('click',begin);
+const begin=()=>{
+launch.style.display='none';
+startPreview(false,true);
+};
+window.gururiReturnToTitle=()=>{
+launch.style.display='flex';
+};
+launchButton.disabled=false;
+launchButton.style.opacity='1';
+launchButton.addEventListener('click',begin);
 loading.remove();
 }catch(error){console.error(error);launch.textContent='作品を開けませんでした：'+error.message;}
 })();
@@ -9098,7 +9544,7 @@ if(saveHandle){const stream=await saveHandle.createWritable();await stream.write
 else{const url=URL.createObjectURL(archive);const link=document.createElement('a');link.href=url;link.download=fileName;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 setSaveProgress(100,'書き出しが完了しました');
 document.getElementById('exportSettingsModal').classList.add('hidden');
-}catch(error){console.error(error);alert('作品を書き出せませんでした。\\n'+error.message);}
+}catch(error){console.error(error);alert('作品を書き出せませんでした。\n'+error.message);}
 finally{button.disabled=false;endSaveProgress();}
 }
 
@@ -9291,6 +9737,168 @@ function updateWorldTabs(){
  }
  const plus=document.createElement('button');plus.textContent='＋';plus.title='ワールドを追加';plus.addEventListener('click',()=>{const folder=makeWorldFolder('ワールド'+(state.worldFolders.length+1));updateWorldTabs();assignFolderTab(folder.id);});worldTabs.appendChild(plus);
 }
+function renderSharedVisibilitySettings(parent,owner,title){
+owner.visibilityCondition ||= {mode:'always',eventType:'acquire',targetId:'',secondConditionEnabled:false,conditionOperator:'and'};
+
+const condition=owner.visibilityCondition;
+const section=document.createElement('div');
+section.className='setting-group';
+parent.append(section);
+
+const heading=document.createElement('div');
+heading.className='setting-label';
+heading.textContent=title;
+section.append(heading);
+
+const visibilitySelect=document.createElement('select');
+visibilitySelect.className='number-input';
+visibilitySelect.add(new Option('常に表示','always'));
+visibilitySelect.add(new Option('条件を指定','conditional'));
+visibilitySelect.value=condition.mode==='always'?'always':'conditional';
+section.append(visibilitySelect);
+
+const panel=document.createElement('div');
+panel.className='world-layer-fields';
+section.append(panel);
+
+const eventOptions=[['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']];
+
+const renderCondition=(container,keys,label)=>{
+const cap=document.createElement('div');
+cap.className='setting-label';
+cap.textContent=label;
+container.append(cap);
+
+const eventType=document.createElement('select');
+eventType.className='number-input';
+for(const [value,text] of eventOptions)eventType.add(new Option(text,value));
+eventType.value=condition[keys.eventType]||'acquire';
+addFolderRow(container,'表示条件',eventType);
+
+const timing=document.createElement('select');
+timing.className='number-input';
+addFolderRow(container,'前/後',timing);
+const timingLabel=timing.parentElement.querySelector('.setting-label');
+
+const targetContainer=document.createElement('div');
+container.append(targetContainer);
+const explanation=document.createElement('p');
+explanation.className='world-layer-explanation';
+container.append(explanation);
+
+const updateExplanation=()=>{
+const target=getNode(condition[keys.targetId]);
+const name=(target?.type==='toggle'?(target.toggleName||'トグル '+target.id):null)||target?.itemName||target?.eventName||target?.customBody||(target?.clickBranchItemId?itemDisplayName(getNode(target.clickBranchItemId)):null);
+const type=condition[keys.eventType];
+const after=condition[keys.mode]==='after';
+if(type==='toggle'){
+explanation.textContent=name?`「${name}」が${after?'ON':'OFF'}の間に表示`:'対象のトグルを選択してください。';
+return;
+}
+const action=type==='acquire'?'取得':type==='use'?'使用':'終了';
+explanation.textContent=name?`「${name}」の${action}${after?'後':'前'}に表示`:'対象を選ぶと表示条件がここに表示されます。';
+};
+
+const drawTarget=()=>{
+targetContainer.replaceChildren();
+const adapter={eventType:condition[keys.eventType],targetId:condition[keys.targetId]};
+addFolderRow(targetContainer,'対象',folderEventSelect(adapter,()=>{
+condition[keys.targetId]=adapter.targetId;
+updateExplanation();
+}));
+updateExplanation();
+};
+
+const updateTimingLabels=()=>{
+const toggle=condition[keys.eventType]==='toggle';
+timingLabel.textContent=toggle?'ON/OFF':'前/後';
+timing.replaceChildren(new Option(toggle?'OFF':'前','before'),new Option(toggle?'ON':'後','after'));
+timing.value=condition[keys.mode]==='after'?'after':'before';
+};
+
+if(condition[keys.mode]==='always')condition[keys.mode]='before';
+updateTimingLabels();
+drawTarget();
+
+eventType.onchange=()=>{
+condition[keys.eventType]=eventType.value;
+condition[keys.targetId]='';
+updateTimingLabels();
+drawTarget();
+};
+timing.onchange=()=>{
+condition[keys.mode]=timing.value;
+updateExplanation();
+};
+};
+
+const renderAll=()=>{
+panel.replaceChildren();
+if(visibilitySelect.value==='always'){
+condition.mode='always';
+return;
+}
+
+if(condition.mode==='always')condition.mode='before';
+renderCondition(panel,{eventType:'eventType',targetId:'targetId',mode:'mode'},'条件1');
+
+const additional=document.createElement('div');
+additional.className='world-layer-extra-condition';
+panel.append(additional);
+
+const renderAdditional=()=>{
+additional.replaceChildren();
+if(condition.secondConditionEnabled!==true){
+const addSecond=document.createElement('button');
+addSecond.type='button';
+addSecond.className='secondary-button';
+addSecond.textContent='＋ 条件を追加';
+addSecond.onclick=()=>{
+condition.secondConditionEnabled=true;
+condition.secondEventType||='acquire';
+condition.secondMode||='before';
+renderAdditional();
+};
+additional.append(addSecond);
+return;
+}
+
+const operator=document.createElement('select');
+operator.className='number-input';
+operator.add(new Option('かつ（両方を満たす）','and'));
+operator.add(new Option('または（どちらかを満たす）','or'));
+operator.value=condition.conditionOperator==='or'?'or':'and';
+operator.onchange=()=>{condition.conditionOperator=operator.value;};
+addFolderRow(additional,'条件の組み合わせ',operator);
+
+renderCondition(additional,{eventType:'secondEventType',targetId:'secondTargetId',mode:'secondMode'},'条件2');
+
+const removeSecond=document.createElement('button');
+removeSecond.type='button';
+removeSecond.className='secondary-button';
+removeSecond.textContent='2つ目の条件を削除';
+removeSecond.onclick=()=>{
+condition.secondConditionEnabled=false;
+renderAdditional();
+};
+additional.append(removeSecond);
+};
+
+renderAdditional();
+};
+
+visibilitySelect.onchange=()=>{
+condition.mode=visibilitySelect.value==='always'?'always':'before';
+renderAll();
+};
+
+renderAll();
+}
+
+function visibilityConditionMatches(node){
+return layerConditionMatches(node.visibilityCondition||{mode:'always'});
+}
+
 function layerConditionMatches(layer){
  const matches=(eventType,targetId,mode)=>{
   if(mode==='always'||!mode)return true;
@@ -9328,9 +9936,23 @@ if(!temporaryWorldOverlay||!renderTemporaryWorldOverlay(backer.world,image))draw
 }
 }
 function worldCompositeTick(){
- refreshWorldSettingsPreview();
- if(!gamePreview.classList.contains('hidden')&&state.previewWorldNodeId)refreshWorldComposite();
- worldCompositeFrame=requestAnimationFrame(worldCompositeTick);
+refreshWorldSettingsPreview();
+if(!gamePreview.classList.contains('hidden')){
+if(state.previewWorldNodeId)refreshWorldComposite();
+
+for(const element of uiButtonPreviewLayer.querySelectorAll('.game-ui-button[data-node-id]')){
+const node=getNode(element.dataset.nodeId);
+if(!node)continue;
+element.style.display=visibilityConditionMatches(node)?'':'none';
+}
+
+for(const element of media2DLayer.querySelectorAll('.game-text-overlay[data-node-id]')){
+const node=getNode(element.dataset.nodeId);
+if(!node)continue;
+element.style.display=visibilityConditionMatches(node)?'':'none';
+}
+}
+worldCompositeFrame=requestAnimationFrame(worldCompositeTick);
 }
 function addFolderRow(parent,label,element){const group=document.createElement('div');group.className='setting-group';const cap=document.createElement('div');cap.className='setting-label';cap.textContent=label;group.append(cap,element);parent.append(group);}
 function folderMediaSelect(value,types,onchange){const sel=document.createElement('select');sel.className='number-input';sel.add(new Option('素材未設定',''));for(const m of mediaLibrary.filter(m=>types.includes(m.fileType)))sel.add(new Option(m.fileName,m.id));sel.value=value||'';sel.onchange=()=>onchange(sel.value);return sel;}
@@ -9365,7 +9987,7 @@ function renderWorldFolderEditor(){
  settingsPanel.prepend(title);
  const section=document.createElement('div');section.className='world-folder-settings';title.after(section);
  
- const media=folderMediaSelect(folderBacker(folder)?.world?.mediaId,['png','jpg','mp4'],id=>{const b=folderBacker(folder);const m=mediaLibrary.find(m=>m.id===id);b.world.mediaId=id;b.world.fileName=m?.fileName||'';b.world.fileType=m?.fileType||'';b.world.image=m?.image||m?.video||null;worldComposites.delete(folder.id);});addFolderRow(section,'基本360度PNG / MP4',media);
+ const media=folderMediaSelect(folderBacker(folder)?.world?.mediaId,['png','jpg','mp4'],id=>{const b=folderBacker(folder);const m=mediaLibrary.find(m=>m.id===id);b.world.mediaId=id;b.world.fileName=m?.fileName||'';b.world.fileType=m?.fileType||'';b.world.image=m?.image||m?.video||null;worldComposites.delete(folder.id);});addFolderRow(section,'360度PNG / MP4',media);
  const inheritGroup=document.createElement('div');inheritGroup.className='setting-group';
  const inheritLabel=document.createElement('label');inheritLabel.className='media-camera-inherit';
  const inheritCheckbox=document.createElement('input');inheritCheckbox.type='checkbox';inheritCheckbox.checked=Boolean(folderBacker(folder)?.inheritCamera);
@@ -9375,9 +9997,36 @@ function renderWorldFolderEditor(){
  const previewHeading=document.createElement('div');previewHeading.className='setting-label';previewHeading.textContent='ワールドプレビュー（全レイヤー表示）';
  const previewCanvas=document.createElement('canvas');previewCanvas.className='world-settings-preview world-preview';previewCanvas.width=320;previewCanvas.height=Math.round(320*getActiveLayout().height/getActiveLayout().width);
  previewCanvas.dataset.folderId=folder.id;
- const previewNote=document.createElement('div');previewNote.className='world-settings-preview-note';previewNote.textContent='ドラッグ：カメラ回転 / ホイール：ズーム。現在の方向と画角がゲーム開始時の初期表示位置になります。透明PNGレイヤーはすべて表示します。';
- previewGroup.append(previewHeading,previewCanvas,previewNote);section.append(previewGroup);
- setupWorldSettingsCameraPreview(previewCanvas,folder);
+const previewNote=document.createElement('div');previewNote.className='world-settings-preview-note';previewNote.textContent='ドラッグ：カメラ回転 / ホイール：ズーム。初期画角を変更するには「初期画角を記憶」を押してください。';
+const rememberCameraButton=document.createElement('button');
+rememberCameraButton.type='button';
+rememberCameraButton.className='add-world-btn';
+const worldBacker=folderBacker(folder);
+const updateRememberCameraButton=()=>{
+rememberCameraButton.textContent=worldBacker?.initialCameraRecorded===true?'初期画角を更新':'初期画角を記憶';
+};
+updateRememberCameraButton();
+previewGroup.append(previewHeading,previewCanvas,previewNote,rememberCameraButton);
+section.append(previewGroup);
+setupWorldSettingsCameraPreview(previewCanvas,folder);
+let rememberCameraFeedbackTimer=null;
+rememberCameraButton.addEventListener('click',()=>{
+const controller=worldSettingsCameraPreviews.get(previewCanvas);
+if(!controller||!worldBacker)return;
+controller.persist();
+worldBacker.initialCameraRecorded=true;
+updateRememberCameraButton();
+section._refreshInitialCameraFields?.();
+
+if(rememberCameraFeedbackTimer!==null){
+clearTimeout(rememberCameraFeedbackTimer);
+}
+rememberCameraButton.style.color='transparent';
+rememberCameraFeedbackTimer=setTimeout(()=>{
+rememberCameraButton.style.color='';
+rememberCameraFeedbackTimer=null;
+},150);
+});
  const cameraInputs=previewCanvas.nextElementSibling;
  if(cameraInputs?.classList.contains('camera-number-settings')){
   const cameraSection=document.createElement('details');
@@ -9402,9 +10051,70 @@ function renderWorldFolderEditor(){
   const pitchLabel=cameraInputs.querySelector('[data-camera-value="pitch"]')?.closest('.setting-group')?.querySelector('.setting-label');
   if(pitchLabel)pitchLabel.textContent='垂直方向（°）';
   const fovLabel=cameraInputs.querySelector('[data-camera-value="fov"]')?.closest('.setting-group')?.querySelector('.setting-label');
-  if(fovLabel)fovLabel.textContent='FOV値（°）';
- }
- const heading=document.createElement('h3');heading.textContent='透明PNGレイヤー';section.append(heading);
+if(fovLabel)fovLabel.textContent='FOV値（°）';
+}
+if(cameraInputs?.classList.contains('camera-number-settings')){
+const initialCameraSection=document.createElement('details');
+initialCameraSection.className='world-camera-section';
+initialCameraSection.open=Boolean(folder.editorInitialCameraOpen);
+const initialCameraSummary=document.createElement('summary');
+initialCameraSummary.textContent='初期画角';
+initialCameraSection.append(initialCameraSummary);
+
+const initialCameraInputs=cameraInputs.cloneNode(true);
+initialCameraInputs.querySelectorAll('[data-camera-value]').forEach(input=>{
+input.readOnly=true;
+input.tabIndex=-1;
+});
+
+const refreshInitialCameraFields=()=>{
+const backer=folderBacker(folder);
+if(!backer)return;
+const saved=getWorldInitialView(backer);
+if(!saved)return;
+const values={
+yaw:((saved.yaw*180/Math.PI+180)%360+360)%360-180,
+pitch:saved.pitch*180/Math.PI,
+fov:75/saved.zoom
+};
+for(const [key,value] of Object.entries(values)){
+const input=initialCameraInputs.querySelector(`[data-camera-value="${key}"]`);
+if(input)input.value=Number(value.toFixed(2)).toString();
+}
+};
+
+const initialCopyButton=initialCameraInputs.querySelector('.camera-copy-view');
+if(initialCopyButton){
+initialCopyButton.textContent='初期画角をコピー';
+initialCopyButton.addEventListener('click',async()=>{
+const saved=getWorldInitialView(folderBacker(folder));
+if(!saved)return;
+const cameraData={
+yaw:Number((saved.yaw*180/Math.PI).toFixed(6)),
+pitch:Number((saved.pitch*180/Math.PI).toFixed(6)),
+fov:Number((75/saved.zoom).toFixed(6))
+};
+try{
+await navigator.clipboard.writeText('GURURI_CAMERA:'+JSON.stringify(cameraData));
+initialCopyButton.textContent='コピーしました';
+setTimeout(()=>{
+if(initialCopyButton.isConnected)initialCopyButton.textContent='初期画角をコピー';
+},1500);
+}catch(error){
+alert('初期画角をコピーできませんでした。');
+}
+});
+}
+
+initialCameraSection.append(initialCameraInputs);
+initialCameraSection.addEventListener('toggle',()=>{
+folder.editorInitialCameraOpen=initialCameraSection.open;
+});
+section._initialCameraSection=initialCameraSection;
+section._refreshInitialCameraFields=refreshInitialCameraFields;
+refreshInitialCameraFields();
+}
+const heading=document.createElement('h3');heading.textContent='透明PNGレイヤー';section.append(heading);
  for(const layer of folder.layers){
   const details=document.createElement('details');details.className='world-layer-entry';
   details.open=!!layer.editorOpen;
@@ -9415,8 +10125,9 @@ function renderWorldFolderEditor(){
   summary.append(remove);details.append(summary);section.append(details);
   details.addEventListener('toggle',()=>{layer.editorOpen=details.open;});
   const panel=document.createElement('div');panel.className='world-layer-fields';details.append(panel);
-  const label=document.createElement('input');label.className='number-input';label.placeholder='レイヤー名';label.value=layer.name||'';
-  label.oninput=()=>{layer.name=label.value;layerName.textContent=label.value||'名称未設定レイヤー';};addFolderRow(panel,'レイヤー名',label);
+ const label=document.createElement('input');label.className='number-input';label.placeholder='レイヤー名';
+label.value=window.editorLanguage==='en'&&layer.name==='新規レイヤー'?'New Layer':layer.name||'';
+label.oninput=()=>{layer.name=label.value;layerName.textContent=label.value||'名称未設定レイヤー';};addFolderRow(panel,'レイヤー名',label);
   addFolderRow(panel,'画像',folderMediaSelect(layer.mediaId,['png'],id=>layer.mediaId=id));
   const heading=document.createElement('div');heading.className='setting-label';heading.textContent='このレイヤーをいつ表示しますか？';panel.append(heading);
   const eventOptions=[['acquire','アイテム取得'],['use','アイテム使用'],['event','イベント終了'],['toggle','トグル']];
@@ -9475,7 +10186,9 @@ function renderWorldFolderEditor(){
   renderAdditional();
   
  }
- const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);if(section._cameraSection)section.append(section._cameraSection);
+ const add=document.createElement('button');add.className='add-world-btn';add.textContent='レイヤー追加';add.onclick=()=>{folder.layers.push({id:uid('layer'),name:window.editorLanguage==='en'?'New Layer':'新規レイヤー',mediaId:'',mode:'before',eventType:'acquire',targetId:'',editorOpen:true});renderSettings();};section.append(add);
+if(section._cameraSection)section.append(section._cameraSection);
+if(section._initialCameraSection)section.append(section._initialCameraSection);
 }
 const originalRenderSettings=renderSettings;
 renderSettings=function(){
@@ -9615,7 +10328,6 @@ image:compositeCache.valid?composite:null,
 };
 
 syncInputs=setupCameraNumberInputs(canvas,view,()=>{
-persist();
 draw();
 });
 
@@ -9633,7 +10345,6 @@ if(!drag||e.pointerId!==drag.pointerId)return;
 view.yaw=drag.yaw-(e.clientX-drag.x)*0.008;
 view.pitch=clamp(drag.pitch+(e.clientY-drag.y)*0.008,-Math.PI/2+.02,Math.PI/2-.02);
 
-persist();
 draw();
 });
 
@@ -9645,11 +10356,10 @@ e.preventDefault();
 
 view.zoom=clamp(view.zoom+(e.deltaY>0?-0.1:0.1),0.75,75/35);
 
-persist();
 draw();
 },{passive:false});
 
-worldSettingsCameraPreviews.set(canvas,{folder,draw,refresh});
+worldSettingsCameraPreviews.set(canvas,{folder,draw,refresh,persist});
 draw();
 }
 let worldSettingsPreviewFrames=0;
@@ -9665,19 +10375,39 @@ if(controller&&controller.folder===activeFolder()){
 controller.refresh();
 }
 }
-function enterWorldFolder(folderId,resetToInitial=false){
- const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;
- const previousWorld=getNode(currentWorldBackerId)?.world;
- const inheritedView=resetToInitial?null:(previousWorld?{yaw:previousWorld.yaw,pitch:previousWorld.pitch,zoom:previousWorld.zoom}:(state.lastCameraView?{...state.lastCameraView}:null));
- currentWorldBackerId=folder.backerId;
- const media=getFolderMedia(folder);
- if(media?.video){try{media.video.loop=true;media.video.currentTime=0;media.video.play().catch(()=>{});}catch(_e){}}
- const backer=folderBacker(folder);if(!backer)return;
- cancelPreviewScene();pendingWorldEntryFade=null;worldEntryFadeActive=false;
- if(resetToInitial){state.lastCameraView=null;applyWorldInitialView(backer);}
- else if(inheritedView)state.lastCameraView=inheritedView;
- const start=state.nodes.find(n=>n.type==='folderStart'&&n.folderId===folder.id);
- if(start)showPreviewNode(start.id);else showPreviewNode(backer.id);
+function enterWorldFolder(folderId,resetToInitial=false,restartNodeId=null){
+const folder=state.worldFolders.find(w=>w.id===folderId);if(!folder)return;
+const previousWorld=getNode(currentWorldBackerId)?.world;
+const inheritedView=resetToInitial?null:(previousWorld?{yaw:previousWorld.yaw,pitch:previousWorld.pitch,zoom:previousWorld.zoom}:(state.lastCameraView?{...state.lastCameraView}:null));
+currentWorldBackerId=folder.backerId;
+const media=getFolderMedia(folder);
+if(media?.video){try{media.video.loop=true;media.video.currentTime=0;media.video.play().catch(()=>{});}catch(_e){}}
+const backer=folderBacker(folder);if(!backer)return;
+cancelPreviewScene();pendingWorldEntryFade=null;worldEntryFadeActive=false;
+if(resetToInitial){state.lastCameraView=null;applyWorldInitialView(backer);}
+else if(inheritedView)state.lastCameraView=inheritedView;
+
+const restartNode=restartNodeId?getNode(restartNodeId):null;
+if(restartNode&&restartNode.folderId===folder.id){
+const worldDisplay=state.nodes.find(n=>n.type==='worldDisplay'&&n.folderId===folder.id);
+if(worldDisplay){
+showPreviewNode(worldDisplay.id);
+}else{
+showPreviewNode(backer.id);
+}
+
+recordPreviewDiagnostic('restart-point',{nodeId:restartNode.id,mode:restartNode.restartMode||'after'});
+
+if(restartNode.restartMode==='before'){
+showPreviewNode(restartNode.id);
+}else{
+previewOutgoing(restartNode.id);
+}
+return;
+}
+
+const start=state.nodes.find(n=>n.type==='folderStart'&&n.folderId===folder.id);
+if(start)showPreviewNode(start.id);else showPreviewNode(backer.id);
 }
 applyGameAspectRatio();
 updateLayoutControls();
@@ -9836,5 +10566,3 @@ if(source)drawClickLassoOverlay(clickNode,source);
 });
 });
 editorSettingsResizeObserver.observe(settingsPanel);
-
-
