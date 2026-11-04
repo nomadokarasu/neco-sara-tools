@@ -9569,6 +9569,11 @@ button.disabled=false;
 }
 }
 
+document.getElementById('newGartBtn').addEventListener('click',()=>{
+if(!confirm('新規作成しますか？現在の編集内容は破棄されます。'))return;
+gururiSavedProjectSignature=null;
+window.location.reload();
+});
 document.getElementById('saveGartBtn').addEventListener('click',()=>saveGartProject(false));
 document.getElementById('openGartBtn').addEventListener('click',()=>document.getElementById('gartFileInput').click());
 document.getElementById('gartFileInput').addEventListener('change',async e=>{
