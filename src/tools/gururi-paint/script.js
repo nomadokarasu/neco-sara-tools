@@ -65,7 +65,7 @@ const scene = new THREE.Scene();
 ================================ */
 
 const APP_VERSION =
-"2.0.16";
+"2.0.17";
 
 
 const appVersionElements =
@@ -1436,6 +1436,11 @@ currentLanguage === "en"
 previewDownloadButton.textContent =
 t("download");
 
+document.getElementById("previewTransparentLabel").textContent =
+currentLanguage === "en"
+? "Transparent background"
+: "背景を透過する";
+
 shortcutSettingsButton.textContent =
 t("shortcutMenu");
 
@@ -1943,10 +1948,7 @@ String(isActive)
 );
 
 
-setElementText(
-".preview-header span",
-t("previewTitle")
-);
+// プレビュー見出しの自動更新は行わない
 
 
 previewCloseButton.textContent =
@@ -4091,6 +4093,28 @@ paintCanvasへ反映
 
 updatePaintCanvas();
 
+let pngSourceCanvas=paintCanvas;
+
+if(document.getElementById("previewTransparentBackground")?.checked){
+
+const transparentCanvas=document.createElement("canvas");
+transparentCanvas.width=paintCanvas.width;
+transparentCanvas.height=paintCanvas.height;
+
+const transparentContext=transparentCanvas.getContext("2d");
+transparentContext.imageSmoothingEnabled=false;
+transparentContext.clearRect(0,0,transparentCanvas.width,transparentCanvas.height);
+
+for(const layer of layers){
+if(!layer.visible)continue;
+transparentContext.globalAlpha=typeof layer.opacity==="number"?layer.opacity:1;
+transparentContext.drawImage(layer.canvas,0,0);
+}
+
+transparentContext.globalAlpha=1;
+pngSourceCanvas=transparentCanvas;
+}
+
 
 /*
 書き出し専用Canvas
@@ -4158,7 +4182,7 @@ previewLikeSourceContext.scale(
 );
 
 previewLikeSourceContext.drawImage(
-paintCanvas,
+pngSourceCanvas,
 0,
 0
 );
@@ -18710,13 +18734,18 @@ return;
 
 
 /*
-描画を開始したポインター以外の
-移動では線を描かない
+マウス入力ではFirefox等で
+pointerIdが変化する場合があるため、
+IDが違っても描画を継続する。
+
+タッチ・ペン入力では
+従来のID判定を維持する。
 */
 
 if (
 isDrawing &&
 currentStroke &&
+event.pointerType !== "mouse" &&
 event.pointerId !==
 currentStroke.pointerId
 ) {
@@ -19109,13 +19138,17 @@ return;
 
 
 /*
-描画を開始したポインター以外では
-ストロークを終了しない
+マウス入力ではpointerIdが
+変化しても描画を終了できるようにする。
+
+タッチ・ペン入力では
+従来のID判定を維持する。
 */
 
 if (
 isDrawing &&
 currentStroke &&
+event.pointerType !== "mouse" &&
 event.pointerId !==
 currentStroke.pointerId
 ) {
@@ -19361,7 +19394,7 @@ window.addEventListener(
 () => {
 
 navigator.serviceWorker.register(
-"./service-worker.js?v=2.0.16",
+"./service-worker.js?v=2.0.17",
 {
 updateViaCache: "none"
 }

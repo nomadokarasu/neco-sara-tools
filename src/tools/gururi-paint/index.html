@@ -42,7 +42,7 @@ href="https://tools.neco-sara.com/tools/gururi-paint/"
 
 <title>ぐるりペイント｜無料の360°お絵描きツール</title>
 
-<link rel="stylesheet" href="./style.css?v=2.0.16">
+<link rel="stylesheet" href="./style.css?v=2.0.17">
 </head>
 
 <body>
@@ -1908,6 +1908,8 @@ class="preview-overlay"
 
 <div class="preview-header__main">
 
+<div class="preview-transparent-position">
+
 <div class="canvas-size-control">
 
 <label for="canvasSize">
@@ -1928,6 +1930,13 @@ selected
 </option>
 
 </select>
+
+</div>
+
+<label class="preview-transparent-option">
+<input id="previewTransparentBackground" type="checkbox">
+<span id="previewTransparentLabel">背景を透明にする</span>
+</label>
 
 </div>
 
@@ -1996,7 +2005,7 @@ type="button"
 
 <script
 type="module"
-src="./script.js?v=2.0.16"
+src="./script.js?v=2.0.17"
 ></script>
 
 </body>

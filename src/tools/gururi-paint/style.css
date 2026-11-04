@@ -1545,16 +1545,43 @@ pointer-events: none;
 
 
 .preview-footer {
-display: flex;
-align-items: center;
-justify-content: center;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:20px;
+padding:0 12px 12px;
+background:#111;
+}
 
-padding:
-0
-12px
-12px;
+.preview-transparent-position {
+display:flex;
+align-items:center;
+gap:20px;
+flex-wrap:wrap;
+}
 
-background: #111;
+.preview-transparent-option {
+display:flex;
+align-items:center;
+gap:6px;
+color:#eee;
+font-size:13px;
+cursor:pointer;
+white-space:nowrap;
+}
+
+.preview-transparent-option input {
+margin:0;
+cursor:pointer;
+}
+
+@media (max-width:480px) {
+.preview-footer {
+gap:12px;
+}
+.preview-transparent-option {
+font-size:12px;
+}
 }
 
 
