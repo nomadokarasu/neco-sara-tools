@@ -7860,35 +7860,35 @@ function canFireExplorationTrigger(node){
 
 // 接続先の処理を再実行できる状態にする
 function prepareExplorationBranch(nodeId){
- const visited=new Set();
+const visited=new Set();
 
- function visit(id){
-  if(visited.has(id))return;
-  visited.add(id);
+function visit(id){
+if(visited.has(id))return;
+visited.add(id);
 
-  const node=getNode(id);
-  if(!node)return;
+const node=getNode(id);
+if(!node)return;
 
-  // メディアや別の待機トリガーは初期化しない
-  if(
-   node.type==='world'||
-   node.type==='animation'||
-   node.type==='start'||
-   node.type==='click'||
-   node.type==='frameIn'||
-   node.type==='itemUse'
-  )return;
+// 独立したトリガーやゲーム開始地点には踏み込まない
+if(
+node.type==='start'||
+node.type==='click'||
+node.type==='frameIn'||
+node.type==='itemUse'||
+(node.type==='world'&&!isTemporaryWorldNode(node))
+)return;
 
-  previewVisited.delete(id);
+// 一時メディアを含め、接続先を再実行可能にする
+previewVisited.delete(id);
 
-  for(const connection of state.connections){
-   if(connection.from===id)visit(connection.to);
-  }
- }
+for(const connection of state.connections){
+if(connection.from===id)visit(connection.to);
+}
+}
 
- for(const connection of state.connections){
-  if(connection.from===nodeId)visit(connection.to);
- }
+for(const connection of state.connections){
+if(connection.from===nodeId)visit(connection.to);
+}
 }
 
 function fireExplorationTrigger(node){
@@ -9017,22 +9017,28 @@ if(node.type==='toggleSet'){
 if(node.type==='toggleBranch'){previewOutgoing(node.id);return;}
 if(node.type==='eventRecord'){recordedWorldEvents.add(node.id);refreshWorldComposite();previewOutgoing(node.id);return;}
 if(node.type==='itemAcquire'){
- if(state.inventory.has(node.id)){previewOutgoing(node.id);return;}
- acquiredItems.add(node.id);
- refreshWorldComposite();
- if(node.itemRemoveOriginClick&&previewAcquisitionSourceClickId){
-  previewRemovedClickIds.add(previewAcquisitionSourceClickId);
-  state.previewClickTriggerIds=state.previewClickTriggerIds.filter(id=>id!==previewAcquisitionSourceClickId);
-  recordPreviewDiagnostic('item-click-region-disabled',{itemId:node.id,clickId:previewAcquisitionSourceClickId});
- }
- refreshAcquiredMediaScene();
- if(!state.inventory.has(node.id))state.inventory.add(node.id);
- refreshInventory();
- node.dialoguePages=[node.itemDescription||''];node.dialogueSpeaker=node.itemName||'';
- node.dialogueThumbnailMediaId=node.itemThumbnailMediaId||null;
- state.previewDialogueNodeId=node.id;
- showDialoguePage(node,0);
- return;
+const alreadyOwned=state.inventory.has(node.id);
+
+if(!alreadyOwned){
+acquiredItems.add(node.id);
+refreshWorldComposite();
+state.inventory.add(node.id);
+refreshAcquiredMediaScene();
+refreshInventory();
+}
+
+if(node.itemRemoveOriginClick&&previewAcquisitionSourceClickId){
+previewRemovedClickIds.add(previewAcquisitionSourceClickId);
+state.previewClickTriggerIds=state.previewClickTriggerIds.filter(id=>id!==previewAcquisitionSourceClickId);
+recordPreviewDiagnostic('item-click-region-disabled',{itemId:node.id,clickId:previewAcquisitionSourceClickId});
+}
+
+node.dialoguePages=[node.itemDescription||''];
+node.dialogueSpeaker=node.itemName||'';
+node.dialogueThumbnailMediaId=node.itemThumbnailMediaId||null;
+state.previewDialogueNodeId=node.id;
+showDialoguePage(node,0);
+return;
 }
 // 旧インベントリ表示ノードとの互換性を維持
 if(node.type==='inventory'){
