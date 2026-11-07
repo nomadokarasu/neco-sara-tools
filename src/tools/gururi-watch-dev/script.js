@@ -47,7 +47,7 @@ website: "Webサイトなど",
 thumbnail: "サムネイル画像",
 thumbnailHelp: "正方形（1：1）のJPG / PNG / WebP、10MB以下",
 panorama: "ぐるり画像",
-panoramaHelp: "2:1のJPG / PNG / WebP（10MB以下）、またはぐるりエディタのHTML（保存テスト中・10MB以下）。HTMLはまだ公開・再生されません。",
+panoramaHelp: "2:1のJPG / PNG / WebP（10MB以下）、またはぐるりエディタのHTML（保存テスト中・50MB以下）。HTMLはまだ公開・再生されません。",
 contentCheck: "R18・過度に暴力的な内容ではありません。",
 rightsCheck: "他人の作品・個人情報などを無断で使用していません。",
 terms: "自分が投稿する権利を持つ画像であり、問題がある場合は運営者が非表示・削除できることに同意します。",
@@ -113,7 +113,7 @@ website: "Website",
 thumbnail: "Thumbnail",
 thumbnailHelp: "Square (1:1), JPG / PNG / WebP, up to 10 MB",
 panorama: "Panorama image",
-panoramaHelp: "2:1 JPG / PNG / WebP (up to 10 MB), or Gururi Editor HTML (private upload test, up to 10 MB). HTML games cannot be played or published yet.",
+panoramaHelp: "2:1 JPG / PNG / WebP (up to 10 MB), or Gururi Editor HTML (private upload test, up to 50 MB). HTML games cannot be played or published yet.",
 contentCheck: "This submission does not contain adult or excessively violent content.",
 rightsCheck: "I am not using other people's works or personal information without permission.",
 terms: "I have the right to upload these images and agree that the operator may hide or delete problematic submissions.",
@@ -3140,8 +3140,8 @@ postSubmitButton.disabled = true;
 postSubmitButton.textContent = currentLanguage === "ja" ? "保存テスト中…" : "Testing upload…";
 
 try {
-if (selectedWorkFile.size === 0 || selectedWorkFile.size > 10 * 1024 * 1024) {
-throw new Error(currentLanguage === "ja" ? "現在のテストではHTMLは10MB以下にしてください。" : "HTML must be 10 MB or smaller for this test.");
+if (selectedWorkFile.size === 0 || selectedWorkFile.size > 50 * 1024 * 1024) {
+throw new Error(currentLanguage === "ja" ? "現在のテストではHTMLは50MB以下にしてください。" : "HTML must be 50 MB or smaller for this test.");
 }
 
 const gameFormData = new FormData(postForm);

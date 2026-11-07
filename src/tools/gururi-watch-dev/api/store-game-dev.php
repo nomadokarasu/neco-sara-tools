@@ -41,8 +41,8 @@ gameFail("HTMLファイルのみ対応しています。");
 
 $size = (int)($file["size"] ?? 0);
 
-if ($size < 1 || $size > 10 * 1024 * 1024) {
-gameFail("現在のテストではHTMLは10MB以下にしてください。");
+if ($size < 1 || $size > 50 * 1024 * 1024) {
+gameFail("現在のテストではHTMLは50MB以下にしてください。");
 }
 
 $tmp = $file["tmp_name"] ?? "";
