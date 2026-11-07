@@ -26,7 +26,7 @@ window.gtag = function(){};
 <div>
 <div class="site-title-line">
 <h1 class="site-title">ぐるりうむ</h1>
-<span class="site-version">ver.0.2.3</span>
+<span class="site-version">ver.0.2.4-dev</span>
 </div>
 <p class="site-description">ぐるりペイントで描かれた世界たち</p>
 </div>
@@ -186,10 +186,24 @@ EN
 </label>
 
 <label class="form-field">
+<span>作品の種類</span>
+<select id="postMode" name="postMode">
+<option value="image">ぐるり画像</option>
+<option value="game">ぐるりゲーム</option>
+</select>
+</label>
+
+<label id="postPanoramaField" class="form-field">
 <span>ぐるり画像</span>
 <input id="postPanorama" name="panorama" type="file" accept="image/jpeg,image/png,image/webp" required>
 <small>横2：縦1のJPG / PNG / WebP、10MB以下。ぐるりペイントから保存した画像をそのまま使用できます。</small>
 <p id="panoramaWarning" class="file-warning hidden"></p>
+</label>
+
+<label id="postGameField" class="form-field hidden">
+<span>ぐるりゲーム</span>
+<input id="postGame" name="game" type="file" accept=".html,text/html">
+<small>ぐるりエディタから書き出したHTMLファイルを選択してください。現在は投稿機能を準備中です。</small>
 </label>
 
 <label class="terms-check">

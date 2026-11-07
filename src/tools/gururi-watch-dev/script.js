@@ -2911,6 +2911,33 @@ panoramaWarning,
 }
 );
 
+const postMode = document.getElementById("postMode");
+const postPanoramaField = document.getElementById("postPanoramaField");
+const postGameField = document.getElementById("postGameField");
+const postGame = document.getElementById("postGame");
+
+function updatePostMode() {
+const isGame = postMode.value === "game";
+
+postPanoramaField.classList.toggle("hidden", isGame);
+postGameField.classList.toggle("hidden", !isGame);
+
+postPanorama.required = !isGame;
+postPanorama.disabled = isGame;
+postGame.required = isGame;
+postGame.disabled = !isGame;
+
+if (isGame) {
+postError.classList.add("hidden");
+postSubmitButton.textContent = currentLanguage === "ja" ? "ゲームを投稿" : "Post game";
+} else {
+postSubmitButton.textContent = t("postSubmit");
+}
+}
+
+postMode.addEventListener("change", updatePostMode);
+updatePostMode();
+
 function openPostPanel() {
 
 postError.classList.add(
@@ -3118,6 +3145,15 @@ postError.classList.remove(
 
 return;
 
+}
+
+if (postMode.value === "game") {
+postError.textContent = currentLanguage === "ja"
+? "ゲーム投稿のサーバー側機能は準備中です。"
+: "Game uploads are not yet available.";
+
+postError.classList.remove("hidden");
+return;
 }
 
 pendingPostFormData =
