@@ -16,6 +16,7 @@ on:
       - gururi-collection-release-deploy
       - gururi-editor-dev-deploy
       - gururi-editor-release-deploy
+      - gururi-watch-dev-deploy
 
 permissions:
   contents: read
@@ -285,6 +286,50 @@ jobs:
             **/.htaccess
             **/.htpasswd
 
+      - name: Prepare Gururium development files
+        if: github.ref == 'refs/heads/gururi-watch-dev-deploy'
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const source = "dist/tools/gururi-watch-dev";
+          const destination = ".watch-dev-deploy/tools/gururi-watch-dev";
+
+          for (const name of ["index.html", "script.js", "style.css"]) {
+          if (!fs.existsSync(source + "/" + name)) {
+          throw new Error("ぐるりうむ開発版のファイルがありません：" + name);
+          }
+          }
+
+          fs.mkdirSync(destination, {recursive: true});
+          fs.cpSync(source, destination, {recursive: true});
+          NODE
+
+      - name: Upload Gururium development by FTPS
+        if: github.ref == 'refs/heads/gururi-watch-dev-deploy'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.LOLIPOP_FTP_SERVER }}
+          username: ${{ secrets.LOLIPOP_FTP_USERNAME }}
+          password: ${{ secrets.LOLIPOP_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./.watch-dev-deploy/
+          server-dir: /tools/
+          state-name: .ftp-deploy-watch-dev-state.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.admin-credentials.php
+            **/.htaccess
+            **/.htpasswd
+            **/.env*
+            tools/gururi-watch-dev/data/**
+            tools/gururi-watch-dev/uploads/**
+            tools/gururi-watch-dev/api/admin-config.php
+
       - name: Prepare Gururi Editor development files
         if: github.ref == 'refs/heads/gururi-editor-dev-deploy'
         run: |
@@ -396,3 +441,4 @@ jobs:
             tools/gururi-collection/**
             tools/gururi-editor-dev/**
             tools/gururi-editor/**
+            tools/gururi-watch-dev/**

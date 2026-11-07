@@ -5,6 +5,11 @@ src/tools/gururi-watch/data/worlds.json
 src/tools/gururi-watch/uploads/
 src/tools/gururi-watch/api/admin-config.php
 
+# Gururium development
+src/tools/gururi-watch-dev/data/
+src/tools/gururi-watch-dev/uploads/
+src/tools/gururi-watch-dev/api/admin-config.php
+
 src/tools/gururi-paint/home-content.json
 src/tools/gururi-paint/home-thumbnails/
 src/tools/gururi-paint/.htaccess

@@ -11,7 +11,8 @@
 "deploy:gururi-release": "node scripts/deploy.js --gururi-release",
 "deploy:collection-dev": "node scripts/deploy.js --collection-dev",
 "promote:collection": "node scripts/promote-collection.js",
-"deploy:collection-release": "node scripts/deploy.js --collection-release"
+"deploy:collection-release": "node scripts/deploy.js --collection-release",
+"deploy:watch-dev": "node scripts/deploy.js --watch-dev"
 },
   "devDependencies": {
     "serve": "^14.2.6"

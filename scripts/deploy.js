@@ -171,11 +171,140 @@ try {
 }
 }
 
+
+if (process.argv.includes("--watch-dev")) {
+try {
+process.chdir(path.resolve(__dirname, ".."));
+
+const sourceDirectory = "src/tools/gururi-watch-dev";
+const workflowPath = ".github/workflows/deploy.yml";
+
+for (const name of ["index.html", "script.js", "style.css"]) {
+if (!fs.existsSync(path.join(sourceDirectory, name))) {
+throw new Error("必要なファイルがありません：" + name);
+}
+}
+
+const workflow = fs.readFileSync(workflowPath, "utf8");
+
+if (
+!workflow.includes("gururi-watch-dev-deploy") ||
+!workflow.includes("Upload Gururium development by FTPS")
+) {
+throw new Error("ぐるりうむ開発版の配信設定が見つかりません。");
+}
+
+const staged = execFileSync("git", [
+"diff", "--cached", "--name-only"
+], {encoding: "utf8"}).trim();
+
+if (staged) {
+throw new Error("Gitに追加済みの変更があります。配信を停止しました。");
+}
+
+execFileSync(process.execPath, [
+"scripts/build.js"
+], {stdio: "inherit"});
+
+execFileSync(process.execPath, [
+"--check",
+path.join(sourceDirectory, "script.js")
+], {stdio: "inherit"});
+
+const allowedExtensions = new Set([
+".html", ".js", ".css", ".php",
+".png", ".jpg", ".jpeg", ".webp",
+".svg", ".gif", ".ico", ".json"
+]);
+
+const sourceFiles = [];
+
+function collectWatchFiles(directory) {
+for (const entry of fs.readdirSync(directory, {withFileTypes: true})) {
+if (
+entry.name.startsWith(".") ||
+["data", "uploads", "node_modules"].includes(entry.name)
+) {
+continue;
+}
+
+const fullPath = path.join(directory, entry.name);
+
+if (entry.isDirectory()) {
+collectWatchFiles(fullPath);
+continue;
+}
+
+if (!entry.isFile()) {
+continue;
+}
+
+if (
+entry.name === "admin-config.php" ||
+entry.name.toLowerCase().includes("secret") ||
+entry.name.toLowerCase().includes("credential")
+) {
+continue;
+}
+
+if (allowedExtensions.has(path.extname(entry.name).toLowerCase())) {
+sourceFiles.push(fullPath);
+}
+}
+}
+
+collectWatchFiles(sourceDirectory);
+
+if (sourceFiles.length === 0) {
+throw new Error("配信対象のファイルがありません。");
+}
+
+const gitFiles = [
+"package.json",
+".gitignore",
+"scripts/build.js",
+"scripts/deploy.js",
+workflowPath,
+...sourceFiles
+];
+
+execFileSync("git", [
+"add", "--", ...gitFiles
+], {stdio: "inherit"});
+
+const changes = execFileSync("git", [
+"diff", "--cached", "--name-only"
+], {encoding: "utf8"}).trim();
+
+if (changes) {
+console.log("Gitへの追加対象：");
+console.log(changes);
+
+execFileSync("git", [
+"commit", "-m", "Update Gururium development"
+], {stdio: "inherit"});
+}
+
+execFileSync("git", [
+"push", "origin", "HEAD:gururi-watch-dev-deploy"
+], {stdio: "inherit"});
+
+console.log("ぐるりうむ開発版を配信用ブランチへ送信しました。");
+console.log("GitHub Actionsで配信結果を確認してください。");
+
+process.exit(0);
+} catch (error) {
+console.error("ぐるりうむ開発版の配信を停止しました。");
+console.error(error.message);
+process.exit(1);
+}
+}
+
 if (process.argv.includes("--editor-dev")) {
 try {
-  process.chdir(path.resolve(__dirname, ".."));
+process.chdir(path.resolve(__dirname, ".."));
 
-  const sourceDirectory = "src/tools/gururi-editor-dev";
+const sourceDirectory = "src/tools/gururi-editor-dev";
   const requiredFiles = [
     "index.html",
     "app.js",

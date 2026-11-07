@@ -1041,53 +1041,20 @@ recursive: true
 // 本番で生成・保持されるデータをdistから除外
 // ========================================
 
-const gururiWatchDataDirectory =
-path.join(
-outputDirectory,
-"tools",
-"gururi-watch",
-"data"
-);
+for (const toolName of ["gururi-watch", "gururi-watch-dev"]) {
+const toolDirectory = path.join(outputDirectory, "tools", toolName);
 
-const gururiWatchUploadsDirectory =
-path.join(
-outputDirectory,
-"tools",
-"gururi-watch",
-"uploads"
-);
-
-const gururiWatchAdminConfigFile =
-path.join(
-outputDirectory,
-"tools",
-"gururi-watch",
-"api",
-"admin-config.php"
-);
-
-fs.rmSync(
-gururiWatchDataDirectory,
-{
+for (const directoryName of ["data", "uploads"]) {
+fs.rmSync(path.join(toolDirectory, directoryName), {
 recursive: true,
 force: true
+});
 }
-);
 
-fs.rmSync(
-gururiWatchUploadsDirectory,
-{
-recursive: true,
+fs.rmSync(path.join(toolDirectory, "api", "admin-config.php"), {
 force: true
+});
 }
-);
-
-fs.rmSync(
-gururiWatchAdminConfigFile,
-{
-force: true
-}
-);
 
 
 // ========================================
@@ -1167,6 +1134,10 @@ function findHtmlFiles(
         entry.isDirectory()
       ) {
 
+        if (entry.name === "gururi-watch-dev") {
+          return;
+        }
+
         htmlFiles.push(
           ...findHtmlFiles(
             fullPath
@@ -1205,7 +1176,8 @@ function findHtmlFiles(
 const developmentDirectories = [
 path.join(outputDirectory, "tools", "gururi-paint-dev"),
 path.join(outputDirectory, "tools", "gururi-collection-dev"),
-path.join(outputDirectory, "tools", "gururi-editor-dev")
+path.join(outputDirectory, "tools", "gururi-editor-dev"),
+path.join(outputDirectory, "tools", "gururi-watch-dev")
 ];
 
 const originalFindHtmlFiles = findHtmlFiles;
