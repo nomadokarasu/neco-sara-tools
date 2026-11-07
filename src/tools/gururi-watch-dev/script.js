@@ -47,7 +47,7 @@ website: "Webサイトなど",
 thumbnail: "サムネイル画像",
 thumbnailHelp: "正方形（1：1）のJPG / PNG / WebP、10MB以下",
 panorama: "ぐるり画像",
-panoramaHelp: "横2：縦1のJPG / PNG / WebP、10MB以下。ぐるりペイントから保存した画像をそのまま使用できます。",
+panoramaHelp: "2:1のJPG / PNG / WebP（10MB以下）、またはぐるりエディタのHTML（保存テスト中・10MB以下）。HTMLはまだ公開・再生されません。",
 contentCheck: "R18・過度に暴力的な内容ではありません。",
 rightsCheck: "他人の作品・個人情報などを無断で使用していません。",
 terms: "自分が投稿する権利を持つ画像であり、問題がある場合は運営者が非表示・削除できることに同意します。",
@@ -113,7 +113,7 @@ website: "Website",
 thumbnail: "Thumbnail",
 thumbnailHelp: "Square (1:1), JPG / PNG / WebP, up to 10 MB",
 panorama: "Panorama image",
-panoramaHelp: "2:1 landscape JPG / PNG / WebP, up to 10 MB. You can use an image saved directly from Gururi Paint.",
+panoramaHelp: "2:1 JPG / PNG / WebP (up to 10 MB), or Gururi Editor HTML (private upload test, up to 10 MB). HTML games cannot be played or published yet.",
 contentCheck: "This submission does not contain adult or excessively violent content.",
 rightsCheck: "I am not using other people's works or personal information without permission.",
 terms: "I have the right to upload these images and agree that the operator may hide or delete problematic submissions.",
@@ -3135,11 +3135,46 @@ return;
 const selectedWorkFile = postPanorama.files?.[0];
 
 if (isGameFile(selectedWorkFile)) {
-postError.textContent = currentLanguage === "ja"
-? "HTMLゲームの投稿機能は準備中です。"
-: "HTML game uploads are not yet available.";
-postError.classList.remove("hidden");
 pendingPostFormData = null;
+postSubmitButton.disabled = true;
+postSubmitButton.textContent = currentLanguage === "ja" ? "保存テスト中…" : "Testing upload…";
+
+try {
+if (selectedWorkFile.size === 0 || selectedWorkFile.size > 10 * 1024 * 1024) {
+throw new Error(currentLanguage === "ja" ? "現在のテストではHTMLは10MB以下にしてください。" : "HTML must be 10 MB or smaller for this test.");
+}
+
+const gameFormData = new FormData(postForm);
+gameFormData.set("game", selectedWorkFile);
+gameFormData.set("termsAccepted", "1");
+gameFormData.delete("panorama");
+
+const response = await fetch("./api/store-game-dev.php", {
+method: "POST",
+body: gameFormData,
+credentials: "same-origin",
+cache: "no-store"
+});
+
+const result = await response.json();
+
+if (!response.ok || !result.success) {
+throw new Error(result.error || "保存に失敗しました。");
+}
+
+postForm.reset();
+closePostPanel();
+window.alert(currentLanguage === "ja"
+? "HTMLゲームを非公開領域に保存しました。テストID：" + result.testId + "\n現段階では作品一覧には表示されません。"
+: "HTML game saved privately. Test ID: " + result.testId + "\nIt is not yet listed publicly.");
+
+} catch (error) {
+postError.textContent = error.message;
+postError.classList.remove("hidden");
+} finally {
+postSubmitButton.disabled = false;
+postSubmitButton.textContent = t("postSubmit");
+}
 return;
 }
 
