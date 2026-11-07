@@ -64,6 +64,27 @@ $loggedIn =
 $_SESSION["gururi_admin_logged_in"]
 );
 
+if (isset($_GET["session_check"])) {
+header("Content-Type: application/json; charset=UTF-8");
+header("Cache-Control: no-store");
+
+$cookieValue = (string)($_COOKIE[session_name()] ?? "");
+$savePath = (string)session_save_path();
+
+echo json_encode([
+"location" => "admin",
+"sessionName" => session_name(),
+"cookiePresent" => $cookieValue !== "",
+"cookieMatchesSession" => $cookieValue !== "" && hash_equals(session_id(), $cookieValue),
+"sessionActive" => session_status() === PHP_SESSION_ACTIVE,
+"authenticated" => $loggedIn,
+"savePathKey" => substr(hash("sha256", $savePath), 0, 12),
+"saveHandler" => ini_get("session.save_handler")
+], JSON_UNESCAPED_UNICODE);
+
+exit;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="ja">
