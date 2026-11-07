@@ -1,14 +1,6 @@
 <?php
 
-session_name("gururi_watch_dev_admin");
-session_set_cookie_params([
-"path" => "/tools/gururi-watch-dev/",
-"secure" => true,
-"httponly" => true,
-"samesite" => "Strict"
-]);
-session_start();
-
+require_once __DIR__ . "/api/admin-session.php";
 require_once __DIR__ . "/api/admin-config.php";
 
 $error = "";
