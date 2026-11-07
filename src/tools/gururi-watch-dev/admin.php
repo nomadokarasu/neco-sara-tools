@@ -308,6 +308,16 @@ required
 
 </div>
 
+<section class="login-form" style="width:100%;max-width:600px;margin-bottom:30px;">
+<h2 style="margin:0 0 12px;font-size:18px;">HTMLゲーム保存テスト</h2>
+<p style="font-size:13px;">ぐるりエディタから書き出したHTMLを、非公開領域に保存します。ゲームは公開・実行されません。</p>
+<form id="gameTestForm">
+<input id="gameTestFile" type="file" name="game" accept=".html,text/html" required>
+<button id="gameTestButton" class="login-button" type="submit">保存テストを実行</button>
+</form>
+<p id="gameTestResult" style="font-size:13px;overflow-wrap:anywhere;" aria-live="polite"></p>
+</section>
+
 <div class="filters">
 
 <button class="filter-button active" type="button" data-filter="all">
@@ -348,6 +358,67 @@ let worlds = [];
 
 let currentFilter =
 "all";
+
+const gameTestForm = document.getElementById("gameTestForm");
+const gameTestFile = document.getElementById("gameTestFile");
+const gameTestButton = document.getElementById("gameTestButton");
+const gameTestResult = document.getElementById("gameTestResult");
+
+gameTestForm.addEventListener("submit", async (event) => {
+event.preventDefault();
+
+const file = gameTestFile.files?.[0];
+
+if (!file) {
+gameTestResult.textContent = "HTMLファイルを選択してください。";
+return;
+}
+
+if (!/\.html$/i.test(file.name)) {
+gameTestResult.textContent = "HTMLファイルのみ選択できます。";
+return;
+}
+
+if (file.size === 0 || file.size > 50 * 1024 * 1024) {
+gameTestResult.textContent = "HTMLは50MB以下にしてください。";
+return;
+}
+
+gameTestButton.disabled = true;
+gameTestButton.textContent = "アップロード中…";
+gameTestResult.textContent = "保存処理を実行しています。";
+
+try {
+const formData = new FormData();
+formData.append("game", file);
+
+const response = await fetch("./api/store-game-test.php", {
+method: "POST",
+body: formData,
+credentials: "same-origin",
+cache: "no-store"
+});
+
+const result = await response.json();
+
+if (!response.ok || !result.success) {
+throw new Error(result.error || "保存に失敗しました。");
+}
+
+gameTestResult.textContent =
+"保存成功：ID " + result.testId +
+" ／ ファイル容量 " +
+(result.bytes / 1024 / 1024).toFixed(2) + " MB";
+
+gameTestFile.value = "";
+
+} catch (error) {
+gameTestResult.textContent = "保存失敗：" + error.message;
+} finally {
+gameTestButton.disabled = false;
+gameTestButton.textContent = "保存テストを実行";
+}
+});
 
 function escapeHtml(
 value
