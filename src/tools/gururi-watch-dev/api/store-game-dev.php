@@ -92,6 +92,40 @@ gameFail("保存処理を開始できませんでした。", 500);
 
 $existing = glob($directory . "/*.txt");
 
+if ($existing === false) {
+flock($lock, LOCK_UN);
+fclose($lock);
+gameFail("一時ファイルを確認できませんでした。", 500);
+}
+
+$expiryTime = time() - 30 * 60;
+
+foreach ($existing as $existingFile) {
+$metadataFile = substr($existingFile, 0, -4) . ".json";
+$modifiedTime = filemtime($existingFile);
+$metadata = is_file($metadataFile)
+? json_decode((string)file_get_contents($metadataFile), true)
+: null;
+
+$expired = is_array($metadata) && isset($metadata["expiresAt"])
+? time() >= (int)$metadata["expiresAt"]
+: ($modifiedTime !== false && $modifiedTime < $expiryTime);
+
+if ($expired) {
+@unlink($existingFile);
+@unlink($metadataFile);
+}
+}
+
+foreach (glob($directory . "/*.json") ?: [] as $metadataFile) {
+$dataFile = substr($metadataFile, 0, -5) . ".txt";
+if (!is_file($dataFile)) {
+@unlink($metadataFile);
+}
+}
+
+$existing = glob($directory . "/*.txt");
+
 if ($existing === false || count($existing) >= 10) {
 flock($lock, LOCK_UN);
 fclose($lock);
@@ -100,6 +134,7 @@ gameFail("保存テストの上限10件に達しました。", 409);
 
 try {
 $id = bin2hex(random_bytes(16));
+$token = bin2hex(random_bytes(32));
 } catch (Throwable $error) {
 flock($lock, LOCK_UN);
 fclose($lock);
@@ -107,14 +142,30 @@ gameFail("保存IDを作成できませんでした。", 500);
 }
 
 $destination = $directory . "/" . $id . ".txt";
+$metadataFile = $directory . "/" . $id . ".json";
+
+$metadata = json_encode([
+"tokenHash" => hash("sha256", $token),
+"expiresAt" => time() + 30 * 60
+], JSON_UNESCAPED_SLASHES);
+
+if ($metadata === false || file_put_contents($metadataFile, $metadata, LOCK_EX) === false) {
+@unlink($metadataFile);
+flock($lock, LOCK_UN);
+fclose($lock);
+gameFail("保存情報を作成できませんでした。", 500);
+}
+
+@chmod($metadataFile, 0600);
 
 if (!move_uploaded_file($tmp, $destination)) {
+@unlink($metadataFile);
 flock($lock, LOCK_UN);
 fclose($lock);
 gameFail("ゲームを保存できませんでした。", 500);
 }
 
-chmod($destination, 0600);
+@chmod($destination, 0600);
 
 flock($lock, LOCK_UN);
 fclose($lock);
@@ -122,5 +173,6 @@ fclose($lock);
 echo json_encode([
 "success" => true,
 "testId" => $id,
+"token" => $token,
 "bytes" => $size
 ], JSON_UNESCAPED_UNICODE);

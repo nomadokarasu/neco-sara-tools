@@ -228,6 +228,16 @@ if (
 $action === "delete"
 ) {
 
+if (($worlds[$foundIndex]["type"] ?? "") === "game") {
+$gameFile = $rootDirectory . "/data/published-games/" . $worldId . ".txt";
+
+if (is_file($gameFile) && !@unlink($gameFile)) {
+flock($fileHandle, LOCK_UN);
+fclose($fileHandle);
+failResponse("ゲーム本体を削除できませんでした。", 500);
+}
+}
+
 $uploadDirectory =
 $rootDirectory .
 "/uploads/" .

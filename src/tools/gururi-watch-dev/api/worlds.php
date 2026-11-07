@@ -53,7 +53,9 @@ return [
 "xUrl" => $world["xUrl"] ?? "",
 "externalUrl" => $world["externalUrl"] ?? "",
 "thumbnail" => $world["thumbnail"] ?? "",
-"panorama" => $world["panorama"] ?? "",
+"type" => ($world["type"] ?? "") === "game" ? "game" : "panorama",
+"gameId" => ($world["type"] ?? "") === "game" ? ($world["gameId"] ?? "") : "",
+"panorama" => ($world["type"] ?? "") === "game" ? "" : ($world["panorama"] ?? ""),
 "initialView" => is_array($world["initialView"] ?? null)
 ? $world["initialView"]
 : null,
