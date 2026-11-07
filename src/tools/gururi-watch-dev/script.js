@@ -2898,45 +2898,30 @@ thumbnailWarning,
 }
 );
 
-postPanorama.addEventListener(
-"change",
-() => {
+postPanorama.addEventListener("change", () => {
+const file = postPanorama.files?.[0];
+
+panoramaWarning.classList.add("hidden");
+panoramaWarning.textContent = "";
+
+if (!file) {
+return;
+}
+
+if (isGameFile(file)) {
+return;
+}
 
 checkImageRatio(
 postPanorama,
 panoramaWarning,
 "panorama"
 );
+});
 
+function isGameFile(file) {
+return !!file && /\.html$/i.test(file.name);
 }
-);
-
-const postMode = document.getElementById("postMode");
-const postPanoramaField = document.getElementById("postPanoramaField");
-const postGameField = document.getElementById("postGameField");
-const postGame = document.getElementById("postGame");
-
-function updatePostMode() {
-const isGame = postMode.value === "game";
-
-postPanoramaField.classList.toggle("hidden", isGame);
-postGameField.classList.toggle("hidden", !isGame);
-
-postPanorama.required = !isGame;
-postPanorama.disabled = isGame;
-postGame.required = isGame;
-postGame.disabled = !isGame;
-
-if (isGame) {
-postError.classList.add("hidden");
-postSubmitButton.textContent = currentLanguage === "ja" ? "ゲームを投稿" : "Post game";
-} else {
-postSubmitButton.textContent = t("postSubmit");
-}
-}
-
-postMode.addEventListener("change", updatePostMode);
-updatePostMode();
 
 function openPostPanel() {
 
@@ -3147,12 +3132,23 @@ return;
 
 }
 
-if (postMode.value === "game") {
-postError.textContent = currentLanguage === "ja"
-? "ゲーム投稿のサーバー側機能は準備中です。"
-: "Game uploads are not yet available.";
+const selectedWorkFile = postPanorama.files?.[0];
 
+if (isGameFile(selectedWorkFile)) {
+postError.textContent = currentLanguage === "ja"
+? "HTMLゲームの投稿機能は準備中です。"
+: "HTML game uploads are not yet available.";
 postError.classList.remove("hidden");
+pendingPostFormData = null;
+return;
+}
+
+if (!selectedWorkFile || !/^image\/(png|jpeg|webp)$/.test(selectedWorkFile.type)) {
+postError.textContent = currentLanguage === "ja"
+? "PNG・JPG・WebP、またはぐるりエディタのHTMLを選択してください。"
+: "Please select a PNG, JPG, WebP, or Gururi Editor HTML file.";
+postError.classList.remove("hidden");
+pendingPostFormData = null;
 return;
 }
 
