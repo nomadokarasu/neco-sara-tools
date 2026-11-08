@@ -363,7 +363,13 @@ jobs:
           }
 
           fs.mkdirSync(destination, {recursive: true});
-          fs.cpSync(source, destination, {recursive: true});
+
+          for (const name of requiredFiles) {
+          const from = source + "/" + name;
+          const to = destination + "/" + name;
+          fs.mkdirSync(require("node:path").dirname(to), {recursive: true});
+          fs.copyFileSync(from, to);
+          }
           NODE
 
       - name: Upload Gururium release by FTPS
