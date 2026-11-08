@@ -12,24 +12,6 @@ session_start();
 header("Content-Type: application/json; charset=UTF-8");
 header("Cache-Control: no-store");
 
-if (isset($_GET["session_check"])) {
-$cookieValue = (string)($_COOKIE[session_name()] ?? "");
-$savePath = (string)session_save_path();
-
-echo json_encode([
-"location" => "admin-worlds",
-"sessionName" => session_name(),
-"cookiePresent" => $cookieValue !== "",
-"cookieMatchesSession" => $cookieValue !== "" && hash_equals(session_id(), $cookieValue),
-"sessionActive" => session_status() === PHP_SESSION_ACTIVE,
-"authenticated" => !empty($_SESSION["gururi_admin_logged_in"]),
-"savePathKey" => substr(hash("sha256", $savePath), 0, 12),
-"saveHandler" => ini_get("session.save_handler")
-], JSON_UNESCAPED_UNICODE);
-
-exit;
-}
-
 if (
 empty($_SESSION["gururi_admin_logged_in"])
 ) {

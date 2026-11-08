@@ -163,8 +163,10 @@ $world = [
 "createdAt" => gmdate("c")
 ];
 
+require_once __DIR__ . "/worlds-storage.php";
+
 $dataFile = $dataDirectory . "/worlds.json";
-$handle = fopen($dataFile, "c+");
+$handle = fopen($dataDirectory . "/worlds-update.lock", "c");
 
 if ($handle === false || !flock($handle, LOCK_EX)) {
 if (is_resource($handle)) {
@@ -174,53 +176,37 @@ fclose($handle);
 @unlink($thumbnailDestination);
 flock($lock, LOCK_UN);
 fclose($lock);
-failPublish("作品データを開けませんでした。", 500);
+failPublish("作品データをロックできませんでした。", 500);
 }
 
-rewind($handle);
-$existingJson = stream_get_contents($handle);
-$worlds = json_decode($existingJson ?: "[]", true);
-
-if (!is_array($worlds) || !array_is_list($worlds)) {
+try {
+$worlds = readWorldsSafely($dataFile);
+} catch (Throwable $error) {
 flock($handle, LOCK_UN);
 fclose($handle);
 @unlink($gameDestination);
 @unlink($thumbnailDestination);
 flock($lock, LOCK_UN);
 fclose($lock);
-failPublish("作品データを確認できませんでした。", 500);
+failPublish($error->getMessage(), 500);
 }
 
 $worlds[] = $world;
-$newJson = json_encode($worlds, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-if ($newJson === false) {
+try {
+writeWorldsSafely($dataFile, $worlds);
+} catch (Throwable $error) {
 flock($handle, LOCK_UN);
 fclose($handle);
 @unlink($gameDestination);
 @unlink($thumbnailDestination);
 flock($lock, LOCK_UN);
 fclose($lock);
-failPublish("作品データを変換できませんでした。", 500);
-}
-
-rewind($handle);
-$written = ftruncate($handle, 0) && fwrite($handle, $newJson) === strlen($newJson);
-
-if ($written) {
-fflush($handle);
+failPublish($error->getMessage(), 500);
 }
 
 flock($handle, LOCK_UN);
 fclose($handle);
-
-if (!$written) {
-@unlink($gameDestination);
-@unlink($thumbnailDestination);
-flock($lock, LOCK_UN);
-fclose($lock);
-failPublish("作品データを保存できませんでした。", 500);
-}
 
 @unlink($temporaryFile);
 @unlink($metadataFile);

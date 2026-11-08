@@ -45,11 +45,82 @@ if ($size < 1 || $size > 50 * 1024 * 1024) {
 gameFail("現在のテストではHTMLは50MB以下にしてください。");
 }
 
+
 $tmp = $file["tmp_name"] ?? "";
 
 if (!is_string($tmp) || !is_uploaded_file($tmp)) {
 gameFail("アップロードファイルを確認できません。");
 }
+
+$dataDirectory = dirname(__DIR__) . "/data";
+
+if (
+!is_file($dataDirectory . "/.htaccess") ||
+!str_contains((string)file_get_contents($dataDirectory . "/.htaccess"), "Require all denied")
+) {
+gameFail("非公開データのアクセス制限を確認できません。", 500);
+}
+
+$rateDirectory = $dataDirectory . "/upload-rates";
+
+if (!is_dir($rateDirectory) && !mkdir($rateDirectory, 0700, true) && !is_dir($rateDirectory)) {
+gameFail("アップロード制限を初期化できませんでした。", 500);
+}
+
+$clientIp = (string)($_SERVER["REMOTE_ADDR"] ?? "unknown");
+$rateFile = $rateDirectory . "/" . hash("sha256", $clientIp) . ".json";
+$rateHandle = fopen($rateFile, "c+");
+
+if ($rateHandle === false || !flock($rateHandle, LOCK_EX)) {
+if (is_resource($rateHandle)) {
+fclose($rateHandle);
+}
+gameFail("アップロード制限を確認できませんでした。", 500);
+}
+
+rewind($rateHandle);
+$rateJson = stream_get_contents($rateHandle);
+$rateRecords = json_decode($rateJson ?: "[]", true);
+
+if (!is_array($rateRecords)) {
+$rateRecords = [];
+}
+
+$now = time();
+$rateRecords = array_values(array_filter($rateRecords, function ($timestamp) use ($now) {
+return is_numeric($timestamp) && (int)$timestamp > $now - 3600 && (int)$timestamp <= $now;
+}));
+
+$recentRecords = array_filter($rateRecords, function ($timestamp) use ($now) {
+return (int)$timestamp > $now - 600;
+});
+
+if (count($recentRecords) >= 5 || count($rateRecords) >= 12) {
+flock($rateHandle, LOCK_UN);
+fclose($rateHandle);
+header("Retry-After: 600");
+gameFail("アップロード回数の上限に達しました。時間をおいて再度お試しください。", 429);
+}
+
+$rateRecords[] = $now;
+$newRateJson = json_encode($rateRecords);
+
+rewind($rateHandle);
+
+if (
+$newRateJson === false ||
+!ftruncate($rateHandle, 0) ||
+fwrite($rateHandle, $newRateJson) !== strlen($newRateJson)
+) {
+flock($rateHandle, LOCK_UN);
+fclose($rateHandle);
+gameFail("アップロード制限を保存できませんでした。", 500);
+}
+
+fflush($rateHandle);
+flock($rateHandle, LOCK_UN);
+fclose($rateHandle);
+@chmod($rateFile, 0600);
 
 $contents = file_get_contents($tmp);
 

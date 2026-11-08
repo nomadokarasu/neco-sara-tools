@@ -39,42 +39,33 @@ $worldId === "" ||
 failResponse("作品IDが正しくありません。");
 }
 
-$dataFile = dirname(__DIR__) . "/data/worlds.json";
+require_once __DIR__ . "/worlds-storage.php";
 
-if (!file_exists($dataFile)) {
+$dataDirectory = dirname(__DIR__) . "/data";
+$dataFile = $dataDirectory . "/worlds.json";
+$lockFile = $dataDirectory . "/worlds-update.lock";
+
+if (!is_file($dataFile)) {
 failResponse("投稿データがありません。", 404);
 }
 
-$fileHandle = fopen(
-$dataFile,
-"c+"
-);
+$fileHandle = fopen($lockFile, "c");
 
 if ($fileHandle === false) {
-failResponse("投稿データを開けませんでした。", 500);
+failResponse("投稿データのロックを開けませんでした。", 500);
 }
 
 if (!flock($fileHandle, LOCK_EX)) {
 fclose($fileHandle);
-failResponse("投稿データを更新できませんでした。", 500);
+failResponse("投稿データをロックできませんでした。", 500);
 }
 
-rewind($fileHandle);
-
-$currentJson =
-stream_get_contents(
-$fileHandle
-);
-
-$worlds = json_decode(
-$currentJson ?: "[]",
-true
-);
-
-if (!is_array($worlds)) {
+try {
+$worlds = readWorldsSafely($dataFile);
+} catch (Throwable $error) {
 flock($fileHandle, LOCK_UN);
 fclose($fileHandle);
-failResponse("投稿データが壊れています。", 500);
+failResponse($error->getMessage(), 500);
 }
 
 $found = false;
@@ -133,37 +124,14 @@ fclose($fileHandle);
 failResponse("作品が見つかりませんでした。", 404);
 }
 
-$newJson = json_encode(
-$worlds,
-JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-);
-
-if ($newJson === false) {
+try {
+writeWorldsSafely($dataFile, $worlds);
+} catch (Throwable $error) {
 flock($fileHandle, LOCK_UN);
 fclose($fileHandle);
-failResponse("投稿データを変換できませんでした。", 500);
+failResponse($error->getMessage(), 500);
 }
 
-rewind($fileHandle);
-
-if (!ftruncate($fileHandle, 0)) {
-flock($fileHandle, LOCK_UN);
-fclose($fileHandle);
-failResponse("投稿データを更新できませんでした。", 500);
-}
-
-if (
-fwrite(
-$fileHandle,
-$newJson
-) === false
-) {
-flock($fileHandle, LOCK_UN);
-fclose($fileHandle);
-failResponse("投稿データを更新できませんでした。", 500);
-}
-
-fflush($fileHandle);
 flock($fileHandle, LOCK_UN);
 fclose($fileHandle);
 
