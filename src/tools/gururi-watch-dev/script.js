@@ -3314,8 +3314,7 @@ const selectedWorkFile = postPanorama.files?.[0];
 if (isGameFile(selectedWorkFile)) {
 pendingPostFormData = null;
 postSubmitButton.disabled = true;
-postSubmitButton.textContent = currentLanguage === "ja" ? "アップロード中…" : "Uploading…";
-postSubmitButton.classList.add("is-uploading");
+postSubmitButton.innerHTML = '<span class="uploading-text">' + (currentLanguage === "ja" ? "アップロード中…" : "Uploading…") + '</span>';
 
 try {
 if (selectedWorkFile.size === 0 || selectedWorkFile.size > 50 * 1024 * 1024) {
@@ -3398,7 +3397,6 @@ postError.textContent = error.message;
 postError.classList.remove("hidden");
 } finally {
 postSubmitButton.disabled = false;
-postSubmitButton.classList.remove("is-uploading");
 postSubmitButton.textContent = t("postSubmit");
 }
 return;
