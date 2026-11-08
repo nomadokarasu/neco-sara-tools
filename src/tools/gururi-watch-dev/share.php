@@ -116,7 +116,7 @@ $lang === "en"
 }
 
 $baseUrl =
-"https://tools.neco-sara.com/tools/gururi-watch/";
+"https://tools.neco-sara.com/tools/gururi-watch-dev/";
 
 $viewerUrl =
 $baseUrl .
