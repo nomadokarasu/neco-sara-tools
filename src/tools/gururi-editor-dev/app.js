@@ -9742,6 +9742,10 @@ launch.style.display='flex';
 loadingFill.style.width='100%';
 loadingLabel.textContent='ゲームが終了しました';
 };
+const remainingTime=Math.max(0,3000-(performance.now()-launchStartedAt));
+if(remainingTime>0){
+await new Promise(resolve=>setTimeout(resolve,remainingTime));
+}
 begin();
 }catch(error){console.error(error);launch.textContent='作品を開けませんでした：'+error.message;}
 })();
