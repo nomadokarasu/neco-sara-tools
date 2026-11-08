@@ -9643,7 +9643,11 @@ body.gururi-player #gamePreview{position:fixed!important;top:0!important;left:0!
 body.gururi-player #closePreviewBtn{display:none!important}
 #gururiLaunch{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;gap:24px;align-items:center;justify-content:center;background:#080808;color:#fff;font-family:sans-serif;text-align:center;padding:20px;box-sizing:border-box}
 #gururiLaunch>*{position:relative;z-index:1}
-#gururiLaunch h1{font-size:clamp(24px,5vw,46px);font-weight:700;letter-spacing:.12em;margin:0}
+#gururiLaunch h1{font-size:clamp(24px,5vw,46px);font-weight:700;letter-spacing:.12em;margin:0;animation:gururiTitlePulse 4s ease-in-out infinite}
+@keyframes gururiTitlePulse{
+0%,100%{opacity:1}
+50%{opacity:.3}
+}
 #gururiLoading{width:min(340px,80vw);display:flex;flex-direction:column;gap:12px;align-items:stretch}
 #gururiLoadingTrack{height:8px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
 #gururiLoadingFill{height:100%;width:0;background:#fff;border-radius:99px;transition:width .15s ease}
