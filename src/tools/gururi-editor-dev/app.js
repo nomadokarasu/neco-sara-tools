@@ -1077,7 +1077,7 @@ renderNodes();
 return;
 }
 if(node.type==='gameEnd'){
- settingsPanel.innerHTML='<div class="settings-title">ゲーム終了</div><p class="settings-empty">このノードを実行するとゲームを終了し、書き出した作品ではトップページに戻ります。エディタ内ではプレビューを閉じます。出力接続はありません。</p>';
+ settingsPanel.innerHTML='<div class="settings-title">ゲーム終了</div><p class="settings-empty">このノードを実行するとゲームを終了し、書き出した作品では「MADE WITH GURURI」の終了画面を表示します。エディタ内ではプレビューを閉じます。出力接続はありません。</p>';
  return;
 }
 if(node.type==='eventRecord'){
@@ -9588,7 +9588,7 @@ const title=document.getElementById('exportTitle').value.trim();
 const author=document.getElementById('exportAuthor').value.trim();
 const coverImage=exportCoverDataUrl;
 if(!title||!author)throw new Error('作品タイトルと作者名を入力してください。');
-if(!coverImage)throw new Error('トップページの背景画像を撮影して「決定」を押してください。');
+if(!coverImage)throw new Error('サムネイル画像を撮影して「決定」を押してください。');
 if(!state.worldFolders.length||!state.worldFolders[0]?.id)throw new Error('開始ワールドがありません。');
 setSaveProgress(5,'作品データを準備しています…');
 const metadata={
@@ -9641,17 +9641,13 @@ html,body{margin:0!important;background:#000!important}
 body.gururi-player #editorHomePage,body.gururi-player .editor-home,body.gururi-player .topbar,body.gururi-player .main-layout,body.gururi-player .media-popup,body.gururi-player #exportPreviewDiagnosticBtn{display:none!important}
 body.gururi-player #gamePreview{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:auto!important;width:100%!important;height:100vh!important;height:100svh!important;z-index:20!important;background:#000!important;overflow:hidden!important}
 body.gururi-player #closePreviewBtn{display:none!important}
-#gururiLaunch{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;gap:15px;align-items:center;justify-content:center;background-color:#080808;background-size:cover;background-position:center;color:#fff;font-family:sans-serif;text-align:center;padding:20px;box-sizing:border-box}
-#gururiLaunch::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.48),rgba(0,0,0,.68));pointer-events:none}
-#gururiLaunch>*{position:relative;z-index:1;text-shadow:0 2px 10px #000,0 1px 3px #000}
-#gururiLaunch h1{font-size:clamp(24px,4vw,44px);max-width:94vw;overflow-wrap:anywhere}
-#gururiLaunch button{background:rgba(28,28,28,.78)!important;backdrop-filter:blur(7px);border:1px solid rgba(255,255,255,.7)!important;text-shadow:none;min-width:180px}
-#gururiLaunch button{padding:17px 40px;border:1px solid #888;border-radius:9px;background:#242424;color:#fff;font-size:20px;cursor:pointer}
-#gururiLoading{width:min(340px,80vw);display:flex;flex-direction:column;gap:8px;align-items:stretch}
+#gururiLaunch{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;gap:24px;align-items:center;justify-content:center;background:#080808;color:#fff;font-family:sans-serif;text-align:center;padding:20px;box-sizing:border-box}
+#gururiLaunch>*{position:relative;z-index:1}
+#gururiLaunch h1{font-size:clamp(24px,5vw,46px);font-weight:700;letter-spacing:.12em;margin:0}
+#gururiLoading{width:min(340px,80vw);display:flex;flex-direction:column;gap:12px;align-items:stretch}
 #gururiLoadingTrack{height:8px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
 #gururiLoadingFill{height:100%;width:0;background:#fff;border-radius:99px;transition:width .15s ease}
-#gururiLoadingLabel{font-size:13px;color:#fff;text-align:center}
-#gururiLaunch button:disabled{cursor:default;opacity:.6}
+#gururiLoadingLabel{font-size:13px;color:#ccc;text-align:center}
 `;
 const playerBootstrap=String.raw`
 (async()=>{
@@ -9663,17 +9659,14 @@ try{
 const data=window.GURURI_EXPORTED_WORK;
 const encoded=window.GURURI_EMBEDDED_MEDIA;
 launch.replaceChildren();
-if(data?.coverImage){launch.style.backgroundImage='url("'+data.coverImage+'")';}
-const launchTitle=document.createElement('h1');launchTitle.textContent=data?.title||'ぐるり作品';launchTitle.style.margin='0';
-const launchAuthor=document.createElement('div');launchAuthor.textContent='作者：'+(data?.author||'');
-const launchButton=document.createElement('button');launchButton.type='button';launchButton.textContent='スタート';launchButton.disabled=true;
-launchButton.style.opacity='.6';
+const launchTitle=document.createElement('h1');
+launchTitle.textContent='MADE WITH GURURI';
 const loading=document.createElement('div');loading.id='gururiLoading';
 const loadingTrack=document.createElement('div');loadingTrack.id='gururiLoadingTrack';
 const loadingFill=document.createElement('div');loadingFill.id='gururiLoadingFill';
 const loadingLabel=document.createElement('div');loadingLabel.id='gururiLoadingLabel';loadingLabel.textContent='作品を準備しています… 0%';
 loadingTrack.appendChild(loadingFill);loading.append(loadingTrack,loadingLabel);
-launch.append(launchTitle,launchAuthor,launchButton,loading);
+launch.append(launchTitle,loading);
 const updateLoading=(percent,label)=>{
 const amount=Math.max(0,Math.min(100,Math.round(percent)));
 loadingFill.style.width=amount+'%';
@@ -9746,11 +9739,10 @@ startPreview(false,true);
 };
 window.gururiReturnToTitle=()=>{
 launch.style.display='flex';
+loadingFill.style.width='100%';
+loadingLabel.textContent='ゲームが終了しました';
 };
-launchButton.disabled=false;
-launchButton.style.opacity='1';
-launchButton.addEventListener('click',begin);
-loading.remove();
+begin();
 }catch(error){console.error(error);launch.textContent='作品を開けませんでした：'+error.message;}
 })();
 `;
@@ -9849,7 +9841,7 @@ e.preventDefault();exportCoverView.zoom=clamp(exportCoverView.zoom+(e.deltaY>0?-
 exportCoverShoot.addEventListener('click',()=>{
 if(!exportCoverImage){alert('開始ワールドの画像がありません。');return;}
 // Capture WebGL pixels directly in the same call as the draw (no preserveDrawingBuffer required).
-const w=1280,h=720;
+const w=1280,h=1280;
 const capture=document.createElement('canvas');capture.width=w;capture.height=h;
 Object.defineProperties(capture,{clientWidth:{get:()=>w/(window.devicePixelRatio||1)},clientHeight:{get:()=>h/(window.devicePixelRatio||1)}});
 drawPanoramaPreview(capture,{image:exportCoverImage,...exportCoverView});
@@ -9883,7 +9875,7 @@ event.preventDefault();
 let name=exportFileNameInput.value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/[. ]+$/g,'');
 if(name.toLowerCase().endsWith('.zip'))name=name.slice(0,-4);
 if(!name){alert('ファイル名を入力してください。');return;}
-if(!exportCoverDataUrl){alert('トップページの背景画像を撮影して「決定」を押してください。');return;}
+if(!exportCoverDataUrl){alert('サムネイル画像を撮影して「決定」を押してください。');return;}
 const fileName=name+'.zip';
 let handle=null;
 if(typeof window.showSaveFilePicker==='function'&&window.isSecureContext){
@@ -9921,7 +9913,7 @@ const worldComposites=new Map();
 function activeFolder(){return state.worldFolders.find(w=>w.id===state.activeFolderId)||null;}
 function makeWorldFolder(name){
  const id=uid('folder');
- const backer={id:uid('world'),type:'world',folderId:id,x:0,y:0,world:{fileName:'',fileType:'png',mediaId:null,image:null,yaw:0,pitch:0,zoom:1,views:{pc:{yaw:0,pitch:0,zoom:1},mobile:{yaw:0,pitch:0,zoom:1}}},worldInfiniteLoop:true};
+ const backer={id:uid('world'),type:'world',folderId:id,x:0,y:0,world:{fileName:'',fileType:'png',mediaId:null,image:null,yaw:-Math.PI/2,pitch:0,zoom:1,views:{pc:{yaw:-Math.PI/2,pitch:0,zoom:1},mobile:{yaw:-Math.PI/2,pitch:0,zoom:1}}},worldInfiniteLoop:true};
  state.nodes.push(backer);
  const folder={id,name,backerId:backer.id,layers:[]};state.worldFolders.push(folder);
  const start={id:uid('folderStart'),type:'folderStart',folderId:id,x:70,y:120};
@@ -10258,7 +10250,17 @@ let rememberCameraFeedbackTimer=null;
 rememberCameraButton.addEventListener('click',()=>{
 const controller=worldSettingsCameraPreviews.get(previewCanvas);
 if(!controller||!worldBacker)return;
+const isFirstSave=worldBacker.initialCameraRecorded!==true;
 controller.persist();
+if(isFirstSave){
+const currentView=getWorldInitialView(worldBacker);
+const otherMode=state.displayMode==='pc'?'mobile':'pc';
+const otherView=worldBacker.world.views[otherMode];
+if(otherView&&currentView){
+otherView.yaw=currentView.yaw;
+otherView.pitch=currentView.pitch;
+}
+}
 worldBacker.initialCameraRecorded=true;
 updateRememberCameraButton();
 section._refreshInitialCameraFields?.();
