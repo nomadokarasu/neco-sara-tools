@@ -9673,7 +9673,7 @@ const loadingLabel=document.createElement('div');loadingLabel.id='gururiLoadingL
 loadingTrack.appendChild(loadingFill);loading.append(loadingTrack,loadingLabel);
 launch.append(launchTitle,loading);
 const updateLoading=(percent,label)=>{
-const amount=Math.max(0,Math.min(100,Math.round(percent)));
+const amount=Math.max(0,Math.min(98,Math.round(percent)));
 loadingFill.style.width=amount+'%';
 loadingLabel.textContent=label+' '+amount+'%';
 };
