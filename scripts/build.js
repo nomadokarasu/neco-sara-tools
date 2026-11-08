@@ -1210,20 +1210,28 @@ function addGoogleAnalytics(
     );
 
 
- // 両方のGA4測定IDがすでにある場合は追加しない
-if (
-  html.includes(GA_MEASUREMENT_ID) &&
-  html.includes(GA_ALL_MEASUREMENT_ID)
-) {
+ // 既存のGA4設定を維持し、不足する測定IDだけを追加する
+if (html.includes(GA_MEASUREMENT_ID)) {
+if (!html.includes(GA_ALL_MEASUREMENT_ID)) {
+const existingConfig = `gtag('config', '${GA_MEASUREMENT_ID}');`;
+const additionalConfig = `gtag('config', '${GA_ALL_MEASUREMENT_ID}');`;
 
-  console.log(
-    `GA4設定済み：${path.relative(
-      outputDirectory,
-      filePath
-    )}`
-  );
+if (!html.includes(existingConfig)) {
+throw new Error(`既存のGA4設定を確認できません：${filePath}`);
+}
 
-  return;
+html = html.replace(
+existingConfig,
+existingConfig + "\n" + additionalConfig
+);
+
+fs.writeFileSync(filePath, html, "utf8");
+console.log(`GA4測定IDを追加：${path.relative(outputDirectory, filePath)}`);
+} else {
+console.log(`GA4設定済み：${path.relative(outputDirectory, filePath)}`);
+}
+
+return;
 }
 
   // <head>がない場合

@@ -9,8 +9,30 @@ gtag('js', new Date());
 gtag('config', 'G-E5CTR47H44');
 </script>
 
+
+<script>
+
+if (/^[a-f0-9]{16}$/.test(new URLSearchParams(window.location.search).get("world") || "")) {
+document.documentElement.classList.add("direct-world-loading");
+}
+</script>
+<style>
+.direct-world-loading #topScreen {
+visibility: hidden;
+}
+#postSubmitButton .uploading-text {
+display: inline-block;
+animation: gururi-upload-pulse 1s ease-in-out infinite;
+}
+@keyframes gururi-upload-pulse {
+0%, 100% { opacity: 1; }
+50% { opacity: 0.3; }
+}
+</style>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
 <title>ぐるりうむ</title>
 <link rel="stylesheet" href="./style.css?v=2026090716">
 </head>
@@ -29,7 +51,7 @@ gtag('config', 'G-E5CTR47H44');
 <div>
 <div class="site-title-line">
 <h1 class="site-title">ぐるりうむ</h1>
-<span class="site-version">ver.0.2.3</span>
+<span class="site-version">ver.0.3.0</span>
 </div>
 <p class="site-description">ぐるりペイントで描かれた世界たち</p>
 </div>
@@ -42,7 +64,7 @@ EN
 
 <div class="top-actions">
 <button id="postButton" class="post-button" type="button">
-世界を投稿
+作品投稿
 </button>
 
 <a class="gururi-paint-button" href="https://tools.neco-sara.com/tools/gururi-paint/">
@@ -152,8 +174,6 @@ EN
 ×
 </button>
 
-<h2 class="modal-title">世界を投稿する</h2>
-
 <form id="postForm" class="post-form">
 
 <label class="form-field">
@@ -189,9 +209,9 @@ EN
 </label>
 
 <label class="form-field">
-<span>ぐるり画像</span>
-<input id="postPanorama" name="panorama" type="file" accept="image/jpeg,image/png,image/webp" required>
-<small>横2：縦1のJPG / PNG / WebP、10MB以下。ぐるりペイントから保存した画像をそのまま使用できます。</small>
+<span>作品データ</span>
+<input id="postPanorama" name="panorama" type="file" accept=".png,.jpg,.jpeg,.webp,.html,image/png,image/jpeg,image/webp,text/html" required>
+<small>2:1のPNG・JPG・WebP（10MB以下）、またはぐるりエディタで書き出したHTML（50MB以下）。プレビューで動作確認してから投稿できます。</small>
 <p id="panoramaWarning" class="file-warning hidden"></p>
 </label>
 
@@ -394,7 +414,7 @@ alt=""
 
 </main>
 
-<script type="module" src="./script.js?v=2026091815"></script>
+<script type="module" src="./script.js?v=0.3.0"></script>
 
 </body>
 </html>

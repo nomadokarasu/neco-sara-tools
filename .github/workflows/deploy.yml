@@ -17,6 +17,7 @@ on:
       - gururi-editor-dev-deploy
       - gururi-editor-release-deploy
       - gururi-watch-dev-deploy
+      - gururi-watch-release-deploy
 
 permissions:
   contents: read
@@ -326,9 +327,70 @@ jobs:
             **/.htaccess
             **/.htpasswd
             **/.env*
+
             tools/gururi-watch-dev/data/**
             tools/gururi-watch-dev/uploads/**
             tools/gururi-watch-dev/api/admin-config.php
+
+      - name: Prepare Gururium release files
+        if: github.ref == 'refs/heads/gururi-watch-release-deploy'
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const source = "dist/tools/gururi-watch";
+          const destination = ".watch-release-deploy/tools/gururi-watch";
+          const requiredFiles = [
+          "index.html",
+          "script.js",
+          "style.css",
+          "share.php",
+          "admin.php",
+          "api/worlds.php",
+          "api/create-world.php",
+          "api/admin-worlds.php",
+          "api/admin-update-world.php",
+          "api/report-world.php",
+          "api/worlds-storage.php",
+          "api/store-game-dev.php",
+          "api/delete-game-dev.php",
+          "api/publish-game-dev.php"
+          ];
+
+          for (const name of requiredFiles) {
+          if (!fs.existsSync(source + "/" + name)) {
+          throw new Error("公開版のファイルがありません：" + name);
+          }
+          }
+
+          fs.mkdirSync(destination, {recursive: true});
+          fs.cpSync(source, destination, {recursive: true});
+          NODE
+
+      - name: Upload Gururium release by FTPS
+        if: github.ref == 'refs/heads/gururi-watch-release-deploy'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.LOLIPOP_FTP_SERVER }}
+          username: ${{ secrets.LOLIPOP_FTP_USERNAME }}
+          password: ${{ secrets.LOLIPOP_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./.watch-release-deploy/
+          server-dir: /tools/
+          state-name: .ftp-deploy-watch-release-state.json
+          dangerous-clean-slate: false
+          dry-run: true
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.admin-credentials.php
+            **/.htaccess
+            **/.htpasswd
+            **/.env*
+            tools/gururi-watch/data/**
+            tools/gururi-watch/uploads/**
+            tools/gururi-watch/api/admin-config.php
 
       - name: Prepare Gururi Editor development files
         if: github.ref == 'refs/heads/gururi-editor-dev-deploy'

@@ -23,7 +23,7 @@ const TEXT = {
 ja: {
 siteTitle: "ぐるりうむ",
 siteDescription: "ぐるりペイントで描かれた世界たち",
-postWorld: "世界を投稿",
+postWorld: "作品投稿",
 gururiPaint: "ぐるりペイント",
 support: "JUNOTAを応援",
 authorIntro: "作者紹介",
@@ -46,8 +46,8 @@ xUrl: "XのURL",
 website: "Webサイトなど",
 thumbnail: "サムネイル画像",
 thumbnailHelp: "正方形（1：1）のJPG / PNG / WebP、10MB以下",
-panorama: "ぐるり画像",
-panoramaHelp: "横2：縦1のJPG / PNG / WebP、10MB以下。ぐるりペイントから保存した画像をそのまま使用できます。",
+panorama: "作品データ",
+panoramaHelp: "2:1のJPG / PNG / WebP（10MB以下）、またはぐるりエディタのHTML（50MB以下）。プレビューで動作確認してから投稿できます。",
 contentCheck: "R18・過度に暴力的な内容ではありません。",
 rightsCheck: "他人の作品・個人情報などを無断で使用していません。",
 terms: "自分が投稿する権利を持つ画像であり、問題がある場合は運営者が非表示・削除できることに同意します。",
@@ -89,7 +89,7 @@ imageUnreadable: "画像を読み込めませんでした。別の画像を選�
 en: {
 siteTitle: "Gururium",
 siteDescription: "Worlds created with Gururi Paint",
-postWorld: "Post a world",
+postWorld: "Submit Work",
 gururiPaint: "Gururi Paint",
 support: "Support JUNOTA",
 authorIntro: "Creator",
@@ -112,8 +112,8 @@ xUrl: "X URL",
 website: "Website",
 thumbnail: "Thumbnail",
 thumbnailHelp: "Square (1:1), JPG / PNG / WebP, up to 10 MB",
-panorama: "Panorama image",
-panoramaHelp: "2:1 landscape JPG / PNG / WebP, up to 10 MB. You can use an image saved directly from Gururi Paint.",
+panorama: "Work File",
+panoramaHelp: "2:1 JPG / PNG / WebP (up to 10 MB), or Gururi Editor HTML (up to 50 MB). Preview and test your game before publishing.",
 contentCheck: "This submission does not contain adult or excessively violent content.",
 rightsCheck: "I am not using other people's works or personal information without permission.",
 terms: "I have the right to upload these images and agree that the operator may hide or delete problematic submissions.",
@@ -511,11 +511,6 @@ t("reportSubmit");
 reportCancelButton.textContent =
 t("cancel");
 
-postPanel.querySelector(
-".modal-title"
-).textContent =
-t("postTitle");
-
 document.getElementById(
 "postTitle"
 ).previousElementSibling.textContent =
@@ -837,6 +832,46 @@ null;
 let pendingPostFormData =
 null;
 
+
+let temporaryGameFile = null;
+let temporaryGameId = "";
+let temporaryGameToken = "";
+
+function discardTemporaryGame() {
+if (!temporaryGameId || !temporaryGameToken) {
+return;
+}
+
+const formData = new FormData();
+formData.set("id", temporaryGameId);
+formData.set("token", temporaryGameToken);
+
+temporaryGameFile = null;
+temporaryGameId = "";
+temporaryGameToken = "";
+
+fetch("./api/delete-game-dev.php", {
+method: "POST",
+body: formData,
+credentials: "same-origin",
+keepalive: true
+}).catch((error) => {
+console.warn("一時ゲームの削除要求に失敗しました。", error);
+});
+}
+
+window.addEventListener("pagehide", () => {
+if (!temporaryGameId || !temporaryGameToken) {
+return;
+}
+
+const formData = new FormData();
+formData.set("id", temporaryGameId);
+formData.set("token", temporaryGameToken);
+
+navigator.sendBeacon("./api/delete-game-dev.php", formData);
+});
+
 function resizePostPreview() {
 
 const width =
@@ -1013,6 +1048,17 @@ postError.classList.remove(
 
 function closePostPreview() {
 
+const gameFrame = document.getElementById("gamePreviewFrame");
+
+if (gameFrame) {
+gameFrame.remove();
+postPreviewRenderer.domElement.style.display = "";
+postPreviewSubmitButton.disabled = false;
+postPreviewSubmitButton.textContent = t("postPreviewSubmit");
+postPreviewTitle.textContent = t("postPreviewTitle");
+postPreviewDescription.textContent = t("postPreviewDescription");
+}
+
 postPreviewPanel.classList.add(
 "hidden"
 );
@@ -1032,6 +1078,71 @@ null;
 postPreviewPinchStartFov =
 null;
 
+}
+
+
+async function publishTemporaryGame() {
+if (!temporaryGameId || !temporaryGameToken) {
+window.alert("プレビュー用のゲームが見つかりません。");
+return;
+}
+
+const formData = new FormData(postForm);
+formData.delete("panorama");
+formData.set("id", temporaryGameId);
+formData.set("token", temporaryGameToken);
+formData.set("termsAccepted", "1");
+
+postPreviewSubmitButton.disabled = true;
+postPreviewSubmitButton.textContent = t("posting");
+
+try {
+const response = await fetch("./api/publish-game-dev.php", {
+method: "POST",
+body: formData,
+credentials: "same-origin",
+cache: "no-store"
+});
+
+const result = await response.json();
+
+if (!response.ok || !result.success || !result.world?.id) {
+throw new Error(result.error || "ゲームを投稿できませんでした。");
+}
+
+temporaryGameFile = null;
+temporaryGameId = "";
+temporaryGameToken = "";
+pendingPostFormData = null;
+
+const gameFrame = document.getElementById("gamePreviewFrame");
+if (gameFrame) {
+gameFrame.remove();
+}
+
+postPreviewRenderer.domElement.style.display = "";
+postPreviewPanel.classList.add("hidden");
+postPreviewTitle.textContent = t("postPreviewTitle");
+postPreviewDescription.textContent = t("postPreviewDescription");
+
+postForm.reset();
+
+await loadWorldList();
+
+trackEvent("post_complete", {
+world_id: result.world.id,
+world_title: result.world.title || "",
+world_author: result.world.author || "",
+language: currentLanguage
+});
+
+openPostCompletePanel(result.world.id);
+} catch (error) {
+window.alert(error.message || "ゲームを投稿できませんでした。");
+} finally {
+postPreviewSubmitButton.disabled = false;
+postPreviewSubmitButton.textContent = t("postPreviewSubmit");
+}
 }
 
 async function submitPendingPost() {
@@ -1449,6 +1560,11 @@ postPreviewSubmitButton
 "click",
 () => {
 
+if (document.getElementById("gamePreviewFrame")) {
+publishTemporaryGame();
+return;
+}
+
 submitPendingPost();
 
 }
@@ -1754,6 +1870,47 @@ window.history.replaceState(
 worldUrl
 );
 
+const previousGameFrame = document.getElementById("publishedGameFrame");
+if (previousGameFrame) {
+previousGameFrame.remove();
+}
+
+renderer.domElement.style.display = "";
+
+if (world.type === "game") {
+const gameId = String(world.gameId || "");
+
+if (!/^[a-f0-9]{16}$/.test(gameId)) {
+window.alert("ゲームIDが正しくありません。");
+return;
+}
+
+const gameFrame = document.createElement("iframe");
+gameFrame.id = "publishedGameFrame";
+gameFrame.title = world.title || "HTMLゲーム";
+gameFrame.src = "https://gururi-game.neco-sara.com/?site=release&id=" + encodeURIComponent(gameId);
+gameFrame.setAttribute("sandbox", "allow-scripts allow-pointer-lock");
+gameFrame.setAttribute("allow", "fullscreen");
+gameFrame.referrerPolicy = "no-referrer";
+gameFrame.style.position = "absolute";
+gameFrame.style.inset = "0";
+gameFrame.style.width = "100%";
+gameFrame.style.height = "100%";
+gameFrame.style.border = "0";
+gameFrame.style.background = "#111";
+
+panoramaContainer.style.position = "relative";
+renderer.domElement.style.display = "none";
+panoramaContainer.appendChild(gameFrame);
+
+topScreen.classList.add("hidden");
+viewerScreen.classList.remove("hidden");
+document.documentElement.classList.remove("direct-world-loading");
+
+trackEvent("world_view", getCurrentWorldAnalyticsData());
+return;
+}
+
 textureLoader.load(
 world.panorama,
 (texture) => {
@@ -1787,6 +1944,8 @@ viewerScreen.classList.remove(
 "hidden"
 );
 
+document.documentElement.classList.remove("direct-world-loading");
+
 resizeViewer();
 
 trackEvent(
@@ -1800,6 +1959,12 @@ getCurrentWorldAnalyticsData()
 }
 
 function showTop() {
+
+const publishedGameFrame = document.getElementById("publishedGameFrame");
+if (publishedGameFrame) {
+publishedGameFrame.remove();
+renderer.domElement.style.display = "";
+}
 
 viewerScreen.classList.add(
 "hidden"
@@ -2497,9 +2662,15 @@ loadWorld(
 requestedWorldId
 );
 
+} else {
+
+document.documentElement.classList.remove("direct-world-loading");
+
 }
 
 } catch (error) {
+
+document.documentElement.classList.remove("direct-world-loading");
 
 console.error(
 error
@@ -2898,18 +3069,34 @@ thumbnailWarning,
 }
 );
 
-postPanorama.addEventListener(
-"change",
-() => {
+postPanorama.addEventListener("change", () => {
+const file = postPanorama.files?.[0];
+
+if (temporaryGameFile && temporaryGameFile !== file) {
+discardTemporaryGame();
+}
+
+panoramaWarning.classList.add("hidden");
+panoramaWarning.textContent = "";
+
+if (!file) {
+return;
+}
+
+if (isGameFile(file)) {
+return;
+}
 
 checkImageRatio(
 postPanorama,
 panoramaWarning,
 "panorama"
 );
+});
 
+function isGameFile(file) {
+return !!file && /\.html$/i.test(file.name);
 }
-);
 
 function openPostPanel() {
 
@@ -2927,6 +3114,8 @@ postPanel.classList.remove(
 }
 
 function closePostPanel() {
+
+discardTemporaryGame();
 
 postPanel.classList.add(
 "hidden"
@@ -3118,6 +3307,108 @@ postError.classList.remove(
 
 return;
 
+}
+
+const selectedWorkFile = postPanorama.files?.[0];
+
+if (isGameFile(selectedWorkFile)) {
+pendingPostFormData = null;
+postSubmitButton.disabled = true;
+postSubmitButton.innerHTML = '<span class="uploading-text">' + (currentLanguage === "ja" ? "アップロード中…" : "Uploading…") + '</span>';
+
+try {
+if (selectedWorkFile.size === 0 || selectedWorkFile.size > 50 * 1024 * 1024) {
+throw new Error(currentLanguage === "ja" ? "HTMLは50MB以下にしてください。" : "HTML must be 50 MB or smaller.");
+}
+
+let gameId = temporaryGameId;
+
+if (temporaryGameFile !== selectedWorkFile || !gameId) {
+const gameFormData = new FormData(postForm);
+gameFormData.set("game", selectedWorkFile);
+gameFormData.set("termsAccepted", "1");
+gameFormData.delete("panorama");
+
+const response = await fetch("./api/store-game-dev.php", {
+method: "POST",
+body: gameFormData,
+credentials: "same-origin",
+cache: "no-store"
+});
+
+const result = await response.json();
+
+if (!response.ok || !result.success) {
+throw new Error(result.error || "一時保存に失敗しました。");
+}
+
+if (
+!/^[a-f0-9]{32}$/.test(result.testId || "") ||
+!/^[a-f0-9]{64}$/.test(result.token || "")
+) {
+throw new Error("一時保存情報が正しくありません。");
+}
+
+temporaryGameFile = selectedWorkFile;
+temporaryGameId = result.testId;
+temporaryGameToken = result.token;
+gameId = result.testId;
+}
+
+const oldFrame = document.getElementById("gamePreviewFrame");
+if (oldFrame) {
+oldFrame.remove();
+}
+
+const previewFrame = document.createElement("iframe");
+previewFrame.id = "gamePreviewFrame";
+previewFrame.title = "HTMLゲームのプレビュー";
+previewFrame.src = "https://gururi-game.neco-sara.com/?site=release&id=" + encodeURIComponent(gameId) + "&token=" + encodeURIComponent(temporaryGameToken);
+previewFrame.setAttribute("sandbox", "allow-scripts allow-pointer-lock");
+previewFrame.setAttribute("allow", "fullscreen");
+previewFrame.referrerPolicy = "no-referrer";
+previewFrame.style.position = "absolute";
+previewFrame.style.inset = "0";
+previewFrame.style.width = "100%";
+previewFrame.style.height = "100%";
+previewFrame.style.border = "0";
+previewFrame.style.background = "#111";
+
+postPreviewPanorama.style.position = "relative";
+postPreviewRenderer.domElement.style.display = "none";
+postPreviewPanorama.appendChild(previewFrame);
+
+postPanel.classList.add("hidden");
+postPreviewPanel.classList.remove("hidden");
+
+postPreviewTitle.textContent = currentLanguage === "ja"
+? "ゲームをプレビュー"
+: "Game preview";
+
+postPreviewDescription.textContent = currentLanguage === "ja"
+? "ゲームを操作して動作を確認してください。戻ると投稿情報を変更できます。"
+: "Play the game to test it. Go back to edit the submission.";
+
+postPreviewSubmitButton.disabled = false;
+postPreviewSubmitButton.textContent = t("postPreviewSubmit");
+
+} catch (error) {
+postError.textContent = error.message;
+postError.classList.remove("hidden");
+} finally {
+postSubmitButton.disabled = false;
+postSubmitButton.textContent = t("postSubmit");
+}
+return;
+}
+
+if (!selectedWorkFile || !/^image\/(png|jpeg|webp)$/.test(selectedWorkFile.type)) {
+postError.textContent = currentLanguage === "ja"
+? "PNG・JPG・WebP、またはぐるりエディタのHTMLを選択してください。"
+: "Please select a PNG, JPG, WebP, or Gururi Editor HTML file.";
+postError.classList.remove("hidden");
+pendingPostFormData = null;
+return;
 }
 
 pendingPostFormData =

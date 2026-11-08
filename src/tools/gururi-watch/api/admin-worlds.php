@@ -1,5 +1,12 @@
 <?php
 
+session_name("gururi_watch_admin");
+session_set_cookie_params([
+"path" => "/tools/gururi-watch/",
+"secure" => true,
+"httponly" => true,
+"samesite" => "Strict"
+]);
 session_start();
 
 header("Content-Type: application/json; charset=UTF-8");

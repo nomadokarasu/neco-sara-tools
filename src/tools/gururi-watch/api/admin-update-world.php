@@ -1,5 +1,12 @@
 <?php
 
+session_name("gururi_watch_admin");
+session_set_cookie_params([
+"path" => "/tools/gururi-watch/",
+"secure" => true,
+"httponly" => true,
+"samesite" => "Strict"
+]);
 session_start();
 
 header("Content-Type: application/json; charset=UTF-8");
@@ -94,70 +101,28 @@ failResponse(
 
 $rootDirectory =
 dirname(__DIR__);
+require_once __DIR__ . "/worlds-storage.php";
 
-$dataFile =
-$rootDirectory . "/data/worlds.json";
+$dataFile = $rootDirectory . "/data/worlds.json";
+$lockFile = $rootDirectory . "/data/worlds-update.lock";
 
-$fileHandle = fopen(
-$dataFile,
-"c+"
-);
+$fileHandle = fopen($lockFile, "c");
 
 if ($fileHandle === false) {
-failResponse(
-"投稿データを開けませんでした。",
-500
-);
+failResponse("投稿データのロックを開けませんでした。", 500);
 }
 
-if (
-!flock(
-$fileHandle,
-LOCK_EX
-)
-) {
-
-fclose(
-$fileHandle
-);
-
-failResponse(
-"投稿データを更新できませんでした。",
-500
-);
-
+if (!flock($fileHandle, LOCK_EX)) {
+fclose($fileHandle);
+failResponse("投稿データをロックできませんでした。", 500);
 }
 
-rewind(
-$fileHandle
-);
-
-$currentJson =
-stream_get_contents(
-$fileHandle
-);
-
-$worlds = json_decode(
-$currentJson ?: "[]",
-true
-);
-
-if (!is_array($worlds)) {
-
-flock(
-$fileHandle,
-LOCK_UN
-);
-
-fclose(
-$fileHandle
-);
-
-failResponse(
-"投稿データが壊れています。",
-500
-);
-
+try {
+$worlds = readWorldsSafely($dataFile);
+} catch (Throwable $error) {
+flock($fileHandle, LOCK_UN);
+fclose($fileHandle);
+failResponse($error->getMessage(), 500);
 }
 
 $foundIndex =
@@ -216,137 +181,61 @@ $worlds[$foundIndex]["status"] =
 "hidden";
 
 }
+$deletedWorld = null;
 
-if (
-$action === "delete"
-) {
-
-$uploadDirectory =
-$rootDirectory .
-"/uploads/" .
-$worldId;
-
-if (
-is_dir(
-$uploadDirectory
-)
-) {
-
-$files =
-glob(
-$uploadDirectory . "/*"
-);
-
-if (
-is_array(
-$files
-)
-) {
-
-foreach (
-$files as $file
-) {
-
-if (
-is_file(
-$file
-)
-) {
-
-@unlink(
-$file
-);
-
+if ($action === "delete") {
+$deletedWorld = $worlds[$foundIndex];
+array_splice($worlds, $foundIndex, 1);
 }
 
+try {
+writeWorldsSafely($dataFile, $worlds);
+} catch (Throwable $error) {
+flock($fileHandle, LOCK_UN);
+fclose($fileHandle);
+failResponse($error->getMessage(), 500);
 }
 
+flock($fileHandle, LOCK_UN);
+fclose($fileHandle);
+
+$cleanupFailed = false;
+
+if ($deletedWorld !== null) {
+if (($deletedWorld["type"] ?? "") === "game") {
+$gameFile = $rootDirectory . "/data/published-games/" . $worldId . ".txt";
+
+if (is_file($gameFile) && !@unlink($gameFile)) {
+$cleanupFailed = true;
+}
 }
 
-@rmdir(
-$uploadDirectory
-);
+$uploadDirectory = $rootDirectory . "/uploads/" . $worldId;
 
+if (is_dir($uploadDirectory)) {
+$files = glob($uploadDirectory . "/*");
+
+if ($files === false) {
+$cleanupFailed = true;
+} else {
+foreach ($files as $file) {
+if (is_file($file) && !@unlink($file)) {
+$cleanupFailed = true;
+}
+}
 }
 
-array_splice(
-$worlds,
-$foundIndex,
-1
-);
-
+if (!@rmdir($uploadDirectory) && is_dir($uploadDirectory)) {
+$cleanupFailed = true;
+}
+}
 }
 
-$newJson = json_encode(
-$worlds,
-JSON_PRETTY_PRINT |
-JSON_UNESCAPED_UNICODE |
-JSON_UNESCAPED_SLASHES
-);
-
-if ($newJson === false) {
-
-flock(
-$fileHandle,
-LOCK_UN
-);
-
-fclose(
-$fileHandle
-);
-
-failResponse(
-"投稿データを変換できませんでした。",
-500
-);
-
+if ($cleanupFailed) {
+error_log("Gururium: Failed to remove some files for world " . $worldId);
 }
-
-rewind(
-$fileHandle
-);
-
-ftruncate(
-$fileHandle,
-0
-);
-
-if (
-fwrite(
-$fileHandle,
-$newJson
-) === false
-) {
-
-flock(
-$fileHandle,
-LOCK_UN
-);
-
-fclose(
-$fileHandle
-);
-
-failResponse(
-"投稿データを保存できませんでした。",
-500
-);
-
-}
-
-fflush(
-$fileHandle
-);
-
-flock(
-$fileHandle,
-LOCK_UN
-);
-
-fclose(
-$fileHandle
-);
 
 echo json_encode([
-"success" => true
+"success" => true,
+"cleanupWarning" => $cleanupFailed
 ], JSON_UNESCAPED_UNICODE);

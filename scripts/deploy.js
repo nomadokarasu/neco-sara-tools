@@ -172,6 +172,150 @@ try {
 }
 
 
+
+if (process.argv.includes("--watch-release")) {
+try {
+process.chdir(path.resolve(__dirname, ".."));
+
+const sourceDirectory = "src/tools/gururi-watch";
+const workflowPath = ".github/workflows/deploy.yml";
+
+const requiredFiles = [
+"index.html",
+"script.js",
+"style.css",
+"share.php",
+"admin.php",
+"api/worlds.php",
+"api/create-world.php",
+"api/admin-worlds.php",
+"api/admin-update-world.php",
+"api/report-world.php",
+"api/worlds-storage.php",
+"api/store-game-dev.php",
+"api/delete-game-dev.php",
+"api/publish-game-dev.php"
+];
+
+for (const name of requiredFiles) {
+if (!fs.existsSync(path.join(sourceDirectory, name))) {
+throw new Error("公開版のファイルがありません：" + name);
+}
+}
+
+const workflow = fs.readFileSync(workflowPath, "utf8");
+
+if (
+!workflow.includes("gururi-watch-release-deploy") ||
+!workflow.includes("Upload Gururium release by FTPS")
+) {
+throw new Error("ぐるりうむ公開版の配信設定が未完成です。");
+}
+
+const staged = execFileSync("git", [
+"diff", "--cached", "--name-only"
+], {encoding: "utf8"}).trim();
+
+if (staged) {
+throw new Error("Gitに追加済みの変更があります。配信を停止しました。");
+}
+
+const index = fs.readFileSync(
+path.join(sourceDirectory, "index.html"),
+"utf8"
+);
+
+const versionMatch = index.match(
+/class="site-version">ver\.(\d+\.\d+\.\d+)<\/span>/
+);
+
+if (!versionMatch) {
+throw new Error("公開版のバージョンを確認できません。");
+}
+
+const version = versionMatch[1];
+
+if (
+index.includes("noindex") ||
+index.includes("開発版") ||
+index.includes("window.gtag = function(){}") ||
+!index.includes("G-E5CTR47H44") ||
+!index.includes('class="site-version">ver.' + version + '</span>')
+) {
+throw new Error("公開版の設定またはバージョンを確認できません。");
+}
+
+const adminFiles = [
+"admin.php",
+"api/admin-worlds.php",
+"api/admin-update-world.php"
+];
+
+for (const name of adminFiles) {
+const content = fs.readFileSync(
+path.join(sourceDirectory, name),
+"utf8"
+);
+
+if (
+content.includes("gururi_watch_dev_admin") ||
+content.includes("/tools/gururi-watch-dev/")
+) {
+throw new Error("開発版の管理設定が残っています：" + name);
+}
+}
+
+execFileSync(process.execPath, [
+"scripts/build.js"
+], {stdio: "inherit"});
+
+execFileSync(process.execPath, [
+"--check",
+path.join(sourceDirectory, "script.js")
+], {stdio: "inherit"});
+
+const filesToStage = [
+"package.json",
+"scripts/build.js",
+"scripts/deploy.js",
+"scripts/promote-watch.js",
+workflowPath,
+...requiredFiles.map(name => path.join(sourceDirectory, name))
+];
+
+execFileSync("git", [
+"add", "--", ...filesToStage
+], {stdio: "inherit"});
+
+const changes = execFileSync("git", [
+"diff", "--cached", "--name-only"
+], {encoding: "utf8"}).trim();
+
+if (changes) {
+console.log("公開版デプロイの変更対象：");
+console.log(changes);
+
+execFileSync("git", [
+"commit", "-m", "Release Gururium " + version
+], {stdio: "inherit"});
+}
+
+execFileSync("git", [
+"push", "origin", "HEAD:gururi-watch-release-deploy"
+], {stdio: "inherit"});
+
+console.log("ぐるりうむ公開版を配信用ブランチへ送信しました。");
+console.log("GitHub Actionsで配信結果を確認してください。");
+
+process.exit(0);
+
+} catch (error) {
+console.error("ぐるりうむ公開版の配信を停止しました。");
+console.error(error.message);
+process.exit(1);
+}
+}
+
 if (process.argv.includes("--watch-dev")) {
 try {
 process.chdir(path.resolve(__dirname, ".."));

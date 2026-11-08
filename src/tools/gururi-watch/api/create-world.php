@@ -301,60 +301,57 @@ $initialProjectionMode === "legacy"
 "createdAt" => gmdate("c")
 ];
 
-$dataFile = $rootDirectory . "/data/worlds.json";
+function cleanupFailedWorldUpload($thumbnailDestination, $panoramaDestination, $uploadDirectory) {
+if (is_file($thumbnailDestination)) {
+@unlink($thumbnailDestination);
+}
 
-$fileHandle = fopen($dataFile, "c+");
+if (is_file($panoramaDestination)) {
+@unlink($panoramaDestination);
+}
+
+if (is_dir($uploadDirectory)) {
+@rmdir($uploadDirectory);
+}
+}
+
+require_once __DIR__ . "/worlds-storage.php";
+
+$dataFile = $rootDirectory . "/data/worlds.json";
+$lockFile = $rootDirectory . "/data/worlds-update.lock";
+
+$fileHandle = fopen($lockFile, "c");
 
 if ($fileHandle === false) {
-failResponse("投稿データを保存できませんでした。", 500);
+cleanupFailedWorldUpload($thumbnailDestination, $panoramaDestination, $uploadDirectory);
+failResponse("投稿データのロックを開けませんでした。", 500);
 }
 
 if (!flock($fileHandle, LOCK_EX)) {
 fclose($fileHandle);
-failResponse("投稿データを保存できませんでした。", 500);
+cleanupFailedWorldUpload($thumbnailDestination, $panoramaDestination, $uploadDirectory);
+failResponse("投稿データをロックできませんでした。", 500);
 }
 
-rewind($fileHandle);
-
-$currentJson = stream_get_contents($fileHandle);
-
-$currentWorlds = json_decode(
-$currentJson ?: "[]",
-true
-);
-
-if (!is_array($currentWorlds)) {
-$currentWorlds = [];
+try {
+$currentWorlds = readWorldsSafely($dataFile);
+} catch (Throwable $error) {
+flock($fileHandle, LOCK_UN);
+fclose($fileHandle);
+cleanupFailedWorldUpload($thumbnailDestination, $panoramaDestination, $uploadDirectory);
+failResponse($error->getMessage(), 500);
 }
 
 $currentWorlds[] = $world;
-
-$newJson = json_encode(
-$currentWorlds,
-JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-);
-
-if ($newJson === false) {
+try {
+writeWorldsSafely($dataFile, $currentWorlds);
+} catch (Throwable $error) {
 flock($fileHandle, LOCK_UN);
 fclose($fileHandle);
-failResponse("投稿データを変換できませんでした。", 500);
+cleanupFailedWorldUpload($thumbnailDestination, $panoramaDestination, $uploadDirectory);
+failResponse($error->getMessage(), 500);
 }
 
-rewind($fileHandle);
-
-if (!ftruncate($fileHandle, 0)) {
-flock($fileHandle, LOCK_UN);
-fclose($fileHandle);
-failResponse("投稿データを保存できませんでした。", 500);
-}
-
-if (fwrite($fileHandle, $newJson) === false) {
-flock($fileHandle, LOCK_UN);
-fclose($fileHandle);
-failResponse("投稿データを保存できませんでした。", 500);
-}
-
-fflush($fileHandle);
 flock($fileHandle, LOCK_UN);
 fclose($fileHandle);
 
