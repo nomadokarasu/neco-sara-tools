@@ -9736,7 +9736,7 @@ updateLayoutControls();
 if(!gamePreview.classList.contains('hidden'))resizeGameCanvas();
 });
 renderNodes();renderSettings();
-updateLoading(100,'準備が完了しました');
+updateLoading(100,'作品を準備しています…');
 await yieldToBrowser();
 const begin=()=>{
 launch.style.display='none';
