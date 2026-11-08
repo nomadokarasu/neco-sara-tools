@@ -3,7 +3,22 @@
 <head>
 <script>
 window.gtag = function(){};
+if (/^[a-f0-9]{16}$/.test(new URLSearchParams(window.location.search).get("world") || "")) {
+document.documentElement.classList.add("direct-world-loading");
+}
 </script>
+<style>
+.direct-world-loading #topScreen {
+visibility: hidden;
+}
+#postSubmitButton.is-uploading {
+animation: gururi-upload-pulse 1s ease-in-out infinite;
+}
+@keyframes gururi-upload-pulse {
+0%, 100% { opacity: 1; }
+50% { opacity: 0.3; }
+}
+</style>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -26,7 +41,7 @@ window.gtag = function(){};
 <div>
 <div class="site-title-line">
 <h1 class="site-title">ぐるりうむ</h1>
-<span class="site-version">ver.0.2.22-dev</span>
+<span class="site-version">ver.0.2.23-dev</span>
 </div>
 <p class="site-description">ぐるりペイントで描かれた世界たち</p>
 </div>
@@ -39,7 +54,7 @@ EN
 
 <div class="top-actions">
 <button id="postButton" class="post-button" type="button">
-世界を投稿
+作品投稿
 </button>
 
 <a class="gururi-paint-button" href="https://tools.neco-sara.com/tools/gururi-paint/">
@@ -148,8 +163,6 @@ EN
 <button id="postCloseButton" class="modal-close" type="button" aria-label="閉じる">
 ×
 </button>
-
-<h2 class="modal-title">世界を投稿する</h2>
 
 <form id="postForm" class="post-form">
 

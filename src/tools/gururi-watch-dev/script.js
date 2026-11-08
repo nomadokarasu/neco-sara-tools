@@ -23,7 +23,7 @@ const TEXT = {
 ja: {
 siteTitle: "ぐるりうむ",
 siteDescription: "ぐるりペイントで描かれた世界たち",
-postWorld: "世界を投稿",
+postWorld: "作品投稿",
 gururiPaint: "ぐるりペイント",
 support: "JUNOTAを応援",
 authorIntro: "作者紹介",
@@ -46,7 +46,7 @@ xUrl: "XのURL",
 website: "Webサイトなど",
 thumbnail: "サムネイル画像",
 thumbnailHelp: "正方形（1：1）のJPG / PNG / WebP、10MB以下",
-panorama: "ぐるり画像",
+panorama: "作品データ",
 panoramaHelp: "2:1のJPG / PNG / WebP（10MB以下）、またはぐるりエディタのHTML（50MB以下）。プレビューで動作確認してから投稿できます。",
 contentCheck: "R18・過度に暴力的な内容ではありません。",
 rightsCheck: "他人の作品・個人情報などを無断で使用していません。",
@@ -89,7 +89,7 @@ imageUnreadable: "画像を読み込めませんでした。別の画像を選�
 en: {
 siteTitle: "Gururium",
 siteDescription: "Worlds created with Gururi Paint",
-postWorld: "Post a world",
+postWorld: "Submit Work",
 gururiPaint: "Gururi Paint",
 support: "Support JUNOTA",
 authorIntro: "Creator",
@@ -112,7 +112,7 @@ xUrl: "X URL",
 website: "Website",
 thumbnail: "Thumbnail",
 thumbnailHelp: "Square (1:1), JPG / PNG / WebP, up to 10 MB",
-panorama: "Panorama image",
+panorama: "Work File",
 panoramaHelp: "2:1 JPG / PNG / WebP (up to 10 MB), or Gururi Editor HTML (up to 50 MB). Preview and test your game before publishing.",
 contentCheck: "This submission does not contain adult or excessively violent content.",
 rightsCheck: "I am not using other people's works or personal information without permission.",
@@ -510,11 +510,6 @@ t("reportSubmit");
 
 reportCancelButton.textContent =
 t("cancel");
-
-postPanel.querySelector(
-".modal-title"
-).textContent =
-t("postTitle");
 
 document.getElementById(
 "postTitle"
@@ -1910,6 +1905,7 @@ panoramaContainer.appendChild(gameFrame);
 
 topScreen.classList.add("hidden");
 viewerScreen.classList.remove("hidden");
+document.documentElement.classList.remove("direct-world-loading");
 
 trackEvent("world_view", getCurrentWorldAnalyticsData());
 return;
@@ -1947,6 +1943,8 @@ topScreen.classList.add(
 viewerScreen.classList.remove(
 "hidden"
 );
+
+document.documentElement.classList.remove("direct-world-loading");
 
 resizeViewer();
 
@@ -2664,9 +2662,15 @@ loadWorld(
 requestedWorldId
 );
 
+} else {
+
+document.documentElement.classList.remove("direct-world-loading");
+
 }
 
 } catch (error) {
+
+document.documentElement.classList.remove("direct-world-loading");
 
 console.error(
 error
@@ -3311,6 +3315,7 @@ if (isGameFile(selectedWorkFile)) {
 pendingPostFormData = null;
 postSubmitButton.disabled = true;
 postSubmitButton.textContent = currentLanguage === "ja" ? "アップロード中…" : "Uploading…";
+postSubmitButton.classList.add("is-uploading");
 
 try {
 if (selectedWorkFile.size === 0 || selectedWorkFile.size > 50 * 1024 * 1024) {
@@ -3393,6 +3398,7 @@ postError.textContent = error.message;
 postError.classList.remove("hidden");
 } finally {
 postSubmitButton.disabled = false;
+postSubmitButton.classList.remove("is-uploading");
 postSubmitButton.textContent = t("postSubmit");
 }
 return;
