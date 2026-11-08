@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ぐるりゲーム再生テスト</title>
+<style>
+html,body{
+margin:0;
+width:100%;
+height:100%;
+background:#111;
+color:#fff;
+font-family:sans-serif;
+}
+#gameFrame{
+display:none;
+width:100%;
+height:100%;
+border:0;
+}
+#message{
+padding:24px;
+}
+</style>
+</head>
+<body>
+<div id="message">ゲームを読み込んでいます。</div>
+<iframe id="gameFrame" sandbox="allow-scripts allow-pointer-lock" allow="fullscreen" referrerpolicy="no-referrer" title="ぐるりゲーム"></iframe>
+<script>
+const params=new URLSearchParams(location.search);
+const id=params.get("id")||"";
+const token=params.get("token")||"";
+const site=params.get("site")||"dev";
+const frame=document.getElementById("gameFrame");
+const message=document.getElementById("message");
+if(!["dev","release"].includes(site)){
+message.textContent="サイト指定が正しくありません。";
+}else if(/^[a-f0-9]{16}$/.test(id)){
+frame.src="./game.php?site="+encodeURIComponent(site)+"&id="+encodeURIComponent(id);
+frame.style.display="block";
+message.style.display="none";
+}else if(/^[a-f0-9]{32}$/.test(id)&&/^[a-f0-9]{64}$/.test(token)){
+frame.src="./game.php?site="+encodeURIComponent(site)+"&id="+encodeURIComponent(id)+"&token="+encodeURIComponent(token);
+frame.style.display="block";
+message.style.display="none";
+}else{
+message.textContent="正しいゲームIDを指定してください。";
+}</script>
+</body>
+</html>
