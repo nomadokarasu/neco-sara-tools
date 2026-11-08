@@ -9652,6 +9652,7 @@ body.gururi-player #closePreviewBtn{display:none!important}
 const playerBootstrap=String.raw`
 (async()=>{
 const launch=document.getElementById('gururiLaunch');
+const launchStartedAt=performance.now();
 // The player has its own landing screen, independent of the editor home.
 const editorHome=document.getElementById('editorHomePage');
 if(editorHome)editorHome.style.display='none';
